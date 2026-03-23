@@ -1,0 +1,317 @@
+{
+  "autoUpdaterStatus": "enabled",
+  "cleanupPeriodDays": 30,
+  "effortLevel": "high",
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-sp-5bdcfa9584194e1ab170eddfb71cc4bc",
+    "ANTHROPIC_BASE_URL": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
+    "ANTHROPIC_MODEL": "glm-5",
+    "ANTHROPIC_REASONING_MODEL": "glm-5",
+    "CLAUDE_CODE_MAX_AUTONOMY": "true",
+    "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-edit-format.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-edit-lint.py",
+            "timeout": 60000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-doc-reminder.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-auto-commit.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-test-runner.py",
+            "timeout": 130000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Read|Glob|Grep"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/pre-task-planner.py",
+            "timeout": 20000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task|Bash|Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/stop-notify.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
+            "timeout": 30000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/stop-daily-summary.py",
+            "timeout": 15000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "language": "Chinese",
+  "mcpServers": {
+    "brave-search": {
+      "_description": "Brave 搜索引擎，提供网页搜索能力",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "command": "npx",
+      "env": {
+        "BRAVE_API_KEY": "你的BraveAPIKey"
+      }
+    },
+    "context7": {
+      "_description": "技术文档实时查询，支持 React/Express 等库的文档检索",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "command": "npx"
+    },
+    "fetch": {
+      "_description": "HTTP 请求工具，获取网页内容和 API 数据",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "command": "uvx",
+      "env": {}
+    },
+    "filesystem": {
+      "_description": "文件系统操作，读写指定目录下的文件",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\apdms"
+      ],
+      "command": "npx"
+    },
+    "github": {
+      "_description": "GitHub 集成，支持 PR、Issue、仓库操作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "command": "npx",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "memory": {
+      "_description": "跨会话记忆持久化，记住重要信息和经验总结",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "command": "npx"
+    },
+    "playwright": {
+      "_description": "现代浏览器自动化，支持截图、测试、页面操作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-playwright"
+      ],
+      "command": "npx"
+    },
+    "postgres": {
+      "_description": "PostgreSQL 数据库操作，支持 SQL 查询和数据管理",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://user:password@localhost:5432/dbname"
+      ],
+      "command": "npx"
+    },
+    "puppeteer": {
+      "_description": "浏览器自动化，截图和页面操作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "command": "npx"
+    },
+    "redis": {
+      "_description": "Redis 缓存数据库操作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis",
+        "redis://localhost:6379"
+      ],
+      "command": "npx"
+    },
+    "sequential-thinking": {
+      "_description": "结构化逐步思考，处理复杂推理任务",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "command": "npx"
+    },
+    "sqlite": {
+      "_description": "SQLite 数据库操作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "--db-path",
+        "D:\\apdms\\database.db"
+      ],
+      "command": "npx"
+    }
+  },
+  "model": "glm-5",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "LS",
+      "Task",
+      "WebFetch",
+      "WebSearch",
+      "TodoRead",
+      "TodoWrite",
+      "NotebookRead",
+      "NotebookEdit",
+      "mcp__*",
+      "Bash(*)"
+    ],
+    "defaultMode": "bypassPermissions",
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/)",
+      "Bash(rm -rf C:*)",
+      "Bash(rm -rf D:*)",
+      "Bash(format *)",
+      "Bash(mkfs *)",
+      "Bash(dd if=* of=/dev/*)",
+      "Bash(chmod 777 *)",
+      "Bash(git push --force)",
+      "Bash(git push -f)",
+      "Bash(git push -f origin main*)",
+      "Bash(git push -f origin master*)",
+      "Bash(git push --force origin main*)",
+      "Bash(git push --force origin master*)",
+      "Bash(git push --force-with-lease origin main*)",
+      "Bash(git push --force-with-lease origin master*)",
+      "Bash(npm publish)",
+      "Bash(npm publish *)",
+      "Bash(pip install --break-system-packages *)",
+      "Bash(kubectl delete namespace *)",
+      "Bash(kubectl drain *)",
+      "Bash(terraform destroy)",
+      "Bash(terraform destroy *)",
+      "Bash(aws s3 rb *)",
+      "Bash(aws ec2 terminate-instances *)",
+      "Bash(redis-cli FLUSHALL)",
+      "Bash(redis-cli FLUSHDB)",
+      "Bash(DROP DATABASE *)",
+      "Bash(DROP TABLE *)",
+      "Read(.env.production)",
+      "Read(.env.prod)",
+      "Read(.env.staging)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.pfx)",
+      "Read(**/*.p12)"
+    ]
+  },
+  "skipDangerousModePermissionPrompt": true
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
+  "_comment": "MCP 服务器配置 - 提供外部工具和数据访问能力",
+
+  "mcpServers": {
+    "redis": {
+      "_description": "Redis 数据库交互，支持缓存、队列、键值存储",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis",
+        "redis://localhost:6379"
+      ]
+    },
+
+    "filesystem": {
+      "_description": "文件系统操作，读写指定目录下的文件",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms"]
+    },
+
+    "memory": {
+      "_description": "持久化记忆存储，支持知识图谱和会话记忆",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+
+    "brave-search": {
+      "_description": "Brave 搜索引擎，提供网页搜索能力",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "你的BraveAPIKey"
+      }
+    },
+
+    "fetch": {
+      "_description": "HTTP 请求工具，获取网页内容和 API 数据",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {}
+    },
+
+    "sqlite": {
+      "_description": "SQLite 数据库操作，支持 SQL 查询和数据管理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite"]
+    },
+
+    "puppeteer": {
+      "_description": "浏览器自动化，支持网页截图、爬虫、测试",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+
+    "sequential-thinking": {
+      "_description": "顺序思维工具，辅助复杂问题的逐步推理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+
+    "postgres": {
+      "_description": "PostgreSQL 数据库操作，支持 SQL 查询和数据管理",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://user:password@localhost:5432/dbname"
+      ]
+    },
+
+    "context7": {
+      "_description": "技术文档实时查询，支持 React/Express 等库的文档检索",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+
+    "github": {
+      "_description": "GitHub 集成，支持 PR、Issue、仓库操作",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+
+    "playwright": {
+      "_description": "现代浏览器自动化，支持截图、测试、页面操作",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    }
+  }
+}
