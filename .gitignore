@@ -1,0 +1,39 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cache & State
+plans/
+projects/
+cache/
+plugins/cache/
+context_cache.json
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime & Sessions
+ide/
+sessions/
+tasks/
+session-env/
+*.lock
+
+# History, Logs & Backups
+logs/
+history/
+file-history/
+backups/
+telemetry/
+shell-snapshots/
+daily_summary/
+history.jsonl
+*.log
+
+# Other
+*.txt

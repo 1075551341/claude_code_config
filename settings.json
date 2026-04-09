@@ -1,0 +1,345 @@
+{
+  "_comment": "Claude Code 主配置文件 - 修改后运行 sync-tools.ps1 同步到其他编辑器",
+
+  "cleanupPeriodDays": 30,
+  "language": "Chinese",
+  "skipDangerousModePermissionPrompt": true,
+  "autoUpdaterStatus": "enabled",
+  "effortLevel": "high",
+
+  "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-sp-5bdcfa9584194e1ab170eddfb71cc4bc",
+    "ANTHROPIC_BASE_URL": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen3-coder-plus",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
+    "ANTHROPIC_MODEL": "glm-5",
+    "ANTHROPIC_REASONING_MODEL": "glm-5",
+    "CLAUDE_CODE_MAX_AUTONOMY": "true",
+    "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
+  },
+  "model": "qwen3-coder-plus",
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "LS",
+      "Task",
+      "WebFetch",
+      "WebSearch",
+      "TodoRead",
+      "TodoWrite",
+      "NotebookRead",
+      "NotebookEdit",
+      "mcp__*",
+      "Bash(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/)",
+      "Bash(rm -rf C:*)",
+      "Bash(rm -rf D:*)",
+      "Bash(format *)",
+      "Bash(mkfs *)",
+      "Bash(dd if=* of=/dev/*)",
+      "Bash(chmod 777 *)",
+      "Bash(git push --force)",
+      "Bash(git push -f)",
+      "Bash(git push -f origin main*)",
+      "Bash(git push -f origin master*)",
+      "Bash(git push --force origin main*)",
+      "Bash(git push --force origin master*)",
+      "Bash(git push --force-with-lease origin main*)",
+      "Bash(git push --force-with-lease origin master*)",
+      "Bash(npm publish)",
+      "Bash(npm publish *)",
+      "Bash(pip install --break-system-packages *)",
+      "Bash(kubectl delete namespace *)",
+      "Bash(kubectl drain *)",
+      "Bash(terraform destroy)",
+      "Bash(terraform destroy *)",
+      "Bash(aws s3 rb *)",
+      "Bash(aws ec2 terminate-instances *)",
+      "Bash(redis-cli FLUSHALL)",
+      "Bash(redis-cli FLUSHDB)",
+      "Bash(DROP DATABASE *)",
+      "Bash(DROP TABLE *)",
+      "Read(.env.production)",
+      "Read(.env.prod)",
+      "Read(.env.staging)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.pfx)",
+      "Read(**/*.p12)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+
+  "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "_note": "1. 格式化（最先运行，保证后续 lint 检查格式化后代码）",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
+            "timeout": 30000
+          },
+          {
+            "_note": "2. Lint + 类型检查",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-lint.py",
+            "timeout": 30000
+          },
+          {
+            "_note": "3. 操作日志",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000
+          },
+          {
+            "_note": "4. 密钥泄露检测",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000
+          },
+          {
+            "_note": "5. 函数文档注释提醒",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-doc-reminder.py",
+            "timeout": 10000
+          },
+          {
+            "_note": "6. 自动测试运行器（最耗时，放倒数第二）",
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-test-runner.py",
+            "timeout": 60000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Read|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "_note": "上下文注入（会话首次运行，之后缓存快速退出）- 覆盖所有操作类型",
+        "matcher": "Task|Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
+            "timeout": 8000
+          }
+        ]
+      },
+      {
+        "_note": "复杂任务计划生成（会话级缓存，每会话只生成一次）",
+        "matcher": "Task|Bash|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-task-planner.py",
+            "timeout": 20000
+          }
+        ]
+      },
+      {
+        "_note": "Bash 专属：依赖安全检查 + 危险命令拦截（顺序不可调换）",
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-dep-checker.py",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "_note": "1. 立即弹出系统通知",
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-notify.py",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "_note": "2. 每日工作总结（当日首次，累计 3 次编辑后触发）",
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-daily-summary.py",
+            "timeout": 15000
+          }
+        ]
+      },
+      {
+        "_note": "3. README 自动更新（依赖 plan_cache，有计划且有显著变更时触发）",
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  },
+
+  "_plugins_section": "插件配置",
+  "enabledPlugins": {
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": false,
+    "context7@claude-plugins-official": false,
+    "firecrawl@claude-plugins-official": false,
+    "github@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false
+  },
+
+  "_mcp_section": "MCP 服务器配置（共 16 个，_group 注释键已移至 .mcp.json）",
+  "mcpServers": {
+    "redis": {
+      "_description": "Redis 缓存/队列/键值存储",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis",
+        "redis://localhost:6379"
+      ]
+    },
+    "sqlite": {
+      "_description": "SQLite 轻量数据库",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "--db-path",
+        "D:\\apdms\\database.db"
+      ]
+    },
+    "postgres": {
+      "_description": "PostgreSQL 数据库",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://user:password@localhost:5432/dbname"
+      ]
+    },
+    "fs": {
+      "_description": "文件系统操作（D:\\apdms + ~/.claude）",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\apdms",
+        "C:\\Users\\DELL\\.claude"
+      ]
+    },
+    "fetch": {
+      "_description": "HTTP 请求工具",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {}
+    },
+    "brave": {
+      "_description": "Brave 网页搜索",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": { "BRAVE_API_KEY": "你的BraveAPIKey" }
+    },
+    "crawl": {
+      "_description": "Firecrawl 网页爬取",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": { "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey" }
+    },
+    "pw": {
+      "_description": "Playwright 浏览器自动化（首选）",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "puppeteer": {
+      "_description": "Puppeteer Chrome 自动化（备选）",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "git": {
+      "_description": "Git 版本库直接操作",
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
+    },
+    "gh": {
+      "_description": "GitHub API 集成",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "你的GitHubPAT" }
+    },
+    "ctx7": {
+      "_description": "Context7 技术文档查询",
+      "command": "npx",
+      "args": ["-y", "@context7/mcp-server"]
+    },
+    "docker": {
+      "_description": "Docker 容器管理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"]
+    },
+    "time": {
+      "_description": "时间与时区工具",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"]
+    },
+    "thinking": {
+      "_description": "结构化逐步推理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "memory": {
+      "_description": "跨会话记忆持久化",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  }
+}
