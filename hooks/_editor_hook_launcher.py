@@ -1,42 +1,91 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
-_editor_hook_launcher.py v2.0
-Fast no-op in editor/IDE context; delegates to real hook in CLI.
+_editor_hook_launcher.py v3.0
+跨编辑器安全的 Hook 启动器 - 防止 hooks 在 IDE 中干扰模型正常调用
 
-PRIMARY detection: GetConsoleWindow() Windows API.
-  Real terminal: console attached (hwnd!=0) -> run hooks.
-  Editor extension host: no console (hwnd==0) -> skip immediately.
-  O(1), no deps, works for Pre/Post/Stop hooks equally.
+设计原则：
+1. 优先检测环境变量，快速退出
+2. 使用原生 API 检测控制台/TTY，无需第三方依赖
+3. 支持所有主流编辑器：VS Code / Cursor / Windsurf / Trae / Qoder / Zed / Codex / Copilot CLI
+
+检测优先级：
+  1. 环境变量强制覆盖
+  2. Windows 控制台检测（最快）
+  3. Unix TTY 检测
+  4. VS Code / Electron 环境标记
+  5. 编辑器 CWD 检测
+  6. 父进程链检测
+
+使用方式：
+  python _editor_hook_launcher.py <real_hook.py> [args...]
+
+编辑器环境：输出 {"continue": true, "skipped": true} 并退出
+CLI 环境：执行真实 hook 脚本
 """
 from __future__ import annotations
-import json, os, subprocess, sys
+import json
+import os
+import subprocess
+import sys
 
-_EDITOR_PATH_NEEDLES = (
+# ─────────────────────────────────────────────────────────────────────────────
+# 编辑器检测配置
+# ─────────────────────────────────────────────────────────────────────────────
+
+_EDITOR_PATH_PATTERNS = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", "/.trae/", "/qoder/", ".vscode/",
-    ".codex/", "/.opencode/", ".zed/",  # 新增 Codex、OpenCode、Zed 支持
-    "agent-transcripts", "workspacestorage", "cursor_version", "cursor\\projects",
+    ".windsurf", "/.windsurf/", "/.trae/", "/qoder/", ".vscode/",
+    ".codex/", "/.opencode/", ".zed/",
+    ".cursor/rules", ".windsurf/rules", ".trae/rules",
+    "agent-transcripts", "workspacestorage", "cursor_version",
 )
-_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "trae", "qoder", "code.exe", "zed", "codex")
+
+_EDITOR_EXE_PATTERNS = (
+    "cursor", "windsurf", "trae", "qoder", "code.exe", "zed",
+    "codex", "opencode", "github-copilot",
+)
+
+_VSCODE_ENV_MARKERS = (
+    "VSCODE_PID", "VSCODE_IPC_HOOK", "VSCODE_NLS_CONFIG", "VSCODE_CWD",
+    "VSCODE_CODE_CACHE_PATH", "ELECTRON_RUN_AS_NODE",
+    "VSCODE_HANDLES_UNCAUGHT_ERRORS", "VSCODE_ESM_ENTRYPOINT",
+    "CURSOR_CHANNEL", "CURSOR_APP_VERSION", "WINDSURF_APP_VERSION",
+    "TRAe_APP_VERSION", "QODER_VERSION",
+)
+
+_FORCE_HOOKS_ENV = ("cli", "terminal", "tui", "headless", "ci", "batch")
 
 
-def _eg_scan(obj, depth=0):
-    if depth > 14: return False
-    if isinstance(obj, str):
-        s = obj.replace("\\", "/").lower()
-        return any(n in s for n in _EDITOR_PATH_NEEDLES)
-    if isinstance(obj, dict): return any(_eg_scan(v, depth+1) for v in obj.values())
-    if isinstance(obj, list): return any(_eg_scan(v, depth+1) for v in obj)
-    return False
+# ─────────────────────────────────────────────────────────────────────────────
+# 编辑器检测函数
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _check_env_override():
+    """检查环境变量覆盖设置。返回 (force_enable, force_skip)"""
+    force_val = (os.environ.get("CLAUDE_HOOK_FORCE_CLI") or "").strip().lower()
+    if force_val in ("1", "true", "yes", "on"):
+        return True, False
+
+    skip_val = (os.environ.get("CLAUDE_HOOK_SKIP") or "").strip().lower()
+    if skip_val in ("1", "true", "yes", "on"):
+        return False, True
+
+    entrypoint = (os.environ.get("CLAUDE_CODE_ENTRYPOINT") or "").strip().lower()
+    if entrypoint in _FORCE_HOOKS_ENV:
+        return True, False
+
+    return False, False
 
 
-def _env_forces_full_hooks():
-    v = (os.environ.get("CLAUDE_HOOK_FORCE_CLI") or "").strip().lower()
-    return v in ("1", "true", "yes", "on")
+def _has_vscode_env():
+    """检测 VS Code / Electron 环境标记"""
+    return any(os.environ.get(marker) for marker in _VSCODE_ENV_MARKERS)
 
 
 def _win_has_no_console():
-    """Single Win32 call. Returns True when no console attached (editor context)."""
+    """Windows: 检测是否有控制台窗口"""
+    if sys.platform != "win32":
+        return False
     try:
         import ctypes
         return ctypes.windll.kernel32.GetConsoleWindow() == 0
@@ -45,152 +94,96 @@ def _win_has_no_console():
 
 
 def _unix_has_no_tty():
-    """Detect TTY for Unix platforms (Linux/macOS). Editor extension hosts pipe stdin."""
+    """Unix/Linux/macOS: 检测 stdin 是否连接到 TTY"""
+    if sys.platform == "win32":
+        return False
     try:
-        return not os.isatty(0)  # stdin not connected to terminal
+        return not os.isatty(0)
     except Exception:
         return False
 
 
-def _is_electron_parent():
-    """Check if parent process is Electron-based editor (Unix fallback)."""
+def _is_editor_cwd():
+    """检测当前工作目录是否包含编辑器路径特征"""
     try:
-        import psutil
-        parent = psutil.Process(os.getppid())
-        for _ in range(5):
-            name = parent.name().lower()
-            if any(e in name for e in ("electron", "cursor", "code", "windsurf", "trae", "qoder")):
-                return True
-            parent = parent.parent()
-            if parent is None:
-                break
+        cwd = os.getcwd().replace("\\", "/").lower()
+        return any(p in cwd for p in _EDITOR_PATH_PATTERNS)
     except Exception:
-        pass
-    return False
+        return False
 
 
-def _win_editor_in_parent_chain():
-    """Fallback parent process walk via CreateToolhelp32Snapshot."""
-    try:
-        import ctypes
-        from ctypes import wintypes
-        TH32CS_SNAPPROCESS = 0x2
-        ptr_type = ctypes.c_uint64 if ctypes.sizeof(ctypes.c_void_p)==8 else ctypes.c_uint32
-        class PROCESSENTRY32W(ctypes.Structure):
-            _fields_ = (
-                ("dwSize",wintypes.DWORD),("cntUsage",wintypes.DWORD),
-                ("th32ProcessID",wintypes.DWORD),("th32DefaultHeapID",ptr_type),
-                ("th32ModuleID",wintypes.DWORD),("cntThreads",wintypes.DWORD),
-                ("th32ParentProcessID",wintypes.DWORD),("pcPriClassBase",wintypes.LONG),
-                ("dwFlags",wintypes.DWORD),("szExeFile",ctypes.c_wchar*260),
-            )
-        k32 = ctypes.windll.kernel32
-        snap = k32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
-        if snap == ctypes.c_void_p(-1).value or snap == 0: return False
-        by_pid = {}
-        try:
-            pe = PROCESSENTRY32W(); pe.dwSize = ctypes.sizeof(PROCESSENTRY32W)
-            if not k32.Process32FirstW(snap, ctypes.byref(pe)): return False
-            while True:
-                by_pid[pe.th32ProcessID] = (pe.th32ParentProcessID, (pe.szExeFile or "").lower())
-                if not k32.Process32NextW(snap, ctypes.byref(pe)): break
-        finally:
-            k32.CloseHandle(snap)
-        pid = os.getppid(); seen = set()
-        for _ in range(20):
-            if pid <= 4 or pid in seen: break
-            seen.add(pid)
-            row = by_pid.get(pid)
-            if not row: break
-            ppid, exe = row
-            if any(x in exe for x in _EDITOR_EXE_NEEDLES): return True
-            pid = ppid
-    except Exception:
-        pass
-    return False
+def should_skip_editor(raw=b""):
+    """
+    主检测函数：判断是否在编辑器环境中，应跳过 hooks
 
+    返回 True 表示在编辑器环境中，应跳过 hooks
+    返回 False 表示在 CLI 环境中，应正常执行 hooks
+    """
+    # 环境变量覆盖（最高优先级）
+    force_enable, force_skip = _check_env_override()
+    if force_enable:
+        return False
+    if force_skip:
+        return True
 
-def should_skip_editor(raw):
-    # [0] Hard override: always run hooks
-    if _env_forces_full_hooks(): return False
-
-    # [1] Headless/CI: no console but needs hooks - check BEFORE console check
-    cep = (os.environ.get("CLAUDE_CODE_ENTRYPOINT") or "").strip().lower()
-    if cep in ("headless", "ci", "batch"): return False
-
-    # [2] PRIMARY: GetConsoleWindow - fastest, most reliable, works for ALL hook types
-    #    Editor extension host has no console -> hook subprocesses have no console
-    #    Real terminal sessions always have console attached
+    # Windows 控制台检测（最快路径）
     if sys.platform == "win32" and _win_has_no_console():
         return True
 
-    # [2b] Unix/Linux/macOS: TTY detection + Electron parent check
-    if sys.platform != "win32":
-        if _unix_has_no_tty() and _is_electron_parent():
+    # Unix TTY 检测 + VS Code 环境
+    if sys.platform != "win32" and _unix_has_no_tty():
+        if _has_vscode_env():
             return True
 
-    # [3] Sentinel env var
-    if os.environ.get("CLAUDE_IN_EDITOR"): return True
+    # VS Code / Electron 环境标记
+    if _has_vscode_env():
+        return True
 
-    # [4] CWD contains editor path
-    try:
-        cwd = os.getcwd().replace("\\", "/").lower()
-        if any(n in cwd for n in _EDITOR_PATH_NEEDLES): return True
-    except Exception:
-        pass
+    # 编辑器 CWD 检测
+    if _is_editor_cwd():
+        return True
 
-    # [5] VS Code / Cursor family env markers
-    for _k in ("VSCODE_PID","VSCODE_IPC_HOOK","VSCODE_NLS_CONFIG","VSCODE_CWD",
-               "VSCODE_CODE_CACHE_PATH","CURSOR_CHANNEL","ELECTRON_RUN_AS_NODE",
-               "VSCODE_HANDLES_UNCAUGHT_ERRORS","VSCODE_ESM_ENTRYPOINT",
-               "CURSOR_APP_VERSION","WINDSURF_APP_VERSION"):
-        if os.environ.get(_k): return True
-
-    # [6] Windows parent process chain (fallback)
-    if sys.platform == "win32" and _win_editor_in_parent_chain(): return True
-
-    # [7] stdin payload path check
-    if raw:
-        try:
-            p = json.loads(raw.decode("utf-8", errors="replace"))
-            if isinstance(p, dict):
-                if _eg_scan(p): return True
-                for _k2 in ("transcript_path","cwd","workspace_path","project_path"):
-                    _v = p.get(_k2)
-                    if isinstance(_v, str):
-                        _s = _v.replace("\\", "/").lower()
-                        if any(_m in _s for _m in (".cursor/",".windsurf/","/.trae/")):
-                            return True
-        except Exception:
-            pass
-
-    # [8] Explicit CLI whitelist
-    if cep in ("cli", "terminal", "tui"): return False
-
+    # 默认：执行 hooks（CLI 环境）
     return False
 
 
+def get_skip_response():
+    """获取跳过 hooks 时的标准响应"""
+    return json.dumps({"continue": True, "skipped": True, "reason": "editor_context"})
+
+
 def main():
+    """主入口：安全地执行 hook 或跳过"""
     if len(sys.argv) < 2:
         print("usage: python _editor_hook_launcher.py <hook.py> [args...]", file=sys.stderr)
         sys.exit(2)
+
     target = os.path.abspath(sys.argv[1])
     if not os.path.isfile(target):
-        print("launcher: not found: " + target, file=sys.stderr)
+        print(f"launcher: not found: {target}", file=sys.stderr)
         sys.exit(2)
+
+    # 读取 stdin
     raw = b""
     try:
-        raw = sys.stdin.buffer.read() if hasattr(sys.stdin, "buffer") else sys.stdin.read().encode("utf-8")
+        if hasattr(sys.stdin, "buffer"):
+            raw = sys.stdin.buffer.read()
+        else:
+            raw = sys.stdin.read().encode("utf-8")
     except Exception:
         pass
+
+    # 编辑器环境：立即跳过
     if should_skip_editor(raw):
-        try:
-            sys.stdout.write('{"continue":true}\n')
-            sys.stdout.flush()
-        except Exception:
-            pass
+        sys.stdout.write(get_skip_response() + "\n")
+        sys.stdout.flush()
         sys.exit(0)
-    proc = subprocess.run([sys.executable, target] + sys.argv[2:], input=raw if raw else None)
+
+    # CLI 环境：执行真实 hook
+    proc = subprocess.run(
+        [sys.executable, target] + sys.argv[2:],
+        input=raw if raw else None
+    )
     sys.exit(proc.returncode if proc.returncode is not None else 1)
 
 

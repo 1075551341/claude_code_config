@@ -9,6 +9,7 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 ### 1. CLAUDE.md 精简优化
 - 保留核心规则和快速指令前缀
 - 添加工具库来源说明
+- **新增**: MCP 工具自然语言匹配矩阵，明确 `mcp0-mcp8` 前缀映射
 - 明确编辑器兼容性策略
 - 优化为跨编辑器通用格式
 
@@ -21,6 +22,13 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 | workflow-automation | 工作流设计 | deer-flow |
 | api-developer | API设计开发 | awesome-claude-skills |
 | cloud-architect | 云原生架构 | 综合最佳实践 |
+| **tool-matcher** | **工具匹配专家** | **本次优化** |
+
+**tool-matcher 增强**: 
+- 完整自然语言工具匹配矩阵（9大类别）
+- 明确的 MCP 工具前缀映射 (`mcp0-mcp8`)
+- 组合场景推荐（调试+搜索、设计+规划等）
+- 跨编辑器工具映射表
 
 **删除的重复项**: agent-orchestrator(与agentic重复)、testing-strategist(与qa重复)
 
@@ -32,21 +40,31 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 |------|------|
 | mcp-matcher | 智能MCP工具匹配 |
 
-**总计**: 147  148 技能
+**总计**: 147 → 148 技能
 
 ### 4. Hooks 优化
 
-#### 新增 Hook
-| Hook | 功能 |
-|------|------|
-| pre-tool-matcher | 智能工具匹配推荐 |
+#### 重写 Hook
+| Hook | 功能 | 优化内容 |
+|------|------|---------|
+| **pre-tool-matcher** | **智能工具匹配推荐** | **v2.0 完整重写** |
+
+#### pre-tool-matcher v2.0 增强功能
+- **TOOL_MATCHING_RULES**: 11类工具匹配规则库
+- **SKILL_TRIGGERS**: 8个技能触发器映射
+- **特殊场景检测**: 
+  - 调试+搜索组合场景
+  - 设计+文档组合场景
+  - 开发+测试组合场景
+- **置信度评估**: high/medium/low 三级置信度
+- **结构化输出**: JSON 格式推荐结果
 
 #### 编辑器兼容性保障
 - _editor_hook_launcher.py 提供8层检测机制
 - 自动识别 Cursor/Windsurf/Trae/VSCode 环境
 - 编辑器环境下自动跳过 Hooks，防止干扰模型调用
 
-**总计**: 13  14 Hooks
+**总计**: 13 → 14 Hooks
 
 ### 5. 新增配置文件
 

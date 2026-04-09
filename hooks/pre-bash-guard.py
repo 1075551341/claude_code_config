@@ -45,6 +45,9 @@ DANGER_PATTERNS = [
     (r"dd\s+if=.+of=/dev/[sh]d[a-z]",              "禁止 dd 写入块设备"),
     (r"dd\s+if=/dev/zero\s+of=",                    "禁止 dd 零写覆盖"),
     (r"shred\s+.*-[zun].*\s+/dev/",                "禁止 shred 覆盖设备"),
+    # Git 直接推送保护（禁止直接push到保护分支，必须使用PR）
+    (r"git\s+push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)",
+     "禁止直接推送到 main/master 分支，请使用功能分支并创建 PR"),
     # Git 强制推送保护
     (r"git\s+push\s+(?!.*--dry-run).*--force(?:-with-lease)?\s*$",  "禁止无目标强制推送"),
     (r"git\s+push\s+(?!.*--dry-run).*-f\s+\S*origin\s+(main|master|release|prod)\b",

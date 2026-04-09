@@ -193,6 +193,17 @@
         ]
       },
       {
+        "_note": "1.5 Debug产物检测（console.log/debugger/breakpoint等）",
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-debug-checker.py",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
         "_note": "2. 每日工作总结（当日首次，累计 3 次编辑后触发）",
         "matcher": "",
         "hooks": [

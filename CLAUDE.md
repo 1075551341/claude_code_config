@@ -5,6 +5,82 @@
   模型必须在每次响应前完整读取"强制规则速查"部分
 -->
 
+> **跨编辑器说明**：本文件通过软链接在 Claude Code、Cursor、Windsurf、Trae、VS Code 等编辑器间共享。
+> 标记 `[Claude Code Only]` 的章节仅适用于 Claude Code CLI，其他编辑器会安全忽略。
+> **工具自动匹配**：未明确指定工具时，根据任务场景自动匹配最合适的工具（详见"工具自动调用规则"）。
+
+---
+
+## 快速导航
+
+| 需求 | 跳转 |
+|------|------|
+| 工具自动匹配规则 | [工具自动调用规则](#工具自动调用规则) |
+| Agent 自动委托 | [Agent 路由](#agent-路由) |
+| 强制规则清单 | [★ 强制规则速查](#强制规则速查) |
+| 跨编辑器兼容 | [跨编辑器工具映射](#跨编辑器工具映射) |
+| MCP 服务器列表 | [MCP 工具映射](#mcp-工具映射) |
+
+---
+
+## 跨编辑器工具映射 [Claude Code Only]
+
+本配置通过软链接同步到多个编辑器，各编辑器工具名称映射如下：
+
+| 功能 | Claude Code | Cursor | Windsurf | Gemini CLI | Copilot CLI |
+|------|-------------|--------|----------|--------------|-------------|
+| 读取文件 | `Read` | `read_file` | `read_file` | `view` | `view` |
+| 编辑文件 | `Edit` | `apply_diff` | `edit_file` | `replace` | `edit` |
+| 创建文件 | `Write` | `write_file` | `write_file` | `create` | `write` |
+| 搜索代码 | `Grep` | `search_files` | `search` | `grep` | `search` |
+| 查找文件 | `Glob` | `list_dir` | `glob` | `ls` | `glob` |
+| 执行命令 | `Bash` | `run_terminal_cmd` | `run_command` | `bash` | `bash` |
+| 调用 Agent | `Task` | `agent` | `agent` | N/A | `agent` |
+
+**编辑器检测**：Hooks 通过以下方式自动检测编辑器环境并安全跳过：
+- 环境变量：`VSCODE_PID`, `CURSOR_CHANNEL`, `WINDSURF_APP_VERSION`
+- 控制台检测：`GetConsoleWindow() == 0` (Windows), `!isatty(0)` (Unix)
+- 路径特征：`.cursor/`, `.windsurf/`, `.trae/` 等
+
+---
+
+## 工具选择指南 [Claude Code Only]
+
+使用**最具体的工具**。有结构化工具时，不要默认使用 Bash。
+
+| 任务            | 首选工具             |
+| --------------- | -------------------- |
+| 读取单个文件    | `Read`               |
+| 按模式查找文件  | `Glob`               |
+| 搜索文件内容    | `Grep`               |
+| 编写或修补代码  | `Edit` / `MultiEdit` |
+| 创建新文件      | `Write`              |
+| 运行 shell 命令 | `Bash`（限定范围）   |
+| 获取网页内容    | `WebFetch`           |
+| 网络搜索        | `WebSearch`          |
+| 浏览 UI         | `Computer`           |
+| 生成专业子代理  | `Task`               |
+
+**代理委托规则**：任务隔离且范围明确时（代码审查、安全扫描、文档更新）委托给子代理。单个文件读取或简单问题**不生成**代理。
+
+---
+
+## Agent 路由 [Claude Code Only]
+
+根据上下文自动调用正确的子代理：
+
+| 提示中的信号                                         | 委托给代理          |
+| ---------------------------------------------------- | ------------------- |
+| "review", "check quality", "PR feedback"             | `code-reviewer`     |
+| "plan", "design feature", "how should I implement"   | `planner`           |
+| "architecture", "design system", "scalability"       | `architect`         |
+| "security", "vulnerability", "CVE", "audit"          | `security-reviewer` |
+| "write docs", "update README", "JSDoc"               | `doc-writer`        |
+| "debug", "why is this failing", "trace error"        | `debugger`          |
+| "refactor", "clean up", "dead code"                  | `refactor-cleaner`  |
+| "test", "coverage", "TDD"                            | `tdd-guide`         |
+| "search codebase", "find implementation", "where is" | `codebase-search`   |
+
 ---
 
 ## ★ 强制规则速查（每次响应前必须遵守）
@@ -28,53 +104,97 @@
 
 ## 工具自动调用规则
 
-**不需要显式说明工具名称。根据任务场景，自动选择并调用最合适的工具。**
+**核心原则：不需要显式说明工具名称。根据任务描述的自然语言，自动匹配并调用最合适的工具。**
 
-### 场景 → 工具映射（自动触发，无需用户指定）
+### MCP 工具自然语言匹配矩阵
 
-| 触发场景                                 | 自动调用                      |
-| ---------------------------------------- | ----------------------------- |
-| 需要查找最新技术文档、库的用法、版本信息 | ctx7（优先）→ brave（备选）   |
-| 需要在网络上搜索解决方案、错误原因       | brave → fetch                 |
-| 需要访问某个具体 URL 获取内容            | fetch                         |
-| 需要爬取网页批量提取内容                 | crawl                         |
-| 需要操作本地文件系统（项目目录外）       | fs                            |
-| 需要执行 Redis 缓存/队列操作             | redis                         |
-| 需要查询或操作 SQLite 数据库             | sqlite                        |
-| 需要查询或操作 PostgreSQL 数据库         | postgres                      |
-| 需要执行 git 操作（不涉及 GitHub API）   | git                           |
-| 需要操作 GitHub PR/Issue/仓库/Actions    | gh                            |
-| 需要截图、测试网页、E2E 自动化           | pw（优先）→ puppeteer（备选） |
-| 需要 Docker 容器/镜像/服务管理           | docker                        |
-| 需要获取当前时间、时区转换               | time                          |
-| 复杂推理、多步骤规划、连续/分支思考       | thinking（Sequential Thinking MCP） |
-| 需要在会话间记住重要信息、上下文         | memory                        |
-| 需要 Slack 消息发送/频道管理             | slack                         |
-| 需要 Exa AI 语义搜索                     | exa                           |
-| 需要 Linear 项目管理/Issue 跟踪          | linear                        |
+**匹配优先级**：精确关键词 > 场景语义 > 工具组合
+
+| 自然语言关键词 | 首选工具 | 备用方案 | 典型场景 | 工具前缀 |
+|--------------|---------|---------|---------|---------|
+| **GitHub 文档** | | | | |
+| "github.com/xxx、仓库文档、项目文档" | mcp0_ask_question | mcp1_web_search_exa | 查询 GitHub 仓库 Wiki | `mcp0_*` |
+| **语义搜索** | | | | |
+| "搜索、查找、找资料、semantic search" | mcp1_web_search_exa | brave | AI 语义搜索相似内容 | `mcp1_*` |
+| **URL 获取** | | | | |
+| "https://...、网页内容、URL、获取页面" | mcp2_fetch | - | 直接获取指定 URL | `mcp2_*` |
+| **设计稿** | | | | |
+| "figma.com、figma、设计稿、UI 设计" | mcp3_get_design_context | - | 设计稿转代码 | `mcp3_*` |
+| **文件操作** | | | | |
+| "读取文件、文件操作、目录结构" | Read / mcp4_* | - | 项目内文件操作 | `mcp4_*` |
+| **Git 操作** | | | | |
+| "git 状态、提交历史、分支" | mcp5_git_status/log | gh | 本地 Git 操作 | `mcp5_*` |
+| **浏览器自动化** | | | | |
+| "截图、网页测试、E2E、表单填写" | mcp6_browser_* | mcp8_puppeteer | Playwright 测试 | `mcp6_*` |
+| **记忆存储** | | | | |
+| "记住、保存上下文、跨会话记忆" | mcp7_create_memory | - | 持久化重要信息 | `mcp7_*` |
+| **Puppeteer** | | | | |
+| "PDF 生成、打印页面" | mcp8_puppeteer_screenshot | mcp6 | Chrome 自动化 | `mcp8_*` |
+| **数据库/其他** | | | | |
+| Redis、缓存 | redis | - | 缓存操作 | - |
+| SQLite、本地数据库 | sqlite | - | 轻量数据库 | - |
+| PostgreSQL、PG | postgres | - | 生产数据库 | - |
+| Docker、容器 | docker | - | 容器管理 | - |
+| 时间、时区 | time | - | 时间计算 | - |
+| 复杂推理、架构设计 | thinking | - | 多方案比较 | - |
+| Slack、通知 | slack | - | 消息发送 | - |
+| Linear、项目管理 | linear | - | 任务跟踪 | - |
+
+### 自然语言工具匹配规则
+
+**匹配优先级**：精确关键词 > 场景语义 > 工具组合
+
+```
+触发条件识别：
+├─ 文档/知识查询 → ctx7 (优先) / brave (备选)
+│   └─ 关键词：文档、API、用法、示例、reference、手册
+├─ 问题/错误排查 → brave (优先) / fetch (备选)
+│   └─ 关键词：报错、错误、怎么解决、为什么、如何
+├─ URL/网页内容 → fetch (直接访问)
+│   └─ 关键词：https://、网址、网页、网站、页面
+├─ 批量采集/爬取 → crawl
+│   └─ 关键词：爬取、采集、批量、所有页面、sitemap
+├─ 数据库操作 → redis/sqlite/postgres (根据上下文识别)
+│   └─ 关键词：数据库、查询、表、SQL、缓存
+├─ 浏览器操作 → pw (优先) / puppeteer (备选)
+│   └─ 关键词：截图、测试、点击、填写、E2E、页面
+└─ 推理/规划 → thinking
+    └─ 关键词：分析、设计、规划、对比、选择、决策
+```
+
+### 工具降级策略
+
+当首选工具不可用时，自动降级到备选方案：
+
+```
+ctx7 (技术文档) → brave (网页搜索) → fetch (直接访问)
+pw (Playwright) → puppeteer (备选浏览器)
+git (本地操作) → gh (GitHub API)
+redis/sqlite/postgres → fs (本地文件备选)
+```
 
 ### Agent 自动匹配规则
 
-| 任务类型 | 自动调用 Agent |
-|----------|----------------|
-| AI/LLM 应用开发 | ai-engineer |
-| 前端 UI 开发 | frontend-developer |
-| 后端 API 开发 | backend-developer |
-| 数据库设计/优化 | database-architect |
-| 代码审查 | code-reviewer |
-| 安全审计 | security-scanner |
-| 性能分析 | performance-analyzer |
-| 测试编写 | qa-engineer |
-| 故障排查 | debugger |
-| 文档生成 | doc-generator |
-| DevOps/部署 | devops-engineer |
-| 机器学习开发 | ml-engineer |
-| 游戏开发 | game-developer |
-| 嵌入式/物联网 | embedded-engineer |
-| 构建错误排查 | build-validator |
-| E2E 测试 | e2e-runner |
-| 安全审查 | security-reviewer |
-| 规格文档编写 | spec-writer |
+| 任务类型        | 自动调用 Agent       |
+| --------------- | -------------------- |
+| AI/LLM 应用开发 | ai-engineer          |
+| 前端 UI 开发    | frontend-developer   |
+| 后端 API 开发   | backend-developer    |
+| 数据库设计/优化 | database-architect   |
+| 代码审查        | code-reviewer        |
+| 安全审计        | security-scanner     |
+| 性能分析        | performance-analyzer |
+| 测试编写        | qa-engineer          |
+| 故障排查        | debugger             |
+| 文档生成        | doc-generator        |
+| DevOps/部署     | devops-engineer      |
+| 机器学习开发    | ml-engineer          |
+| 游戏开发        | game-developer       |
+| 嵌入式/物联网   | embedded-engineer    |
+| 构建错误排查    | build-validator      |
+| E2E 测试        | e2e-runner           |
+| 安全审查        | security-reviewer    |
+| 规格文档编写    | spec-writer          |
 
 ### 工具调用原则
 
