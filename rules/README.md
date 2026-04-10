@@ -6,19 +6,19 @@
 
 ## 规则列表
 
-| 规则文件 | 适用场景 | 自动加载 |
-|----------|----------|----------|
-| `RULES_CORE.md` | 所有代码开发 | ✅ 始终启用 |
-| `RULES_BACKEND.md` | 后端 API 开发 | ❌ 按需加载 |
-| `RULES_FRONTEND.md` | 前端 UI 开发 | ❌ 按需加载 |
-| `RULES_DATABASE.md` | 数据库设计/查询 | ❌ 按需加载 |
-| `RULES_SECURITY.md` | 安全开发/审计 | ❌ 按需加载 |
-| `RULES_TESTING.md` | 测试编写/策略 | ❌ 按需加载 |
-| `RULES_PYTHON.md` | Python 开发 | ❌ 按需加载 |
-| `RULES_TYPESCRIPT.md` | TypeScript 开发 | ❌ 按需加载 |
-| `RULES_AI.md` | AI/LLM 应用开发 | ❌ 按需加载 |
-| `RULES_DEVOPS.md` | CI/CD、容器化、部署 | ❌ 按需加载 |
-| `RULES_GIT.md` | 版本控制、分支管理 | ❌ 按需加载 |
+| 规则文件              | 适用场景            | 自动加载    |
+| --------------------- | ------------------- | ----------- |
+| `RULES_CORE.md`       | 所有代码开发        | ✅ 始终启用 |
+| `RULES_BACKEND.md`    | 后端 API 开发       | ❌ 按需加载 |
+| `RULES_FRONTEND.md`   | 前端 UI 开发        | ❌ 按需加载 |
+| `RULES_DATABASE.md`   | 数据库设计/查询     | ❌ 按需加载 |
+| `RULES_SECURITY.md`   | 安全开发/审计       | ❌ 按需加载 |
+| `RULES_TESTING.md`    | 测试编写/策略       | ❌ 按需加载 |
+| `RULES_PYTHON.md`     | Python 开发         | ❌ 按需加载 |
+| `RULES_TYPESCRIPT.md` | TypeScript 开发     | ❌ 按需加载 |
+| `RULES_AI.md`         | AI/LLM 应用开发     | ❌ 按需加载 |
+| `RULES_DEVOPS.md`     | CI/CD、容器化、部署 | ❌ 按需加载 |
+| `RULES_GIT.md`        | 版本控制、分支管理  | ❌ 按需加载 |
 
 ---
 
@@ -29,7 +29,7 @@
 ```yaml
 ---
 description: 规则描述
-alwaysApply: true  # 始终加载
+alwaysApply: true # 始终加载
 ---
 ```
 
@@ -40,6 +40,7 @@ alwaysApply: true  # 始终加载
 ```
 
 示例：
+
 - "使用数据库规则设计订单表结构"
 - "使用安全规则审计这个 API"
 - "使用测试规则编写单元测试"
@@ -73,7 +74,7 @@ alwaysApply: true  # 始终加载
 
 - 数据库选型：PostgreSQL / MySQL / MongoDB / Redis
 - 表设计规范：命名、字段类型、索引
-- 查询规范：禁止 SELECT *、参数化查询
+- 查询规范：禁止 SELECT \*、参数化查询
 - Migration 规范：可回滚、分步执行
 
 ### RULES_SECURITY.md（安全规则）
@@ -142,9 +143,6 @@ alwaysApply: true  # 始终加载
 ```
 
 同步内容：
+
 - `rules/` → 软连接到各编辑器目录
 - 配合 `CLAUDE.md` 全局指令使用
-
----
-
-_最后更新：2026-04-08（规则总数：11 个）_

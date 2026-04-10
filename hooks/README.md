@@ -1,6 +1,6 @@
 # Hooks 钩子系统
 
-17 个自动化钩子，覆盖开发全流程。
+45 个自动化钩子，覆盖开发全流程。
 
 ---
 
@@ -11,24 +11,61 @@ hooks/
 ├── _editor_hook_launcher.py  # 核心：编辑器检测 + 调度器
 │
 ├── PreToolUse/               # 工具执行前
-│   ├── pre-context-injector.py   # 上下文注入
-│   ├── pre-task-planner.py       # 复杂任务计划生成
-│   ├── pre-dep-checker.py        # 依赖安全检查
-│   └── pre-bash-guard.py         # 危险命令拦截
+│   ├── pre-context-injector.py           # 上下文注入
+│   ├── pre-task-planner.py               # 复杂任务计划生成
+│   ├── pre-dep-checker.py                # 依赖安全检查
+│   ├── pre-bash-guard.py                 # 危险命令拦截
+│   ├── pre-commit-quality.py            # Git 提交质量检查
+│   ├── pre-git-push-reminder.py         # Git push 前提醒审查
+│   ├── pre-doc-file-warning.py          # 非标准文档文件警告
+│   ├── pre-config-protection.py         # 配置文件保护
+│   ├── pre-tool-matcher.py              # 智能工具匹配推荐
+│   ├── pre-dev-server-blocker.py        # Dev Server tmux 拦截
+│   ├── pre-tmux-reminder.py             # 长时间运行命令 tmux 提醒
+│   ├── pre-mcp-health-check.py          # MCP 服务器健康检查
+│   ├── pre-token-budget.py              # Token 预算预警
+│   ├── pre-suggest-compact.py           # 手动压缩建议
+│   ├── pre-observe-tool.py              # 工具使用观察（持续学习）
+│   └── pre-git-hook-bypass-block.py     # 阻止 git --no-verify
 │
 ├── PostToolUse/              # 工具执行后
-│   ├── post-edit-format.py       # 自动格式化
-│   ├── post-edit-lint.py         # Lint + 类型检查
-│   ├── post-operation-log.py     # 操作日志
-│   ├── post-secret-detector.py   # 密钥泄露检测
-│   ├── post-doc-reminder.py      # 文档注释提醒
-│   ├── post-test-runner.py       # 自动测试运行
-│   └── post-auto-commit.py       # 自动提交（可选）
+│   ├── post-edit-format.py             # 自动格式化
+│   ├── post-edit-lint.py               # Lint + 类型检查
+│   ├── post-operation-log.py           # 操作日志
+│   ├── post-secret-detector.py         # 密钥泄露检测
+│   ├── post-doc-reminder.py            # 文档注释提醒
+│   ├── post-test-runner.py             # 自动测试运行
+│   ├── post-auto-commit.py             # 自动提交（可选）
+│   ├── post-edit-console-warn.py       # Console.log 警告
+│   ├── post-command-log-audit.py       # Bash 命令日志审计
+│   ├── post-dependency-audit.py        # 依赖审计
+│   ├── post-pr-logger.py               # PR 创建日志记录
+│   ├── post-build-analysis.py          # 构建分析
+│   ├── post-governance-capture.py      # 治理事件捕获
+│   ├── post-cost-tracker.py            # 成本追踪
+│   ├── post-record-js-edits.py         # 记录 JS/TS 编辑
+│   └── post-observe-result.py          # 工具结果观察（持续学习）
+│
+├── SessionStart/             # 会话启动
+│   └── session-start-bootstrap.py      # 会话启动引导
+│
+├── PreCompact/               # 上下文压缩前
+│   └── pre-compact-state.py          # 压缩前状态保存
+│
+├── SessionEnd/               # 会话结束
+│   └── stop-session-end-marker.py     # 会话结束标记
 │
 └── Stop/                     # 会话结束
-    ├── stop-notify.py            # 系统通知
-    ├── stop-daily-summary.py     # 每日工作总结
-    └── stop-readme-updater.py    # README 自动更新
+    ├── stop-notify.py                # 系统通知
+    ├── stop-daily-summary.py         # 每日工作总结
+    ├── stop-readme-updater.py        # README 自动更新
+    ├── stop-debug-checker.py         # 调试检查
+    ├── stop-session-summary.py       # 会话总结
+    ├── stop-pattern-extraction.py    # 模式提取
+    ├── stop-cost-tracker.py          # 成本追踪
+    ├── stop-batch-format-typecheck.py # 批量格式化类型检查
+    ├── stop-persist-session.py       # 持久化会话状态
+    └── stop-evaluate-patterns.py     # 评估可提取模式
 ```
 
 ---
@@ -85,6 +122,18 @@ if sys.platform != "win32":
 | `pre-task-planner` | Task/Bash/Write | 复杂任务自动生成计划 | 15s |
 | `pre-dep-checker` | Bash | npm/pip 依赖安全检查 | 10s |
 | `pre-bash-guard` | Bash | 危险命令拦截 | 5s |
+| `pre-commit-quality` | Bash | Git 提交质量检查 | 15s |
+| `pre-git-push-reminder` | Bash | Git push 前提醒审查 | 5s |
+| `pre-doc-file-warning` | Write | 非标准文档文件警告 | 3s |
+| `pre-config-protection` | Write/Edit/MultiEdit | 配置文件保护 | 5s |
+| `pre-tool-matcher` | Skill | 智能工具匹配推荐 | 5s |
+| `pre-dev-server-blocker` | Bash | Dev Server tmux 拦截 | 5s |
+| `pre-tmux-reminder` | Bash | 长时间运行命令 tmux 提醒 | 3s |
+| `pre-mcp-health-check` | MCP 工具 | MCP 服务器健康检查 | 5s |
+| `pre-token-budget` | 多种工具 | Token 预算预警 | 3s |
+| `pre-suggest-compact` | 多种工具 | 手动压缩建议（约 50 次调用后） | 3s |
+| `pre-observe-tool` | 多种工具 | 工具使用观察（持续学习） | 3s |
+| `pre-git-hook-bypass-block` | Bash | 阻止 git --no-verify 标志 | 3s |
 
 ### PostToolUse（工具执行后）
 
@@ -96,6 +145,33 @@ if sys.platform != "win32":
 | `post-secret-detector` | Edit/Write/MultiEdit | 密钥泄露检测 | 10s |
 | `post-doc-reminder` | Edit/Write/MultiEdit | 函数文档注释提醒 | 10s |
 | `post-test-runner` | Edit/Write/MultiEdit | 自动运行测试 | 120s |
+| `post-edit-console-warn` | Edit/Write/MultiEdit | Console.log 警告 | 5s |
+| `post-command-log-audit` | Bash | 命令日志审计 | 3s |
+| `post-dependency-audit` | Bash | 依赖审计 | 10s |
+| `post-pr-logger` | Bash | PR 创建日志记录 | 5s |
+| `post-build-analysis` | Bash | 构建分析 | 15s |
+| `post-governance-capture` | 多种工具 | 治理事件捕获 | 5s |
+| `post-cost-tracker` | Bash | 成本追踪（bash 工具使用） | 3s |
+| `post-record-js-edits` | Edit/Write/MultiEdit | 记录 JS/TS 文件编辑 | 3s |
+| `post-observe-result` | 多种工具 | 工具结果观察（持续学习） | 3s |
+
+### SessionStart（会话启动）
+
+| Hook | 功能 | 超时 |
+|------|------|------|
+| `session-start-bootstrap` | 会话启动引导，检测包管理器 | 10s |
+
+### PreCompact（上下文压缩前）
+
+| Hook | 功能 | 超时 |
+|------|------|------|
+| `pre-compact-state` | 压缩前状态保存 | 5s |
+
+### SessionEnd（会话结束）
+
+| Hook | 功能 | 超时 |
+|------|------|------|
+| `stop-session-end-marker` | 会话结束生命周期标记（非阻塞） | 3s |
 
 ### Stop（会话结束）
 
@@ -104,6 +180,13 @@ if sys.platform != "win32":
 | `stop-notify` | 系统通知弹窗 | 5s |
 | `stop-daily-summary` | 每日工作总结 | 15s |
 | `stop-readme-updater` | README 自动更新 | 30s |
+| `stop-debug-checker` | 调试检查 | 10s |
+| `stop-session-summary` | 会话总结 | 15s |
+| `stop-pattern-extraction` | 模式提取 | 10s |
+| `stop-cost-tracker` | 成本追踪 | 5s |
+| `stop-batch-format-typecheck` | 批量格式化类型检查（JS/TS） | 60s |
+| `stop-persist-session` | 持久化会话状态 | 5s |
+| `stop-evaluate-patterns` | 评估可提取模式 | 10s |
 
 ---
 
@@ -198,18 +281,26 @@ if __name__ == "__main__":
 
 | 类型 | 数量 |
 |------|------|
-| PreToolUse | 4 |
-| PostToolUse | 6 |
-| Stop | 3 |
-| **总计** | **13 个活跃钩子** |
+| PreToolUse | 16 |
+| PostToolUse | 15 |
+| SessionStart | 1 |
+| PreCompact | 1 |
+| SessionEnd | 1 |
+| Stop | 10 |
+| **总计** | **44 个活跃钩子** |
 
 ---
 
-## 新增 Hook
+## Hook 来源说明
 
-| Hook | 触发 | 功能 |
-|------|------|------|
-| pre-tool-matcher | PreToolUse | 智能工具匹配推荐 |
+基于以下 GitHub 仓库优化补全：
+
+- **affaan-m/everything-claude-code**: 提供了完整的 hooks 系统架构和实现参考，新增了持续学习、成本追踪、批量格式化等 hooks
+- **obra/superpowers**: 提供了 hooks 最佳实践和跨平台兼容方案，参考了 SessionStart hook 的实现
+- **anthropics/skills**: 官方技能系统规范
+- **ComposioHQ/awesome-claude-skills**: 技能集合和 marketplace 架构
+
+新增 hooks 主要参考 affaan-m/everything-claude-code 的实现，并结合实际需求进行了本地化优化。去除了与 React hooks 相关的内容（bytedance/deer-flow 和 Chalarangelo/30-seconds-of-code），因为这些是前端 React hooks，与 Claude Code 的 hooks 系统无关。
 
 ## Hook 编辑器兼容性
 
@@ -234,5 +325,3 @@ else:
 -  Cursor/Windsurf/Trae: 跳过可能影响模型的 Hooks
 
 ---
-
-_更新：2026-04-09 | 总计: 13  14 Hooks_

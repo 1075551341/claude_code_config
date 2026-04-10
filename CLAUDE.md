@@ -452,17 +452,4 @@ Get-ChildItem D:/apdms/backend
 
 ---
 
-## 参考来源
-
-本配置整合自以下优质资源：
-
-- [anthropics/skills](https://github.com/anthropics/skills) - Claude 官方技能
-- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 完整配置参考
-- [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) - 社区技能合集
-- [obra/superpowers](https://github.com/obra/superpowers) - 增强技能
-- [Chalarangelo/30-seconds-of-code](https://github.com/Chalarangelo/30-seconds-of-code) - 代码片段
-- [bytedance/deer-flow](https://github.com/bytedance/deer-flow) - 工作流最佳实践
-
----
-
-_版本：v3.0 | 更新：2026-04-09_
+_版本：v3.1 | 更新：2026-04-10_

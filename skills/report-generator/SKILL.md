@@ -1,34 +1,17 @@
 ---
 name: report-generator
-description: 当需要生成报告文档、制作分析报告、输出Markdown/PDF/Word报告时调用此技能。触发词：报告生成、文档生成、分析报告、Markdown报告、报告输出、报告模板、日报生成、周报生成。
+description: 当需要生成报告文档、制作分析报告、输出Markdown/PDF/Word/Excel报告时调用此技能。触发词：报告生成、文档生成、分析报告、Markdown报告、报告输出、报告模板、日报生成、周报生成。
 ---
 
-# 报告文档生成
-
-生成各类报告文档。
-
-## 使用方式
-
-```
-/report-generator <type> [options]
-```
-
-**类型说明：**
-- `markdown` - Markdown 格式
-- `pdf` - PDF 文档
-- `word` - Word 文档
-- `html` - HTML 报告
+# 报告生成
 
 ## Markdown 报告
 
 ### 基础模板
 
 ```typescript
-// utils/report/markdown.ts
-
 interface ReportOptions {
   title: string
-  subtitle?: string
   author?: string
   date?: Date
   sections: ReportSection[]
@@ -41,18 +24,14 @@ interface ReportSection {
 }
 
 export function generateMarkdownReport(options: ReportOptions): string {
-  const lines: string[] = []
+  let md = `# ${options.title}\n\n`
 
-  // 标题
-  lines.push(`# ${options.title}`)
-  lines.push('')
-
-  // 元信息
-  if (options.subtitle) {
-    lines.push(`**${options.subtitle}**`)
-    lines.push('')
+  if (options.author) {
+    md += `**作者**: ${options.author}\n\n`
   }
 
+  if (options.date) {
+    md += `**日期**: ${options.date.toLocaleDateString()}\n\n`
   if (options.author || options.date) {
     const meta = []
     if (options.author) meta.push(`作者: ${options.author}`)
@@ -109,34 +88,34 @@ function renderSection(section: ReportSection, level = 2): string {
 // utils/report/tables.ts
 
 interface TableData {
-  headers: string[]
-  rows: any[][]
+  headers: string[];
+  rows: any[][];
 }
 
 export function renderMarkdownTable(data: TableData): string {
-  const lines: string[] = []
+  const lines: string[] = [];
 
   // 表头
-  lines.push(`| ${data.headers.join(' | ')} |`)
-  lines.push(`| ${data.headers.map(() => '---').join(' | ')} |`)
+  lines.push(`| ${data.headers.join(" | ")} |`);
+  lines.push(`| ${data.headers.map(() => "---").join(" | ")} |`);
 
   // 数据行
   data.rows.forEach((row) => {
-    lines.push(`| ${row.join(' | ')} |`)
-  })
+    lines.push(`| ${row.join(" | ")} |`);
+  });
 
-  return lines.join('\n')
+  return lines.join("\n");
 }
 
 // 使用示例
 const table = renderMarkdownTable({
-  headers: ['任务', '状态', '完成时间'],
+  headers: ["任务", "状态", "完成时间"],
   rows: [
-    ['视频转码', '已完成', '2024-03-20 10:30'],
-    ['图片压缩', '处理中', '-'],
-    ['音频转换', '等待中', '-'],
+    ["视频转码", "已完成", "2024-03-20 10:30"],
+    ["图片压缩", "处理中", "-"],
+    ["音频转换", "等待中", "-"],
   ],
-})
+});
 ```
 
 ## PDF 报告
@@ -145,77 +124,83 @@ const table = renderMarkdownTable({
 
 ```typescript
 // utils/report/pdf.ts
-import PDFDocument from 'pdfkit'
-import fs from 'fs'
+import PDFDocument from "pdfkit";
+import fs from "fs";
 
 interface PdfReportOptions {
-  title: string
-  subtitle?: string
-  author?: string
-  content: string
-  outputPath: string
+  title: string;
+  subtitle?: string;
+  author?: string;
+  content: string;
+  outputPath: string;
 }
 
-export async function generatePdfReport(options: PdfReportOptions): Promise<void> {
+export async function generatePdfReport(
+  options: PdfReportOptions,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
-      size: 'A4',
+      size: "A4",
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
-    })
+    });
 
-    const stream = fs.createWriteStream(options.outputPath)
-    doc.pipe(stream)
+    const stream = fs.createWriteStream(options.outputPath);
+    doc.pipe(stream);
 
     // 字体设置（支持中文）
-    doc.registerFont('SourceHanSans', 'fonts/SourceHanSansCN-Regular.ttf')
-    doc.font('SourceHanSans')
+    doc.registerFont("SourceHanSans", "fonts/SourceHanSansCN-Regular.ttf");
+    doc.font("SourceHanSans");
 
     // 标题
-    doc.fontSize(24).text(options.title, { align: 'center' })
-    doc.moveDown()
+    doc.fontSize(24).text(options.title, { align: "center" });
+    doc.moveDown();
 
     // 副标题
     if (options.subtitle) {
-      doc.fontSize(14).text(options.subtitle, { align: 'center' })
-      doc.moveDown()
+      doc.fontSize(14).text(options.subtitle, { align: "center" });
+      doc.moveDown();
     }
 
     // 元信息
-    const meta = []
-    if (options.author) meta.push(`作者: ${options.author}`)
-    meta.push(`日期: ${formatDate(new Date())}`)
+    const meta = [];
+    if (options.author) meta.push(`作者: ${options.author}`);
+    meta.push(`日期: ${formatDate(new Date())}`);
 
-    doc.fontSize(10).text(meta.join(' | '), { align: 'center' })
-    doc.moveDown(2)
+    doc.fontSize(10).text(meta.join(" | "), { align: "center" });
+    doc.moveDown(2);
 
     // 分割线
-    doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke()
-    doc.moveDown()
+    doc
+      .moveTo(50, doc.y)
+      .lineTo(doc.page.width - 50, doc.y)
+      .stroke();
+    doc.moveDown();
 
     // 正文
     doc.fontSize(12).text(options.content, {
-      align: 'left',
+      align: "left",
       lineGap: 6,
-    })
+    });
 
     // 页脚
-    const pages = doc.bufferedPageRange()
+    const pages = doc.bufferedPageRange();
     for (let i = 0; i < pages.count; i++) {
-      doc.switchToPage(i)
-      doc.fontSize(8)
+      doc.switchToPage(i);
+      doc
+        .fontSize(8)
         .text(
           `第 ${i + 1} 页 / 共 ${pages.count} 页`,
           50,
           doc.page.height - 30,
-          { align: 'center' }
-        )
+          { align: "center" },
+        );
     }
 
-    doc.end()
+    doc.end();
 
-    stream.on('finish', resolve)
-    stream.on('error', reject)
-  })
+    stream.on("finish", resolve);
+    stream.on("error", reject);
+  });
 }
 ```
 
@@ -223,22 +208,25 @@ export async function generatePdfReport(options: PdfReportOptions): Promise<void
 
 ```typescript
 // utils/report/pdf-html.ts
-import puppeteer from 'puppeteer'
+import puppeteer from "puppeteer";
 
-export async function htmlToPdf(html: string, outputPath: string): Promise<void> {
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
+export async function htmlToPdf(
+  html: string,
+  outputPath: string,
+): Promise<void> {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
 
-  await page.setContent(html, { waitUntil: 'networkidle0' })
+  await page.setContent(html, { waitUntil: "networkidle0" });
 
   await page.pdf({
     path: outputPath,
-    format: 'A4',
-    margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
+    format: "A4",
+    margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
     printBackground: true,
-  })
+  });
 
-  await browser.close()
+  await browser.close();
 }
 ```
 
@@ -252,51 +240,61 @@ pnpm add docx
 
 ```typescript
 // utils/report/word.ts
-import { Document, Paragraph, TextRun, Table, TableRow, TableCell, HeadingLevel } from 'docx'
+import {
+  Document,
+  Paragraph,
+  TextRun,
+  Table,
+  TableRow,
+  TableCell,
+  HeadingLevel,
+} from "docx";
 
 interface WordReportOptions {
-  title: string
-  subtitle?: string
-  author?: string
-  sections: { title: string; content: string }[]
-  tables?: TableData[]
+  title: string;
+  subtitle?: string;
+  author?: string;
+  sections: { title: string; content: string }[];
+  tables?: TableData[];
 }
 
-export async function generateWordReport(options: WordReportOptions): Promise<Buffer> {
-  const children: Paragraph[] = []
+export async function generateWordReport(
+  options: WordReportOptions,
+): Promise<Buffer> {
+  const children: Paragraph[] = [];
 
   // 标题
   children.push(
     new Paragraph({
       text: options.title,
       heading: HeadingLevel.TITLE,
-      alignment: 'center',
-    })
-  )
+      alignment: "center",
+    }),
+  );
 
   // 副标题
   if (options.subtitle) {
     children.push(
       new Paragraph({
         text: options.subtitle,
-        alignment: 'center',
-      })
-    )
+        alignment: "center",
+      }),
+    );
   }
 
   // 作者和日期
   children.push(
     new Paragraph({
       children: [
-        new TextRun({ text: `作者: ${options.author || '系统生成'}` }),
-        new TextRun({ text: '    ' }),
+        new TextRun({ text: `作者: ${options.author || "系统生成"}` }),
+        new TextRun({ text: "    " }),
         new TextRun({ text: `日期: ${formatDate(new Date())}` }),
       ],
-      alignment: 'center',
-    })
-  )
+      alignment: "center",
+    }),
+  );
 
-  children.push(new Paragraph({ text: '' })) // 空行
+  children.push(new Paragraph({ text: "" })); // 空行
 
   // 各章节
   options.sections.forEach((section) => {
@@ -304,29 +302,29 @@ export async function generateWordReport(options: WordReportOptions): Promise<Bu
       new Paragraph({
         text: section.title,
         heading: HeadingLevel.HEADING_1,
-      })
-    )
+      }),
+    );
 
     children.push(
       new Paragraph({
         text: section.content,
-      })
-    )
+      }),
+    );
 
-    children.push(new Paragraph({ text: '' }))
-  })
+    children.push(new Paragraph({ text: "" }));
+  });
 
   // 表格
   options.tables?.forEach((table) => {
-    children.push(new Paragraph({ text: '' }))
+    children.push(new Paragraph({ text: "" }));
     // 表格渲染逻辑...
-  })
+  });
 
   const doc = new Document({
     sections: [{ children }],
-  })
+  });
 
-  return await doc.toBuffer()
+  return await doc.toBuffer();
 }
 ```
 
@@ -336,16 +334,18 @@ export async function generateWordReport(options: WordReportOptions): Promise<Bu
 
 ```typescript
 // utils/report/html.ts
-import ejs from 'ejs'
+import ejs from "ejs";
 
 interface HtmlReportOptions {
-  title: string
-  subtitle?: string
-  data: any
-  template: string
+  title: string;
+  subtitle?: string;
+  data: any;
+  template: string;
 }
 
-export async function generateHtmlReport(options: HtmlReportOptions): Promise<string> {
+export async function generateHtmlReport(
+  options: HtmlReportOptions,
+): Promise<string> {
   const template = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -402,9 +402,9 @@ export async function generateHtmlReport(options: HtmlReportOptions): Promise<st
   </div>
 </body>
 </html>
-  `
+  `;
 
-  return ejs.render(template, options)
+  return ejs.render(template, options);
 }
 ```
 
@@ -416,49 +416,48 @@ export async function generateHtmlReport(options: HtmlReportOptions): Promise<st
 // reports/task-stats.ts
 
 interface TaskStatsReport {
-  period: { start: Date; end: Date }
-  tasks: Task[]
+  period: { start: Date; end: Date };
+  tasks: Task[];
   stats: {
-    total: number
-    completed: number
-    failed: number
-    avgDuration: number
-  }
+    total: number;
+    completed: number;
+    failed: number;
+    avgDuration: number;
+  };
 }
 
-export async function generateTaskStatsReport(data: TaskStatsReport): Promise<string> {
+export async function generateTaskStatsReport(
+  data: TaskStatsReport,
+): Promise<string> {
   const sections = [
     {
-      title: '概览',
+      title: "概览",
       content: renderMarkdownTable({
-        headers: ['指标', '数值'],
+        headers: ["指标", "数值"],
         rows: [
-          ['任务总数', data.stats.total],
-          ['完成数', data.stats.completed],
-          ['失败数', data.stats.failed],
-          ['平均耗时', `${data.stats.avgDuration}ms`],
+          ["任务总数", data.stats.total],
+          ["完成数", data.stats.completed],
+          ["失败数", data.stats.failed],
+          ["平均耗时", `${data.stats.avgDuration}ms`],
         ],
       }),
     },
     {
-      title: '任务列表',
+      title: "任务列表",
       content: renderMarkdownTable({
-        headers: ['ID', '类型', '状态', '耗时'],
-        rows: data.tasks.slice(0, 20).map((t) => [
-          t.id.slice(0, 8),
-          t.type,
-          t.status,
-          `${t.duration}ms`,
-        ]),
+        headers: ["ID", "类型", "状态", "耗时"],
+        rows: data.tasks
+          .slice(0, 20)
+          .map((t) => [t.id.slice(0, 8), t.type, t.status, `${t.duration}ms`]),
       }),
     },
-  ]
+  ];
 
   return generateMarkdownReport({
-    title: '任务统计报告',
+    title: "任务统计报告",
     subtitle: `${formatDate(data.period.start)} - ${formatDate(data.period.end)}`,
     sections,
-  })
+  });
 }
 ```
 
@@ -467,19 +466,21 @@ export async function generateTaskStatsReport(data: TaskStatsReport): Promise<st
 ```typescript
 // reports/performance.ts
 
-export async function generatePerformanceReport(data: PerformanceData): Promise<string> {
+export async function generatePerformanceReport(
+  data: PerformanceData,
+): Promise<string> {
   const html = await generateHtmlReport({
-    title: '性能分析报告',
+    title: "性能分析报告",
     subtitle: `分析周期: ${formatDate(data.period.start)} - ${formatDate(data.period.end)}`,
     sections: [
       {
-        title: '响应时间分布',
+        title: "响应时间分布",
         content: renderChart(data.responseTimes),
       },
       {
-        title: '慢请求分析',
+        title: "慢请求分析",
         content: renderMarkdownTable({
-          headers: ['接口', '平均耗时', '调用次数', 'P99'],
+          headers: ["接口", "平均耗时", "调用次数", "P99"],
           rows: data.slowApis.map((api) => [
             api.path,
             `${api.avgTime}ms`,
@@ -489,16 +490,16 @@ export async function generatePerformanceReport(data: PerformanceData): Promise<
         }),
       },
       {
-        title: '错误统计',
+        title: "错误统计",
         content: renderMarkdownTable({
-          headers: ['错误码', '次数', '占比'],
+          headers: ["错误码", "次数", "占比"],
           rows: data.errors.map((e) => [e.code, e.count, `${e.percent}%`]),
         }),
       },
     ],
-  })
+  });
 
-  return html
+  return html;
 }
 ```
 
@@ -506,22 +507,26 @@ export async function generatePerformanceReport(data: PerformanceData): Promise<
 
 ```typescript
 // utils/report/charts.ts
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
+import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 
-export async function generatePieChart(data: { label: string; value: number }[]): Promise<Buffer> {
-  const chartCanvas = new ChartJSNodeCanvas({ width: 400, height: 300 })
+export async function generatePieChart(
+  data: { label: string; value: number }[],
+): Promise<Buffer> {
+  const chartCanvas = new ChartJSNodeCanvas({ width: 400, height: 300 });
 
   const config = {
-    type: 'pie',
+    type: "pie",
     data: {
       labels: data.map((d) => d.label),
-      datasets: [{
-        data: data.map((d) => d.value),
-        backgroundColor: ['#1890ff', '#52c41a', '#faad14', '#ff4d4f'],
-      }],
+      datasets: [
+        {
+          data: data.map((d) => d.value),
+          backgroundColor: ["#1890ff", "#52c41a", "#faad14", "#ff4d4f"],
+        },
+      ],
     },
-  }
+  };
 
-  return chartCanvas.renderToBuffer(config)
+  return chartCanvas.renderToBuffer(config);
 }
 ```

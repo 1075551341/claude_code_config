@@ -1,36 +1,18 @@
 ---
 name: notion-integration
-description: 当需要使用Notion API、集成Notion工作区、操作Notion数据库时调用此技能。触发词：Notion API、Notion集成、Notion数据库、Notion自动化、Notion开发。
+description: 使用Notion API、集成Notion工作区、操作Notion数据库。
 ---
 
 # Notion 集成
-
-## 核心能力
-
-**Notion API操作、数据库管理、工作区自动化。**
-
----
-
-## 适用场景
-
-- Notion API开发
-- 数据库操作
-- 工作区自动化
-- 内容同步
-
----
 
 ## 快速开始
 
 ### 创建集成
 
-```markdown
 1. 访问 https://www.notion.so/my-integrations
 2. 点击 "New integration"
-3. 填写名称、选择工作区
-4. 获取 Internal Integration Token
-5. 在目标页面点击 "..." → "Add connections" → 选择集成
-```
+3. 获取 Internal Integration Token
+4. 在目标页面添加连接
 
 ### 安装SDK
 
@@ -42,16 +24,12 @@ pip install notion-client
 npm install @notionhq/client
 ```
 
----
-
-## 基础操作
-
-### Python客户端
+## Python客户端
 
 ```python
 from notion_client import Client
 
-# 初始化客户端
+notion = Client(auth="your_integration_token")
 notion = Client(auth="secret_xxx...")
 
 # 获取页面
@@ -77,18 +55,18 @@ notion.pages.update(
 ### Node.js客户端
 
 ```javascript
-const { Client } = require('@notionhq/client');
+const { Client } = require("@notionhq/client");
 
-const notion = new Client({ auth: 'secret_xxx...' });
+const notion = new Client({ auth: "secret_xxx..." });
 
 // 查询数据库
 async function queryDatabase(databaseId) {
   const response = await notion.databases.query({
     database_id: databaseId,
     filter: {
-      property: 'Status',
-      select: { equals: '进行中' }
-    }
+      property: "Status",
+      select: { equals: "进行中" },
+    },
   });
   return response.results;
 }
@@ -99,9 +77,9 @@ async function createPage(databaseId, title) {
     parent: { database_id: databaseId },
     properties: {
       Name: {
-        title: [{ text: { content: title } }]
-      }
-    }
+        title: [{ text: { content: title } }],
+      },
+    },
   });
 }
 ```
