@@ -152,6 +152,33 @@
       "env": {
         "LINEAR_API_KEY": "${LINEAR_API_KEY}"
       }
+    },
+
+    "notion": {
+      "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-notion"],
+      "env": {
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      }
+    },
+
+    "supabase": {
+      "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-supabase"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+
+    "figma": {
+      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-figma"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: architect
-description: 系统架构专家。当需要进行系统设计、技术选型、架构决策时调用此Agent。提供架构设计原则、技术选型指导和最佳实践。触发词：系统架构、架构设计、技术选型、架构决策、系统设计、architecture、技术方案。
+description: 系统架构专家。当需要进行系统设计、技术选型、架构决策时调用此Agent。提供架构设计原则、技术选型指导和最佳实践。触发词：系统架构、架构设计、技术选型、架构决策、系统设计、architecture、技术方案、DDD、CQRS、领域设计、架构评审、技术债务、微服务拆分、扩展方案、云原生、K8s、Docker、容器化、Terraform、IaC、组件架构、组件拆分、Props设计、状态管理、Composable。
 model: inherit
 color: purple
 tools:
@@ -482,3 +482,68 @@ tools:
 - 架构决策不记录
 - 不考虑可维护性
 - 盲目追求新技术
+
+## 云原生架构（Docker/K8s/IaC）
+
+### Docker多阶段构建
+
+```dockerfile
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+USER node
+EXPOSE 3000
+CMD ["node", "dist/main.js"]
+```
+
+### K8s关键配置
+
+- **资源定义**: Deployment/Service/Ingress/ConfigMap
+- **调度策略**: 亲和性/反亲和性、资源requests/limits
+- **安全策略**: RBAC、NetworkPolicy、PodSecurity
+- **健康检查**: livenessProbe/readinessProbe必配
+
+### 部署策略
+
+| 策略 | 适用场景 | 风险 | 实现方式 |
+|------|----------|------|----------|
+| 滚动更新 | 常规发布 | 低 | K8s原生 |
+| 蓝绿部署 | 重大变更 | 中 | 双环境切换 |
+| 金丝雀 | 灰度发布 | 低 | Istio流量分割 |
+| 功能开关 | A/B测试 | 低 | LaunchDarkly |
+
+## 前端组件架构
+
+### 组件设计原则
+
+- **单一职责**: 展示OR逻辑，不混合
+- **高内聚低耦合**: Props/Events/Context通信
+- **可复用**: 通用逻辑抽取为Composable/Hook
+- **易扩展**: 开闭原则，Slot/Children扩展
+
+### 状态管理决策树
+
+```
+仅本组件 → useState/ref
+父子共享 → 状态提升+Props
+兄弟共享 → 提升到最近公共父
+跨多层 → Context/Provide-Inject
+全局(用户/主题) → Pinia/Zustand/Redux
+```
+
+### 组件拆分信号
+
+- 组件>200行 / 文件含多个独立功能 / 同样JSX出现2+次 / 5+独立状态 / 大量条件渲染
+
+### Props设计
+
+- 超过5个Props考虑结构化: `{ user: Pick<User, 'name'|'email'>, onAction?: (a: 'edit'|'delete') => void }`
+- Props下钻>2层 → Context/Provide-Inject

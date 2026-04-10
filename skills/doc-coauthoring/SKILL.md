@@ -1,64 +1,37 @@
 ---
 name: doc-coauthoring
-description: 当需要协同编写文档、撰写技术规范、创建提案文档时调用此技能。触发词：文档协作、文档编写、技术规范、提案编写、文档撰写、协同编辑、PRD文档、设计文档、技术文档。
+description: 结构化文档协作撰写。触发：写文档、写提案、写技术规范、写决策文档、写 RFC
 ---
 
-# 文档协同撰写工作流
+# 文档协作撰写
 
-This skill provides a structured workflow for guiding users through collaborative document creation. Act as an active guide, walking users through three stages: Context Gathering, Refinement & Structure, and Reader Testing.
+## 3 阶段工作流
 
-## When to Offer This Workflow
+### 阶段 1：上下文收集
+1. **元问题**：文档的目标读者是谁？解决什么问题？成功标准？
+2. **信息倾倒**：用户自由输入所有已知信息、想法、约束
+3. **澄清问题**：识别模糊点，逐一确认
 
-**Trigger conditions:**
-- User mentions writing documentation: "write a doc", "draft a proposal", "create a spec", "write up"
-- User mentions specific doc types: "PRD", "design doc", "decision doc", "RFC"
-- User seems to be starting a substantial writing task
+### 阶段 2：细化与结构
+逐节构建，每节遵循：
 
-**Initial offer:**
-Offer the user a structured workflow for co-authoring the document. Explain the three stages:
+1. **澄清**：确认本节要传达的核心信息
+2. **头脑风暴**：列出可能的切入点和论据
+3. **筛选**：选择最有说服力的 2-3 个论据
+4. **缺口检查**：是否遗漏关键信息？
+5. **起草**：写出本节初稿
+6. **迭代细化**：精简语言、强化逻辑、补充证据
 
-1. **Context Gathering**: User provides all relevant context while Claude asks clarifying questions
-2. **Refinement & Structure**: Iteratively build each section through brainstorming and editing
-3. **Reader Testing**: Test the doc with a fresh Claude (no context) to catch blind spots before others read it
+### 阶段 3：读者测试
+- 用全新视角通读全文
+- 检查：逻辑连贯性、术语一致性、可读性
+- 确认：目标读者能否仅凭此文档完成预期行动？
 
-## Stage 1: Context Gathering
+## 文档类型模板
 
-**Goal:** Close the gap between what the user knows and what Claude knows, enabling smart guidance later.
-
-### Initial Questions
-
-Start by asking the user for meta-context about the document:
-
-1. What type of document is this? (e.g., technical spec, decision doc, proposal)
-2. Who's the primary audience?
-3. What's the desired impact when someone reads this?
-4. Is there a template or specific format to follow?
-5. Any other constraints or context to know?
-
-### Info Dumping
-
-Once initial questions are answered, encourage the user to dump all the context they have.
-
-## Stage 2: Refinement & Structure
-
-**Goal:** Build the document section by section through brainstorming, curation, and iterative refinement.
-
-For each section:
-1. Clarifying questions will be asked about what to include
-2. 5-20 options will be brainstormed
-3. User will indicate what to keep/remove/combine
-4. The section will be drafted
-5. It will be refined through surgical edits
-
-## Stage 3: Reader Testing
-
-**Goal:** Test the document with a fresh Claude (no context bleed) to verify it works for readers.
-
-### Testing Approach
-
-1. Predict Reader Questions
-2. Test with Sub-Agent
-3. Run Additional Checks
-4. Report and Fix
-
-When Reader Claude consistently answers questions correctly and doesn't surface new gaps or ambiguities, the doc is ready.
+| 类型 | 结构 |
+|------|------|
+| **RFC** | 背景 → 目标 → 方案 → 权衡 → 替代方案 → 迁移计划 |
+| **技术规范** | 概述 → 架构 → API → 数据模型 → 安全 → 测试 |
+| **决策记录** | 背景 → 决策 → 理由 → 后果 → 替代方案 |
+| **提案** | 问题 → 解决方案 → 价值 → 成本 → 时间线 |

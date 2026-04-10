@@ -443,3 +443,43 @@ conda install --file requirements.txt
 - 忽视预防措施
 - 直接修改配置不测试
 - 不考虑长期影响
+
+## 常见修复模式速查
+
+| 错误 | 修复 |
+|------|------|
+| `Module not found` | 检查安装+导入路径+tsconfig paths |
+| `Type 'X' not assignable to 'Y'` | 解析/转换类型或修复类型定义 |
+| `Cannot find module` | 检查tsconfig paths、安装包或修复导入 |
+| `Hook called conditionally` | 将hooks移到顶层 |
+| `'await' outside async` | 添加 `async` 关键字 |
+| `Circular dependency` | 提取公共模块或使用延迟导入 |
+| `JavaScript heap out of memory` | `NODE_OPTIONS="--max-old-space-size=8192"` |
+
+## 构建工具诊断
+
+```bash
+# Vite
+rm -rf node_modules/.vite && vite --debug
+
+# Webpack
+npx webpack-bundle-analyzer dist/stats.json
+
+# TypeScript
+tsc --noEmit
+```
+
+## 构建优化
+
+```typescript
+// vite.config.ts - 速度+产物优化
+export default defineConfig({
+  build: {
+    minify: "esbuild",  // 比terser快
+    rollupOptions: {
+      output: { manualChunks: { vendor: ["react", "react-dom"] } }
+    },
+    esbuild: { drop: ["console", "debugger"] }
+  }
+})
+```

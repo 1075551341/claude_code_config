@@ -308,3 +308,20 @@ function getDiscount(user: User, order: Order): number {
 - [ ] 命名清晰表达意图
 - [ ] 无注释掉的代码
 - [ ] 无 TODO 超过1周未处理
+
+
+## 渐进式迁移原则
+
+1. **渐进式**(不大爆炸重写): 新功能用新技术，旧代码按优先级逐步迁移，保持新旧共存兼容
+2. **测试先行**: 迁移前补充测试覆盖关键行为，迁移后验证行为一致
+3. **小步提交**: 每次迁移一个模块，独立PR可回滚
+4. **风险降序**: 先迁移低风险高价值代码，复杂业务逻辑最后
+
+## 常见迁移场景
+
+| 场景 | 关键步骤 |
+|------|----------|
+| JS→TS | allowJs→逐文件重命名→noImplicitAny→strict |
+| 类组件→Hooks | 生命周期→useEffect | this.setState→useState | bind→箭头函数 |
+| CJS→ESM | require→import | module.exports→export | package.json加type:"module" |
+| 回调→async | promisify回调 → Promise链 → async/await |

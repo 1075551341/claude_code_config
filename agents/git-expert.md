@@ -198,3 +198,11 @@ git config --global push.default current  # 推送当前分支
 git config --global alias.lg "log --oneline --graph --decorate --all"
 git config --global alias.st "status -sb"
 ```
+
+## 合并策略对比
+
+| 策略 | 命令 | 优点 | 缺点 |
+|------|------|------|------|
+| Merge | git merge feature | 保留完整历史 | 大量merge commits |
+| Rebase | git rebase main | 线性历史 | 改变历史，不适合公共分支 |
+| Squash | git merge --squash feature | 简洁历史 | 丢失详细历史 |

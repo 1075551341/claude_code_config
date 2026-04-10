@@ -166,3 +166,18 @@ async function createUser(dto: CreateUserDto): Promise<User> {}
 3. **生成文档** - 按模板填充内容
 4. **一致性检查** - 确保文档与代码保持一致
 5. **格式优化** - Markdown 格式规范、表格对齐
+
+
+## 文档更新检查清单
+
+代码变更时: □ 更新README功能列表 □ 更新API文档 □ 更新代码注释 □ 更新CHANGELOG □ 检查文档链接 □ 验证准确性
+
+发布新版本时: □ 更新版本号 □ 记录变更 □ 更新迁移指南 □ 检查过期信息
+
+## 文档验证
+
+```bash
+markdown-link-check README.md  # 检查链接
+markdownlint *.md              # 检查格式
+cspell *.md                    # 检查拼写
+```

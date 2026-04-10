@@ -274,3 +274,22 @@ await mcp6_browser_screenshot({ filename: 'mobile.png' });
 1. [改进建议]
 2. [优化建议]
 ```
+
+
+## API测试策略
+
+### 测试层次
+1. **功能测试**: 正常CRUD + 分页/过滤/排序
+2. **边界测试**: 空数据/最大长度/超出限制/不存在的ID
+3. **错误处理**: 400缺参数 / 401无Token / 403权限不足 / 404不存在 / 409重复
+4. **安全测试**: SQL注入 / XSS / 越权访问
+5. **性能测试**: `ab -n 100 -c 10` → 平均<200ms, P99<1s, 错误率=0%
+
+### curl测试模板
+```bash
+# GET with auth
+curl -s -X GET "http://localhost:3000/api/v1/users" -H "Authorization: Bearer $TOKEN" | jq .
+
+# POST with body
+curl -s -w "\n%{http_code}" -X POST "http://localhost:3000/api/v1/users" -H "Content-Type: application/json" -d '{"username":"test"}'
+```
