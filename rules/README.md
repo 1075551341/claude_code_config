@@ -1,6 +1,6 @@
 # Rules 规则索引
 
-11 个专用规则文件，覆盖开发全场景。
+17 个专用规则文件，覆盖开发全场景。
 
 ---
 
@@ -9,6 +9,7 @@
 | 规则文件              | 适用场景            | 自动加载    |
 | --------------------- | ------------------- | ----------- |
 | `RULES_CORE.md`       | 所有代码开发        | ✅ 始终启用 |
+| `RULES_COMMON.md`     | 通用编码规范        | ❌ 按需加载 |
 | `RULES_BACKEND.md`    | 后端 API 开发       | ❌ 按需加载 |
 | `RULES_FRONTEND.md`   | 前端 UI 开发        | ❌ 按需加载 |
 | `RULES_DATABASE.md`   | 数据库设计/查询     | ❌ 按需加载 |
@@ -19,6 +20,11 @@
 | `RULES_AI.md`         | AI/LLM 应用开发     | ❌ 按需加载 |
 | `RULES_DEVOPS.md`     | CI/CD、容器化、部署 | ❌ 按需加载 |
 | `RULES_GIT.md`        | 版本控制、分支管理  | ❌ 按需加载 |
+| `RULES_MOBILE.md`     | 移动端开发          | ❌ 按需加载 |
+| `RULES_CSHARP.md`     | C# / .NET 开发      | ❌ 按需加载 |
+| `RULES_DART.md`       | Dart / Flutter 开发 | ❌ 按需加载 |
+| `RULES_GO.md`         | Go 语言开发         | ❌ 按需加载 |
+| `RULES_RUST.md`       | Rust 语言开发       | ❌ 按需加载 |
 
 ---
 

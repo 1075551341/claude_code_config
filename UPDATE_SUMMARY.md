@@ -32,19 +32,19 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 
 **删除的重复项**: agent-orchestrator(与agentic重复)、testing-strategist(与qa重复)
 
-**总计**: 88 Agents（实际统计）
+**总计**: 91 Agents（实际统计）
 
 ### 3. 技能库统计
 
-**总计**: 156 Skills（实际统计）
+**总计**: 165 Skills（实际统计）
 
 ### 4. 规则库统计
 
-**总计**: 12 Rules（实际统计）
+**总计**: 17 Rules（实际统计）
 
 ### 5. Hooks 统计
 
-**总计**: 48 Hooks（包含启动器、业务钩子及备份文件）
+**总计**: 47 Hooks（包含启动器、安全守卫及业务钩子）
 
 ### 6. MCP 服务器统计
 
@@ -195,5 +195,5 @@ cp /tmp/skills/* ~/.claude/skills/
 
 ---
 
-_更新日期：2026-04-09_
-_版本：v2.0-optimized_
+_更新日期：2026-04-11_
+_版本：v2.1-optimized_

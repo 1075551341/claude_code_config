@@ -1,6 +1,6 @@
 # Hooks 钩子系统
 
-45 个自动化钩子，覆盖开发全流程。
+47 个自动化钩子，覆盖开发全流程。
 
 ---
 
@@ -287,7 +287,8 @@ if __name__ == "__main__":
 | PreCompact | 1 |
 | SessionEnd | 1 |
 | Stop | 10 |
-| **总计** | **44 个活跃钩子** |
+| 辅助脚本 | 3（launcher + safe_guard + compact-state） |
+| **总计** | **47 个 .py 文件** |
 
 ---
 
