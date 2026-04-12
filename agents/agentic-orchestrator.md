@@ -1,6 +1,6 @@
 ---
 name: agentic-orchestrator
-description: 负责多Agent协调和任务编排。当需要协调多个Agent协作、分配复杂任务、管理Agent间通信、设计Agent工作流、实现Agent链式调用、构建Agent系统时调用此Agent。触发词：多agent、协调、编排、任务分配、agent协作、agent链、agent系统、orchestrator、workflow。
+description: 负责多Agent协调和任务编排，含并行调度能力。当需要协调多个Agent协作、分配复杂任务、管理Agent间通信、设计Agent工作流、实现Agent链式调用、构建Agent系统、并行调度多个子Agent、批量处理类似任务时调用此Agent。触发词：多agent、协调、编排、任务分配、agent协作、agent链、agent系统、orchestrator、workflow、并行Agent、批量处理、并行处理、同时执行、并发Agent、Agent调度、多任务并行、parallel agents、批量分发。
 model: inherit
 color: purple
 tools:

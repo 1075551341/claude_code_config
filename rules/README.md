@@ -9,7 +9,7 @@
 | 规则文件              | 适用场景            | 自动加载    |
 | --------------------- | ------------------- | ----------- |
 | `RULES_CORE.md`       | 所有代码开发        | ✅ 始终启用 |
-| `RULES_COMMON.md`     | 通用编码规范        | ❌ 按需加载 |
+| `RULES_COMMON.md`     | 通用编码规范        | ✅ 始终启用 |
 | `RULES_BACKEND.md`    | 后端 API 开发       | ❌ 按需加载 |
 | `RULES_FRONTEND.md`   | 前端 UI 开发        | ❌ 按需加载 |
 | `RULES_DATABASE.md`   | 数据库设计/查询     | ❌ 按需加载 |

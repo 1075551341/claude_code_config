@@ -1,6 +1,6 @@
 ---
 name: google-workspace
-description: 当需要操作Google Workspace服务、Gmail API、Google Drive、Google Sheets、Google Docs、Google Calendar时调用此技能。触发词：Google Workspace、Gmail、Google Drive、Google Sheets、Google Docs、Google Calendar、G Suite、谷歌办公套件。
+description: Google Workspace集成（CLI+API），统一管理Gmail、Drive、Calendar、Sheets、Docs等服务。触发词：Google Workspace、Gmail、Google Drive、Google Sheets、Google Docs、Google Calendar、G Suite、谷歌办公套件。
 ---
 
 # Google Workspace

@@ -1,6 +1,6 @@
 ---
 name: logging-monitoring
-description: 当需要配置日志系统、实现应用监控、设置链路追踪告警时调用此技能。触发词：日志系统、应用监控、链路追踪、Winston、Pino、ELK、Prometheus、Grafana、日志采集、指标监控、告警配置。
+description: 可观测性系统搭建，包括日志、监控、链路追踪、Prometheus、Grafana、OpenTelemetry。触发词：日志系统、应用监控、链路追踪、Winston、Pino、ELK、Prometheus、Grafana、日志采集、指标监控、告警配置、可观测性、OpenTelemetry、APM、监控搭建、监控配置、告警设置、指标采集、监控仪表板。
 ---
 
 # 日志与监控

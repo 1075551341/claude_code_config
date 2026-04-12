@@ -1,6 +1,6 @@
 ---
 name: capacitor-app
-description: 当需要使用Capacitor将Web应用打包为移动应用、实现混合应用开发、调用原生API时调用此技能。触发词：Capacitor、混合应用、Web转原生、Ionic Capacitor、原生插件、Capacitor插件、混合开发。
+description: 当需要开发混合移动应用、使用Capacitor/Ionic框架、将Web应用打包为移动应用时调用此技能。触发词：Capacitor、Ionic、混合应用、Web转原生、Ionic Capacitor、原生插件、Capacitor插件、混合开发、Ionic框架、Ionic Angular、Ionic React、Ionic Vue。
 ---
 
 # Capacitor 混合应用

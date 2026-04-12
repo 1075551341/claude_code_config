@@ -9,14 +9,14 @@
 
 | 分类         | 数量    |
 | ------------ | ------- |
-| 开发流程     | 13      |
+| 开发流程     | 12      |
 | 后端开发     | 14      |
-| 前端开发     | 10      |
-| 移动端开发   | 13      |
-| 桌面应用开发 | 2       |
+| 前端开发     | 9       |
+| 移动端开发   | 10      |
+| 桌面应用开发 | 1       |
 | 测试与质量   | 12      |
-| 运维部署     | 9       |
-| 安全与取证   | 4       |
+| 运维部署     | 8       |
+| 安全与取证   | 3       |
 | 数据与分析   | 6       |
 | 文档办公     | 8       |
 | 创意设计     | 7       |
@@ -27,7 +27,7 @@
 | 工具与工作流 | 11      |
 | 内容创作     | 5       |
 | 协作工作流   | 3       |
-| **总计**     | **157** |
+| **总计**     | **142** |
 
 ---
 
@@ -36,7 +36,6 @@
 ```
 skills/
 ├── 开发流程
-│   ├── design-brainstorming/   # 设计头脑风暴
 │   ├── implementation-planning/ # 实施计划编写
 │   ├── executing-plans/        # 计划执行跟踪
 │   ├── requirement-refinement/ # 需求细化与确认
@@ -70,7 +69,6 @@ skills/
 │   ├── frontend-design/   # 生产级 UI 界面
 │   ├── i18n-support/      # 前端国际化
 │   ├── icon-search/       # 图标搜索
-│   ├── js-code-snippets/  # JavaScript 代码片段
 │   ├── react-component/   # React 组件
 │   ├── state-management/  # 状态管理
 │   ├── theme-config/      # 主题配置
@@ -83,19 +81,15 @@ skills/
 │   ├── flutter-development/  # Flutter 跨平台
 │   ├── react-native/         # React Native
 │   ├── android-development/  # Android 原生开发
-│   ├── kotlin-android/       # Kotlin Android
 │   ├── ios-native-dev/       # iOS 原生开发
-│   ├── swift-ui/             # SwiftUI 界面
 │   ├── ios-simulator/        # iOS 模拟器
 │   ├── mini-program/         # 小程序开发
-│   ├── ionic-app/            # Ionic 混合应用
-│   ├── capacitor-app/        # Capacitor 原生桥接
+│   ├── capacitor-app/        # Capacitor/Ionic 混合应用
 │   ├── mobile-ui/            # 移动端 UI
 │   ├── mobile-performance/   # 移动性能优化
 │   └── mobile-deployment/    # 应用发布上架
 │
 ├── 桌面应用开发
-│   ├── electron-app/     # Electron 桌面应用
 │   └── desktop-app/      # 桌面应用通用
 │
 ├── 测试与质量
@@ -119,12 +113,10 @@ skills/
 │   ├── nginx-config/      # Nginx 配置
 │   ├── n8n-automation/    # n8n 工作流
 │   ├── kubernetes/        # K8s 容器编排
-│   ├── prometheus-monitoring/ # Prometheus 监控
 │   └── ffuf-fuzzing/      # Web 安全测试
 │
 ├── 安全与取证
 │   ├── security-forensics/# 安全取证
-│   ├── threat-hunting/    # 威胁狩猎
 │   ├── metadata-extraction/ # 元数据提取
 │   └── secure-deletion/   # 安全删除
 │
@@ -161,8 +153,8 @@ skills/
 │   ├── env-config/        # 环境配置
 │   ├── file-upload/       # 文件上传
 │   ├── fullstack-auth/    # 全栈认证
-│   ├── google-workspace/  # Google 集成
-│   ├── logging-monitoring/# 日志监控
+│   ├── google-workspace/  # Google 集成(CLI+API)
+│   ├── logging-monitoring/# 可观测性(日志+监控+追踪)
 │   ├── mongodb/           # MongoDB 数据库
 │   ├── redis-cache/       # Redis 缓存
 │   ├── monorepo-management/# Monorepo
@@ -174,7 +166,6 @@ skills/
 │   ├── prompt-engineering/ # Prompt 工程
 │   ├── software-architecture/ # 软件架构
 │   ├── mcp-matcher/       # MCP 工具智能匹配
-│   └── imagen/            # AI 图像生成
 │
 ├── 自动化工具
 │   ├── web-scraping/      # 网络爬虫
@@ -226,12 +217,11 @@ skills/
 
 | 技能                        | 触发词                                                           |
 | --------------------------- | ---------------------------------------------------------------- |
-| design-brainstorming        | 新功能、设计组件、架构设计、方案讨论                             |
 | implementation-planning     | 实施计划、开发计划、任务分解                                     |
 | executing-plans             | 执行计划、实现步骤、进度跟踪                                     |
 | requirement-refinement      | 拷问、需求细化、需求确认、需求澄清、反问需求、明确需求、需求对齐、细化需求、澄清需求、确认理解、细化方案 |
 | test-driven-development     | TDD、测试驱动、RED-GREEN-REFACTOR                                |
-| systematic-debugging        | 报错、调试、bug、异常、崩溃                                      |
+| systematic-debugging        | 报错、调试、bug、异常、故障诊断、troubleshooting              |
 | verification-checklist      | 完成验证、提交前检查、验收检查                                   |
 | collision-zone-thinking     | 碰撞思维、概念结合、跨界创新、强制联想                             |
 | inversion-exercise          | 反转假设、逆向思维、假设翻转、约束发现                             |
@@ -266,7 +256,6 @@ skills/
 | frontend-design       | UI界面、落地页、仪表板          |
 | i18n-support          | 国际化、多语言、i18next         |
 | icon-search           | 图标查找、Iconify、FontAwesome  |
-| js-code-snippets      | JS片段、ES6技巧、代码模式       |
 | react-component       | React、Hooks、组件开发          |
 | state-management      | 状态管理、Redux、Pinia、Zustand |
 | theme-config          | 主题配置、暗色模式、Tailwind    |
@@ -282,13 +271,10 @@ skills/
 | flutter-development | Flutter、Dart、跨平台移动                      |
 | react-native        | React Native、RN、移动应用                     |
 | android-development | Android开发、Android原生、Gradle               |
-| kotlin-android      | Kotlin Android、Kotlin协程、Jetpack Compose    |
 | ios-native-dev      | iOS开发、Swift、UIKit、Cocoa                   |
-| swift-ui            | SwiftUI、声明式UI、Swift UI组件                |
 | ios-simulator       | iOS模拟器、iPhone测试、Xcode调试               |
 | mini-program        | 小程序、微信小程序、支付宝小程序、UniApp小程序 |
-| ionic-app           | Ionic、混合应用、Ionic Angular/React/Vue       |
-| capacitor-app       | Capacitor、原生桥接、混合应用原生功能          |
+| capacitor-app       | Capacitor/Ionic、混合应用、原生桥接            |
 | mobile-ui           | 移动端UI、Vant Mobile、Ant Design Mobile       |
 | mobile-performance  | 移动性能、App优化、启动优化、包体积            |
 | mobile-deployment   | 应用发布、App Store、Google Play、应用签名     |
@@ -297,7 +283,6 @@ skills/
 
 | 技能         | 触发词                          |
 | ------------ | ------------------------------- |
-| electron-app | Electron、桌面应用、Windows应用 |
 | desktop-app  | 桌面软件、Tauri、Qt、WPF        |
 
 ### 测试与质量
@@ -327,7 +312,6 @@ skills/
 | nginx-config          | Nginx、反向代理、负载均衡     |
 | n8n-automation        | n8n、工作流自动化             |
 | kubernetes            | K8s、容器编排、kubectl        |
-| prometheus-monitoring | Prometheus、Grafana、监控告警 |
 | ffuf-fuzzing          | Web安全、目录扫描、渗透测试   |
 
 ### 安全与取证
@@ -335,7 +319,6 @@ skills/
 | 技能                | 触发词                       |
 | ------------------- | ---------------------------- |
 | security-forensics  | 安全取证、入侵检测、日志分析 |
-| threat-hunting      | 威胁狩猎、Sigma规则、APT     |
 | metadata-extraction | 元数据、Exif、文件属性       |
 | secure-deletion     | 安全删除、数据擦除           |
 
@@ -384,8 +367,8 @@ skills/
 | env-config          | 环境变量、.env、配置管理        |
 | file-upload         | 文件上传、分片上传、OSS         |
 | fullstack-auth      | 认证授权、JWT、OAuth2           |
-| google-workspace    | Gmail、Google Drive、Sheets API |
-| logging-monitoring  | 日志、监控、ELK                 |
+| google-workspace    | Google Workspace(CLI+API)      |
+| logging-monitoring  | 可观测性、日志、监控、追踪     |
 | mongodb             | MongoDB、NoSQL、Mongoose        |
 | redis-cache         | Redis、缓存、分布式锁           |
 | monorepo-management | Monorepo、Turborepo、pnpm       |
@@ -433,7 +416,7 @@ skills/
 | git-worktrees          | Worktrees、并行开发、分支隔离                      |
 | resume-generator       | 简历生成、简历优化、求职简历                       |
 | internal-communication | 内部邮件、团队公告、跨部门沟通                     |
-| skill-creator          | 技能创建、Skill开发                                |
+| skill-creator          | 技能创建、Skill开发、SKILL.md编写              |
 | notion-integration     | Notion API、Notion集成、Notion数据库、Notion自动化 |
 | api-documentation      | API文档、接口文档、Swagger、文档生成               |
 | architecture-diagrams  | 架构图、系统架构图、Mermaid、架构可视化            |
@@ -445,7 +428,7 @@ skills/
 
 | 技能                | 触发词                                           |
 | ------------------- | ------------------------------------------------ |
-| article-writing     | 文章写作、博客撰写、技术文章、长文写作、避免AI腔 |
+| article-writing     | 文章写作、博客撰写、技术文章、内容研究、避免AI腔 |
 | domain-brainstorm   | 域名创意、域名推荐、域名命名、品牌域名、域名生成 |
 | investor-materials  | 投资者材料、商业计划书、融资PPT、路演材料、BP    |
 | root-cause-analysis | 根因分析、根本原因、问题追溯、根因追踪、5Why分析 |
@@ -557,7 +540,7 @@ cat > .cursorrules << 'EOF'
 EOF
 
 # 追加具体技能内容
-cat ~/.claude/skills/design-brainstorming/SKILL.md >> .cursorrules
+cat ~/.claude/skills/brainstorming/SKILL.md >> .cursorrules
 ```
 
 ---

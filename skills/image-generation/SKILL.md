@@ -1,6 +1,6 @@
 ---
 name: image-generation
-description: 使用 AI 生成图像。触发词：AI画图、图像生成、DALL-E、Stable Diffusion、AI绘画、图片生成、AI作图、AI绘图、Midjourney。
+description: 使用 AI 生成和编辑图像。触发词：AI画图、图像生成、DALL-E、Stable Diffusion、AI绘画、图片生成、AI作图、AI绘图、Midjourney、Imagen、图片编辑、图像合成。
 ---
 
 # AI 图像生成
@@ -58,7 +58,7 @@ result = mj.imagine("futuristic city, cyberpunk style, highly detailed")
 print(result.image_url)
 ```
 
-### 4. Google Imagen (Gemini)
+### 4. Google Imagen (Gemini / Vertex AI)
 
 ```python
 import google.generativeai as genai
@@ -70,6 +70,31 @@ response = model.generate_image(
     prompt="A serene Japanese garden with cherry blossoms",
     number_of_images=1,
 )
+```
+
+#### Vertex AI Imagen
+
+```python
+import requests, base64
+from PIL import Image
+from io import BytesIO
+
+PROJECT_ID = "your-project-id"
+LOCATION = "us-central1"
+
+def generate_image_vertex(prompt, model="imagen-3.0-generate-001"):
+    url = f"https://{LOCATION}-aiplatform.googleapis.com/v1/projects/{PROJECT_ID}/locations/{LOCATION}/publishers/google/models/{model}:predict"
+    payload = {
+        "instances": [{"prompt": prompt}],
+        "parameters": {"sampleCount": 1, "aspectRatio": "1:1"}
+    }
+    response = requests.post(url, json=payload, headers={
+        "Authorization": f"Bearer {get_access_token()}",
+        "Content-Type": "application/json"
+    })
+    result = response.json()
+    image_data = base64.b64decode(result["predictions"][0]["bytesBase64Encoded"])
+    return Image.open(BytesIO(image_data))
 ```
 
 ## 提示词优化

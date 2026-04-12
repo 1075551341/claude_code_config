@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: 负责前端开发任务。当需要实现前端页面、开发UI组件、创建Vue/React组件、实现响应式布局、处理前端状态管理、开发表单交互、实现动画效果、接入前端路由、调用后端API、处理用户交互逻辑、实现数据可视化图表、开发移动端H5页面时调用此Agent。触发词：前端、页面、组件、UI、Vue、React、界面、样式、CSS、HTML、TypeScript、Pinia、Vuex、Redux、Tailwind、Element、Ant Design、UniApp、小程序。
+description: 负责前端开发任务。当需要实现前端页面、开发UI组件、创建Vue/React组件、实现响应式布局、处理前端状态管理、开发表单交互、实现动画效果、接入前端路由、调用后端API、处理用户交互逻辑、实现数据可视化图表时调用此Agent。触发词：前端、页面、组件、UI、Vue、React、界面、样式、CSS、HTML、TypeScript、Pinia、Vuex、Redux、Tailwind、Element、Ant Design。
 model: inherit
 color: blue
 tools:

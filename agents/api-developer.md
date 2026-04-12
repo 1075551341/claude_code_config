@@ -1,6 +1,6 @@
 ﻿---
 name: api-developer
-description: 当需要设计RESTful/GraphQL/gRPC API、编写后端接口、规划API版本策略、生成OpenAPI文档、处理API认证授权时调用此Agent。触发词：API设计、接口开发、RESTful API、GraphQL、gRPC、API文档、Swagger、OpenAPI、版本控制。
+description: 当需要设计RESTful/GraphQL/gRPC API、编写后端接口、生成OpenAPI文档、处理API认证授权时调用此Agent。触发词：API设计、接口开发、RESTful API、GraphQL、gRPC、Swagger、OpenAPI。
 model: inherit
 color: green
 tools:

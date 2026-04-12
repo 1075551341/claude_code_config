@@ -1,6 +1,6 @@
 ---
 name: snippet-expert
-description: 代码片段专家。触发：快速代码片段、工具函数、常用模式、代码速查
+description: 代码片段专家，覆盖JavaScript/ES6及多语言常用模式。触发：快速代码片段、工具函数、常用模式、代码速查、JS代码片段、JavaScript技巧、ES6技巧、代码模式、JS实用代码、JavaScript速查
 ---
 
 # 代码片段专家

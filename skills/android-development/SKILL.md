@@ -53,6 +53,39 @@ class HomeFragment : Fragment() {
 }
 ```
 
+## Kotlin 协程
+
+### 基础用法
+
+```kotlin
+// 启动协程
+lifecycleScope.launch {
+    val data = withContext(Dispatchers.IO) {
+        repository.fetchData()
+    }
+    _data.value = data
+}
+
+// Flow 数据流
+val userFlow: Flow<List<User>> = flow {
+    while (true) {
+        emit(repository.getUsers())
+        delay(5000)
+    }
+}
+```
+
+### 扩展函数
+
+```kotlin
+// 扩展函数示例
+fun String.isEmailValid(): Boolean =
+    this.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
+
+// 内联扩展函数
+inline fun <reified T> Gson.fromJson(json: String): T = fromJson(json, T::class.java)
+```
+
 ## Jetpack 组件
 
 ### ViewModel

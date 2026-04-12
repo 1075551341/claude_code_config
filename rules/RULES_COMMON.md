@@ -33,10 +33,7 @@ alwaysApply: true
 
 ## 安全基线
 
-- 提交前检查：无硬编码秘密、无 SQL 拼接、无 eval/exec
-- 依赖审计：新依赖检查许可证、已知漏洞、维护状态
-- 最小权限：服务/容器/函数仅授予必要权限
-- HTTPS 优先：所有外部通信走加密通道
+> 详见 `RULES_SECURITY.md`（OWASP Top 10、加密、API安全等完整覆盖）
 
 ## 性能意识
 
@@ -54,7 +51,4 @@ alwaysApply: true
 
 ## Git 规范
 
-- 提交粒度：一个逻辑变更一个提交
-- 提交信息：`<type>(<scope>): <描述>` — feat/fix/refactor/perf/test/docs/chore
-- 分支命名：`<type>/<简述>` — feature/add-auth, fix/login-redirect
-- 不提交：.env、node_modules/、__pycache__/、.DS_Store、IDE 配置
+> 详见 `RULES_GIT.md`（分支策略、Commit规范、PR模板、危险操作防护等完整覆盖）

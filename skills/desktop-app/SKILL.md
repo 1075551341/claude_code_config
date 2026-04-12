@@ -1,6 +1,6 @@
 ---
 name: desktop-app
-description: 当需要开发桌面应用程序、选择桌面技术栈、实现桌面应用功能时调用此技能。触发词：桌面应用、桌面软件开发、Tauri、Electron、WPF、Qt、桌面GUI、Windows应用、macOS应用、Linux应用。
+description: 当需要开发桌面应用程序、选择桌面技术栈、实现桌面应用功能时调用此技能。触发词：桌面应用、桌面软件开发、Tauri、Electron、WPF、Qt、桌面GUI、Windows应用、macOS应用、Linux应用、跨平台桌面。
 ---
 
 # 桌面应用开发

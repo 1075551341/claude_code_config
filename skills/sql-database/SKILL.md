@@ -1,6 +1,6 @@
 ---
 name: sql-database
-description: 当需要编写SQL查询、优化数据库性能、设计SQL索引、使用MySQL/PostgreSQL时调用此技能。触发词：SQL数据库、MySQL、PostgreSQL、SQLite、SQL查询、SQL优化、索引设计、数据库优化、SQL语句。
+description: 当需要编写SQL查询、优化数据库性能、设计SQL索引、使用MySQL/PostgreSQL时调用此技能。触发词：SQL数据库、MySQL、PostgreSQL、SQLite、SQL查询、SQL优化、索引设计、数据库优化、SQL语句、性能调优。
 ---
 
 # SQL 数据库开发

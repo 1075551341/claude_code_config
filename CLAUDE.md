@@ -80,39 +80,7 @@
 
 ---
 
-## 工具匹配 [CC]
-
-**原则**：用最具体的工具，有结构化工具不用Bash。
-
-| 任务 | 工具 | | 任务 | MCP工具 |
-|------|------|-|------|---------|
-| 读文件 | Read | | 技术文档/API | ctx7 → brave |
-| 找文件 | Glob | | 网页搜索 | exa → brave |
-| 搜内容 | Grep | | URL内容 | fetch |
-| 改代码 | Edit | | Git操作 | git → gh |
-| 建文件 | Write | | 浏览器/E2E | pw → puppeteer |
-| 跑命令 | Bash | | 记忆存储 | memory |
-| 子代理 | Task | | 设计稿 | figma |
-
-**降级**：ctx7→brave→fetch | pw→puppeteer | git→gh
-
----
-
-## Agent 路由 [CC]
-
-| 信号 | Agent | | 信号 | Agent |
-|------|-------|-|------|-------|
-| review/quality/PR | code-reviewer | | debug/失败/报错 | systematic-debugging |
-| plan/设计/实现 | execution-planner | | refactor/清理 | refactoring-expert |
-| architecture/扩展 | architect | | simplify/KISS | code-simplifier |
-| security/CVE/audit | security-reviewer | | test/TDD/coverage | tdd-guide |
-| docs/README | doc-generator | | 深度研究/调研 | deep-researcher |
-| AI/LLM开发 | ai-engineer | | SEO/排名 | seo-specialist |
-| 前端UI | frontend-developer | | 完成验证 | verification-checker |
-| 后端API | backend-developer | | C#/.NET审查 | csharp-reviewer |
-| 数据库 | database-architect | | Flutter审查 | flutter-reviewer |
-| DevOps/部署 | devops-engineer | | 构建错误 | build-error-resolver |
-| 方案设计/头脑风暴 | brainstorming | | 需求模糊/迭代精炼 | iterative-refinement |
+> 工具匹配/Agent路由/跨编辑器映射 → 详见 `TOOL_MATCHING_GUIDE.md` + `agents/` 目录
 
 ---
 
@@ -185,22 +153,8 @@
 
 ---
 
-## 代码规范
-
-- TS优先，Python 3.11+；禁止`any`，Python必须有类型注解
-- 2空格(JS/TS)，4空格(Python)；单引号(JS)，双引号(Python)
-- 组件PascalCase / 变量camelCase / 常量UPPER_SNAKE / 文件kebab-case
-- 前端：React/Vue+TS，Tailwind/CSS Modules，单文件<300行
-- 后端：统一响应格式，参数化查询，JWT鉴权，禁止裸await
-- 数据库：走索引，禁SELECT*，Migration可回滚，敏感字段加密
-
----
-
-## Git 规范
-
-`<type>(<scope>): <描述>` — feat|fix|refactor|perf|test|docs|chore|ci
-
-**绝对不执行**：push main/master / push --force / branch -D / push --delete
+> 代码规范 → 详见 `rules/RULES_CORE.md` + `rules/RULES_COMMON.md` + 各语言rules
+> Git规范 → 详见 `rules/RULES_GIT.md`；绝对不执行：push main/master / push --force / branch -D / push --delete
 
 ---
 
@@ -213,19 +167,8 @@
 
 ---
 
-## 跨编辑器工具映射 [CC]
-
-| 功能 | Claude Code | Cursor | Windsurf | Gemini | Copilot |
-|------|-------------|--------|----------|--------|---------|
-| 读 | Read | read_file | read_file | view | view |
-| 改 | Edit | apply_diff | edit_file | replace | edit |
-| 建 | Write | write_file | write_file | create | write |
-| 搜 | Grep | search_files | search | grep | search |
-| 找 | Glob | list_dir | glob | ls | glob |
-| 跑 | Bash | run_terminal_cmd | run_command | bash | bash |
-
-Hooks通过环境变量/控制台检测/路径特征自动识别编辑器并安全跳过。
+> 跨编辑器工具映射 → 详见 `TOOL_MATCHING_GUIDE.md` + `SYNC_GUIDE.md`
 
 ---
 
-_版本：v4.2 | 更新：2026-04-10_
+_版本：v4.3 | 更新：2026-04-12 | 优化：精准去重，消除与rules/文档的重复内容_

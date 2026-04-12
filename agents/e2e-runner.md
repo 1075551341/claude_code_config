@@ -1,6 +1,6 @@
 ---
 name: e2e-runner
-description: 端到端测试专家，优先使用Agent Browser进行E2E测试，Playwright作为备选。主动生成、维护和运行E2E测试，管理测试流程、隔离不稳定测试、上传artifacts（截图、视频、traces），确保关键用户流程正常工作。触发词：E2E测试、端到端测试、Playwright、Cypress、集成测试、e2e。
+description: 端到端测试专家，优先使用Agent Browser进行E2E测试，Playwright作为备选。主动生成、维护和运行E2E测试，管理测试流程、隔离不稳定测试、上传artifacts（截图、视频、traces），确保关键用户流程正常工作。也覆盖Web应用功能测试、UI行为调试、交互验证。触发词：E2E测试、端到端测试、Playwright、Cypress、集成测试、e2e、Web测试、浏览器测试、前端测试、UI测试、页面测试、交互测试、功能测试。
 model: inherit
 color: blue
 tools:

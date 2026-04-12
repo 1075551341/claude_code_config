@@ -62,9 +62,7 @@ ComponentName/
 
 ## 安全
 
-- 禁止 `innerHTML` 直接插入用户数据 → 用 `textContent` 或 DOMPurify
-- 敏感信息不写 `localStorage` → 改用 httpOnly Cookie
-- CSP 头配置列入上线检查项
+> 详见 `RULES_SECURITY.md`（XSS防护、CSP配置、敏感信息处理等完整覆盖）
 
 ## 何时必须写 README
 
