@@ -483,35 +483,11 @@ tools:
 - 不考虑可维护性
 - 盲目追求新技术
 
-## 云原生架构（Docker/K8s/IaC）
+## 云原生架构
 
-### Docker多阶段构建
+> Docker/K8s/IaC 实现细节详见 `devops-engineer` Agent 和 `RULES_DEVOPS.md`
 
-```dockerfile
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-USER node
-EXPOSE 3000
-CMD ["node", "dist/main.js"]
-```
-
-### K8s关键配置
-
-- **资源定义**: Deployment/Service/Ingress/ConfigMap
-- **调度策略**: 亲和性/反亲和性、资源requests/limits
-- **安全策略**: RBAC、NetworkPolicy、PodSecurity
-- **健康检查**: livenessProbe/readinessProbe必配
-
-### 部署策略
+### 部署策略选型
 
 | 策略 | 适用场景 | 风险 | 实现方式 |
 |------|----------|------|----------|

@@ -1,6 +1,6 @@
 ﻿---
 name: claude-code-optimizer
-description: 当需要优化Claude Code CLI使用效率、选择最佳工具组合、设计并行执行策略、管理记忆持久化时调用此Agent。提供工具匹配建议和效率优化方案。触发词：Claude Code优化、CLI效率、工具选择、并行执行、MCP工具、记忆管理、效率提升。
+description: Claude Code效率优化专家，含工具匹配、Harness配置优化、模型选择、工具权限配置。当需要优化Claude Code CLI使用效率、选择最佳工具组合、设计并行执行策略、管理记忆持久化、配置agent/harness、匹配MCP工具时调用此Agent。触发词：Claude Code优化、CLI效率、工具选择、并行执行、MCP工具、记忆管理、效率提升、harness优化、模型选择、工具权限、工具匹配。
 model: inherit
 color: purple
 tools:

@@ -1,6 +1,6 @@
 ---
 name: ai-engineer
-description: 负责AI/LLM应用开发。触发词：AI开发、LLM、RAG、Prompt工程、向量数据库、Claude API、OpenAI API、Langchain、Agent开发。
+description: 负责AI/LLM应用开发，含Prompt工程设计和LangSmith调试追踪。触发词：AI开发、LLM、RAG、Prompt工程、向量数据库、Claude API、OpenAI API、Langchain、Agent开发、Prompt设计、Few-shot、System Prompt、LangSmith、LangChain调试。
 model: inherit
 color: purple
 tools:

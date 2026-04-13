@@ -20,7 +20,7 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 | snippet-expert | 代码片段生成 | 30-seconds-of-code |
 | claude-code-optimizer | CLI环境优化 | everything-claude-code |
 | workflow-automation | 工作流设计 | deer-flow |
-| api-developer | API设计开发 | awesome-claude-skills |
+| backend-developer | 后端/API开发（含api-developer） | awesome-claude-skills + 合并 |
 | cloud-architect | 云原生架构 | 综合最佳实践 |
 | **tool-matcher** | **工具匹配专家** | **本次优化** |
 

@@ -250,6 +250,6 @@ XXX项目遇到以下问题需要决策：
 
 ## 相关技能
 
-- `email-writer` agent - 邮件撰写
+- `business-writing` agent - 商务写作（含邮件撰写）
 - `doc-coauthoring` - 文档协作
 - `report-generator` - 报告生成

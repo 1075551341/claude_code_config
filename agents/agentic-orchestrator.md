@@ -1,6 +1,6 @@
 ---
 name: agentic-orchestrator
-description: 负责多Agent协调和任务编排，含并行调度能力。当需要协调多个Agent协作、分配复杂任务、管理Agent间通信、设计Agent工作流、实现Agent链式调用、构建Agent系统、并行调度多个子Agent、批量处理类似任务时调用此Agent。触发词：多agent、协调、编排、任务分配、agent协作、agent链、agent系统、orchestrator、workflow、并行Agent、批量处理、并行处理、同时执行、并发Agent、Agent调度、多任务并行、parallel agents、批量分发。
+description: 负责多Agent协调和任务编排，含并行调度、子代理驱动开发、两阶段审查能力。当需要协调多个Agent协作、分配复杂任务、管理Agent间通信、设计Agent工作流、实现Agent链式调用、构建Agent系统、并行调度多个子Agent、批量处理类似任务时调用此Agent。触发词：多agent、协调、编排、任务分配、agent协作、agent链、agent系统、orchestrator、workflow、并行Agent、批量处理、并行处理、同时执行、并发Agent、Agent调度、多任务并行、parallel agents、批量分发、子代理开发、subagent-driven、任务分发、并行开发、执行计划、任务拆解。
 model: inherit
 color: purple
 tools:
@@ -59,15 +59,15 @@ tools:
   AI功能 → ai-engineer
 
 质量保障 →
-  代码审查 → code-reviewer
-  安全检查 → security-scanner
+  代码审查 → code-review-workflow
+  安全检查 → security-reviewer
   性能分析 → performance-analyzer
   测试编写 → qa-engineer
 
 架构设计 →
-  系统架构 → software-architect
-  数据库 → database-architect
-  组件设计 → component-architect
+  系统架构 → architect
+  数据库 → database-expert
+  组件设计 → architect
 
 运维部署 →
   CI/CD → devops-engineer

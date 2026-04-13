@@ -285,40 +285,10 @@ const fs = require('fs')
 
 ### MEDIUM — React/Next.js
 
+> React 组件专项审查（Hooks依赖、状态突变、key、memo等）详见 `react-reviewer` Agent
+
 ```typescript
-// 🟢 Hooks 缺少依赖数组
-useEffect(() => {
-  fetchData(userId)
-}, [])  // 缺少 userId
-
-// ✅ 完整依赖
-useEffect(() => {
-  fetchData(userId)
-}, [userId])
-
-// 🟢 状态突变而非不可变更新
-const [items, setItems] = useState([])
-items.push(newItem)
-setItems(items)
-
-// ✅ 不可变更新
-setItems([...items, newItem])
-
-// 🟢 使用数组索引作为 key
-{items.map((item, index) => <Item key={index} />)}
-
-// ✅ 使用稳定唯一 ID
-{items.map(item => <Item key={item.id} />)}
-
-// 🟢 useEffect 中的派生状态
-useEffect(() => {
-  setFiltered(items.filter(isActive))
-}, [items])
-
-// ✅ 直接计算派生值
-const filtered = items.filter(isActive)
-
-// 🟢 服务器/客户端边界违规
+// 🟢 服务器/客户端边界违规（Next.js App Router）
 // 在服务器组件中使用浏览器 API
 // ✅ 使用 'use client' 或分离组件
 ```

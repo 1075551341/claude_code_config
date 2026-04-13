@@ -1,6 +1,6 @@
 ---
 name: git-expert
-description: Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践。涵盖Git Flow、GitHub Flow、Trunk Based等协作流程。触发词：Git、合并冲突、分支策略、commit规范、rebase、cherry-pick、Git回滚、Git钩子、版本管理、代码回退、Git历史、分支管理、Gitflow、Git标签、Git工作流、代码合并。
+description: Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践、Git Worktree并行开发。触发词：Git、合并冲突、分支策略、commit规范、rebase、cherry-pick、Git回滚、Git钩子、版本管理、代码回退、Git历史、分支管理、Gitflow、Git标签、Git工作流、代码合并、git worktree、并行开发。
 model: inherit
 color: orange
 tools:
@@ -206,3 +206,16 @@ git config --global alias.st "status -sb"
 | Merge | git merge feature | 保留完整历史 | 大量merge commits |
 | Rebase | git rebase main | 线性历史 | 改变历史，不适合公共分支 |
 | Squash | git merge --squash feature | 简洁历史 | 丢失详细历史 |
+
+## Git Worktree（并行开发）
+
+```bash
+# 创建工作树（并行开发多分支，无需频繁切换）
+git worktree add ../feature-auth feature/auth     # 为已有分支创建工作树
+git worktree add -b feature/new ../new-feature    # 创建新分支+工作树
+git worktree list                                  # 列出所有工作树
+git worktree remove ../feature-auth                # 移除工作树
+git worktree prune                                 # 清理已删除的工作树
+
+# 典型场景：同时在main修hotfix和在feature继续开发
+```

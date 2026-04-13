@@ -17,7 +17,7 @@ description: 跨编辑器配置同步指南
 │   ├── RULES_BACKEND.md     #     后端规则
 │   └── ...
 ├── agents/                   # ✅ 同步 - Agent 定义
-│   ├── code-reviewer.md
+│   ├── code-review-workflow.md
 │   ├── debugger.md
 │   └── ...
 ├── skills/                   # ✅ 同步 - 技能库（Markdown 格式）

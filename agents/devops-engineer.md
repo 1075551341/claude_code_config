@@ -1,6 +1,6 @@
 ---
 name: devops-engineer
-description: 负责DevOps和运维相关任务。当需要配置CI/CD流水线、编写Docker配置、创建Kubernetes部署文件、配置GitHub Actions/GitLab CI、搭建容器化环境、配置监控告警、编写Nginx配置、设置自动化部署、配置环境变量、处理基础设施即代码(IaC)、排查部署问题、优化构建流程时调用此Agent。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、流水线、GitHub Actions、GitLab CI、Jenkins、Nginx、Helm、监控配置、运维、基础设施、自动化部署。
+description: 负责DevOps和运维相关任务，含Terraform/IaC基础设施管理。当需要配置CI/CD流水线、编写Docker配置、创建Kubernetes部署文件、配置GitHub Actions/GitLab CI、搭建容器化环境、配置监控告警、编写Nginx配置、设置自动化部署、配置环境变量、处理基础设施即代码(IaC)、Terraform配置、云资源编排、排查部署问题、优化构建流程时调用此Agent。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、流水线、GitHub Actions、GitLab CI、Jenkins、Nginx、Helm、监控配置、运维、基础设施、自动化部署、Terraform、IaC、云资源、VPC、ECS、RDS、多环境管理。
 model: inherit
 color: purple
 tools:

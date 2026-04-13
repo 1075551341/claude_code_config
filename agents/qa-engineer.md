@@ -1,6 +1,6 @@
 ---
 name: qa-engineer
-description: 负责测试相关任务。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、E2E端到端测试、搭建测试框架、设计测试数据、进行接口测试、评估测试覆盖率、编写测试报告、实施质量保障体系时调用此Agent。触发词：测试、单元测试、集成测试、E2E、测试用例、测试策略、自动化测试、Jest、Vitest、Playwright、Cypress、测试覆盖率、质量保障、测试计划、Mock、测试报告。
+description: 负责测试相关任务，含E2E端到端测试(Playwright/Cypress)。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、E2E端到端测试、搭建测试框架、设计测试数据、进行接口测试、评估测试覆盖率、编写测试报告、实施质量保障体系时调用此Agent。触发词：测试、单元测试、集成测试、E2E、测试用例、测试策略、自动化测试、Jest、Vitest、Playwright、Cypress、测试覆盖率、质量保障、测试计划、Mock、测试报告、浏览器测试、UI测试。
 model: inherit
 color: yellow
 tools:

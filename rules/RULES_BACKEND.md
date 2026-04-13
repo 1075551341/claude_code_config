@@ -65,15 +65,15 @@ def function_name(param_a: str, param_b: int = 0) -> dict:
 
 ## 安全基线
 
-> 详见 `RULES_SECURITY.md`（SQL注入、认证、权限、敏感泄露、Rate Limit等完整覆盖）
+> 详见 `RULES_SECURITY.md`（SQL 注入、认证、权限、敏感泄露、Rate Limit 等完整覆盖）
 
 ## 错误处理原则
 
+> 通用错误处理详见 `RULES_CORE.md`，以下为后端特有补充
+
 ```
-1. 已知错误  → 业务码 + 友好提示（不暴露内部）
-2. 未知错误  → 记录完整日志 + 返回通用错误码
-3. 外部依赖  → timeout + fallback，避免雪崩
-4. 所有异步  → 必须 try/catch 或 .catch()，禁止裸 await
+外部依赖  → timeout + fallback，避免雪崩
+所有异步  → 必须 try/catch 或 .catch()，禁止裸 await
 ```
 
 ## 项目结构（参考）

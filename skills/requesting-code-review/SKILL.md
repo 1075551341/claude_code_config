@@ -31,7 +31,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 步骤 2: 派发审查代理
 
-使用 Task 工具派发 `code-reviewer` 代理。
+使用 Task 工具派发 `code-review-workflow` 代理。
 
 ### 步骤 3: 填写审查模板
 

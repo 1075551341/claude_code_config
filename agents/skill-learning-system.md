@@ -1,6 +1,6 @@
 ---
-name: continuous-learning-v2
-description: 持续学习系统专家。当需要从用户交互中学习、提取模式、生成技能、优化行为时调用此Agent。基于观察和反馈不断改进AI代理的能力。触发词：持续学习、模式提取、技能生成、行为优化、学习系统、观察模式、自适应改进。
+name: skill-learning-system
+description: 技能学习系统专家，覆盖持续学习、模式提取、技能创建。当需要从用户交互中学习、提取模式、生成技能、优化行为、创建新技能、设计技能触发词时调用此Agent。触发词：持续学习、模式提取、技能生成、行为优化、学习系统、观察模式、自适应改进、技能创建、skill创建、触发词定义。
 model: inherit
 color: magenta
 tools:

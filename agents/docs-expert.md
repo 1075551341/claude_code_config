@@ -1,6 +1,6 @@
 ---
-name: doc-generator
-description: 负责技术文档生成任务。当需要生成API文档、编写README文件、添加代码注释、生成JSDoc/docstring、编写接口文档、创建技术说明文档、编写开发指南、生成变更日志CHANGELOG、编写部署文档、创建数据库设计文档时调用此Agent。触发词：生成文档、写文档、API文档、README、代码注释、JSDoc、文档注释、技术文档、接口文档、开发文档、部署文档、CHANGELOG、Swagger。
+name: docs-expert
+description: 文档专家，覆盖文档生成和文档查找。当需要生成API文档、编写README文件、添加代码注释、生成JSDoc/docstring、编写接口文档、创建技术说明文档、编写开发指南、生成变更日志CHANGELOG、编写部署文档、查找API文档、查询库文档、检索技术文档时调用此Agent。触发词：生成文档、写文档、API文档、README、代码注释、JSDoc、文档注释、技术文档、接口文档、开发文档、部署文档、CHANGELOG、Swagger、查找文档、文档查找、docs lookup、Context7。
 model: inherit
 color: green
 tools:

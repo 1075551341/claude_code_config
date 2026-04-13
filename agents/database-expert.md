@@ -1,6 +1,6 @@
 ---
-name: database-architect
-description: 负责数据库架构设计任务。当需要设计数据库架构、选择数据库技术方案、设计表结构和索引策略、规划数据库分库分表方案、设计数据迁移方案、优化数据库性能、设计缓存架构、处理数据建模、规划读写分离架构时调用此Agent。触发词：数据库设计、数据库架构、表设计、索引设计、数据建模、分库分表、数据迁移、数据库选型、PostgreSQL、MySQL、MongoDB、Redis、数据库优化、ER图、数据库方案。
+name: database-expert
+description: 数据库全栈专家，覆盖架构设计、审查优化、SQL编写、数据迁移。当需要设计数据库架构、选择数据库技术方案、设计表结构和索引策略、规划分库分表、优化SQL查询、审查数据库设计、编写复杂SQL、规划数据迁移时调用此Agent。触发词：数据库设计、数据库架构、表设计、索引设计、数据建模、分库分表、数据迁移、数据库选型、PostgreSQL、MySQL、MongoDB、Redis、数据库优化、ER图、SQL查询、慢查询优化、数据库审查、Schema审查、零停机迁移。
 model: inherit
 color: orange
 tools:

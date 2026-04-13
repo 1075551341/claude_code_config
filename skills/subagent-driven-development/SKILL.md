@@ -135,7 +135,7 @@ await runAgent(
 | ------------------ | ----------------- | ------------------- |
 | frontend-developer | UI 组件、页面开发 | Vue/React 组件      |
 | backend-developer  | API、服务开发     | Express/NestJS 代码 |
-| database-architect | 数据库设计        | Migration 脚本      |
+| database-expert | 数据库设计        | Migration 脚本      |
 | tester             | 测试用例编写      | 测试文件            |
 | doc-writer         | 文档编写          | Markdown 文档       |
 

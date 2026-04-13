@@ -1,6 +1,6 @@
 ---
 name: build-error-resolver
-description: 构建错误解决专家。当遇到构建错误、编译错误、类型错误、依赖问题时调用此Agent。提供系统化的错误诊断和解决方案。触发词：构建错误、编译错误、类型错误、依赖问题、build error、compilation error、type error。
+description: 构建错误解决专家。当遇到构建错误、编译错误、类型错误、依赖问题时调用此Agent。覆盖Maven/Gradle/npm/pip等构建工具。触发词：构建错误、编译错误、类型错误、依赖问题、build error、Maven错误、Gradle错误、依赖冲突。
 model: inherit
 color: orange
 tools:
@@ -482,4 +482,20 @@ export default defineConfig({
     esbuild: { drop: ["console", "debugger"] }
   }
 })
+```
+
+## Java/Maven/Gradle 专项
+
+```bash
+# Maven 依赖冲突分析
+mvn dependency:tree -Dverbose
+mvn dependency:analyze
+
+# Gradle 依赖冲突
+gradle dependencies --configuration compileClasspath
+gradle dependencyInsight --dependency <dependency-name>
+
+# 常见修复
+# Maven: 排除传递依赖 → <exclusions><exclusion>...</exclusion></exclusions>
+# Gradle: 强制版本 → configurations.all { resolutionStrategy { force 'group:artifact:version' } }
 ```
