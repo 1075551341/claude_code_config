@@ -1,16 +1,17 @@
 ---
 name: cicd-pipeline
-description: 当需要配置CI/CD流水线、设置GitHub Actions/GitLab CI、实现自动化构建部署时调用此技能。触发词：CI/CD、持续集成、持续部署、GitHub Actions、GitLab CI、自动化部署、流水线、构建流水线、部署自动化。
+description: 配置CI/CD流水线、设置GitHub Actions/GitLab CI、实现自动化构建部署
+triggers: [CI/CD, 持续集成, 持续部署, GitHub Actions, GitLab CI, 自动化部署, 流水线, 构建流水线, 部署自动化]
 ---
 
 # CI/CD 流水线最佳实践
 
 ## 描述
 持续集成与持续部署技能，涵盖 GitHub Actions/GitLab CI 配置、
-Docker 镜像构建、自动化测试、部署策略和环境管理。
+Docker 镜像构建、自动化测试、部署策略和环境管理
 
 ## 触发条件
-当需要配置自动化构建、测试、部署流水线时使用。
+配置自动化构建、测试、部署流水线时使用
 
 ## 技术选型
 

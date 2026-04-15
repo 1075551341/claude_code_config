@@ -1,15 +1,16 @@
 ---
 name: search-engine
-description: 当需要实现全文搜索功能、集成Elasticsearch/MeiliSearch搜索引擎、配置站内搜索时调用此技能。触发词：全文搜索、搜索引擎、Elasticsearch、MeiliSearch、站内搜索、模糊搜索、倒排索引、搜索功能、分词高亮。
+description: 实现全文搜索功能、集成Elasticsearch/MeiliSearch搜索引擎、配置站内搜索
+triggers: [全文搜索, 搜索引擎, Elasticsearch, MeiliSearch, 站内搜索, 模糊搜索, 倒排索引, 搜索功能, 分词高亮]
 ---
 
 # 搜索实现
 
 ## 描述
-全文搜索与搜索引擎集成方案，涵盖 Elasticsearch、MeiliSearch、数据库全文搜索等。
+全文搜索与搜索引擎集成方案，涵盖 Elasticsearch、MeiliSearch、数据库全文搜索等
 
 ## 触发条件
-当用户提到：搜索、全文搜索、Elasticsearch、MeiliSearch、Algolia、搜索引擎、模糊搜索、分词、搜索建议、搜索高亮、倒排索引、LIKE 查询优化 时使用此技能。
+当用户提到：搜索、全文搜索、Elasticsearch、MeiliSearch、Algolia、搜索引擎、模糊搜索、分词、搜索建议、搜索高亮、倒排索引、LIKE 查询优化 时使用此技能
 
 ## 方案选型
 

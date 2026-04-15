@@ -1,11 +1,12 @@
 ---
 name: typescript
-description: 当需要编写TypeScript类型、解决类型错误、使用泛型/高级类型、实现类型安全时调用此技能。触发词：TypeScript、TS类型、泛型、类型定义、类型安全、TypeScript配置、类型推断、类型体操、interface、type。
+description: 编写TypeScript类型、解决类型错误、使用泛型/高级类型、实现类型安全
+triggers: [TypeScript, TS类型, 泛型, 类型定义, 类型安全, TypeScript配置, 类型推断, 类型体操, interface, type]
 ---
 
 # TypeScript 高级模式
 
-> 聚焦高级模式和易错点，基础类型略过。
+> 聚焦高级模式和易错点，基础类型略过
 
 ## 高级类型
 

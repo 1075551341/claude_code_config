@@ -1,6 +1,7 @@
 ---
 name: note-management
-description: 当需要管理笔记、使用Obsidian/Notion等笔记工具、构建知识库、整理知识体系时调用此技能。触发词：笔记管理、Obsidian、Notion、知识库、笔记整理、知识管理、双链笔记、Markdown笔记。
+description: 管理笔记、使用Obsidian/Notion等笔记工具、构建知识库、整理知识体系
+triggers: [笔记管理, Obsidian, Notion, 知识库, 笔记整理, 知识管理, 双链笔记, Markdown笔记]
 ---
 
 # 笔记与知识管理

@@ -1,6 +1,7 @@
 ---
 name: ios-native-dev
-description: 当需要开发iOS原生应用、使用Swift/Objective-C开发iPhone/iPad应用、实现iOS UI界面时调用此技能。触发词：iOS开发、iOS原生、Swift开发、Objective-C、iPhone开发、iPad开发、UIKit、SwiftUI、声明式UI、SwiftUI组件、SwiftUI布局、Xcode、CocoaPods、Swift Package。
+description: 开发iOS原生应用、使用Swift/Objective-C开发iPhone/iPad应用、实现iOS UI界面
+triggers: [iOS开发, iOS原生, Swift开发, Objective-C, iPhone开发, iPad开发, UIKit, SwiftUI, 声明式UI, SwiftUI组件, SwiftUI布局, Xcode, CocoaPods, Swift Package]
 ---
 
 # iOS 原生开发

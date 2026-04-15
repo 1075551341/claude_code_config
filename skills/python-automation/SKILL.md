@@ -1,6 +1,7 @@
 ---
 name: python-automation
-description: 当需要编写Python自动化脚本、批量处理任务、自动化日常工作、编写工具脚本时调用此技能。触发词：Python自动化、自动化脚本、批量处理、Python脚本、自动化任务、工具脚本、批处理。
+description: 编写Python自动化脚本
+triggers: [编写Python自动化脚本, 批量处理任务, 自动化日常工作, 编写工具脚本]
 ---
 
 # Python 自动化脚本

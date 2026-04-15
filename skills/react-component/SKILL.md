@@ -1,6 +1,7 @@
 ---
 name: react-component
-description: 当需要开发React组件、使用React Hooks、管理React状态、优化React性能时调用此技能。触发词：React组件、React开发、React Hooks、useState、useEffect、React状态管理、JSX、组件开发、React性能优化。
+description: 开发React组件
+triggers: [开发React组件, 使用React Hooks, 管理React状态, 优化React性能]
 ---
 
 # React 组件开发

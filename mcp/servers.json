@@ -1,0 +1,66 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
+  "description": "MCP服务器配置 - 整合自多个优秀仓库的最佳实践",
+  "sources": [
+    "github/mcp-server - 官方GitHub MCP服务器",
+    "anthropics/claude-code-action - 多认证方式集成",
+    "zilliztech/claude-context - 上下文增强"
+  ],
+  "servers": {
+    "github": {
+      "description": "GitHub官方MCP服务器 - 代码搜索、PR管理、Issue处理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "memory": {
+      "description": "MCP记忆服务器 - 跨会话持久化上下文",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "sequential-thinking": {
+      "description": "顺序思考服务器 - 复杂问题的逐步推理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "filesystem": {
+      "description": "文件系统服务器 - 安全文件操作",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/DELL"],
+      "env": {
+        "ALLOWED_DIRECTORIES": "/Users/DELL"
+      }
+    },
+    "playwright": {
+      "description": "Playwright MCP服务器 - 浏览器自动化和Web测试",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp", "--extension"]
+    },
+    "exa": {
+      "description": "Exa搜索服务器 - Web搜索和内容提取",
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp"
+    },
+    "context7": {
+      "description": "Context7服务器 - 代码库上下文增强（来自zilliztech/claude-context）",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  },
+  "serverConfigs": {
+    "github": {
+      "toolsets": ["repos", "issues", "pull_requests", "users", "code_search", "security"],
+      "headers": {
+        "X-MCP-Toolsets": "issues,pull_requests"
+      }
+    },
+    "playwright": {
+      "browser": {
+        "headless": true,
+        "slowMo": 100
+      }
+    }
+  }
+}

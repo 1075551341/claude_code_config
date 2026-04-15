@@ -1,6 +1,7 @@
 ---
 name: mongodb
-description: 当需要操作MongoDB数据库、编写MongoDB查询、设计文档结构、实现MongoDB最佳实践时调用此技能。触发词：MongoDB、Mongo、文档数据库、NoSQL、MongoDB查询、聚合查询、Mongoose。
+description: 操作MongoDB数据库
+triggers: [操作MongoDB数据库, 编写MongoDB查询, 设计文档结构, 实现MongoDB最佳实践]
 ---
 
 # MongoDB 数据库

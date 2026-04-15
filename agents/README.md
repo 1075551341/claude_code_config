@@ -1,78 +1,246 @@
-# Agents 智能体
+# Agents 智能体库
 
-64 个专业化智能体，覆盖软件开发全流程。
-
-基于以下开源项目优化整合：
-
-- [anthropics/skills](https://github.com/anthropics/skills) - Anthropic 官方技能标准
-- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 性能优化系统
-- [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) - 实用技能集合
-- [obra/superpowers](https://github.com/obra/superpowers) - 结构化开发工作流
-- [Chalarangelo/30-seconds-of-code](https://github.com/Chalarangelo/30-seconds-of-code) - 代码片段集合
+> 整合自 [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)、[obra/superpowers](https://github.com/obra/superpowers)
 
 ---
 
-## 快速索引
+## 设计原则
 
-| 领域         | 智能体                                                                                                                                                                                    |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **前端**     | `frontend-developer`, `mobile-developer`, `react-reviewer`, `typescript-reviewer`, `ux-design-expert`, `typescript-pro`, `accessibility-expert`, `snippet-expert`                          |
-| **后端**     | `backend-developer`, `nodejs-reviewer`, `python-pro`, `python-reviewer`, `api-versioner`, `claude-code-optimizer`                                                                         |
-| **数据**     | `database-expert`, `data-engineer`                                                                                                                                                        |
-| **测试**     | `qa-engineer`, `code-review-workflow`, `tdd-guide`                                                                                                                                        |
-| **安全**     | `security-reviewer`, `compliance-checker`                                                                                                                                                 |
-| **性能**     | `performance-analyzer`                                                                                                                                                                    |
-| **架构**     | `architect`                                                                                                                                                                               |
-| **运维**     | `devops-engineer`, `observability-engineer`, `incident-responder`, `cloud-cost-optimizer`                                                                                                 |
-| **工程**     | `git-expert`, `refactoring-expert`, `build-error-resolver`                                                                                                                                |
-| **AI/数据**  | `ai-engineer`, `agentic-orchestrator`, `ml-engineer`, `workflow-automation`, `mcp-builder`                                                                                                |
-| **文档**     | `docs-expert`, `changelog-generator`, `ppt-creator`, `business-writing`, `canvas-design`                                                                                                  |
-| **支付**     | `payment-integration`                                                                                                                                                                     |
-| **管理**     | `planning-expert`, `context-manager`                                                                                                                                                      |
-| **图表**     | `mermaid-expert`                                                                                                                                                                          |
-| **调试**     | `systematic-debugging`                                                                                                                                                                    |
-| **游戏**     | `game-developer`                                                                                                                                                                          |
-| **嵌入式**   | `embedded-engineer`                                                                                                                                                                       |
-| **工作流**   | `brainstorming`, `skill-learning-system`, `finishing-a-development-branch`, `verification-checker`                                                                                        |
-| **文件管理** | `file-organizer`                                                                                                                                                                          |
-| **语言专项** | `go-reviewer`, `cpp-reviewer`, `rust-reviewer`, `kotlin-reviewer`, `swift-reviewer`, `csharp-reviewer`, `flutter-reviewer`, `typescript-reviewer`, `python-reviewer`, `nodejs-reviewer`, `react-reviewer` |
+### 1. 精确上下文构造
+
+子代理应该从不继承会话历史，精确构造所需上下文。
+
+### 2. 单一职责
+
+每个 Agent 专注于特定领域或任务类型。
+
+### 3. 模型选择策略
+
+| 任务类型       | 模型选择     | 原因                         |
+| -------------- | ------------ | ---------------------------- |
+| 机械实现任务   | 快速便宜模型 | 孤立函数、清晰规格、1-2文件  |
+| 集成和判断任务 | 标准模型     | 多文件协调、模式匹配、调试   |
+| 架构设计和审查 | 最强模型     | 需要设计判断或广泛代码库理解 |
+
+### 4. 状态处理
+
+```
+DONE              → 继续 spec 合规性审查
+DONE_WITH_CONCERNS → 阅读担忧后决定
+NEEDS_CONTEXT     → 提供缺失上下文并重新派遣
+BLOCKED           → 评估阻止因素并重新派遣
+```
 
 ---
 
-## 合并记录
+## 标准 Agent 格式
 
-以下智能体已合并（保留核心能力，消除重复）：
+````markdown
+---
+name: agent-name
+description: |
+  Use this agent when [specific triggering conditions]...
+model: inherit
+color: blue
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+---
 
-| 合并后名称 | 原智能体 | 合并原因 |
-|-----------|---------|---------|
-| `code-review-workflow` | code-reviewer + requesting-code-review + receiving-code-review | 代码审查全生命周期 |
-| `database-expert` | database-architect + database-reviewer + sql-pro + migration-planner | 数据库全栈能力 |
-| `planning-expert` | execution-planner + spec-writer + project-manager | 规划全链路 |
-| `docs-expert` | doc-generator + docs-lookup | 文档生成+查找 |
-| `business-writing` | email-writer + meeting-notes + weekly-report | 商务写作 |
-| `ux-design-expert` | ui-designer + ux-researcher | UX设计+研究 |
-| `skill-learning-system` | continuous-learning-v2 + skill-creator | 学习→创建连续流程 |
-| `build-error-resolver` | + java-build-resolver | Java是构建子集 |
-| `git-expert` | + using-git-worktrees | Worktree是Git子功能 |
-| `agentic-orchestrator` | + subagent-driven-development | 核心编排能力重叠 |
-| `claude-code-optimizer` | + harness-optimizer + tool-matcher | 工具/配置优化子能力 |
-| `ai-engineer` | + prompt-engineer + langsmith-fetch | Prompt工程是AI核心子能力 |
-| `devops-engineer` | + terraform-specialist | Terraform是DevOps IaC子领域 |
-| `qa-engineer` | + e2e-runner | E2E是QA子领域 |
+# Agent Name
+
+## 角色定位
+
+[一句话说明Agent职责]
+
+## 核心能力
+
+1. **能力1**: 描述
+2. **能力2**: 描述
+
+## 工作流程
+
+### 1. [步骤名]
+
+[说明]
+
+### 2. [步骤名]
+
+[说明]
+
+## 输出格式
+
+```markdown
+[输出模板]
+```
+````
+
+## 注意事项
+
+- 注意点1
+- 注意点2
+
+```
+
+---
+
+## Frontmatter 字段
+
+| 字段 | 必需 | 说明 |
+|------|------|------|
+| `name` | **是** | 唯一标识符 |
+| `description` | **是** | 触发条件描述 |
+| `model` | 否 | 指定模型，默认 inherit |
+| `color` | 否 | UI颜色标识 |
+| `tools` | 否 | 可用工具列表 |
+
+---
+
+## Agent 分类（64个）
+
+### 架构与设计（1个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `architect` | 系统设计、架构决策 | Read, Write, Grep |
+
+### 前端开发（8个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `frontend-developer` | 前端开发 | Read, Write, Edit |
+| `react-reviewer` | React代码审查 | Read, Grep |
+| `ux-design-expert` | UI/UX设计 | Read, Write, Edit |
+| `typescript-pro` | TypeScript专家 | Read, Write, Grep |
+| `snippet-expert` | 代码片段 | Read, Write |
+| `accessibility-expert` | 无障碍专家 | Read, Grep |
+| `web-artifacts-builder` | Web构件 | Read, Write |
+| `mermaid-expert` | 图表绘制 | Read, Write |
+
+### 后端开发（6个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `backend-developer` | 后端开发 | Read, Write, Bash |
+| `nodejs-reviewer` | Node.js审查 | Read, Grep |
+| `python-pro` | Python专家 | Read, Write, Grep |
+| `python-reviewer` | Python审查 | Read, Grep |
+| `api-versioner` | API版本管理 | Read, Write, Grep |
+| `websocket-server` | WebSocket开发 | Read, Write, Bash |
+
+### 数据（2个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `database-expert` | 数据库设计/优化 | Read, Grep, Bash |
+| `data-engineer` | 数据工程 | Read, Bash, Grep |
+
+### 测试与质量（3个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `qa-engineer` | 测试策略/自动化 | Read, Write, Bash |
+| `code-review-workflow` | 代码审查全流程 | Read, Grep |
+| `tdd-guide` | TDD指导 | Read, Write |
+
+### 安全（2个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `security-reviewer` | 安全审查 | Read, Grep |
+| `compliance-checker` | 合规检查 | Read, Grep |
+
+### DevOps（4个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `devops-engineer` | CI/CD、容器化 | Read, Bash |
+| `observability-engineer` | 监控/可观测性 | Read, Bash, Grep |
+| `incident-responder` | 故障响应 | Read, Bash |
+| `cloud-cost-optimizer` | 云成本优化 | Read, Bash |
+
+### 文档与沟通（5个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `docs-expert` | 文档生成 | Read, Write |
+| `changelog-generator` | 变更日志 | Read, Write |
+| `business-writing` | 商务写作 | Read, Write |
+| `ppt-creator` | PPT创建 | Read, Write |
+| `canvas-design` | 画布设计 | Read, Write |
+
+### 工程效能（3个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `git-expert` | Git工作流 | Bash, Read |
+| `refactoring-expert` | 重构 | Read, Write, Edit |
+| `build-error-resolver` | 构建错误 | Read, Bash |
+
+### AI与数据（5个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `ai-engineer` | AI/LLM应用 | Read, Write, Bash |
+| `agentic-orchestrator` | 多Agent编排 | Read, Write |
+| `ml-engineer` | 机器学习 | Read, Write, Bash |
+| `mcp-builder` | MCP服务器开发 | Read, Write, Bash |
+| `workflow-automation` | 工作流自动化 | Read, Write, Bash |
+
+### 垂直领域（2个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `payment-integration` | 支付集成 | Read, Write |
+| `game-developer` | 游戏开发 | Read, Write |
+
+### 语言专项（11个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `go-reviewer` | Go审查 | Read, Grep |
+| `rust-reviewer` | Rust审查 | Read, Grep |
+| `kotlin-reviewer` | Kotlin审查 | Read, Grep |
+| `swift-reviewer` | Swift审查 | Read, Grep |
+| `csharp-reviewer` | C#审查 | Read, Grep |
+| `flutter-reviewer` | Flutter审查 | Read, Grep |
+| `typescript-reviewer` | TypeScript审查 | Read, Grep |
+| `cpp-reviewer` | C++审查 | Read, Grep |
+| `embedded-engineer` | 嵌入式 | Read, Write, Bash |
+| `react-reviewer` | React审查 | Read, Grep |
+| `nodejs-reviewer` | Node.js审查 | Read, Grep |
+
+### 管理与流程（4个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `planning-expert` | 规划管理 | Read, Write |
+| `context-manager` | 上下文管理 | Read, Write |
+| `verification-checker` | 验证检查 | Read, Grep |
+| `brainstorming` | 头脑风暴 | Read, Write |
+
+### 效率与创意（2个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `file-organizer` | 文件整理 | Read, Bash |
+| `snippet-expert` | 代码片段 | Read, Write |
+
+### 移动开发（1个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `mobile-developer` | 移动开发 | Read, Write, Bash |
+
+### 其他（5个）
+| Agent | 场景 | 工具 |
+|-------|------|------|
+| `performance-analyzer` | 性能分析 | Read, Bash, Grep |
+| `security-reviewer` | 安全审查 | Read, Grep |
+| `claude-code-optimizer` | Claude Code优化 | Read, Write |
+| `skill-learning-system` | 技能学习 | Read, Write |
+| `deep-researcher` | 深度研究 | Read, Write, WebSearch |
 
 ---
 
 ## 使用方式
 
-### 直接调用（Claude Code）
-
+### 直接调用
 ```
+
 使用 [agent-name] agent 来 [任务描述]
-```
 
-### 使用示例
+````
 
-```
+### 示例
+```bash
 # AI 开发
 使用 ai-engineer agent 集成 OpenAI API 实现智能客服
 
@@ -87,32 +255,97 @@
 
 # 规划
 使用 planning-expert agent 制定项目实施计划
+````
+
+---
+
+## Agent 模型选择指南
+
+### 按任务复杂度
+
+| 复杂度    | Agent                                 | 推荐模型 |
+| --------- | ------------------------------------- | -------- |
+| 简单/机械 | snippet-expert, file-organizer        | haiku    |
+| 标准/协调 | frontend-developer, backend-developer | sonnet   |
+| 复杂/架构 | architect, security-reviewer          | opus     |
+
+### 按任务类型
+
+| 类型   | Agent                        | 推荐模型    |
+| ------ | ---------------------------- | ----------- |
+| 实现类 | _\_developer, _\_engineer    | sonnet      |
+| 审查类 | \*\_reviewer                 | sonnet/opus |
+| 架构类 | architect                    | opus        |
+| 研究类 | deep-researcher, ai-engineer | opus        |
+
+---
+
+## 双阶段审查模式（来自 superpowers）
+
 ```
+Implementer → Spec Reviewer → Code Quality Reviewer → Task Complete
+     ↓              ↓                ↓
+   [FIX]         [FIX]            [FIX]
+     ↓              ↓                ↓
+   [REVIEW]      [REVIEW]         [REVIEW]
+```
+
+---
+
+## PR Review 协议（来自 awesome-claude-code）
+
+```
+FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → OUTPUT
+```
+
+### 多角色审查
+
+1. Product Manager Review → 商业价值/用户体验
+2. Developer Review → 代码质量/性能
+3. Quality Engineer Review → 测试覆盖/边缘case
+4. Security Engineer Review → 漏洞/数据保护
+5. DevOps Review → CI/CD/基础设施
+6. UI/UX Designer Review → 视觉/可用性
+
+---
+
+## Phase 工作流（来自 get-shit-done）
+
+```
+Phase 1: Minimum Viable — 最小可工作切片
+Phase 2: Core Experience — 完整快乐路径
+Phase 3: Edge Cases — 错误处理、边界情况、打磨
+Phase 4: Optimization — 性能、监控
+```
+
+---
+
+## 来源
+
+- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 48个专业Agent
+- [obra/superpowers](https://github.com/obra/superpowers) - 工作流系统
+- [anthropics/skills](https://github.com/anthropics/skills) - 技能标准
 
 ---
 
 ## 统计
 
-| 类别          | 数量   |
-| ------------- | ------ |
-| 前端开发      | 8      |
-| 后端开发      | 6      |
-| 数据          | 2      |
-| 测试与质量    | 3      |
-| 安全          | 2      |
-| 性能          | 1      |
-| 架构          | 1      |
-| 运维与 DevOps | 4      |
-| 工程效能      | 3      |
-| AI/数据       | 5      |
-| 文档与沟通    | 5      |
-| 专项领域      | 2      |
-| 管理          | 2      |
-| 图表          | 1      |
-| 调试          | 1      |
-| 游戏          | 1      |
-| 嵌入式        | 1      |
-| 工作流        | 4      |
-| 文件管理      | 1      |
-| 语言专项      | 11     |
-| **总计**      | **64** |
+| 分类       | 数量   |
+| ---------- | ------ |
+| 架构与设计 | 1      |
+| 前端开发   | 8      |
+| 后端开发   | 6      |
+| 数据       | 2      |
+| 测试与质量 | 3      |
+| 安全       | 2      |
+| DevOps     | 4      |
+| 文档与沟通 | 5      |
+| 工程效能   | 3      |
+| AI与数据   | 5      |
+| 垂直领域   | 2      |
+| 语言专项   | 11     |
+| 管理与流程 | 4      |
+| 效率与创意 | 2      |
+| 移动开发   | 1      |
+| 其他       | 5      |
+| **总计**   | **64** |

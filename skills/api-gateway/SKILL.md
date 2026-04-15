@@ -1,6 +1,7 @@
 ---
 name: api-gateway
-description: API 网关配置与管理。触发词：API网关、Kong、网关配置、路由管理、流量控制、API管理。
+description: API网关配置与管理
+triggers: [API网关, Kong, 网关配置, 路由管理, 流量控制]
 ---
 
 # API 网关

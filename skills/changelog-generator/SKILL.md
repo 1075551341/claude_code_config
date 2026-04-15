@@ -1,6 +1,7 @@
 ---
 name: changelog-generator
-description: 当需要生成变更日志、版本发布说明、提交历史整理、版本更新记录时调用此技能。触发词：变更日志、CHANGELOG、版本日志、发布说明、Release Notes、版本更新记录、提交历史整理、版本历史。
+description: 生成变更日志
+triggers: [生成变更日志, 版本发布说明, 提交历史整理, 版本更新记录]
 ---
 
 # 变更日志生成

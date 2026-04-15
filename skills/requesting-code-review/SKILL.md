@@ -1,9 +1,20 @@
 ---
 name: requesting-code-review
-description: 请求代码审查，向审查者提供精确的上下文。触发词：请求审查、代码审查请求、PR审查、请求Review、审查代码、Review请求。
+description: 请求代码审查，向审查者提供精确的上下文
+triggers: [请求代码审查, 提供精确上下文, 代码审查请求]
 ---
 
 # 请求代码审查
+
+## @Examples
+
+```
+用户: "这个功能完成了，帮我审查"
+Claude: /requesting-code-review → 准备提交范围 → 派发审查代理 → 填写审查模板
+
+用户: "PR #123 需要审查"
+Claude: 获取变更 → 识别关键文件 → 提供上下文 → 派发 code-review-workflow
+```
 
 ## 核心原则
 
@@ -31,7 +42,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 步骤 2: 派发审查代理
 
-使用 Task 工具派发 `code-review-workflow` 代理。
+使用 Task 工具派发 `code-review-workflow` 代理
 
 ### 步骤 3: 填写审查模板
 
@@ -148,7 +159,7 @@ ghi9012 fix: 修复 Token 过期处理
 
 ```markdown
 ✅ 好的请求：
-"实现了用户认证功能，包括登录、注册和 Token 管理。
+"实现了用户认证功能，包括登录、注册和 Token 管理
 主要变更在 src/auth/ 目录，请重点关注：
 - 密码加密是否安全
 - Token 验证逻辑是否完整

@@ -1,15 +1,16 @@
 ---
 name: data-validation
-description: 当需要验证输入数据、校验请求参数、使用Zod/Joi/Pydantic进行数据校验时调用此技能。触发词：数据校验、参数验证、表单验证、输入验证、Zod、Joi、Pydantic、Schema验证、数据验证、字段校验。
+description: 验证输入数据、校验请求参数、使用Zod/Joi/Pydantic进行数据校验
+triggers: [数据校验, 参数验证, 表单验证, 输入验证, Zod, Joi, Pydantic, Schema验证, 数据验证, 字段校验]
 ---
 
 # 数据校验
 
 ## 描述
-请求参数与数据模型校验方案，涵盖 Zod、Joi、class-validator、Pydantic 等主流校验库。
+请求参数与数据模型校验方案，涵盖 Zod、Joi、class-validator、Pydantic 等主流校验库
 
 ## 触发条件
-当用户提到：数据校验、参数校验、Zod、Joi、Yup、class-validator、Pydantic、表单验证、Schema 校验、输入验证、类型校验 时使用此技能。
+当用户提到：数据校验、参数校验、Zod、Joi、Yup、class-validator、Pydantic、表单验证、Schema 校验、输入验证、类型校验 时使用此技能
 
 ## 方案选型
 

@@ -1,6 +1,7 @@
 ---
 name: ffuf-fuzzing
-description: 当需要进行Web安全测试、目录枚举、参数模糊测试、漏洞扫描时调用此技能。触发词：ffuf、Web模糊测试、目录扫描、参数Fuzz、安全测试、渗透测试、Web安全、目录枚举。
+description: 进行Web安全测试
+triggers: [进行Web安全测试, 目录枚举, 参数模糊测试, 漏洞扫描]
 ---
 
 # FFUF Web 模糊测试

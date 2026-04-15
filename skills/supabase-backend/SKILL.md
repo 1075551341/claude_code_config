@@ -1,6 +1,7 @@
 ---
 name: supabase-backend
-description: 使用 Supabase 构建 BaaS 后端服务。触发词：Supabase、BaaS、实时数据库、PostgreSQL托管、认证服务。
+description: 使用 Supabase 构建 BaaS 后端服务
+triggers: [使用 Supabase 构建 BaaS 后端服务]
 ---
 
 # Supabase 后端开发

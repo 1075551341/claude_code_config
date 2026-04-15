@@ -1,14 +1,14 @@
 ---
 name: pptx
-description: 当需要创建PPT演示文稿、编辑pptx文件、制作幻灯片时调用此技能。触发词：PPT制作、pptx、演示文稿、幻灯片、PPT编辑、演示PPT、PowerPoint、PPT生成、PPT设计。
-license: Proprietary. LICENSE.txt has complete terms
+description: 创建PPT演示文稿、编辑pptx文件，制作幻灯片
+triggers: [PPT制作, pptx, 演示文稿, 幻灯片, PPT编辑, PowerPoint]
 ---
 
 # PPTX 创建、编辑和分析
 
 ## 概述
 
-用户可能要求您创建、编辑或分析 .pptx 文件的内容。.pptx 文件本质上是一个包含 XML 文件和其他资源的 ZIP 存档。
+用户可能要求您创建、编辑或分析 .pptx 文件的内容。.pptx 文件本质上是一个包含 XML 文件和其他资源的 ZIP 存档
 
 ## 读取和分析内容
 
@@ -17,13 +17,12 @@ license: Proprietary. LICENSE.txt has complete terms
 如果您只需要读取演示文稿的文本内容：
 
 ```bash
-# 将文档转换为 markdown
 python -m markitdown path-to-file.pptx
 ```
 
 ### 原始 XML 访问
 
-以下情况需要原始 XML 访问：批注、演讲者备注、幻灯片布局、动画、设计元素和复杂格式。
+以下情况需要原始 XML 访问：批注、演讲者备注、幻灯片布局、动画、设计元素和复杂格式
 
 #### 关键文件结构
 
@@ -37,13 +36,13 @@ python -m markitdown path-to-file.pptx
 
 ## **不使用模板**创建新 PowerPoint 演示文稿
 
-从头创建新 PowerPoint 演示文稿时，使用 **html2pptx** 工作流。
+从头创建新 PowerPoint 演示文稿时，使用 **html2pptx** 工作流
 
 ### 设计原则
 
 **关键**：创建任何演示文稿之前，分析内容并选择适当的设计元素：
 
-1. **考虑主题**：它暗示什么基调、行业或情绪？
+1. **考虑主题**：它暗示什么基调，行业或情绪？
 2. **检查品牌**：如果用户提到公司/组织，考虑其品牌颜色
 3. **配色与内容匹配**：选择反映主题的颜色
 4. **说明您的方法**：在编写代码前解释您的设计选择
@@ -51,7 +50,7 @@ python -m markitdown path-to-file.pptx
 **要求**：
 
 - ✅ 仅使用网页安全字体：Arial、Helvetica、Times New Roman、Georgia、Courier New、Verdana、Tahoma、Trebuchet MS、Impact
-- ✅ 通过大小、粗细和颜色创建清晰的视觉层次
+- ✅ 通过大小，粗细和颜色创建清晰的视觉层次
 - ✅ 确保可读性：强对比度、适当大小的文字、清晰对齐
 - ✅ 保持一致：在幻灯片中重复模式、间距和视觉语言
 
@@ -63,7 +62,7 @@ python -m markitdown path-to-file.pptx
 
 ## 编辑现有 PowerPoint 演示文稿
 
-编辑现有 PowerPoint 演示文稿中的幻灯片时，需要使用原始 Office Open XML (OOXML) 格式。
+编辑现有 PowerPoint 演示文稿中的幻灯片时，需要使用原始 Office Open XML (OOXML) 格式
 
 ### 工作流
 

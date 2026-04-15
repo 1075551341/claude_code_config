@@ -1,15 +1,16 @@
 ---
 name: logging-monitoring
-description: 可观测性系统搭建，包括日志、监控、链路追踪、Prometheus、Grafana、OpenTelemetry。触发词：日志系统、应用监控、链路追踪、Winston、Pino、ELK、Prometheus、Grafana、日志采集、指标监控、告警配置、可观测性、OpenTelemetry、APM、监控搭建、监控配置、告警设置、指标采集、监控仪表板。
+description: 可观测性系统搭建，包括日志
+triggers: [可观测性系统搭建，包括日志, 监控, 链路追踪, Prometheus, Grafana, OpenTelemetry]
 ---
 
 # 日志与监控
 
 ## 描述
-应用日志采集与系统监控方案，涵盖结构化日志、链路追踪、指标采集与告警。
+应用日志采集与系统监控方案，涵盖结构化日志、链路追踪、指标采集与告警
 
 ## 触发条件
-当用户提到：日志、监控、Winston、Pino、ELK、Prometheus、Grafana、链路追踪、OpenTelemetry、告警、日志级别、结构化日志、APM、loguru 时使用此技能。
+当用户提到：日志、监控、Winston、Pino、ELK、Prometheus、Grafana、链路追踪、OpenTelemetry、告警、日志级别、结构化日志、APM、loguru 时使用此技能
 
 ## 方案选型
 

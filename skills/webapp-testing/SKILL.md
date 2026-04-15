@@ -1,6 +1,7 @@
 ---
 name: webapp-testing
-description: 用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。当需要测试 Web 应用、编写 E2E 测试、自动化浏览器操作时使用。触发词：Web测试、E2E测试、Playwright、端到端测试、浏览器自动化、页面测试、UI自动化、集成测试、browser test、自动化测试。
+description: 用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。测试 Web 应用
+triggers: [用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。测试 Web 应用, 编写 E2E 测试, 自动化浏览器操作时使用]
 ---
 
 # Web 应用测试

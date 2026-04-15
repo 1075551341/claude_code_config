@@ -1,14 +1,14 @@
 ---
 name: xlsx
-description: 当需要处理Excel表格、操作xlsx文件、处理CSV数据时调用此技能。触发词：Excel处理、xlsx、表格处理、CSV、Excel表格、电子表格、数据分析表格、Excel公式、Excel编辑。
-license: Proprietary. LICENSE.txt has complete terms
+description: 处理Excel表格、操作xlsx文件、处理CSV数据
+triggers: [Excel处理, xlsx, 表格处理, CSV, Excel表格, Excel公式]
 ---
 
 # XLSX 创建、编辑和分析
 
 ## 概述
 
-用户可能要求您创建、编辑或分析 .xlsx 文件的内容。
+用户可能要求您创建、编辑或分析 .xlsx 文件的内容
 
 ## 关键：使用公式，而非硬编码值
 

@@ -1,16 +1,17 @@
 ---
 name: fullstack-auth
-description: 当需要实现用户认证授权、设计登录注册功能、集成OAuth第三方登录、管理JWT Token时调用此技能。触发词：认证授权、JWT、登录注册、OAuth2、用户认证、权限管理、Token管理、SSO单点登录、RBAC权限。
+description: 实现用户认证授权
+triggers: [实现用户认证授权, 设计登录注册功能, 集成OAuth第三方登录, 管理JWT Token]
 ---
 
 # 全栈认证授权最佳实践
 
 ## 描述
 全栈认证授权技能，涵盖 JWT/Session 方案选型、OAuth2.0 接入、
-RBAC 权限模型、Token 管理和安全防护。
+RBAC 权限模型、Token 管理和安全防护
 
 ## 触发条件
-当需要实现用户注册登录、权限控制、第三方登录、Token 管理时使用。
+实现用户注册登录、权限控制、第三方登录、Token 管理时使用
 
 ## 方案选型
 

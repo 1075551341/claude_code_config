@@ -1,6 +1,7 @@
 ---
 name: aws-cloud
-description: 当需要部署AWS云服务、配置AWS资源、编写CloudFormation/IAM策略、使用AWS CLI/SDK时调用此技能。触发词：AWS、亚马逊云、EC2、S3、Lambda、RDS、CloudFormation、IAM策略、AWS CLI、AWS SDK、云服务部署。
+description: 部署AWS云服务、配置AWS资源、编写CloudFormation/IAM策略、使用AWS CLI/SDK
+triggers: [AWS, 亚马逊云, EC2, S3, Lambda, RDS, CloudFormation, IAM策略, AWS CLI, AWS SDK, 云服务部署]
 ---
 
 # AWS 云服务

@@ -1,11 +1,12 @@
 ---
 name: nginx-config
-description: 当需要配置Nginx服务器、设置反向代理负载均衡、配置SSL证书时调用此技能。触发词：Nginx配置、反向代理、负载均衡、SSL配置、Nginx服务器、Nginx部署、HTTPS配置、静态资源服务、gzip压缩。
+description: 配置Nginx服务器
+triggers: [配置Nginx服务器, 设置反向代理负载均衡, 配置SSL证书]
 ---
 
 # Nginx 配置生成
 
-生成各类 Nginx 配置文件。
+生成各类 Nginx 配置文件
 
 ## 使用方式
 

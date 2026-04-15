@@ -1,6 +1,7 @@
 ---
 name: git-workflow
-description: 当需要管理Git分支、规范提交信息、处理Git冲突、设计Git工作流时调用此技能。触发词：Git工作流、分支管理、提交规范、Git分支、合并代码、Git冲突、版本控制、Git提交、代码合并。
+description: 管理Git分支
+triggers: [管理Git分支, 规范提交信息, 处理Git冲突, 设计Git工作流]
 ---
 
 # Git 工作流

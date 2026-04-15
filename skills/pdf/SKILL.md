@@ -1,14 +1,14 @@
 ---
 name: pdf
-description: 当需要处理PDF文件、提取PDF文本、合并拆分PDF、填写PDF表单时调用此技能。触发词：PDF处理、PDF文件、PDF提取、PDF合并、PDF拆分、PDF编辑、PDF生成、PDF表单、PDF操作。
-license: Proprietary. LICENSE.txt has complete terms
+description: 处理PDF文件、提取PDF文本、合并拆分PDF、填写PDF表单
+triggers: [PDF处理, PDF文件, PDF提取, PDF合并, PDF拆分, PDF编辑, PDF表单]
 ---
 
 # PDF 处理指南
 
 ## 概述
 
-本指南涵盖使用 Python 库和命令行工具进行的基本 PDF 处理操作。
+本指南涵盖使用 Python 库和命令行工具进行的基本 PDF 处理操作
 
 ## 快速开始
 
@@ -120,15 +120,15 @@ qpdf input.pdf --pages . 1-5 -- pages1-5.pdf
 
 ## 快速参考
 
-| 任务           | 最佳工具    | 命令/代码                   |
-| -------------- | ----------- | --------------------------- |
-| 合并 PDF       | pypdf       | `writer.add_page(page)`     |
-| 拆分 PDF       | pypdf       | 每文件一页                  |
-| 提取文本       | pdfplumber  | `page.extract_text()`       |
-| 提取表格       | pdfplumber  | `page.extract_tables()`     |
-| 创建 PDF       | reportlab   | Canvas 或 Platypus          |
-| 命令行合并     | qpdf        | `qpdf --empty --pages ...`  |
-| OCR 扫描 PDF   | pytesseract | 先转换为图像                |
+| 任务         | 最佳工具    | 命令/代码                  |
+| ------------ | ----------- | -------------------------- |
+| 合并 PDF     | pypdf       | `writer.add_page(page)`    |
+| 拆分 PDF     | pypdf       | 每文件一页                 |
+| 提取文本     | pdfplumber  | `page.extract_text()`      |
+| 提取表格     | pdfplumber  | `page.extract_tables()`    |
+| 创建 PDF     | reportlab   | Canvas 或 Platypus         |
+| 命令行合并   | qpdf        | `qpdf --empty --pages ...` |
+| OCR 扫描 PDF | pytesseract | 先转换为图像               |
 
 ## 依赖项
 

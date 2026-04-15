@@ -1,11 +1,12 @@
 ---
 name: theme-config
-description: 当需要配置主题样式、设计暗色模式、配置Ant Design/Element Plus主题时调用此技能。触发词：主题配置、暗色模式、Dark Mode、主题定制、Ant Design主题、Element Plus主题、Tailwind主题、颜色主题、UI主题。
+description: 配置主题样式、设计暗色模式、配置Ant Design/Element Plus主题
+triggers: [主题配置, 暗色模式, Dark Mode, 主题定制, Ant Design主题, Element Plus主题, Tailwind主题, 颜色主题, UI主题]
 ---
 
 # 主题配置生成
 
-生成前端主题配置文件。
+生成前端主题配置文件
 
 ## 使用方式
 

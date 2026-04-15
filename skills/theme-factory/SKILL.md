@@ -1,7 +1,7 @@
 ---
 name: theme-factory
-description: 当需要为文档/幻灯片/网页应用主题样式、设计颜色字体方案时调用此技能。触发词：主题样式、颜色方案、字体主题、设计主题、配色方案、视觉主题、主题应用、样式主题。
-license: Complete terms in LICENSE.txt
+description: 为文档/幻灯片/网页应用主题样式、设计颜色字体方案
+triggers: [主题样式, 颜色方案, 字体主题, 配色方案, 视觉主题]
 ---
 
 # 主题工厂
@@ -11,6 +11,7 @@ This skill provides a curated collection of professional font and color themes, 
 ## Purpose
 
 To apply consistent, professional styling to presentation slide decks, use this skill. Each theme includes:
+
 - A cohesive color palette with hex codes
 - Complementary font pairings for headers and body text
 - A distinct visual identity suitable for different contexts and audiences
@@ -38,6 +39,7 @@ To apply consistent, professional styling to presentation slide decks, use this 
 ## Theme Details
 
 Each theme is defined with complete specifications including:
+
 - Cohesive color palette with hex codes
 - Complementary font pairings for headers and body text
 - Distinct visual identity suitable for different contexts and audiences
@@ -45,6 +47,7 @@ Each theme is defined with complete specifications including:
 ## Application Process
 
 After a preferred theme is selected:
+
 1. Read the corresponding theme specifications
 2. Apply the specified colors and fonts consistently
 3. Ensure proper contrast and readability

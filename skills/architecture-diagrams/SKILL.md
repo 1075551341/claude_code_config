@@ -1,6 +1,7 @@
 ---
 name: architecture-diagrams
-description: 系统架构图绘制，使用Mermaid绘制流程图、时序图、架构图、ER图等可视化文档。触发词：架构图、Mermaid、流程图、时序图、ER图、系统图、技术图表、架构设计图、可视化文档。
+description: 系统架构图绘制，使用Mermaid绘制流程图、时序图、架构图
+triggers: [架构图, Mermaid, 流程图, 时序图, ER图, 系统图, 技术图表]
 ---
 
 # 架构图绘制

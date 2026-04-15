@@ -1,6 +1,7 @@
 ---
 name: claude-api
 description: Claude API / Anthropic SDK 开发指南。触发：使用 Claude API、Anthropic SDK、构建 AI 应用、Managed Agents
+triggers: [使用 Claude API、Anthropic SDK、构建 AI 应用、Managed Agents]
 ---
 
 # Claude API / SDK 开发指南

@@ -1,13 +1,14 @@
 ---
 name: android-development
-description: Android原生应用开发、Kotlin/Java编程、Jetpack组件使用。
+description: Android原生应用开发、Kotlin/Java编程、Jetpack组件使用
+triggers: [Android开发, Kotlin, Java, Jetpack, 原生应用]
 ---
 
 # Android 原生开发
 
 ## 核心能力
 
-Android原生应用开发、Kotlin/Java编程、Jetpack组件使用。
+Android原生应用开发、Kotlin/Java编程、Jetpack组件使用
 
 ## 项目结构
 

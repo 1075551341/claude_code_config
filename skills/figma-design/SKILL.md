@@ -1,6 +1,8 @@
 ---
 name: figma-design
-description: Figma 设计工具集成与设计稿转代码。触发词：Figma、UI设计、设计稿、组件库、设计转代码。
+Sync Figma
+description: Figma 设计工具集成与设计稿转代码
+triggers: [Figma 设计工具集成与设计稿转代码]
 ---
 
 # Figma 设计集成

@@ -1,6 +1,7 @@
 ---
 name: api-documentation
-description: API文档编写规范，编写清晰、完整的RESTful API文档。触发词：API文档、接口文档、RESTful文档、API说明、接口说明、Swagger、OpenAPI、API规范。
+description: API文档编写规范，编写清晰、完整的RESTful API文档
+triggers: [API文档, 接口文档, RESTful文档, Swagger, OpenAPI]
 ---
 
 # API 文档编写

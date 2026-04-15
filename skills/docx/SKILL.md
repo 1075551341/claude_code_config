@@ -1,13 +1,14 @@
 ---
 name: docx
-description: 当需要创建Word文档、编辑docx文件、处理Word文档格式时调用此技能。触发词：Word文档、docx、Word编辑、文档创建、Word处理、docx文件、文档生成、Word格式。
+description: 创建Word文档
+triggers: [创建Word文档, 编辑docx文件, 处理Word文档格式]
 ---
 
 # DOCX 创建、编辑和分析
 
 ## 概述
 
-用户可能要求您创建、编辑或分析 .docx 文件的内容。.docx 文件本质上是一个包含 XML 文件和其他资源的 ZIP 存档，您可以读取或编辑。
+用户可能要求您创建、编辑或分析 .docx 文件的内容。.docx 文件本质上是一个包含 XML 文件和其他资源的 ZIP 存档，您可以读取或编辑
 
 ## 工作流决策树
 
@@ -38,7 +39,7 @@ pandoc --track-changes=all path-to-file.docx -o output.md
 
 ### 原始 XML 访问
 
-以下情况需要原始 XML 访问：批注、复杂格式、文档结构、嵌入媒体和元数据。
+以下情况需要原始 XML 访问：批注、复杂格式、文档结构、嵌入媒体和元数据
 
 #### 关键文件结构
 
@@ -48,7 +49,7 @@ pandoc --track-changes=all path-to-file.docx -o output.md
 
 ## 创建新 Word 文档
 
-从头创建新 Word 文档时，使用 **docx-js**，它允许您使用 JavaScript/TypeScript 创建 Word 文档。
+从头创建新 Word 文档时，使用 **docx-js**，它允许您使用 JavaScript/TypeScript 创建 Word 文档
 
 ### 工作流
 
@@ -58,7 +59,7 @@ pandoc --track-changes=all path-to-file.docx -o output.md
 
 ## 编辑现有 Word 文档
 
-编辑现有 Word 文档时，使用 **Document 库**（用于 OOXML 操作的 Python 库）。
+编辑现有 Word 文档时，使用 **Document 库**（用于 OOXML 操作的 Python 库）
 
 ### 工作流
 
@@ -69,10 +70,10 @@ pandoc --track-changes=all path-to-file.docx -o output.md
 
 ## 文档审查的红线修订工作流
 
-此工作流允许您在 markdown 中规划全面的追踪更改，然后在 OOXML 中实现它们。
+此工作流允许您在 markdown 中规划全面的追踪更改，然后在 OOXML 中实现它们
 
 **原则：最小、精确的编辑**
-实现追踪更改时，仅标记实际更改的文本。
+实现追踪更改时，仅标记实际更改的文本
 
 ### 追踪更改工作流
 

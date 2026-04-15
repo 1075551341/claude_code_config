@@ -1,15 +1,16 @@
 ---
 name: message-queue
-description: 当需要实现消息队列、处理异步任务、使用BullMQ/RabbitMQ/Kafka时调用此技能。触发词：消息队列、BullMQ、RabbitMQ、Kafka、异步任务、延迟队列、发布订阅、消息中间件、任务调度。
+description: 实现消息队列、处理异步任务、使用BullMQ/RabbitMQ/Kafka
+triggers: [消息队列, BullMQ, RabbitMQ, Kafka, 异步任务, 延迟队列, 发布订阅, 消息中间件, 任务调度]
 ---
 
 # 消息队列
 
 ## 描述
-异步任务与消息队列方案，涵盖 BullMQ、RabbitMQ、Redis Streams 等消息中间件。
+异步任务与消息队列方案，涵盖 BullMQ、RabbitMQ、Redis Streams 等消息中间件
 
 ## 触发条件
-当用户提到：消息队列、MQ、BullMQ、RabbitMQ、Kafka、Redis Streams、异步任务、任务队列、延迟队列、死信队列、发布订阅、事件驱动、后台任务 时使用此技能。
+当用户提到：消息队列、MQ、BullMQ、RabbitMQ、Kafka、Redis Streams、异步任务、任务队列、延迟队列、死信队列、发布订阅、事件驱动、后台任务 时使用此技能
 
 ## 方案选型
 

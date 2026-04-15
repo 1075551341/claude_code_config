@@ -1,6 +1,7 @@
 ---
 name: report-generator
-description: 当需要生成报告文档、制作分析报告、输出Markdown/PDF/Word/Excel报告时调用此技能。触发词：报告生成、文档生成、分析报告、Markdown报告、报告输出、报告模板、日报生成、周报生成。
+description: 生成报告文档、制作分析报告、输出Markdown/PDF/Word/Excel报告
+triggers: [报告生成, 文档生成, 分析报告, Markdown报告, 报告输出, 报告模板, 日报生成, 周报生成]
 ---
 
 # 报告生成

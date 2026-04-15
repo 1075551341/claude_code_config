@@ -1,6 +1,7 @@
 ---
 name: linear-integration
-description: 集成 Linear 项目管理和 Issue 跟踪。触发词：Linear、项目管理、Issue跟踪、任务管理、Linear API。
+description: 集成 Linear 项目管理和 Issue 跟踪
+triggers: [集成 Linear 项目管理和 Issue 跟踪]
 ---
 
 # Linear 集成

@@ -1,6 +1,7 @@
 ---
 name: security-best-practices
-description: 当需要进行安全开发、防护常见漏洞、处理敏感数据、实现安全认证时调用此技能。触发词：安全开发、安全防护、OWASP、XSS防护、SQL注入防护、CSRF防护、安全审计、漏洞防护、敏感数据加密。
+description: 进行安全开发
+triggers: [进行安全开发, 防护常见漏洞, 处理敏感数据, 实现安全认证]
 ---
 
 # 安全最佳实践

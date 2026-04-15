@@ -1,9 +1,20 @@
 ---
 name: brainstorming
-description: 设计头脑风暴和方案验证，包括创造性工作前的设计思考。触发词：头脑风暴、方案设计、设计验证、brainstorming、方案讨论、新功能、设计组件、实现模块、架构设计、需求分析、功能开发、技术方案。
+description: 设计头脑风暴和方案验证，包括创造性工作前的设计思考
+triggers: [头脑风暴, 方案设计, 设计验证, brainstorming, 方案讨论, 新功能, 架构设计, 需求分析]
 ---
 
 # 设计头脑风暴
+
+## @Examples
+
+```
+用户: "我们新功能要用什么架构？"
+Claude: /brainstorming → 决策矩阵 → 推荐方案
+
+用户: "帮我设计用户模块"
+Claude: /brainstorming → 三方案对比 → 决策点确认
+```
 
 ## 核心流程
 

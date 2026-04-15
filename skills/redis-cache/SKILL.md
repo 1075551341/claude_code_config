@@ -1,6 +1,7 @@
 ---
 name: redis-cache
-description: 当需要使用Redis缓存、配置Redis服务、实现缓存策略、操作Redis数据结构时调用此技能。触发词：Redis、缓存、Redis命令、Redis配置、缓存策略、分布式缓存、内存数据库。
+description: 使用Redis缓存
+triggers: [使用Redis缓存, 配置Redis服务, 实现缓存策略, 操作Redis数据结构]
 ---
 
 # Redis 缓存

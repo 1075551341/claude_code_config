@@ -1,6 +1,8 @@
 ---
 name: docker-devops
-description: 当需要编写Dockerfile、配置Docker Compose、容器化部署、管理Docker容器时调用此技能。触发词：Docker、Dockerfile、Docker Compose、容器化、Docker部署、容器编排、镜像构建、docker-compose。
+CI/CD
+description: 编写Dockerfile
+triggers: [编写Dockerfile, 配置Docker Compose, 容器化部署, 管理Docker容器]
 ---
 
 # Docker 与 DevOps

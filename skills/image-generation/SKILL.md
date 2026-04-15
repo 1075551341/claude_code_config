@@ -1,6 +1,7 @@
 ---
 name: image-generation
-description: 使用 AI 生成和编辑图像。触发词：AI画图、图像生成、DALL-E、Stable Diffusion、AI绘画、图片生成、AI作图、AI绘图、Midjourney、Imagen、图片编辑、图像合成。
+description: 使用 AI 生成和编辑图像
+triggers: [使用 AI 生成和编辑图像]
 ---
 
 # AI 图像生成

@@ -1,6 +1,7 @@
 ---
 name: doc-coauthoring
-description: 结构化文档协作撰写。触发：写文档、写提案、写技术规范、写决策文档、写 RFC
+description: 结构化文档协作撰写。触发：写文档
+triggers: [结构化文档协作撰写。触发：写文档, 写提案, 写技术规范, 写决策文档, 写 RFC]
 ---
 
 # 文档协作撰写

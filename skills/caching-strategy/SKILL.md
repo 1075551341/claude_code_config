@@ -1,15 +1,16 @@
 ---
 name: caching-strategy
-description: 当需要设计缓存策略、使用Redis缓存、配置CDN缓存、解决缓存穿透/雪崩/击穿问题时调用此技能。触发词：缓存策略、Redis缓存、CDN缓存、HTTP缓存、缓存穿透、缓存雪崩、缓存击穿、TTL、LRU、Cache-Control。
+description: 设计缓存策略、使用Redis缓存、配置CDN缓存、解决缓存穿透/雪崩/击穿问题
+triggers: [缓存策略, Redis缓存, CDN缓存, HTTP缓存, 缓存穿透, 缓存雪崩, 缓存击穿, TTL, LRU, Cache-Control]
 ---
 
 # 缓存策略
 
 ## 描述
-缓存策略设计与实现，涵盖 Redis、内存缓存、CDN、HTTP 缓存等多层缓存方案。
+缓存策略设计与实现，涵盖 Redis、内存缓存、CDN、HTTP 缓存等多层缓存方案
 
 ## 触发条件
-当用户提到：缓存、Redis、内存缓存、CDN、HTTP Cache、Cache-Control、ETag、缓存穿透、缓存雪崩、缓存击穿、TTL、LRU、缓存失效策略 时使用此技能。
+当用户提到：缓存、Redis、内存缓存、CDN、HTTP Cache、Cache-Control、ETag、缓存穿透、缓存雪崩、缓存击穿、TTL、LRU、缓存失效策略 时使用此技能
 
 ## 方案选型
 

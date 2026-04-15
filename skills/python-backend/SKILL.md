@@ -1,6 +1,7 @@
 ---
 name: python-backend
-description: 当需要开发Python后端应用、使用FastAPI/Flask/Django框架、编写Python API服务时调用此技能。触发词：Python后端、FastAPI开发、Flask开发、Django开发、Python API、Python服务、后端开发、Python Web。
+description: 开发Python后端应用、使用FastAPI/Flask/Django框架、编写Python API服务
+triggers: [Python后端, FastAPI开发, Flask开发, Django开发, Python API, Python服务, 后端开发, Python Web]
 ---
 
 # Python 后端开发

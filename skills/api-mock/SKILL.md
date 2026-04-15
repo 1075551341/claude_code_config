@@ -1,6 +1,7 @@
 ---
 name: api-mock
-description: 当需要生成Mock数据、模拟API响应、创建测试数据、使用Faker.js/Mock.js时调用此技能。触发词：Mock数据、模拟数据、Mock API、Faker.js、Mock.js、MSW、测试数据生成、假数据、数据模拟。
+description: 生成Mock数据、模拟API响应、创建测试数据、使用Faker.js/Mock.js
+triggers: [Mock数据, 模拟数据, Mock API, Faker.js, Mock.js, MSW, 测试数据生成, 假数据, 数据模拟]
 ---
 
 # API Mock 开发

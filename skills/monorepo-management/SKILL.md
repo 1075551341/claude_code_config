@@ -1,16 +1,17 @@
 ---
 name: monorepo-management
-description: 当需要管理Monorepo项目、使用Turborepo/Nx/pnpm workspace、配置多包仓库时调用此技能。触发词：Monorepo、Turborepo、Nx、pnpm workspace、多包管理、组件库开发、包管理、工作区配置。
+description: 管理Monorepo项目、使用Turborepo/Nx/pnpm workspace、配置多包仓库
+triggers: [Monorepo, Turborepo, Nx, pnpm workspace, 多包管理, 组件库开发, 包管理, 工作区配置]
 ---
 
 # Monorepo 项目管理最佳实践
 
 ## 描述
 Monorepo 项目管理技能，涵盖 Turborepo/Nx/pnpm workspace 的配置、
-包管理、依赖共享、构建缓存和 CI/CD 集成。
+包管理、依赖共享、构建缓存和 CI/CD 集成
 
 ## 触发条件
-当需要搭建或管理多包项目、前后端统一仓库、组件库 + 应用共存时使用。
+搭建或管理多包项目、前后端统一仓库、组件库 + 应用共存时使用
 
 ## 技术选型
 

@@ -1,6 +1,7 @@
 ---
 name: mobile-deployment
-description: 当需要发布移动应用、上架应用商店、配置应用签名、实现应用更新时调用此技能。触发词：应用发布、App发布、应用商店、上架App Store、上架Google Play、应用签名、OTA更新、热更新。
+description: 发布移动应用
+triggers: [发布移动应用, 上架应用商店, 配置应用签名, 实现应用更新]
 ---
 
 # 移动应用发布

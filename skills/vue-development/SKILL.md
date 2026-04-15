@@ -1,6 +1,7 @@
 ---
 name: vue-development
-description: 当需要开发Vue组件、使用Vue3 Composition API、管理Vue状态、编写Vue应用时调用此技能。触发词：Vue开发、Vue3、Vue组件、Composition API、Pinia、Vue Router、Vue状态管理、setup语法、响应式数据。
+description: 开发Vue组件
+triggers: [开发Vue组件, 使用Vue3 Composition API, 管理Vue状态, 编写Vue应用]
 ---
 
 # Vue.js 开发（Vue 3）

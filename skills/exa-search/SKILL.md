@@ -1,6 +1,7 @@
 ---
 name: exa-search
-description: 使用 Exa AI 进行语义搜索和智能检索。触发词：Exa、AI搜索、语义搜索、智能检索、神经搜索。
+description: 使用 Exa AI 进行语义搜索和智能检索
+triggers: [使用 Exa AI 进行语义搜索和智能检索]
 ---
 
 # Exa AI 搜索

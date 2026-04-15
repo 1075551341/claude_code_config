@@ -45,6 +45,39 @@
 
 ---
 
+## 规则分类
+
+### AlwaysApply（始终启用）
+
+- `RULES_CORE.md` — 核心规则
+
+### 按领域（按需加载）
+
+| 领域 | 规则文件 |
+|------|----------|
+| AI/LLM | RULES_AI.md |
+| 后端 | RULES_BACKEND.md |
+| 前端 | RULES_FRONTEND.md |
+| 数据库 | RULES_DATABASE.md |
+| 安全 | RULES_SECURITY.md |
+| 测试 | RULES_TESTING.md |
+| Git | RULES_GIT.md |
+| DevOps | RULES_DEVOPS.md |
+
+### 按语言（按需加载）
+
+| 语言 | 规则文件 |
+|------|----------|
+| Python | RULES_PYTHON.md |
+| TypeScript | RULES_TYPESCRIPT.md |
+| Go | RULES_GO.md |
+| Rust | RULES_RUST.md |
+| C# | RULES_CSHARP.md |
+| Dart/Flutter | RULES_DART.md |
+| 移动开发 | RULES_MOBILE.md |
+
+---
+
 ## 同步机制
 
 ```powershell

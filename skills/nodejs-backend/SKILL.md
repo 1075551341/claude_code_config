@@ -1,6 +1,7 @@
 ---
 name: nodejs-backend
-description: 当需要开发Node.js后端应用、使用Express/Koa/NestJS框架、编写后端API服务时调用此技能。触发词：Node.js后端、Express开发、Koa开发、NestJS、后端开发、Node服务、JavaScript后端、TypeScript后端。
+description: 开发Node.js后端应用、使用Express/Koa/NestJS框架、编写后端API服务
+triggers: [Node.js后端, Express开发, Koa开发, NestJS, 后端开发, Node服务, JavaScript后端, TypeScript后端]
 ---
 
 # Node.js 后端开发

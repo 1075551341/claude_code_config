@@ -1,6 +1,7 @@
 ---
 name: vercel-deploy
-description: Vercel 部署和托管配置。触发词：Vercel、部署、托管、Edge Functions、前端部署。
+description: Vercel 部署和托管配置
+triggers: [Vercel 部署和托管配置]
 ---
 
 # Vercel 部署

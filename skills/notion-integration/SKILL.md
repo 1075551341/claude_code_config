@@ -1,6 +1,7 @@
 ---
 name: notion-integration
-description: 使用Notion API、集成Notion工作区、操作Notion数据库。
+description: 使用Notion API
+triggers: [使用Notion API, 集成Notion工作区, 操作Notion数据库]
 ---
 
 # Notion 集成

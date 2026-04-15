@@ -1,16 +1,17 @@
 ---
 name: state-management
-description: 当需要管理前端状态、使用Redux/Pinia/Zustand、设计全局状态存储时调用此技能。触发词：状态管理、Redux、Pinia、Zustand、全局状态、Store设计、状态持久化、跨组件通信、Jotai。
+description: 管理前端状态、使用Redux/Pinia/Zustand、设计全局状态存储
+triggers: [状态管理, Redux, Pinia, Zustand, 全局状态, Store设计, 状态持久化, 跨组件通信, Jotai]
 ---
 
 # 状态管理最佳实践
 
 ## 描述
 前端状态管理技能，涵盖 React（Zustand/Redux/Jotai）和 Vue（Pinia）的状态设计、
-Store 拆分、异步状态处理、持久化和性能优化。
+Store 拆分、异步状态处理、持久化和性能优化
 
 ## 触发条件
-当需要设计或实现前端状态管理方案时使用，包括全局状态、跨组件通信、缓存策略等场景。
+设计或实现前端状态管理方案时使用，包括全局状态、跨组件通信、缓存策略等场景
 
 ## 技术方案选型
 

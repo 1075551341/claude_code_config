@@ -1,6 +1,7 @@
 ---
 name: command-reference
-description: 常用CLI命令速查表。触发词：命令速查、CLI命令、Git命令、Docker命令、Linux命令、npm命令、命令行、命令参考。
+description: 常用CLI命令速查表
+triggers: [常用CLI命令速查表]
 ---
 
 # 常用命令速查

@@ -1,11 +1,12 @@
 ---
 name: icon-search
-description: 当需要查找图标、搜索图标库、使用Iconify/FontAwesome图标时调用此技能。触发词：图标搜索、Iconify、FontAwesome、图标查找、IconPark、前端图标、SVG图标、图标导入、icon组件。
+description: 查找图标、搜索图标库、使用Iconify/FontAwesome图标
+triggers: [图标搜索, Iconify, FontAwesome, 图标查找, IconPark, 前端图标, SVG图标, 图标导入, icon组件]
 ---
 
 # 图标搜索和导入
 
-搜索和导入前端图标。
+搜索和导入前端图标
 
 ## 使用方式
 

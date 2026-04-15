@@ -1,6 +1,7 @@
 ---
 name: brand-guidelines
-description: 当需要创建品牌指南、设计规范、视觉风格指南、品牌一致性文档时调用此技能。触发词：品牌指南、Brand Guidelines、视觉规范、设计规范、品牌风格、品牌一致性、设计系统、品牌标识。
+description: 创建品牌指南
+triggers: [创建品牌指南, 设计规范, 视觉风格指南, 品牌一致性文档]
 ---
 
 # 品牌指南创建

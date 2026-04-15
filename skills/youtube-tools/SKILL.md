@@ -1,6 +1,7 @@
 ---
 name: youtube-tools
-description: 当需要下载YouTube视频、获取YouTube字幕、分析YouTube内容时调用此技能。触发词：YouTube下载、YouTube字幕、视频下载、字幕提取、YouTube工具、yt-dlp。
+description: 下载YouTube视频
+triggers: [下载YouTube视频, 获取YouTube字幕, 分析YouTube内容]
 ---
 
 # YouTube 工具

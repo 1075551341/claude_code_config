@@ -1,9 +1,20 @@
 ---
 name: systematic-debugging
-description: 当遇到程序报错、运行时异常、测试失败、功能异常、性能问题时调用此技能，遵循系统化调试流程（含根因分析/5Why）。触发词：报错、错误、bug、异常、崩溃、不工作、失败、白屏、500、404、调试、排查、定位问题、故障诊断、troubleshooting、问题定位、故障分析、错误排查、调试指南、问题诊断、根因分析、根本原因、问题追溯、根因追踪、根因排查、5Why分析。
+description: 当遇到程序报错、运行时异常、测试失败，遵循系统化调试流程（含根因分析/5Why）
+triggers: [程序报错, 运行时异常, 测试失败, 功能异常, 性能问题, 调试]
 ---
 
 # 系统化调试
+
+## @Examples
+
+```
+用户: "程序崩溃了，错误是 TypeError: Cannot read property 'x' of undefined"
+Claude: /systematic-debugging → 收集症状 → 分析现场 → 5Why 根因分析 → 找到 undefined 的来源
+
+用户: "测试全部失败了"
+Claude: /systematic-debugging → 分类失败 → 从第一个开始 → 复现 → 定位根因 → 修复
+```
 
 ## 核心原则
 

@@ -1,6 +1,7 @@
 ---
 name: metadata-extraction
-description: 当需要提取文件元数据、分析文档属性、检查图片Exif信息、文件取证分析时调用此技能。触发词：元数据提取、metadata、文件属性、Exif信息、文档信息、图片信息、文件分析、元数据分析。
+description: 提取文件元数据
+triggers: [提取文件元数据, 分析文档属性, 检查图片Exif信息, 文件取证分析]
 ---
 
 # 文件元数据提取

@@ -1,6 +1,7 @@
 ---
 name: clickhouse-analytics
-description: 当需要使用ClickHouse进行分析查询、处理大数据分析、实现实时数据统计时调用此技能。触发词：ClickHouse、ClickHouse分析、大数据分析、实时分析、OLAP数据库、列式数据库。
+description: 使用ClickHouse进行分析查询
+triggers: [使用ClickHouse进行分析查询, 处理大数据分析, 实现实时数据统计]
 ---
 
 # ClickHouse 分析

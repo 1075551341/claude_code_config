@@ -1,6 +1,7 @@
 ---
 name: uniapp-development
-description: 当需要开发UniApp跨平台应用、编写微信小程序、实现多端适配时调用此技能。触发词：UniApp、UniApp开发、跨平台开发、微信小程序、小程序开发、多端适配、Vue小程序、uView、UniApp组件。
+description: 开发UniApp跨平台应用
+triggers: [开发UniApp跨平台应用, 编写微信小程序, 实现多端适配]
 ---
 
 # UniApp 开发

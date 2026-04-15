@@ -312,12 +312,56 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## 格式转换（Claude Code → 编辑器）
+
+### 使用 -FormatConvert 参数
+
+```powershell
+# 同步并转换格式
+~/.claude/sync.ps1 -FormatConvert
+
+# 转换但不写入（预览）
+~/.claude/sync.ps1 -DryRun -FormatConvert
+```
+
+### 转换内容
+
+| 源格式 | 目标格式 | 说明 |
+|--------|---------|------|
+| `_comment` 字段 | `//` 注释 | JSON 注释移除 |
+| `_note` 字段 | `//` 注释 | JSON 注释移除 |
+| `hooks` 配置 | 移除 | 编辑器不支持 |
+| Claude 特定字段 | 清理/移除 | 保留通用配置 |
+
+## 回滚操作
+
+### 从备份恢复
+
+```powershell
+# 回滚到上次同步
+~/.claude/sync.ps1 -Rollback
+
+# 回滚（预览）
+~/.claude/sync.ps1 -DryRun -Rollback
+```
+
+### 备份位置
+
+```
+~/.claude/backups/sync-YYYYMMDD-HHmmss/
+├── Cursor/
+├── Windsurf/
+└── Trae/
+```
+
 ## 参考仓库
 
 - [anthropics/skills](https://github.com/anthropics/skills) - Claude 官方技能
-- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 完整配置参考
+- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) - 完整配置参考
 - [obra/superpowers](https://github.com/obra/superpowers) - 多平台增强技能
+- [deer-flow](https://github.com/bytedance/deer-flow) - 工作流模式
+- [claude-context](https://github.com/zilliztech/claude-context) - 上下文管理
 
 ---
 
-_版本：v4.0 | 更新：2026-04-09_
+_版本：v5.0 | 更新：2026-04-15_

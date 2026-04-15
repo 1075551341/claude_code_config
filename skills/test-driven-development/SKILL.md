@@ -1,9 +1,20 @@
 ---
 name: test-driven-development
-description: 当需要遵循TDD流程开发功能、编写单元测试、实现测试先行开发时调用此技能。触发词：TDD、测试驱动、测试先行、RED-GREEN-REFACTOR、先写测试、单元测试开发、测试覆盖率提升。
+description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
+triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
 ---
 
 # 测试驱动开发（TDD）
+
+## @Examples
+
+```
+用户: "用TDD实现这个功能"
+Claude: /test-driven-development → RED(写失败测试) → GREEN(最小实现) → REFACTOR(优化)
+
+用户: "先写测试"
+Claude: /test-driven-development → 设计测试 → 编写失败测试 → 实现功能
+```
 
 ## 核心理念
 

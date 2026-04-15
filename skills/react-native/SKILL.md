@@ -1,6 +1,7 @@
 ---
 name: react-native
-description: 当需要开发React Native跨平台移动应用、使用JavaScript/TypeScript开发移动端时调用此技能。触发词：React Native、RN开发、移动端开发、React Native CLI、Expo、移动应用开发、iOS Android开发。
+description: 开发React Native跨平台移动应用、使用JavaScript/TypeScript开发移动端
+triggers: [React Native, RN开发, 移动端开发, React Native CLI, Expo, 移动应用开发, iOS Android开发]
 ---
 
 # React Native 跨平台开发

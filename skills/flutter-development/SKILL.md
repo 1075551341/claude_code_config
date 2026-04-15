@@ -1,6 +1,7 @@
 ---
 name: flutter-development
-description: 当需要开发Flutter跨平台移动应用、编写Dart代码、实现iOS/Android双端应用时调用此技能。触发词：Flutter、Flutter开发、Dart、移动应用、跨平台开发、Flutter UI、Widget、iOS Android双端。
+description: 开发Flutter跨平台移动应用、编写Dart代码、实现iOS/Android双端应用
+triggers: [Flutter, Flutter开发, Dart, 移动应用, 跨平台开发, Flutter UI, Widget, iOS Android双端]
 ---
 
 # Flutter 跨平台开发

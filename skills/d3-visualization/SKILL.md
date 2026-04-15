@@ -1,6 +1,7 @@
 ---
 name: d3-visualization
-description: 当需要创建D3.js数据可视化图表、交互式图表、自定义可视化时调用此技能。触发词：D3.js、D3可视化、数据可视化、交互图表、SVG图表、D3图表、数据图表、可视化开发。
+description: 创建D3.js数据可视化图表
+triggers: [创建D3.js数据可视化图表, 交互式图表, 自定义可视化]
 ---
 
 # D3.js 数据可视化

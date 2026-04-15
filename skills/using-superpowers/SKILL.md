@@ -1,13 +1,24 @@
 ---
 name: using-superpowers
-description: 技能发现与使用规则。触发：开始任何对话时、不确定是否有可用技能时
+description: 技能发现与使用规则
+triggers: [开始对话, 不确定技能, 有什么技能, 可用技能, 开始任务]
 ---
 
 # 技能发现与使用规则
 
+## @Examples
+
+```
+用户: "帮我创建一个用户模块"
+Claude: /using-superpowers → 查找相关技能 → brainstorming → 设计方案
+
+用户: "有什么技能可用？"
+Claude: /using-superpowers → 列出P0/P1/P2技能及
+```
+
 ## 核心规则
 
-> 即使只有 1% 的可能性技能适用，也必须调用。
+> 即使只有 1% 的可能性技能适用，也必须调用
 
 ## 优先级
 

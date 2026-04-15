@@ -1,6 +1,7 @@
 ---
 name: ios-simulator
-description: 当需要测试iOS应用、使用iOS模拟器、调试iOS界面、测试iPhone/iPad应用时调用此技能。触发词：iOS模拟器、iPhone模拟器、iPad模拟器、iOS测试、Xcode模拟器、Simulator、iOS调试。
+description: 测试iOS应用、使用iOS模拟器、调试iOS界面、测试iPhone/iPad应用
+triggers: [iOS模拟器, iPhone模拟器, iPad模拟器, iOS测试, Xcode模拟器, Simulator, iOS调试]
 ---
 
 # iOS 模拟器操作

@@ -1,6 +1,7 @@
 ---
 name: mobile-ui
-description: 当需要开发移动端UI界面、使用移动UI组件库、实现移动端交互效果时调用此技能。触发词：移动端UI、移动组件库、Vant、Ant Design Mobile、Material Design、移动端样式、移动交互、手势操作。
+description: 开发移动端UI界面
+triggers: [开发移动端UI界面, 使用移动UI组件库, 实现移动端交互效果]
 ---
 
 # 移动端 UI 组件

@@ -1,6 +1,7 @@
 ---
 name: kaizen-improvement
-description: 当需要持续改进、优化流程、提升效率、实施精益改善时调用此技能。触发词：持续改进、改善、Kaizen、流程优化、效率提升、精益改善、PDCA。
+description: 持续改进
+triggers: [持续改进, 优化流程, 提升效率, 实施精益改善]
 ---
 
 # 持续改进（Kaizen）

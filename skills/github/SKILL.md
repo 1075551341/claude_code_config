@@ -1,6 +1,7 @@
 ---
 name: github
-description: 使用gh命令管理GitHub仓库的Issue、PR、CI/CD等。触发词：GitHub CLI、gh命令、Issue管理、PR管理、GitHub自动化。
+description: 使用gh命令管理GitHub仓库的Issue、PR、CI/CD等
+triggers: [GitHub CLI, gh命令, Issue管理, PR管理, GitHub自动化]
 ---
 
 # GitHub CLI

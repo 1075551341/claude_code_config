@@ -1,6 +1,7 @@
 ---
 name: rpa-automation
-description: 当需要实现RPA机器人流程自动化、自动化UI操作、自动化办公流程时调用此技能。触发词：RPA、流程自动化、UI自动化、机器人自动化、自动化办公、RPA开发、机器人流程。
+description: 实现RPA机器人流程自动化
+triggers: [实现RPA机器人流程自动化, 自动化UI操作, 自动化办公流程]
 ---
 
 # RPA 流程自动化

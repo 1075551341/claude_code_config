@@ -1,11 +1,12 @@
 ---
 name: middleware
-description: 当需要编写Express中间件、实现认证日志限流等中间件功能时调用此技能。触发词：Express中间件、中间件开发、认证中间件、日志中间件、错误处理中间件、限流中间件、请求拦截、Koa中间件。
+description: 编写Express中间件
+triggers: [编写Express中间件, 实现认证日志限流等中间件功能]
 ---
 
 # Express 中间件创建
 
-生成符合 Express 规范的中间件代码。
+生成符合 Express 规范的中间件代码
 
 ## 使用方式
 

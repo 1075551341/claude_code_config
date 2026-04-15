@@ -1,11 +1,12 @@
 ---
 name: db-migration
-description: 当需要编写数据库迁移脚本、执行数据库结构变更、使用Prisma/TypeORM/Knex迁移时调用此技能。触发词：数据库迁移、Migration、Prisma迁移、TypeORM迁移、Knex迁移、数据库变更、表结构变更、迁移脚本、数据库版本控制。
+description: 编写数据库迁移脚本、执行数据库结构变更、使用Prisma/TypeORM/Knex迁移
+triggers: [数据库迁移, Migration, Prisma迁移, TypeORM迁移, Knex迁移, 数据库变更, 表结构变更, 迁移脚本, 数据库版本控制]
 ---
 
 # 数据库迁移工具
 
-生成数据库迁移脚本，支持多种 ORM。
+生成数据库迁移脚本，支持多种 ORM
 
 ## 使用方式
 

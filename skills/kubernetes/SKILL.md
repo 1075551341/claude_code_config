@@ -1,6 +1,7 @@
 ---
 name: kubernetes
-description: 当需要部署Kubernetes集群、编写K8s配置文件、管理容器编排、配置Pod/Service/Deployment时调用此技能。触发词：Kubernetes、K8s、容器编排、kubectl、Pod、Deployment、Service、Kubernetes配置。
+description: 部署Kubernetes集群、编写K8s配置文件、管理容器编排、配置Pod/Service/Deployment
+triggers: [Kubernetes, K8s, 容器编排, kubectl, Pod, Deployment, Service, Kubernetes配置]
 ---
 
 # Kubernetes 容器编排

@@ -1,6 +1,7 @@
 ---
 name: agent-browser
-description: Rust极速无头浏览器自动化，支持网页交互和数据采集。触发词：浏览器自动化、无头浏览器、agent browser、网页自动化、浏览器测试。
+description: Rust极速无头浏览器自动化，支持网页交互和数据采集
+triggers: [浏览器自动化, 无头浏览器, agent browser, 网页自动化, 浏览器测试]
 ---
 
 # Agent浏览器

@@ -1,6 +1,7 @@
 ---
 name: social-media-optimizer
-description: 当需要优化社交媒体内容、Twitter算法优化、社交媒体帖子编写、平台内容策略时调用此技能。触发词：社交媒体优化、Twitter优化、社交内容、社媒帖子、内容策略、平台算法、Twitter算法、社交媒体营销。
+description: 优化社交媒体内容
+triggers: [优化社交媒体内容, Twitter算法优化, 社交媒体帖子编写, 平台内容策略]
 ---
 
 # 社交媒体优化
@@ -58,7 +59,7 @@ description: 当需要优化社交媒体内容、Twitter算法优化、社交媒
 - 午间：12-1pm
 - 晚间：5-7pm
 
-根据目标受众时区调整。
+根据目标受众时区调整
 ```
 
 ---

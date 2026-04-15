@@ -1,6 +1,7 @@
 ---
 name: office-docs
-description: 办公文档处理。触发：写报告、做PPT、处理Excel、写邮件、会议纪要、合同审查、通知公告
+description: 办公文档处理。触发：写报告
+triggers: [办公文档处理。触发：写报告, 做PPT, 处理Excel, 写邮件, 会议纪要, 合同审查, 通知公告]
 ---
 
 # 办公文档处理

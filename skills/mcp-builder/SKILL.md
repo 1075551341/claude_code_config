@@ -1,6 +1,7 @@
 ---
 name: mcp-builder
-description: 当需要开发MCP服务器、构建Claude集成工具、创建MCP协议服务时调用此技能。触发词：MCP服务器、MCP开发、Model Context Protocol、Claude MCP、MCP工具、Claude集成、MCP协议。
+description: 开发MCP服务器
+triggers: [开发MCP服务器, 构建Claude集成工具, 创建MCP协议服务]
 ---
 
 # MCP 服务器开发
@@ -18,7 +19,7 @@ mcp = FastMCP("service-name")
 
 @mcp.tool()
 async def service_get_item(item_id: str) -> dict:
-    """获取指定 ID 的条目详情。
+    """获取指定 ID 的条目详情
     
     Args:
         item_id: 条目唯一标识符

@@ -1,6 +1,7 @@
 ---
 name: prompt-engineering
-description: 当需要设计Prompt、优化提示词效果、构建系统提示、实现AI功能时调用此技能。触发词：Prompt设计、提示词工程、提示词优化、Prompt优化、系统提示、System Prompt、Few-shot、Chain of Thought、提示词模板。
+description: 设计Prompt
+triggers: [设计Prompt, 优化提示词效果, 构建系统提示, 实现AI功能]
 ---
 
 # Prompt 工程实践

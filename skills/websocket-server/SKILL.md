@@ -1,6 +1,7 @@
 ---
 name: websocket-server
-description: WebSocket 服务端开发与实时通信。触发词：WebSocket服务端、实时推送、连接管理、Socket服务。
+description: WebSocket 服务端开发与实时通信
+triggers: [WebSocket 服务端开发与实时通信]
 ---
 
 # WebSocket 服务端

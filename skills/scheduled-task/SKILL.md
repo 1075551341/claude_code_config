@@ -1,6 +1,7 @@
 ---
 name: scheduled-task
-description: 定时任务、cron表达式调度任务。
+description: 定时任务
+triggers: [定时任务, cron表达式调度任务]
 ---
 
 # 定时任务

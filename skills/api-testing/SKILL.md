@@ -1,6 +1,7 @@
 ---
 name: api-testing
-description: 当需要测试API接口、执行接口测试、验证API响应、进行接口调试时调用此技能。触发词：API测试、接口测试、API调试、Postman、curl测试、接口验证、API调用、HTTP测试。
+description: 测试API接口、执行接口测试、验证API响应
+triggers: [API测试, 接口测试, API调试, Postman, curl测试, 接口验证]
 ---
 
 # API 测试

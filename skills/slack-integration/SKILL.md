@@ -1,6 +1,7 @@
 ---
 name: slack-integration
-description: 集成 Slack 消息发送、频道管理、用户操作。触发词：Slack、Slack API、消息通知、频道管理、Slack Bot。
+description: 集成 Slack 消息发送
+triggers: [集成 Slack 消息发送, 频道管理, 用户操作]
 ---
 
 # Slack 集成

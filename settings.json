@@ -1,21 +1,412 @@
 {
   "_comment": "Claude Code 主配置文件 - 修改后运行 sync-tools.ps1 同步到其他编辑器",
-  "cleanupPeriodDays": 30,
-  "language": "Chinese",
-  "skipDangerousModePermissionPrompt": true,
-  "autoUpdaterStatus": "enabled",
-  "effortLevel": "high",
+  "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
+  "_mcp_section": "MCP 服务器配置（共 22 个，与 .mcp.json 同步）",
   "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
+  "_plugins_section": "插件配置",
+  "autoUpdaterStatus": "enabled",
+  "cleanupPeriodDays": 30,
+  "effortLevel": "high",
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": false,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "context7@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": false
+  },
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "sk-sp-5bdcfa9584194e1ab170eddfb71cc4bc",
-    "ANTHROPIC_BASE_URL": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen3-coder-plus",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
-    "ANTHROPIC_MODEL": "glm-5",
-    "ANTHROPIC_REASONING_MODEL": "glm-5",
+    "ANTHROPIC_AUTH_TOKEN": "sk-cp-40ZWoZtD6HvK7SVQX8m8vwyqwBtPFq1NK03uSmjizXJ-HmBJtuxHfJRND-TgAS9qrd4Dl6gsQNWiwfmtjKmRogcv88Y77vMJM9a1dIdxBmSz_rSoke8XBSQ",
+    "ANTHROPIC_BASE_URL": "https://api.minimaxi.com/anthropic",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_MODEL": "MiniMax-M2.7",
+    "ANTHROPIC_REASONING_MODEL": "MiniMax-M2.7",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1,
     "CLAUDE_CODE_MAX_AUTONOMY": "true",
     "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "_note": "1. 格式化（最先运行，保证后续 lint 检查格式化后代码）",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "_note": "2. Lint + 类型检查",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-lint.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "_note": "3. 操作日志",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "_note": "4. 密钥泄露检测",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "_note": "5. 函数文档注释提醒",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-doc-reminder.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "_note": "6. 自动测试运行器（最耗时，放倒数第二）",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-test-runner.py",
+            "timeout": 60000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
+            "timeout": 10000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Read|Glob|Grep"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "_note": "上下文注入（会话首次运行，之后缓存快速退出）- 覆盖所有操作类型",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
+            "timeout": 8000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task|Bash|Write|Edit"
+      },
+      {
+        "_note": "复杂任务计划生成（会话级缓存，每会话只生成一次）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-task-planner.py",
+            "timeout": 20000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task|Bash|Write"
+      },
+      {
+        "_note": "Bash 专属：依赖安全检查 + 危险命令拦截 + git钩子绕过阻止（顺序不可调换）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-dep-checker.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-git-hook-bypass-block.py",
+            "timeout": 3000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "_note": "Write/Edit 专属：配置文件保护（阻止修改 linter/formatter 配置）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-config-protection.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit"
+      }
+    ],
+    "Stop": [
+      {
+        "_note": "1. 立即弹出系统通知",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-notify.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "_note": "1.5 Debug产物检测（console.log/debugger/breakpoint等）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-debug-checker.py",
+            "timeout": 10000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "_note": "2. 每日工作总结（当日首次，累计 3 次编辑后触发）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-daily-summary.py",
+            "timeout": 15000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      },
+      {
+        "_note": "3. README 自动更新（依赖 plan_cache，有计划且有显著变更时触发）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
+            "timeout": 30000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "language": "Chinese",
+  "mcpServers": {
+    "brave": {
+      "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "command": "npx",
+      "env": {
+        "BRAVE_API_KEY": "你的BraveAPIKey"
+      }
+    },
+    "crawl": {
+      "_description": "Firecrawl 网页爬取。场景：提取网页正文内容、批量采集数据、抓取文档",
+      "args": [
+        "-y",
+        "firecrawl-mcp"
+      ],
+      "command": "npx",
+      "env": {
+        "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey"
+      }
+    },
+    "ctx7": {
+      "_description": "Context7 技术文档查询。场景：查 React/Vue/Express/Node 等库的最新 API",
+      "args": [
+        "-y",
+        "@context7/mcp-server"
+      ],
+      "command": "npx"
+    },
+    "docker": {
+      "_description": "Docker 容器管理（新增）。场景：查看容器状态、启停服务、查看日志、镜像管理",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-docker"
+      ],
+      "command": "npx"
+    },
+    "exa": {
+      "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
+      "args": [
+        "-y",
+        "@context7/mcp-exa-server"
+      ],
+      "command": "npx",
+      "env": {
+        "EXA_API_KEY": "${EXA_API_KEY}"
+      }
+    },
+    "fetch": {
+      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "command": "uvx",
+      "env": {}
+    },
+    "figma": {
+      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-figma"
+      ],
+      "command": "npx",
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      }
+    },
+    "fs": {
+      "_description": "文件系统操作（D:\\apdms 目录）。场景：读写项目文件、管理配置、批量重命名",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\apdms",
+        "C:\\Users\\DELL\\.claude"
+      ],
+      "command": "npx"
+    },
+    "gh": {
+      "_description": "GitHub API 集成。场景：管理 PR/Issue、查看 Actions 状态、搜索仓库",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "command": "npx",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "git": {
+      "_description": "Git 版本库直接操作（新增）。场景：查看提交历史、diff、blame、本地分支操作",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "D:\\apdms"
+      ],
+      "command": "uvx"
+    },
+    "linear": {
+      "_description": "Linear 项目管理集成。场景：Issue跟踪、任务管理、项目管理",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-linear"
+      ],
+      "command": "npx",
+      "env": {
+        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
+      }
+    },
+    "memory": {
+      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "command": "npx"
+    },
+    "notion": {
+      "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-notion"
+      ],
+      "command": "npx",
+      "env": {
+        "NOTION_API_KEY": "${NOTION_API_KEY}"
+      }
+    },
+    "postgres": {
+      "_description": "PostgreSQL 数据库。场景：生产环境复杂查询、事务处理、JSON 数据存储",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://user:password@localhost:5432/dbname"
+      ],
+      "command": "npx"
+    },
+    "puppeteer": {
+      "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "command": "npx"
+    },
+    "pw": {
+      "_description": "Playwright 浏览器自动化（首选）。场景：E2E 测试、网页截图、表单填写、多浏览器兼容",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "command": "npx"
+    },
+    "redis": {
+      "_description": "Redis 缓存/队列/键值存储。场景：缓存热点数据、会话存储、消息队列、分布式锁",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis",
+        "redis://localhost:6379"
+      ],
+      "command": "npx"
+    },
+    "slack": {
+      "_description": "Slack 消息发送与频道管理。场景：发送通知、管理频道、获取消息",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-slack"
+      ],
+      "command": "npx",
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      }
+    },
+    "sqlite": {
+      "_description": "SQLite 轻量数据库。场景：本地原型开发、小型数据存储、测试数据库",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "--db-path",
+        "D:\\apdms\\database.db"
+      ],
+      "command": "npx"
+    },
+    "supabase": {
+      "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-supabase"
+      ],
+      "command": "npx",
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    },
+    "thinking": {
+      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "command": "npx"
+    },
+    "time": {
+      "_description": "时间与时区工具（新增）。场景：获取当前时间、时区转换、计算时间差",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-time"
+      ],
+      "command": "npx"
+    }
   },
   "model": "qwen3-coder-plus",
   "permissions": {
@@ -37,6 +428,7 @@
       "mcp__*",
       "Bash(*)"
     ],
+    "defaultMode": "bypassPermissions",
     "deny": [
       "Bash(rm -rf /)",
       "Bash(rm -rf /*)",
@@ -78,397 +470,7 @@
       "Read(**/*.key)",
       "Read(**/*.pfx)",
       "Read(**/*.p12)"
-    ],
-    "defaultMode": "bypassPermissions"
-  },
-  "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "_note": "1. 格式化（最先运行，保证后续 lint 检查格式化后代码）",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
-            "timeout": 30000
-          },
-          {
-            "_note": "2. Lint + 类型检查",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-lint.py",
-            "timeout": 30000
-          },
-          {
-            "_note": "3. 操作日志",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
-            "timeout": 10000
-          },
-          {
-            "_note": "4. 密钥泄露检测",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
-            "timeout": 10000
-          },
-          {
-            "_note": "5. 函数文档注释提醒",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-doc-reminder.py",
-            "timeout": 10000
-          },
-          {
-            "_note": "6. 自动测试运行器（最耗时，放倒数第二）",
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-test-runner.py",
-            "timeout": 60000
-          }
-        ]
-      },
-      {
-        "matcher": "Bash|Read|Glob|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
-            "timeout": 10000
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "_note": "上下文注入（会话首次运行，之后缓存快速退出）- 覆盖所有操作类型",
-        "matcher": "Task|Bash|Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
-            "timeout": 8000
-          }
-        ]
-      },
-      {
-        "_note": "复杂任务计划生成（会话级缓存，每会话只生成一次）",
-        "matcher": "Task|Bash|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-task-planner.py",
-            "timeout": 20000
-          }
-        ]
-      },
-      {
-        "_note": "Bash 专属：依赖安全检查 + 危险命令拦截 + git钩子绕过阻止（顺序不可调换）",
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-dep-checker.py",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-git-hook-bypass-block.py",
-            "timeout": 3000
-          }
-        ]
-      },
-      {
-        "_note": "Write/Edit 专属：配置文件保护（阻止修改 linter/formatter 配置）",
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-config-protection.py",
-            "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "_note": "1. 立即弹出系统通知",
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-notify.py",
-            "timeout": 5000
-          }
-        ]
-      },
-      {
-        "_note": "1.5 Debug产物检测（console.log/debugger/breakpoint等）",
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-debug-checker.py",
-            "timeout": 10000
-          }
-        ]
-      },
-      {
-        "_note": "2. 每日工作总结（当日首次，累计 3 次编辑后触发）",
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-daily-summary.py",
-            "timeout": 15000
-          }
-        ]
-      },
-      {
-        "_note": "3. README 自动更新（依赖 plan_cache，有计划且有显著变更时触发）",
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
-            "timeout": 30000
-          }
-        ]
-      }
     ]
   },
-  "_plugins_section": "插件配置",
-  "enabledPlugins": {
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "security-guidance@claude-plugins-official": false,
-    "skill-creator@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "chrome-devtools-mcp@claude-plugins-official": false,
-    "context7@claude-plugins-official": false,
-    "firecrawl@claude-plugins-official": false,
-    "github@claude-plugins-official": false,
-    "playwright@claude-plugins-official": false,
-    "ralph-loop@claude-plugins-official": false,
-    "typescript-lsp@claude-plugins-official": false
-  },
-  "_mcp_section": "MCP 服务器配置（共 22 个，与 .mcp.json 同步）",
-  "mcpServers": {
-    "redis": {
-      "_description": "Redis 缓存/队列/键值存储。场景：缓存热点数据、会话存储、消息队列、分布式锁",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-redis",
-        "redis://localhost:6379"
-      ]
-    },
-    "sqlite": {
-      "_description": "SQLite 轻量数据库。场景：本地原型开发、小型数据存储、测试数据库",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sqlite",
-        "--db-path",
-        "D:\\apdms\\database.db"
-      ]
-    },
-    "postgres": {
-      "_description": "PostgreSQL 数据库。场景：生产环境复杂查询、事务处理、JSON 数据存储",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://user:password@localhost:5432/dbname"
-      ]
-    },
-    "fs": {
-      "_description": "文件系统操作（D:\\apdms 目录）。场景：读写项目文件、管理配置、批量重命名",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "D:\\apdms",
-        "C:\\Users\\DELL\\.claude"
-      ]
-    },
-    "fetch": {
-      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
-      "command": "uvx",
-      "args": [
-        "mcp-server-fetch"
-      ],
-      "env": {}
-    },
-    "brave": {
-      "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
-      "env": {
-        "BRAVE_API_KEY": "你的BraveAPIKey"
-      }
-    },
-    "crawl": {
-      "_description": "Firecrawl 网页爬取。场景：提取网页正文内容、批量采集数据、抓取文档",
-      "command": "npx",
-      "args": [
-        "-y",
-        "firecrawl-mcp"
-      ],
-      "env": {
-        "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey"
-      }
-    },
-    "pw": {
-      "_description": "Playwright 浏览器自动化（首选）。场景：E2E 测试、网页截图、表单填写、多浏览器兼容",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest"
-      ]
-    },
-    "puppeteer": {
-      "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ]
-    },
-    "git": {
-      "_description": "Git 版本库直接操作（新增）。场景：查看提交历史、diff、blame、本地分支操作",
-      "command": "uvx",
-      "args": [
-        "mcp-server-git",
-        "--repository",
-        "D:\\apdms"
-      ]
-    },
-    "gh": {
-      "_description": "GitHub API 集成。场景：管理 PR/Issue、查看 Actions 状态、搜索仓库",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
-    "ctx7": {
-      "_description": "Context7 技术文档查询。场景：查 React/Vue/Express/Node 等库的最新 API",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@context7/mcp-server"
-      ]
-    },
-    "docker": {
-      "_description": "Docker 容器管理（新增）。场景：查看容器状态、启停服务、查看日志、镜像管理",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-docker"
-      ]
-    },
-    "time": {
-      "_description": "时间与时区工具（新增）。场景：获取当前时间、时区转换、计算时间差",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-time"
-      ]
-    },
-    "thinking": {
-      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
-    },
-    "memory": {
-      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ]
-    },
-    "slack": {
-      "_description": "Slack 消息发送与频道管理。场景：发送通知、管理频道、获取消息",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-slack"
-      ],
-      "env": {
-        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
-      }
-    },
-    "exa": {
-      "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@context7/mcp-exa-server"
-      ],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
-    "linear": {
-      "_description": "Linear 项目管理集成。场景：Issue跟踪、任务管理、项目管理",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-linear"
-      ],
-      "env": {
-        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-      }
-    },
-    "notion": {
-      "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-notion"
-      ],
-      "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
-      }
-    },
-    "supabase": {
-      "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-supabase"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
-      }
-    },
-    "figma": {
-      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-figma"
-      ],
-      "env": {
-        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
-      }
-    }
-  }
+  "skipDangerousModePermissionPrompt": true
 }

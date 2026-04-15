@@ -1,6 +1,7 @@
 ---
 name: software-architecture
-description: 当需要进行系统架构设计、技术选型、设计模式应用、架构重构时调用此技能。触发词：软件架构、系统架构、架构设计、设计模式、技术选型、Clean Architecture、分层架构、微服务架构、DDD领域驱动。
+description: 进行系统架构设计
+triggers: [进行系统架构设计, 技术选型, 设计模式应用, 架构重构]
 ---
 
 # 软件架构设计
