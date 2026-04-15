@@ -1,19 +1,6 @@
 # Claude Code 全局配置
 
-> 跨编辑器共享配置：Claude Code / Cursor / Windsurf / Trae / VS Code
->
 > 本文件是所有配置的入口，详细的分类索引请查看 `SPEC.md`
->
-> 继承自：
-> - [anthropics/skills](https://github.com/anthropics/skills) - 官方技能标准
-> - [obra/superpowers](https://github.com/obra/superpowers) - 工作流系统
-> - [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 配置集合
-> - [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - 上下文管理
-> - [bytedance/deer-flow](https://github.com/bytedance/deer-flow) - 任务规划
-> - [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) - 极简工作流
-> - [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) - 技能集合
-
----
 
 ## 优先级定义
 
@@ -254,6 +241,8 @@ Default system prompt — 最低优先级
 
 ## Skill 系统
 
+> 详细索引见 `SPEC.md → Skill 速查`
+
 ### P0 强制Skill（不可跳过）
 
 | Skill | 触发词 | 功能 |
@@ -281,130 +270,40 @@ Default system prompt — 最低优先级
 4. **铁律优先**：技能中的 Iron Law / 铁律不可违反
 
 ### 强制技能前摄
-> If you think there is even a 1% chance a skill might apply, you ABSOLUTELY MUST invoke the skill. THIS IS NOT NEGOTIABLE.
+> 即使你认为某项技能有哪怕 1%的可能适用，你也绝对必须使用它。这一点没有商量的余地。
 
 ---
 
 ## Agent 系统
 
-### 调用方式
-```
-使用 [agent-name] agent 来 [任务描述]
-```
+> 详细索引见 `SPEC.md → Agent 速查`
 
-### 核心Agent索引
+### 核心Agent（按领域）
 
 | 领域 | Agent | 场景 |
 |------|-------|------|
 | **架构** | `architect` | 系统设计、架构决策 |
-| **前端** | `frontend-developer` | 前端开发 |
-| **前端** | `react-reviewer` | React代码审查 |
-| **前端** | `ux-design-expert` | UI/UX设计 |
-| **后端** | `backend-developer` | 后端开发 |
-| **后端** | `nodejs-reviewer` | Node.js审查 |
-| **后端** | `python-reviewer` | Python审查 |
-| **数据** | `database-expert` | 数据库设计/优化 |
-| **数据** | `data-engineer` | 数据工程 |
+| **前端** | `frontend-developer`, `react-reviewer`, `ux-design-expert` | 前端开发/审查/设计 |
+| **后端** | `backend-developer`, `nodejs-reviewer`, `python-reviewer` | 后端开发/审查 |
+| **数据** | `database-expert`, `data-engineer` | 数据库设计/数据工程 |
 | **测试** | `qa-engineer` | 测试策略/自动化 |
-| **安全** | `security-reviewer` | 安全审查 |
-| **安全** | `compliance-checker` | 合规检查 |
-| **DevOps** | `devops-engineer` | CI/CD、容器化 |
-| **DevOps** | `observability-engineer` | 监控/可观测性 |
-| **DevOps** | `incident-responder` | 故障响应 |
-| **架构** | `cloud-cost-optimizer` | 云成本优化 |
-| **文档** | `docs-expert` | 文档生成 |
-| **文档** | `changelog-generator` | 变更日志 |
-| **工程** | `git-expert` | Git工作流 |
-| **工程** | `refactoring-expert` | 重构 |
-| **工程** | `build-error-resolver` | 构建错误 |
-| **AI** | `ai-engineer` | AI/LLM应用 |
-| **AI** | `agentic-orchestrator` | 多Agent编排 |
-| **AI** | `ml-engineer` | 机器学习 |
-| **AI** | `mcp-builder` | MCP服务器开发 |
-| **垂直** | `payment-integration` | 支付集成 |
-| **垂直** | `game-developer` | 游戏开发 |
-| **垂直** | `embedded-engineer` | 嵌入式 |
-| **语言** | `go-reviewer` | Go审查 |
-| **语言** | `rust-reviewer` | Rust审查 |
-| **语言** | `kotlin-reviewer` | Kotlin审查 |
-| **语言** | `swift-reviewer` | Swift审查 |
-| **语言** | `csharp-reviewer` | C#审查 |
-| **语言** | `flutter-reviewer` | Flutter审查 |
-| **语言** | `typescript-reviewer` | TypeScript审查 |
-| **流程** | `planning-expert` | 规划管理 |
-| **流程** | `context-manager` | 上下文管理 |
-| **流程** | `verification-checker` | 验证检查 |
-| **流程** | `brainstorming` | 头脑风暴 |
-| **效率** | `file-organizer` | 文件整理 |
-| **创意** | `canvas-design` | 画布设计 |
-| **创意** | `ppt-creator` | PPT创建 |
-| **图表** | `mermaid-expert` | 图表绘制 |
+| **安全** | `security-reviewer`, `compliance-checker` | 安全审查/合规 |
+| **DevOps** | `devops-engineer`, `observability-engineer`, `incident-responder` | CI/CD/监控/故障响应 |
+| **AI** | `ai-engineer`, `agentic-orchestrator`, `ml-engineer`, `mcp-builder` | AI/LLM应用/编排/ML |
+| **语言** | `go/rust/kotlin/swift/csharp/flutter/typescript-reviewer` | 语言专项审查 |
+| **效率** | `git-expert`, `refactoring-expert`, `build-error-resolver` | Git/重构/构建错误 |
 
 ---
 
 ## Hook 系统
 
-> Claude Code 专用，其他编辑器通过 launcher 跳过
+> 详细索引见 `SPEC.md → Hooks 速查`（Claude Code 专用，其他编辑器通过 launcher 跳过）
 
-### PreToolUse Hooks
-| Hook | 功能 | 触发 |
-|------|------|------|
-| `pre-context-injector` | 上下文注入 | Task/Write/Edit |
-| `pre-task-planner` | 任务规划 | Task/Bash/Write |
-| `pre-bash-guard` | Bash危险命令拦截 | Bash |
-| `pre-dep-checker` | 依赖安全检查 | Bash |
-| `pre-config-protection` | 配置文件保护 | Write/Edit |
-| `pre-token-budget` | Token预算检查 | 全局 |
-| `pre-git-hook-bypass-block` | 阻止git --no-verify | Bash |
-| `pre-commit-quality` | 提交前质量检查 | Bash |
-| `pre-dev-server-blocker` | 阻止tmux外运行dev server | Bash |
-| `pre-git-push-reminder` | push前提醒 | Bash |
-| `pre-doc-file-warning` | 文档文件警告 | Write |
-| `pre-mcp-health-check` | MCP健康检查 | Bash |
-| `pre-compact-state` | 压缩前状态保存 | PreCompact |
-| `pre-tool-matcher` | 工具匹配 | 全局 |
-| `pre-observe-tool` | 工具执行观察 | 全局 |
-| `pre-suggest-compact` | 建议压缩 | 全局 |
-
-### PostToolUse Hooks
-| Hook | 功能 | 触发 |
-|------|------|------|
-| `post-edit-format` | 代码格式化 | Edit/Write |
-| `post-edit-lint` | Lint+类型检查 | Edit/Write |
-| `post-secret-detector` | 密钥泄露检测 | Edit/Write |
-| `post-test-runner` | 自动测试运行 | Bash |
-| `post-operation-log` | 操作日志 | 全局 |
-| `post-auto-commit` | 自动提交格式 | Bash |
-| `post-build-analysis` | 构建分析 | Bash |
-| `post-command-log-audit` | 命令日志审计 | Bash |
-| `post-cost-tracker` | 成本追踪 | Stop |
-| `post-dependency-audit` | 依赖审计 | Bash |
-| `post-doc-reminder` | 文档更新提醒 | Stop |
-| `post-edit-console-warn` | console.log警告 | Edit |
-| `post-governance-capture` | 治理捕获 | Stop |
-| `post-observe-result` | 结果观察 | PostToolUse |
-| `post-pr-logger` | PR日志 | Bash |
-| `post-record-js-edits` | JS编辑记录 | Edit |
-| `post-batch-format-typecheck` | 批量格式化检查 | Stop |
-
-### Stop Hooks
-| Hook | 功能 |
-|------|------|
-| `stop-notify` | 桌面通知 |
-| `stop-daily-summary` | 每日总结 |
-| `stop-readme-updater` | README更新 |
-| `stop-debug-checker` | Debug检查 |
-| `stop-session-summary` | 会话摘要 |
-| `stop-session-end-marker` | 会话结束标记 |
-| `stop-pattern-extraction` | 模式提取 |
-| `stop-persist-session` | 会话持久化 |
-| `stop-cost-tracker` | 成本追踪 |
-| `stop-evaluate-patterns` | 模式评估 |
-
-### SessionStart Hooks
-| Hook | 功能 |
-|------|------|
-| `session-start-bootstrap` | 会话启动引导 |
+| 类别 | 关键Hook | 功能 |
+|------|----------|------|
+| **PreToolUse** | `pre-bash-guard`, `pre-dep-checker`, `pre-git-hook-bypass-block` | 危险命令拦截、依赖安全、Git安全 |
+| **PostToolUse** | `post-edit-format`, `post-edit-lint`, `post-secret-detector` | 格式化、Lint、密钥检测 |
+| **Stop** | `stop-daily-summary`, `stop-session-summary`, `stop-pattern-extraction` | 总结、摘要、模式提取 |
 
 ---
 
@@ -431,11 +330,11 @@ Default system prompt — 最低优先级
 底层：skills/agents（执行能力）
 ```
 
-### 上下文注入原则（来自 superpowers）
+### 上下文注入原则
 - SessionStart 时注入 using-superpowers
 - 子代理精确构造：从不继承会话历史
 
-### 上下文压缩（来自 claude-context）
+### 上下文压缩
 - AST感知分块：语义保持的上下文压缩
 - Merkle DAG增量同步：变更检测而非全量重索引
 - 向量+BM25混合检索：双路召回RRF融合
@@ -498,25 +397,7 @@ git push origin --delete <branch>
 
 ---
 
-## 多编辑器兼容性
-
-通过 `sync.ps1` 同步到：Cursor / Windsurf / Trae / VS Code
-
-### 编辑器适配
-| 平台 | 配置目录 | 说明 |
-|------|---------|------|
-| Claude Code | `.claude/` | 主平台 |
-| Cursor | `.cursor/` | 镜像配置 |
-| Windsurf | `.windsurf/` | 镜像配置 |
-| Trae | `.trae/` | 镜像配置 |
-| VS Code | `.vscode/` | 镜像配置 |
-
-### 同步原则
-Treat the root `.claude/` as source of truth, then mirror shipped changes to other editors only where the feature actually exists.
-
----
-
-## 设计原则（来自 30-seconds-of-code）
+## 设计原则
 
 ### "30秒"约束
 每个技能/指南设计为30秒内可读完/理解
@@ -549,7 +430,7 @@ metadata → SKILL.md → references/
 
 ---
 
-## TDD 工作流（来自多个仓库）
+## TDD 工作流
 
 ```
 RED (写失败测试) → GREEN (最小代码) → REFACTOR (清理)
@@ -559,14 +440,12 @@ RED (写失败测试) → GREEN (最小代码) → REFACTOR (清理)
 - 目标 80%+ 覆盖率（金融/认证 100%）
 - 写最小代码使测试通过
 ```
-
 ---
 
-## PR Review 工作流（来自 awesome-claude-code）
+## PR Review 工作流
 
 ```
 FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → OUTPUT
-
 多角色审查：
 1. Product Manager Review → 商业价值/用户体验
 2. Developer Review → 代码质量/性能
@@ -575,10 +454,9 @@ FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → 
 5. DevOps Review → CI/CD/基础设施
 6. UI/UX Designer Review → 视觉/可用性
 ```
-
 ---
 
-## Phase 工作流（来自 get-shit-done）
+## Phase 工作流
 
 ```
 /gsd-new-project → /gsd-discuss-phase → /gsd-ui-phase → /gsd-plan-phase → /gsd-execute-phase → /gsd-verify-work → /gsd-ship
@@ -588,21 +466,4 @@ FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → 
 - 每阶段可独立合并
 - 降低大PR的review难度
 ```
-
 ---
-
-## 附录：文件索引
-
-```
-.claude/
-├── CLAUDE.md           # 本文件：全局规范入口
-├── SPEC.md             # 规范索引：规则/Skill/Agent速查
-├── agents/             # 64个Agent定义
-├── skills/             # 148个Skill定义
-├── rules/              # 16个规则文件
-├── hooks/              # 47个Hooks
-├── specs/              # 任务规范目录
-├── experiences/        # 经验库
-│   └── patterns/        # 已验证模式
-└── mcp/                # MCP服务器配置
-```
