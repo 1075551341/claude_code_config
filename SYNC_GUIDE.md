@@ -30,7 +30,7 @@ description: 跨编辑器配置同步指南
 ├── .claude.json              # ❌ 不同步 - Claude Code 专用
 ├── TOOL_MATCHING_GUIDE.md    # ✅ 同步 - 工具匹配指南
 ├── SYNC_GUIDE.md             # 📘 本文件
-└── sync.ps1                  # 🚀 Windows 同步脚本
+└── scripts/sync.ps1          # 🚀 Windows 同步脚本
 ```
 
 ## 同步策略
@@ -53,7 +53,7 @@ description: 跨编辑器配置同步指南
 | `.mcp.json` | 各编辑器 MCP 配置格式不同 | Cursor/Windsurf 使用不同的 MCP 配置格式 |
 | `settings.json` | 包含 Claude Code 专属设置 | 包含 hooks 配置、权限设置等编辑器不支持的选项 |
 | `.claude.json` | Claude Code 状态文件 | 编辑器无法识别 |
-| `sync.ps1` | 仅在主环境使用 | 无需同步 |
+| `scripts/sync.ps1` | 仅在主环境使用 | 无需同步 |
 
 ## 软链接创建方式
 
@@ -233,7 +233,7 @@ Hooks 使用多层检测确保在编辑器环境中安全跳过：
 
 ```powershell
 # 运行同步脚本
-~/.claude/sync.ps1
+~/.claude/scripts/sync.ps1
 
 # 功能
 - [✓] 软链接 CLAUDE.md 到各编辑器
@@ -318,10 +318,10 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 
 ```powershell
 # 同步并转换格式
-~/.claude/sync.ps1 -FormatConvert
+~/.claude/scripts/sync.ps1 -FormatConvert
 
 # 转换但不写入（预览）
-~/.claude/sync.ps1 -DryRun -FormatConvert
+~/.claude/scripts/sync.ps1 -DryRun -FormatConvert
 ```
 
 ### 转换内容
@@ -339,10 +339,10 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 
 ```powershell
 # 回滚到上次同步
-~/.claude/sync.ps1 -Rollback
+~/.claude/scripts/sync.ps1 -Rollback
 
 # 回滚（预览）
-~/.claude/sync.ps1 -DryRun -Rollback
+~/.claude/scripts/sync.ps1 -DryRun -Rollback
 ```
 
 ### 备份位置

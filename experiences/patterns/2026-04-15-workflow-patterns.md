@@ -1,3 +1,11 @@
+---
+date: 2026-04-15
+confidence: 0.8
+category: workflow
+status: active
+verified_count: 1
+---
+
 # 工作流经验模式
 
 > 来源：obra/superpowers, gsd-build/get-shit-done, bytedance/deer-flow

@@ -1,3 +1,11 @@
+---
+date: 2026-04-15
+confidence: 0.8
+category: security
+status: active
+verified_count: 1
+---
+
 # 安全经验模式
 
 > 来源：owasp, awesome-claude-code

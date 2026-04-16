@@ -47,6 +47,7 @@
 | `RULES_TESTING.md` | 测试编写 | 单元/集成/E2E、Mock |
 | `RULES_DEVOPS.md` | CI/CD/部署 | Docker/K8s/监控 |
 | `RULES_GIT.md` | Git操作 | 分支策略、Commit规范 |
+| `RULES_WORKFLOW.md` | 工作流/流程 | Phase工作流、任务分解、上下文腐败治理 |
 
 ---
 
@@ -67,11 +68,16 @@
 |-------|--------|------|------|
 | `test-driven-development` | TDD、测试驱动、RED-GREEN-REFACTOR | `skills/test-driven-development/` | RED→GREEN→REFACTOR循环 |
 | `writing-plans` | 写计划、实施计划、任务分解 | `skills/writing-plans/` | 详细实施计划编写 |
+| `executing-plans` | 执行计划、实施任务 | `skills/executing-plans/` | 计划执行与进度跟踪 |
 | `code-review` | 代码审查、PR审查、审查反馈 | `skills/code-review/` | 全流程代码审查 |
 | `subagent-driven-development` | 并行Agent、多任务、子代理 | `skills/subagent-driven-development/` | 子代理调度与协调 |
+| `dispatching-parallel-agents` | 并行调度、多Agent分发 | `skills/dispatching-parallel-agents/` | 并行Agent任务分发 |
 | `finishing-a-development-branch` | 分支完成、合并PR | `skills/finishing-a-development-branch/` | 分支收尾流程 |
 | `receiving-code-review` | 接收审查、审查反馈 | `skills/receiving-code-review/` | 处理审查意见 |
 | `requesting-code-review` | 请求审查、PR审查 | `skills/requesting-code-review/` | 发起审查流程 |
+| `context-rot-guard` | 上下文腐败、上下文退化 | `skills/context-rot-guard/` | 上下文腐败检测与治理 |
+| `quality-gate` | 质量门禁、质量检查 | `skills/quality-gate/` | 质量门禁检查与阻断 |
+| `prompt-guard` | Prompt安全、Prompt注入 | `skills/prompt-guard/` | Prompt安全防护 |
 
 ### P2 领域Skill
 
@@ -82,6 +88,7 @@
 | `collision-zone-thinking` | 碰撞区思考、反转假设 | `skills/collision-zone-thinking/` |
 | `inversion-exercise` | 反转练习、约束探索 | `skills/inversion-exercise/` |
 | `meta-pattern-recognition` | 元模式、跨领域模式 | `skills/meta-pattern-recognition/` |
+| `writing-skills` | 编写技能、技能开发 | `skills/writing-skills/` |
 
 #### 后端开发
 | Skill | 触发词 | 位置 |
@@ -278,7 +285,6 @@
 | `docs-expert` | 文档生成 | Read, Write |
 | `changelog-generator` | 变更日志 | Read, Write |
 | `business-writing` | 商务写作 | Read, Write |
-| `ppt-creator` | PPT创建 | Read, Write |
 
 ### 工程效能
 | Agent | 场景 | 工具 |
@@ -294,6 +300,7 @@
 | `agentic-orchestrator` | 多Agent编排 | Read, Write |
 | `ml-engineer` | 机器学习 | Read, Write, Bash |
 | `mcp-builder` | MCP服务器开发 | Read, Write, Bash |
+| `prompt-engineer` | Prompt工程/优化 | Read, Write |
 
 ### 垂直领域
 | Agent | 场景 | 工具 |
@@ -318,15 +325,12 @@
 |-------|------|------|
 | `planning-expert` | 规划管理 | Read, Write |
 | `context-manager` | 上下文管理 | Read, Write |
-| `verification-checker` | 验证检查 | Read, Grep |
-| `brainstorming` | 头脑风暴 | Read, Write |
+| `context-rot-monitor` | 上下文腐败监控 | Read, Bash |
 
 ### 效率与创意
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `file-organizer` | 文件整理 | Read, Bash |
-| `canvas-design` | 画布设计 | Read, Write |
-| `mermaid-expert` | 图表绘制 | Read, Write |
 
 ---
 
@@ -352,6 +356,8 @@
 | `pre-tool-matcher` | 工具匹配 | 全局 | MEDIUM |
 | `pre-observe-tool` | 工具执行观察 | 全局 | LOW |
 | `pre-suggest-compact` | 建议压缩 | 全局 | LOW |
+| `pre-prompt-guard` | Prompt安全防护 | 全局 | HIGH |
+| `pre-workflow-guard` | 工作流守卫 | Task/Write | MEDIUM |
 
 ### PostToolUse Hooks
 
@@ -389,6 +395,7 @@
 | `stop-persist-session` | 会话持久化 | LOW |
 | `stop-cost-tracker` | 成本追踪 | LOW |
 | `stop-evaluate-patterns` | 模式评估 | LOW |
+| `stop-quality-gate` | 质量门禁 | HIGH |
 
 ### SessionStart Hooks
 
@@ -420,7 +427,7 @@
 │   ├── test-driven-development/
 │   ├── writing-plans/
 │   ├── code-review/
-│   └── .../               # 148个Skill
+│   └── .../               # 136个Skill
 ├── rules/                 # 规则文件
 │   ├── README.md          # 规则索引
 │   ├── RULES_CORE.md      # 核心规则
@@ -437,7 +444,8 @@
 │   ├── RULES_RUST.md
 │   ├── RULES_CSHARP.md
 │   ├── RULES_DART.md
-│   └── RULES_MOBILE.md
+│   ├── RULES_MOBILE.md
+│   └── RULES_WORKFLOW.md
 ├── hooks/                 # Hook脚本
 │   ├── README.md          # Hook索引
 │   ├── pre/               # PreToolUse
@@ -477,7 +485,7 @@
 
 ## 版本信息
 
-- **版本**: 1.0.0
-- **更新日期**: 2026-04-15
+- **版本**: 1.2.0
+- **更新日期**: 2026-04-16
 - **整合仓库数**: 12
-- **总配置项**: agents(64) + skills(148) + hooks(47) + rules(16)
+- **总配置项**: agents(53) + skills(136) + hooks(50) + rules(18)

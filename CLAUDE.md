@@ -47,6 +47,9 @@ Default system prompt — 最低优先级
 
 ### R6: 非简单任务必须流程
 **头脑风暴 → 迭代精炼 → 计划 → 执行 → 交叉验证 → 学习提取**
+
+<HARD-GATE> 在用户批准设计前，禁止任何实现行动。反模式："这太简单不需要设计"——每个项目都必须经过设计审批 </HARD-GATE>
+
 ```
 触发条件（满足任一）：
 - 涉及 >3 文件
@@ -72,7 +75,7 @@ Default system prompt — 最低优先级
 ### R10: 简洁优先
 **最小代码解决问题，禁止未请求的功能/抽象/灵活性/冗余错误处理**
 - 能 50 行解决的不写 200 行
-- 禁止：单次使用的封装 / 未请求的配置项 / 不可能场景的错误处理
+- 禁止：单次使用的封装 / 未请求的配置项 / 不可能场景的错误处理 / 推测性功能
 - 自检：资深工程师会说"过度设计"？→ 重写
 
 ### R11: 安全默认
@@ -89,7 +92,7 @@ Default system prompt — 最低优先级
 - 更简单方案存在时说出来
 - 显式标注约束：`假设：X；若不符请纠正`
 
-### 简洁优先原则（Karpathy 原则）
+### 简洁优先（Karpathy 原则）
 - 能 50 行解决的不写 200 行
 - 不加"以后可能用到"的抽象
 - 禁止：单次使用的封装 / 未请求的配置项 / 不可能场景的错误处理 / 推测性功能
@@ -170,22 +173,6 @@ Default system prompt — 最低优先级
 □ 无 TODO / FIXME / HACK 遗漏（或已记录为 Issue）
 ```
 
-### 测试级验证（必须通过）
-```
-□ 单元测试全部通过
-□ 修改相关测试已同步更新
-□ 新功能有对应测试覆盖
-□ 无跳过/禁用的测试
-```
-
-### 功能级验证（必须通过）
-```
-□ 核心功能端到端可运行
-□ 错误路径正确处理（非仅 happy path）
-□ 边界情况已考虑
-□ 性能无明显退化
-```
-
 ### 安全级验证（必须通过）
 ```
 □ 无硬编码密钥/凭证/Token
@@ -194,17 +181,7 @@ Default system prompt — 最低优先级
 □ 输入验证在系统边界完成
 ```
 
-### 交叉验证（非简单任务必须）
-```
-□ 换个视角审视：如果我是代码审查者，会提出什么问题？
-□ 反向验证：尝试构造让方案失败的场景
-□ 需求回溯：方案是否完整覆盖了原始需求？有无偏离？
-□ 一致性检查：修改是否与项目现有风格/模式一致？
-□ 遗漏扫描：是否有同类文件/同类问题未同步修改？
-□ [Bug] Grep再次搜索相同模式 → 确认零遗漏
-□ [配置] 构建/类型检查 → 确认零新错误
-□ 输出"已修改文件列表"供用户核对
-```
+> 详细验证流程（测试级/功能级/交叉验证/反合理化检查）见 `verification-before-completion` skill
 
 ### 反合理化检查
 | 合理化借口 | 反驳 |
@@ -218,24 +195,7 @@ Default system prompt — 最低优先级
 
 ## 修改彻底性
 
-### 场景A — Bug修复
-```
-1. Grep 全项目相同模式 → 列出所有同类问题文件
-2. 逐个修复 → 每文件修后重新读取确认
-3. Grep 再次确认零遗漏
-```
-
-### 场景B — 配置/接口/类型变更
-```
-1. Grep 识别影响面：
-   ├─ 路由配置   → 所有使用该路由的页面/组件
-   ├─ 环境变量   → 所有读取该变量的代码
-   ├─ 类型定义   → 所有 import 该类型的文件
-   ├─ API 接口   → 所有调用该接口的前后端代码
-   └─ 组件 Props → 所有使用该组件的地方
-2. 逐个同步 → 每文件修后重新读取确认
-3. 构建验证 → 确认无新错误
-```
+Bug修复遵循 R3 铁律，配置变更遵循 R4 铁律，详见对应规则
 
 ---
 
@@ -277,8 +237,6 @@ Default system prompt — 最低优先级
 ## Agent 系统
 
 > 详细索引见 `SPEC.md → Agent 速查`
-
-### 核心Agent（按领域）
 
 | 领域 | Agent | 场景 |
 |------|-------|------|
@@ -339,53 +297,22 @@ Default system prompt — 最低优先级
 - Merkle DAG增量同步：变更检测而非全量重索引
 - 向量+BM25混合检索：双路召回RRF融合
 
+### Context Rot 治理
+- 上下文腐败度 >70%：强制压缩或启动新子Agent（fresh context window）
+- 每完成一个子目标：输出状态摘要，释放已完成上下文
+- 长任务（>30分钟）：拆分为独立子Agent，每个子Agent有明确成功标准
+
 ---
 
 ## 安全规范
 
-### OWASP Top 10 防护
-```
-1. 注入攻击 → 参数化查询/ORM
-2. 失效认证 → JWT短有效期/Refresh Token
-3. 敏感泄露 → 过滤敏感字段/日志脱敏
-4. XXE → XML解析器安全配置
-5. 访问控制 → 资源归属检查
-6. 安全配置 → 禁用目录列表/安全Headers
-7. XSS → textContent优先/DOMPurify
-8. 反序列化 → JSON优先/禁止pickle不可信数据
-9. 组件漏洞 → 定期npm audit/及时更新
-10. 日志监控 → 记录异常登录/接口异常
-```
-
-### Git安全禁止
-```
-push --force origin main
-push --force origin master
-git branch -D <branch>
-git push origin --delete <branch>
-```
+OWASP Top 10 防护详见 `RULES_SECURITY.md`，Git安全禁止详见 `RULES_GIT.md`，命令黑名单详见 `settings.json` permissions.deny
 
 ---
 
 ## 规则自动加载
 
-| 规则 | alwaysApply | 触发条件 |
-|------|-------------|----------|
-| `RULES_CORE.md` | true | 始终启用 |
-| `RULES_GIT.md` | false | Git操作 |
-| `RULES_SECURITY.md` | false | 安全相关 |
-| `RULES_TESTING.md` | false | 测试编写 |
-| `RULES_BACKEND.md` | false | 后端API开发 |
-| `RULES_FRONTEND.md` | false | 前端UI开发 |
-| `RULES_DATABASE.md` | false | 数据库操作 |
-| `RULES_DEVOPS.md` | false | CI/CD/部署 |
-| `RULES_PYTHON.md` | false | Python开发 |
-| `RULES_TYPESCRIPT.md` | false | TypeScript开发 |
-| `RULES_GO.md` | false | Go开发 |
-| `RULES_RUST.md` | false | Rust开发 |
-| `RULES_CSHARP.md` | false | C#开发 |
-| `RULES_DART.md` | false | Flutter/Dart |
-| `RULES_MOBILE.md` | false | 移动开发 |
+详见 `SPEC.md → 规则速查`。核心：`RULES_CORE.md` 始终启用，其余按 globs 条件按需加载。
 
 ---
 
@@ -410,6 +337,14 @@ metadata → SKILL.md → references/
 ### 示例驱动
 具体输入输出示例优先于抽象描述
 
+### 反模式自检
+| 反模式 | 正确做法 |
+|--------|---------|
+| 静默假设文件格式 | 声明假设，不确定就问 |
+| 过度抽象（单次使用） | 内联代码，需要时再抽象 |
+| 推测性通用化 | 解决当前问题，不为假设的未来设计 |
+| 不必要的复杂性 | 自检：资深工程师会说"过度设计"？→ 重写 |
+
 ---
 
 ## 经验库（experiences）
@@ -430,40 +365,6 @@ metadata → SKILL.md → references/
 
 ---
 
-## TDD 工作流
+## 工作流引用
 
-```
-RED (写失败测试) → GREEN (最小代码) → REFACTOR (清理)
-
-原则：
-- 测试必须在实现之前编写
-- 目标 80%+ 覆盖率（金融/认证 100%）
-- 写最小代码使测试通过
-```
----
-
-## PR Review 工作流
-
-```
-FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → OUTPUT
-多角色审查：
-1. Product Manager Review → 商业价值/用户体验
-2. Developer Review → 代码质量/性能
-3. Quality Engineer Review → 测试覆盖/边缘case
-4. Security Engineer Review → 漏洞/数据保护
-5. DevOps Review → CI/CD/基础设施
-6. UI/UX Designer Review → 视觉/可用性
-```
----
-
-## Phase 工作流
-
-```
-/gsd-new-project → /gsd-discuss-phase → /gsd-ui-phase → /gsd-plan-phase → /gsd-execute-phase → /gsd-verify-work → /gsd-ship
-
-阶段特点：
-- 最小可工作切片优先
-- 每阶段可独立合并
-- 降低大PR的review难度
-```
----
+TDD: `test-driven-development` skill | PR Review: `code-review` skill | Phase: `writing-plans` skill

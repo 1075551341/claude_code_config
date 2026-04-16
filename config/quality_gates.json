@@ -1,0 +1,19 @@
+{
+  "quality_gates": {
+    "schema_drift": {
+      "enabled": true,
+      "check_orm_changes": true,
+      "description": "检测ORM变更是否缺少对应migration"
+    },
+    "security_anchor": {
+      "enabled": true,
+      "check_auth_bindings": true,
+      "description": "检查验证逻辑是否绑定到威胁模型"
+    },
+    "scope_reduction": {
+      "enabled": true,
+      "compare_plan_vs_impl": true,
+      "description": "检查planner是否静默丢弃需求"
+    }
+  }
+}

@@ -80,7 +80,7 @@ description: Claude 配置优化更新摘要 | 2026-04-09
 |------|------|
 | SYNC_GUIDE.md | 跨编辑器同步指南 |
 | TOOL_MATCHING_GUIDE.md | 工具精确匹配指南 |
-| sync.ps1 | 一键同步脚本 |
+| scripts/sync.ps1 | 一键同步脚本 |
 | .claude.json | Claude Code 专属配置（含hooks配置） |
 
 ### 6. 同步策略
@@ -141,13 +141,13 @@ cat ~/.claude/hooks/README.md
 ### 2. 同步到其他编辑器
 ```powershell
 # 一键同步到所有编辑器
-~/.claude/sync.ps1
+~/.claude/scripts/sync.ps1
 
 # 同步到指定编辑器
-~/.claude/sync.ps1 -Editors @('cursor', 'windsurf')
+~/.claude/scripts/sync.ps1 -Editors @('cursor', 'windsurf')
 
 # 演练模式（不实际修改）
-~/.claude/sync.ps1 -DryRun
+~/.claude/scripts/sync.ps1 -DryRun
 ```
 
 ### 3. 调用 Agent
@@ -180,7 +180,7 @@ git clone https://github.com/anthropics/skills /tmp/skills
 cp /tmp/skills/* ~/.claude/skills/
 
 # 重新同步
-~/.claude/sync.ps1
+~/.claude/scripts/sync.ps1
 ```
 
 ### 添加自定义 Agent

@@ -6,14 +6,14 @@
 .DESCRIPTION
     从 ~/.claude 向各编辑器用户目录同步以下内容：
       - skills/、agents/ → 目录联接（Junction）或符号链接
-      - CLAUDE.md → 编辑器精简版（移除 [CC] 标记段落：工具匹配/Agent路由/自迭代/跨编辑器映射）
+      - CLAUDE.md → 编辑器完整版
       - TOOL_MATCHING_GUIDE.md、SYNC_GUIDE.md → 文件复制
       - rules/ → 生成编辑器原生规则文件（.cursorrules/.traerules/.windsurfrules）
       - MCP 配置 → 从 settings.json mcpServers 同步到各编辑器：
           - Cursor/Trae/Windsurf: 写入 mcp.json（mcpServers 格式）
           - CodeArts Agent: 写入 mcpServerRegistrations（数组格式，格式转换）
-      - CodeArts agent 编辑器：将精简版 CLAUDE.md + alwaysApply 核心规则合并写入 additionalSystemPrompt
-      - Windsurf global_rules.md：精简版 CLAUDE.md + alwaysApply 核心规则合并
+      - CodeArts agent 编辑器：将完整版 CLAUDE.md + alwaysApply 核心规则合并写入 additionalSystemPrompt
+      - Windsurf global_rules.md：完整版 CLAUDE.md + alwaysApply 核心规则合并
 
     同时向各编辑器 settings.json 合并写入 env.CLAUDE_IN_EDITOR（与 fix.ps1 中
     _editor_hook_launcher 的 GetConsoleWindow() 判定互为补充）。
@@ -211,72 +211,14 @@ function Set-EditorEnvVar {
 function Get-EditorClaudeMd {
     <#
     .SYNOPSIS
-        从源 CLAUDE.md 生成编辑器精简版，移除仅 Claude Code 适用的段落
-        移除标记为 [CC] 的段落：工具匹配、Agent 路由、自迭代更新、跨编辑器工具映射
-        保留：强制规则、任务流程、迭代精炼、交叉验证、执行风格、修改彻底性、计划优先、代码规范、Git 规范
+        读取源 CLAUDE.md 的完整内容，同步到各编辑器
+        注意：不再生成精简版，直接使用完整内容
     #>
     $srcPath = Join-Path $CLAUDE_DIR "CLAUDE.md"
     if (-not (Test-Path $srcPath)) { return "" }
 
     $content = [System.IO.File]::ReadAllText($srcPath, [System.Text.Encoding]::UTF8)
-    $lines = $content -split "`n"
-
-    # 需要移除的段落标题（含 [CC] 标记或仅 CC 适用的段落）
-    $ccSectionPatterns = @(
-        '工具匹配\s*\[CC\]'
-        'Agent\s*路由\s*\[CC\]'
-        '自迭代更新'
-        '跨编辑器工具映射\s*\[CC\]'
-    )
-    $ccRegex = $ccSectionPatterns -join '|'
-
-    $result = [System.Collections.ArrayList]::new()
-    $skipSection = $false
-    $sectionLevel = 0
-
-    foreach ($line in $lines) {
-        # 检测 ## 级别标题
-        if ($line -match '^##\s+(.+)') {
-            $sectionTitle = $Matches[1]
-            if ($sectionTitle -match $ccRegex) {
-                $skipSection = $true
-                continue
-            }
-            $skipSection = $false
-        }
-        # 检测 ### 级别标题（子段落，如果父段落被跳过则继续跳过）
-        elseif ($line -match '^###\s+' -and $skipSection) {
-            continue
-        }
-        # 检测 --- 分隔线（段落边界）
-        elseif ($line -match '^---+$' -and $skipSection) {
-            # Separator belongs to skipped section, skip it
-            continue
-        }
-
-        if ($skipSection) { continue }
-        [void]$result.Add($line)
-    }
-
-    # Compress consecutive blank lines (max 2)
-    $finalLines = [System.Collections.ArrayList]::new()
-    $emptyCount = 0
-    foreach ($line in $result) {
-        if ($line.Trim() -eq '') {
-            $emptyCount++
-            if ($emptyCount -le 2) { [void]$finalLines.Add($line) }
-        } else {
-            $emptyCount = 0
-            [void]$finalLines.Add($line)
-        }
-    }
-
-    # Update version marker
-    $finalText = ($finalLines -join "`n")
-    $finalText = $finalText -replace '跨编辑器共享（Claude Code/Cursor/Windsurf/Trae/VS Code）。`\[CC\]` = 仅Claude Code。', '跨编辑器共享（Cursor/Windsurf/Trae/VS Code）。已移除仅 Claude Code 适用的段落。'
-    $finalText = $finalText -replace '_版本：v4\.2 \| 更新：2026-04-10_', '_版本：v4.2-editor | 更新：2026-04-11_'
-
-    return $finalText
+    return $content
 }
 
 function Read-SourceMcpServers {
@@ -816,7 +758,7 @@ Write-Host "======================================================" -ForegroundC
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray
 Write-Host "  目标编辑器: $($EDITORS -join ', '), $($CODEARTS_EDITORS -join ', ')" -ForegroundColor DarkGray
-Write-Host "  同步项 : $($SYNC_DIRS -join ', ')  +  CLAUDE.md（精简版）" -ForegroundColor DarkGray
+Write-Host "  同步项 : $($SYNC_DIRS -join ', ')  +  CLAUDE.md（完整版）" -ForegroundColor DarkGray
 Write-Host "  环境变量: 仅合并 env.CLAUDE_IN_EDITOR；已清理集成终端 env" -ForegroundColor DarkGray
 $syncModeLabel = if ($isAdmin) { "管理员（符号链接）" } else { "非管理员（目录联接，Junction）" }
 Write-Host "  模式   : $syncModeLabel" -ForegroundColor DarkGray
@@ -888,7 +830,7 @@ foreach ($editor in $EDITORS | Sort-Object) {
         }
     }
 
-    # Copy files (CLAUDE.md → 编辑器精简版; 其余直接复制)
+    # Copy files (CLAUDE.md → 编辑器完整版; 其余直接复制)
     foreach ($file in $COPY_FILES) {
         $src = Join-Path $CLAUDE_DIR $file
         $dst = Join-Path $targetDir $file
@@ -898,23 +840,23 @@ foreach ($editor in $EDITORS | Sort-Object) {
         }
 
         if ($file -eq "CLAUDE.md") {
-            # 生成编辑器精简版 CLAUDE.md（移除 [CC] 标记段落）
+            # 生成编辑器完整版 CLAUDE.md
             $editorContent = Get-EditorClaudeMd
-            if ($editorContent -eq "") { Write-Skip "精简版 CLAUDE.md 生成失败"; continue }
+            if ($editorContent -eq "") { Write-Skip "CLAUDE.md 读取失败"; continue }
             $needWrite = $Force
             if (-not $needWrite -and (Test-Path $dst)) {
                 $existingContent = [System.IO.File]::ReadAllText($dst, [System.Text.Encoding]::UTF8)
                 if ($existingContent -ne $editorContent) { $needWrite = $true }
             } else { $needWrite = $true }
             if ($needWrite) {
-                if ($DryRun) { Write-Ok "[预演] 将写入精简版 CLAUDE.md" }
+                if ($DryRun) { Write-Ok "[预演] 将写入完整版 CLAUDE.md" }
                 else {
                     [System.IO.File]::WriteAllText($dst, $editorContent, [System.Text.Encoding]::UTF8)
-                    Write-Ok "CLAUDE.md 已写入精简版 ($($editorContent.Length) 字符)"
+                    Write-Ok "CLAUDE.md 已写入完整版 ($($editorContent.Length) 字符)"
                 }
                 $stats.Files++
             } else {
-                Write-Ok "CLAUDE.md 精简版已是最新"
+                Write-Ok "CLAUDE.md 完整版已是最新"
             }
         } else {
             $needCopy = (-not (Test-Path $dst)) -or $Force -or ((Get-FileMD5 $src) -ne (Get-FileMD5 $dst))
@@ -1048,7 +990,7 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
         }
     }
 
-    # Copy files (CLAUDE.md → 编辑器精简版; 其余直接复制)
+    # Copy files (CLAUDE.md → 编辑器完整版; 其余直接复制)
     foreach ($file in $COPY_FILES) {
         $src = Join-Path $CLAUDE_DIR $file
         $dst = Join-Path $targetDir $file
@@ -1058,23 +1000,23 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
         }
 
         if ($file -eq "CLAUDE.md") {
-            # 生成编辑器精简版 CLAUDE.md（移除 [CC] 标记段落）
+            # 生成编辑器完整版 CLAUDE.md
             $editorContent = Get-EditorClaudeMd
-            if ($editorContent -eq "") { Write-Skip "精简版 CLAUDE.md 生成失败"; continue }
+            if ($editorContent -eq "") { Write-Skip "CLAUDE.md 读取失败"; continue }
             $needWrite = $Force
             if (-not $needWrite -and (Test-Path $dst)) {
                 $existingContent = [System.IO.File]::ReadAllText($dst, [System.Text.Encoding]::UTF8)
                 if ($existingContent -ne $editorContent) { $needWrite = $true }
             } else { $needWrite = $true }
             if ($needWrite) {
-                if ($DryRun) { Write-Ok "[预演] 将写入精简版 CLAUDE.md" }
+                if ($DryRun) { Write-Ok "[预演] 将写入完整版 CLAUDE.md" }
                 else {
                     [System.IO.File]::WriteAllText($dst, $editorContent, [System.Text.Encoding]::UTF8)
-                    Write-Ok "CLAUDE.md 已写入精简版 ($($editorContent.Length) 字符)"
+                    Write-Ok "CLAUDE.md 已写入完整版 ($($editorContent.Length) 字符)"
                 }
                 $stats.Files++
             } else {
-                Write-Ok "CLAUDE.md 精简版已是最新"
+                Write-Ok "CLAUDE.md 完整版已是最新"
             }
         } else {
             $needCopy = (-not (Test-Path $dst)) -or $Force -or ((Get-FileMD5 $src) -ne (Get-FileMD5 $dst))
@@ -1199,7 +1141,7 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
         }
     }
     else {
-        Write-Ok "[预演] 将更新 additionalSystemPrompt (精简版 CLAUDE.md + alwaysApply 核心规则)"
+        Write-Ok "[预演] 将更新 additionalSystemPrompt (完整版 CLAUDE.md + alwaysApply 核心规则)"
     }
 
     # Sync MCP configuration to CodeArts mcpServerRegistrations

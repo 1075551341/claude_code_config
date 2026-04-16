@@ -146,6 +146,28 @@
           }
         ],
         "matcher": "Write|Edit|MultiEdit"
+      },
+      {
+        "_note": "提示注入防护（检测用户输入中的注入模式）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-prompt-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task"
+      },
+      {
+        "_note": "工作流守卫（确保阶段式工作流按序执行）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-workflow-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task"
       }
     ],
     "Stop": [
@@ -192,6 +214,17 @@
           }
         ],
         "matcher": ""
+      },
+      {
+        "_note": "质量门检查（schema drift/范围缩减检测）",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-quality-gate.py",
+            "timeout": 15000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ]
   },
@@ -205,7 +238,7 @@
       ],
       "command": "npx",
       "env": {
-        "BRAVE_API_KEY": "你的BraveAPIKey"
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
       }
     },
     "crawl": {
@@ -216,7 +249,7 @@
       ],
       "command": "npx",
       "env": {
-        "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey"
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
     "ctx7": {
@@ -330,7 +363,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://user:password@localhost:5432/dbname"
+        "${DATABASE_URL}"
       ],
       "command": "npx"
     },

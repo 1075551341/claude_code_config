@@ -1,3 +1,11 @@
+---
+date: 2026-04-15
+confidence: 0.8
+category: context-management
+status: active
+verified_count: 1
+---
+
 # 上下文管理经验模式
 
 > 来源：zilliztech/claude-context, obra/superpowers
