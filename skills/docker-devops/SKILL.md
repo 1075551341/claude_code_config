@@ -1,6 +1,5 @@
 ---
 name: docker-devops
-CI/CD
 description: 编写Dockerfile
 triggers: [编写Dockerfile, 配置Docker Compose, 容器化部署, 管理Docker容器]
 ---
@@ -70,14 +69,14 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### Dockerfile 优化规则
 
-| 规则 | 说明 |
-|------|------|
-| 使用多阶段构建 | 减小最终镜像体积 |
-| 使用特定版本标签 | 避免 `latest`，保证可重复性 |
-| 合并 RUN 指令 | 减少镜像层数 |
-| 利用构建缓存 | 先复制依赖文件 |
-| 非 root 用户运行 | 提高安全性 |
-| 使用 .dockerignore | 排除不需要的文件 |
+| 规则               | 说明                        |
+| ------------------ | --------------------------- |
+| 使用多阶段构建     | 减小最终镜像体积            |
+| 使用特定版本标签   | 避免 `latest`，保证可重复性 |
+| 合并 RUN 指令      | 减少镜像层数                |
+| 利用构建缓存       | 先复制依赖文件              |
+| 非 root 用户运行   | 提高安全性                  |
+| 使用 .dockerignore | 排除不需要的文件            |
 
 ## Docker Compose
 
@@ -85,7 +84,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -135,7 +134,7 @@ volumes:
 
 ```yaml
 # docker-compose.prod.yml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -153,7 +152,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 512M
         reservations:
           memory: 256M
@@ -211,7 +210,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - run: pnpm install
       - run: pnpm lint

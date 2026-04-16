@@ -1,6 +1,5 @@
 ---
 name: figma-design
-Sync Figma
 description: Figma 设计工具集成与设计稿转代码
 triggers: [Figma 设计工具集成与设计稿转代码]
 ---
