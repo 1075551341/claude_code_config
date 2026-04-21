@@ -62,3 +62,46 @@ discuss → plan → execute → verify → ship
 - 每阶段产出最小可工作增量
 - 每阶段可独立合并，降低大PR的review难度
 - 优先交付最高价值切片
+
+## 命令规范（来自 get-shit-done）
+
+| 命令 | 阶段 | 作用 |
+|------|------|------|
+| `/discuss` | Discuss | 明确需求、识别约束、对齐期望 |
+| `/plan` | Plan | 设计实现方案、分解任务、识别依赖 |
+| `/execute` | Execute | 按计划实现、遵循简洁优先和安全默认 |
+| `/verify` | Verify | 交叉验证、质量门检查、回归测试 |
+| `/ship` | Ship | 合并、部署、监控 |
+| `/compact` | 全局 | 战略压缩：在逻辑断点主动压缩上下文 |
+| `/status` | 全局 | 查看当前工作流状态和进度 |
+
+## Phase 工作流（来自 get-shit-done）
+
+```
+Phase 1: Minimum Viable — 最小可工作切片
+Phase 2: Core Experience — 完整快乐路径
+Phase 3: Edge Cases — 错误处理、边界情况、打磨
+Phase 4: Optimization — 性能、监控
+```
+
+## 上下文腐烂预防
+
+- 长任务（>30分钟）拆分为独立子Agent
+- 每完成一个子目标输出状态摘要
+- 上下文使用率>70%时主动触发压缩
+- 工作流切换时保存/恢复规划上下文
+
+## 子Agent编排（来自 deer-flow）
+
+### 状态机
+```
+DONE              → 继续 spec 合规性审查
+DONE_WITH_CONCERNS → 阅读担忧后决定
+NEEDS_CONTEXT     → 提供缺失上下文并重新派遣
+BLOCKED           → 评估阻止因素并重新派遣
+```
+
+### 无冲突原则
+- 子Agent之间职责边界清晰，不重叠执行范围
+- 同一上下文内只有一个执行者负责某模块
+- 工具调用不相互覆盖（PostToolUse不撤销PreToolUse成果）

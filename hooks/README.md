@@ -301,6 +301,15 @@ if __name__ == "__main__":
 
 ## Profile 配置
 
+通过环境变量切换钩子集合，无需修改文件：
+
+```bash
+export CLAUDE_HOOK_PROFILE=minimal   # 仅保留生命周期和安全钩子
+export CLAUDE_HOOK_PROFILE=standard  # 默认：平衡质量和安全
+export CLAUDE_HOOK_PROFILE=strict    # 完整配置：所有钩子启用
+export CLAUDE_DISABLED_HOOKS="pre:bash:tmux-reminder,post:edit:typecheck"  # 禁用特定钩子
+```
+
 ### minimal
 
 仅保留：pre-context-injector, pre-bash-guard, post-secret-detector
@@ -312,6 +321,13 @@ if __name__ == "__main__":
 ### strict
 
 完整配置：所有钩子启用
+
+## 跨平台兼容性
+
+Hook 实现使用 **Python 3** 而非纯 shell，确保 Windows/macOS/Linux 兼容性。
+编辑器适配通过 `_editor_hook_launcher.py` 自动检测环境：
+- Claude Code 环境 → 执行 hooks
+- Cursor / Windsurf / Trae 环境 → 跳过 hooks（避免冲突）
 
 ---
 
@@ -333,10 +349,11 @@ elif os.environ.get("CLAUDE_PLUGIN_ROOT"):
 
 ## 来源
 
-- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Profile Hooks、Secret检测
-- [obra/superpowers](https://github.com/obra/superpowers) - SessionStart 钩子
-- [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) - Profile-based Hooks
-- [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - Token预算检查
+- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Profile Hooks、Secret检测、Instinct系统
+- [obra/superpowers](https://github.com/obra/superpowers) - SessionStart 钩子、Iron Law、证据优先
+- [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) - Profile-based Hooks、Phase工作流
+- [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - Token预算检查、上下文压缩
+- [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem) - 跨会话记忆持久化
 
 ---
 

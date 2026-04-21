@@ -133,6 +133,17 @@ tags: [tag1, tag2]
 
 ---
 
+## Instinct 系统命令（来自 everything-claude-code）
+
+| 命令 | 作用 |
+|------|------|
+| `/instinct-status` | 查看已学习的 Instincts 及其置信度评分 |
+| `/instinct-import <file>` | 导入外部 Instincts |
+| `/instinct-export` | 导出当前 Instincts 用于分享或备份 |
+| `/evolve` | 将相关的 Instincts 聚类聚合成 Skills |
+| `/prune` | 删除超过 30 天 TTL 的过期 pending instincts |
+| `/learn-eval` | 从当前会话中提取模式，先评估再保存 |
+
 ## 添加新经验
 
 1. 在 `patterns/` 目录创建新文件

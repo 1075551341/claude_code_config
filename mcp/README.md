@@ -183,7 +183,34 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxx
 
 ---
 
+## Toolset 分组（来自 github/github-mcp-server）
+
+servers.json 支持按场景分组管理 MCP 服务器：
+
+```json
+{
+  "toolsets": {
+    "core": ["memory", "thinking", "filesystem"],
+    "dev": ["github", "context7", "playwright"],
+    "ops": ["docker", "postgres", "redis"],
+    "search": ["exa", "brave"]
+  }
+}
+```
+
+| 分组 | 场景 | 服务器 |
+|------|------|--------|
+| core | 核心必开 | memory, thinking, filesystem |
+| dev | 开发辅助 | github, context7, playwright |
+| ops | 运维部署 | docker, postgres, redis |
+| search | 搜索查询 | exa, brave |
+
+每个服务器通过 `_toolset` 字段归属分组，便于按场景批量启用/禁用。
+
+---
+
 ## 版本
 
-- **更新日期**: 2026-04-15
-- **整合来源**: github/mcp-server, zilliztech/claude-context
+- **更新日期**: 2026-04-21
+- **整合来源**: github/github-mcp-server, zilliztech/claude-context, modelcontextprotocol/servers
+- **版本**: 1.2.0（新增 toolset 分组、Lockdown模式、Header驱动配置）

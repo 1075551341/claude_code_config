@@ -1,4 +1,15 @@
 {
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
+    "ANTHROPIC_AUTH_TOKEN": "sk-kimi-MEQKgCcD0S6ccN3mpbe8sHzLsZj5EycMZEgWTzjwQRFNah49uDl6UcwLxtH91WEj",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "K2.6-code-preview",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "K2.6-code-preview",
+    "ANTHROPIC_MODEL": "K2.6-code-preview",
+    "ANTHROPIC_REASONING_MODEL": "K2.6-code-preview",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "K2.6-code-preview",
+    "CLAUDE_CODE_MAX_AUTONOMY": "true",
+    "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
+  },
   "_comment": "Claude Code 主配置文件 - 修改后运行 sync-tools.ps1 同步到其他编辑器",
   "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
   "_mcp_section": "MCP 服务器配置（共 22 个，与 .mcp.json 同步）",
@@ -24,19 +35,6 @@
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": false
-  },
-  "env": {
-    "ANTHROPIC_AUTH_TOKEN": "sk-cp-40ZWoZtD6HvK7SVQX8m8vwyqwBtPFq1NK03uSmjizXJ-HmBJtuxHfJRND-TgAS9qrd4Dl6gsQNWiwfmtjKmRogcv88Y77vMJM9a1dIdxBmSz_rSoke8XBSQ",
-    "ANTHROPIC_BASE_URL": "https://api.minimaxi.com/anthropic",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M2.7",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M2.7",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M2.7",
-    "ANTHROPIC_MODEL": "MiniMax-M2.7",
-    "ANTHROPIC_REASONING_MODEL": "MiniMax-M2.7",
-    "API_TIMEOUT_MS": "3000000",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": 1,
-    "CLAUDE_CODE_MAX_AUTONOMY": "true",
-    "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
   },
   "hooks": {
     "PostToolUse": [
@@ -146,28 +144,6 @@
           }
         ],
         "matcher": "Write|Edit|MultiEdit"
-      },
-      {
-        "_note": "提示注入防护（检测用户输入中的注入模式）",
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-prompt-guard.py",
-            "timeout": 5000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Task"
-      },
-      {
-        "_note": "工作流守卫（确保阶段式工作流按序执行）",
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-workflow-guard.py",
-            "timeout": 5000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Task"
       }
     ],
     "Stop": [
@@ -214,17 +190,6 @@
           }
         ],
         "matcher": ""
-      },
-      {
-        "_note": "质量门检查（schema drift/范围缩减检测）",
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-quality-gate.py",
-            "timeout": 15000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
       }
     ]
   },
@@ -238,7 +203,7 @@
       ],
       "command": "npx",
       "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+        "BRAVE_API_KEY": "你的BraveAPIKey"
       }
     },
     "crawl": {
@@ -249,7 +214,7 @@
       ],
       "command": "npx",
       "env": {
-        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+        "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey"
       }
     },
     "ctx7": {
@@ -363,7 +328,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "${DATABASE_URL}"
+        "postgresql://user:password@localhost:5432/dbname"
       ],
       "command": "npx"
     },

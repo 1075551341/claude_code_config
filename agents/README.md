@@ -98,23 +98,22 @@ tools:
 
 ---
 
-## Agent 分类（64个）
+## Agent 分类（52个）
 
 ### 架构与设计（1个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `architect` | 系统设计、架构决策 | Read, Write, Grep |
 
-### 前端开发（8个）
+### 前端开发（7个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `frontend-developer` | 前端开发 | Read, Write, Edit |
 | `react-reviewer` | React代码审查 | Read, Grep |
 | `ux-design-expert` | UI/UX设计 | Read, Write, Edit |
 | `typescript-pro` | TypeScript专家 | Read, Write, Grep |
-| `snippet-expert` | 代码片段 | Read, Write |
 | `accessibility-expert` | 无障碍专家 | Read, Grep |
-| `web-artifacts-builder` | Web构件 | Read, Write |
+| `artifacts-builder` | Web构件 | Read, Write |
 | `mermaid-expert` | 图表绘制 | Read, Write |
 
 ### 后端开发（6个）
@@ -125,7 +124,7 @@ tools:
 | `python-pro` | Python专家 | Read, Write, Grep |
 | `python-reviewer` | Python审查 | Read, Grep |
 | `api-versioner` | API版本管理 | Read, Write, Grep |
-| `websocket-server` | WebSocket开发 | Read, Write, Bash |
+| `connect` | 连接集成 | Read, Write |
 
 ### 数据（2个）
 | Agent | 场景 | 工具 |
@@ -154,14 +153,13 @@ tools:
 | `incident-responder` | 故障响应 | Read, Bash |
 | `cloud-cost-optimizer` | 云成本优化 | Read, Bash |
 
-### 文档与沟通（5个）
+### 文档与沟通（4个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `docs-expert` | 文档生成 | Read, Write |
 | `changelog-generator` | 变更日志 | Read, Write |
 | `business-writing` | 商务写作 | Read, Write |
-| `ppt-creator` | PPT创建 | Read, Write |
-| `canvas-design` | 画布设计 | Read, Write |
+| `prompt-engineer` | Prompt工程 | Read, Write |
 
 ### 工程效能（3个）
 | Agent | 场景 | 工具 |
@@ -177,7 +175,7 @@ tools:
 | `agentic-orchestrator` | 多Agent编排 | Read, Write |
 | `ml-engineer` | 机器学习 | Read, Write, Bash |
 | `mcp-builder` | MCP服务器开发 | Read, Write, Bash |
-| `workflow-automation` | 工作流自动化 | Read, Write, Bash |
+| `claude-code-optimizer` | Claude Code优化 | Read, Write |
 
 ### 垂直领域（2个）
 | Agent | 场景 | 工具 |
@@ -185,7 +183,7 @@ tools:
 | `payment-integration` | 支付集成 | Read, Write |
 | `game-developer` | 游戏开发 | Read, Write |
 
-### 语言专项（11个）
+### 语言专项（8个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `go-reviewer` | Go审查 | Read, Grep |
@@ -196,37 +194,19 @@ tools:
 | `flutter-reviewer` | Flutter审查 | Read, Grep |
 | `typescript-reviewer` | TypeScript审查 | Read, Grep |
 | `cpp-reviewer` | C++审查 | Read, Grep |
-| `embedded-engineer` | 嵌入式 | Read, Write, Bash |
-| `react-reviewer` | React审查 | Read, Grep |
-| `nodejs-reviewer` | Node.js审查 | Read, Grep |
 
-### 管理与流程（4个）
+### 管理与流程（3个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `planning-expert` | 规划管理 | Read, Write |
 | `context-manager` | 上下文管理 | Read, Write |
-| `verification-checker` | 验证检查 | Read, Grep |
-| `brainstorming` | 头脑风暴 | Read, Write |
+| `finishing-a-development-branch` | 分支收尾 | Read, Write |
 
-### 效率与创意（2个）
-| Agent | 场景 | 工具 |
-|-------|------|------|
-| `file-organizer` | 文件整理 | Read, Bash |
-| `snippet-expert` | 代码片段 | Read, Write |
-
-### 移动开发（1个）
-| Agent | 场景 | 工具 |
-|-------|------|------|
-| `mobile-developer` | 移动开发 | Read, Write, Bash |
-
-### 其他（5个）
+### 其他（2个）
 | Agent | 场景 | 工具 |
 |-------|------|------|
 | `performance-analyzer` | 性能分析 | Read, Bash, Grep |
-| `security-reviewer` | 安全审查 | Read, Grep |
-| `claude-code-optimizer` | Claude Code优化 | Read, Write |
-| `skill-learning-system` | 技能学习 | Read, Write |
-| `deep-researcher` | 深度研究 | Read, Write, WebSearch |
+| `embedded-engineer` | 嵌入式 | Read, Write, Bash |
 
 ---
 
@@ -290,9 +270,15 @@ Implementer → Spec Reviewer → Code Quality Reviewer → Task Complete
    [REVIEW]      [REVIEW]         [REVIEW]
 ```
 
+### 审查触发条件
+- 代码变更 > 100 行
+- 涉及安全敏感模块
+- 修改核心业务流程
+- 新增外部依赖
+
 ---
 
-## PR Review 协议（来自 awesome-claude-code）
+## PR Review 协议（来自 awesome-claude-code / hesreallyhim）
 
 ```
 FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → OUTPUT
@@ -300,12 +286,22 @@ FETCH → CONTEXT → REVIEW → VALIDATE → DECIDE → REPORT → PUBLISH → 
 
 ### 多角色审查
 
-1. Product Manager Review → 商业价值/用户体验
-2. Developer Review → 代码质量/性能
-3. Quality Engineer Review → 测试覆盖/边缘case
-4. Security Engineer Review → 漏洞/数据保护
-5. DevOps Review → CI/CD/基础设施
-6. UI/UX Designer Review → 视觉/可用性
+| 角色 | 审查重点 | Agent |
+|------|---------|-------|
+| Product Manager | 商业价值/用户体验 | `planning-expert` |
+| Developer | 代码质量/性能 | `code-review-workflow` |
+| Quality Engineer | 测试覆盖/边缘case | `qa-engineer` |
+| Security Engineer | 漏洞/数据保护 | `security-reviewer` |
+| DevOps | CI/CD/基础设施 | `devops-engineer` |
+| UI/UX Designer | 视觉/可用性 | `ux-design-expert` |
+
+### 模型选择策略（来自 superpowers）
+
+| 任务类型 | 模型选择 | 原因 |
+|----------|---------|------|
+| 机械实现任务 | 快速便宜模型 | 孤立函数、清晰规格、1-2文件 |
+| 集成和判断任务 | 标准模型 | 多文件协调、模式匹配、调试 |
+| 架构设计和审查 | 最强模型 | 需要设计判断或广泛代码库理解 |
 
 ---
 
@@ -333,19 +329,17 @@ Phase 4: Optimization — 性能、监控
 | 分类       | 数量   |
 | ---------- | ------ |
 | 架构与设计 | 1      |
-| 前端开发   | 8      |
+| 前端开发   | 7      |
 | 后端开发   | 6      |
 | 数据       | 2      |
 | 测试与质量 | 3      |
 | 安全       | 2      |
 | DevOps     | 4      |
-| 文档与沟通 | 5      |
+| 文档与沟通 | 4      |
 | 工程效能   | 3      |
 | AI与数据   | 5      |
 | 垂直领域   | 2      |
-| 语言专项   | 11     |
-| 管理与流程 | 4      |
-| 效率与创意 | 2      |
-| 移动开发   | 1      |
-| 其他       | 5      |
-| **总计**   | **64** |
+| 语言专项   | 8      |
+| 管理与流程 | 3      |
+| 其他       | 2      |
+| **总计**   | **52** |

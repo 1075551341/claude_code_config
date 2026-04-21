@@ -229,9 +229,11 @@ claude-api/
 description: "Use this skill when someone asks about..."
 ```
 
-### 包含TRIGGER/DO NOT TRIGGER
+### 显式 TRIGGER / DO NOT TRIGGER（推荐）
 ```yaml
-description: "TRIGGER when: ... DO NOT TRIGGER when: ..."
+description: |
+  TRIGGER when: 用户需要生成Word文档、修改docx文件、提取文档内容
+  DO NOT TRIGGER when: 用户只是提及"文档"但没有具体文件操作需求；用户要求生成PDF/PPT/Excel
 ```
 
 ### 关键词列表
@@ -239,6 +241,13 @@ description: "TRIGGER when: ... DO NOT TRIGGER when: ..."
 description: "A set of resources to help me write..."
 triggers: [keyword1, keyword2, keyword3]
 ```
+
+### 触发词设计原则
+1. **具体场景优先**：描述具体使用场景而非抽象概念
+2. **正反例明确**：用 TRIGGER / DO NOT TRIGGER 减少误触发
+3. **动词开头**："生成"、"分析"、"调试"等动作词提高匹配精度
+4. **避免过度宽泛**："开发"、"编程"等词会导致技能冲突
+5. **渐进披露**：metadata → SKILL.md → references/，按需加载避免上下文膨胀
 
 ---
 

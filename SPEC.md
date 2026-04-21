@@ -10,19 +10,7 @@
 
 ### 核心规则（RULES_CORE.md）
 
-| # | 规则 | 说明 |
-|---|------|------|
-| R1 | 任务未完成禁止停止 | 验证通过才算完成 |
-| R2 | 修改后必须重新读取确认 | Read → Edit → Read |
-| R3 | Bug修复：Grep全项目 → 全部修复 → 再Grep确认 | 零遗漏 |
-| R4 | 配置变更：Grep所有引用方 → 全部同步 | |
-| R5 | 失败后分析根因，同一方案失败 ≤ 2次 | |
-| R6 | 非简单任务：头脑风暴 → 计划 → 执行 → 验证 | |
-| R7 | 任何"已完成"前必须交叉验证 | |
-| R8 | 高危操作必须用户确认 | |
-| R9 | 禁止 cd + 重定向 / powershell -Command | |
-| R10 | 简洁优先，最小代码解决 | 拒绝过度设计 |
-| R11 | 安全默认，输入验证、最小权限、无硬编码 | |
+> 铁律 R1–R11 完整定义见 `CLAUDE.md → 铁律 R1–R11`
 
 ### 语言规则
 
@@ -182,10 +170,8 @@
 | Skill | 触发词 | 位置 |
 |-------|--------|------|
 | `canvas-design` | 画布设计 | `skills/canvas-design/` |
-| `brand-guidelines` | 品牌指南 | `skills/brand-guidelines/` |
 | `algorithmic-art` | 算法艺术 | `skills/algorithmic-art/` |
 | `theme-factory` | 主题工厂 | `skills/theme-factory/` |
-| `image-generation` | 图像生成 | `skills/image-generation/` |
 
 #### 基础组件
 | Skill | 触发词 | 位置 |
@@ -222,14 +208,11 @@
 #### 效率与生活
 | Skill | 触发词 | 位置 |
 |-------|--------|------|
-| `file-organization` | 文件整理 | `skills/file-organization/` |
-| `note-management` | 笔记管理 | `skills/note-management/` |
-| `time-management` | 时间管理 | `skills/time-management/` |
-| `meeting-productivity` | 会议效率 | `skills/meeting-productivity/` |
-| `learning-resources` | 学习资源 | `skills/learning-resources/` |
-| `health-tracking` | 健康追踪 | `skills/health-tracking/` |
-| `personal-finance` | 个人财务 | `skills/personal-finance/` |
-| `kaizen-improvement` | 持续改进 | `skills/kaizen-improvement/` |
+| `life-assistant` | 生活助手 | `skills/life-assistant/` |
+| `invoice-organizer` | 发票整理 | `skills/invoice-organizer/` |
+| `office-docs` | 办公文档 | `skills/office-docs/` |
+| `meeting-insights-analyzer` | 会议分析 | `skills/meeting-insights-analyzer/` |
+| `academic-paper-review` | 论文审查 | `skills/academic-paper-review/` |
 
 ---
 
@@ -466,26 +449,36 @@
 
 ## 来源索引
 
-| 仓库 | Stars | 主要贡献 |
-|------|-------|---------|
-| [anthropics/skills](https://github.com/anthropics/skills) | 117k | Skill标准格式、frontmatter规范 |
-| [obra/superpowers](https://github.com/obra/superpowers) | 154k | Iron Law、优先级链、子代理上下文构造 |
-| [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | 140k | 分层Rules、Profile Hooks、Instinct系统 |
-| [zilliztech/claude-context](https://github.com/zilliztech/claude-context) | - | Merkle DAG增量同步、AST感知分块 |
-| [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action) | 7k | 多认证方式、智能模式检测 |
-| [github/mcp-server](https://github.com/github/mcp-server) | 29k | Toolset分组、Header驱动配置 |
-| [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) | - | Skill分类、渐进披露设计 |
-| [bytedance/deer-flow](https://github.com/bytedance/deer-flow) | 62k | LangGraph状态机、sub-agent编排 |
-| [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) | 53k | Phase工作流、上下文腐败治理 |
-| [ Chalarangelo/30-seconds-of-code](https://github.com/Chalarangelo/30-seconds-of-code) | 127k | "30秒"约束、示例驱动 |
-| [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) | 39k | Karpathy四大原则、插件化CLAUDE.md |
-| [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | - | 配置集合、规则工作流 |
+| 仓库 | Stars | 主要贡献 | 本配置整合位置 |
+|------|-------|---------|--------------|
+| [anthropics/skills](https://github.com/anthropics/skills) | 117k | Skill标准格式、frontmatter规范、渐进披露 | `skills/README.md` |
+| [obra/superpowers](https://github.com/obra/superpowers) | 154k | Iron Law、优先级链、子代理上下文构造、证据优先、双阶段审查 | `CLAUDE.md` 交叉验证、agents/README.md |
+| [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) | 140k | 分层Rules、Profile Hooks、Instinct系统、持续学习 | `hooks/README.md`、experiences/README.md、CLAUDE.md 持续学习 |
+| [zilliztech/claude-context](https://github.com/zilliztech/claude-context) | - | Merkle DAG增量同步、AST感知分块、向量+BM25混合检索 | `CLAUDE.md` 上下文压缩 |
+| [anthropics/claude-code-action](https://github.com/anthropics/claude-code-action) | 7k | 多认证方式、智能模式检测 | `settings.json` 权限配置 |
+| [github/github-mcp-server](https://github.com/github/github-mcp-server) | 29k | Toolset分组、Header驱动配置、Lockdown模式 | `mcp/servers.json` toolsets |
+| [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) | - | Skill分类、TRIGGER/DO NOT TRIGGER模式 | `skills/README.md` |
+| [bytedance/deer-flow](https://github.com/bytedance/deer-flow) | 62k | LangGraph状态机、sub-agent编排、无冲突原则 | `agents/README.md` 状态处理、`rules/RULES_WORKFLOW.md` |
+| [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) | 53k | Phase工作流、上下文腐败治理、战略断点压缩、命令规范 | `rules/RULES_WORKFLOW.md`、`CLAUDE.md` 上下文管理 |
+| [Chalarangelo/30-seconds-of-code](https://github.com/Chalarangelo/30-seconds-of-code) | 127k | "30秒"约束、示例驱动 | `CLAUDE.md` 设计原则 |
+| [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) | 39k | Karpathy四大原则、插件化CLAUDE.md | `CLAUDE.md` 思维准则 |
+| [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | - | 配置集合、多角色PR审查 | `agents/README.md` PR Review |
+| [shanraisshan/claude-code-best-practice](https://github.com/shanraisshan/claude-code-best-practice) | - | 最佳实践、配置管理、69条tips | 全局 |
+| [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem) | - | 跨会话记忆持久化、智能压缩、双数据库存储 | `CLAUDE.md` 记忆持久化策略 |
 
 ---
 
 ## 版本信息
 
-- **版本**: 1.2.0
-- **更新日期**: 2026-04-16
-- **整合仓库数**: 12
-- **总配置项**: agents(53) + skills(136) + hooks(50) + rules(18)
+- **版本**: 1.5.0
+- **更新日期**: 2026-04-21
+- **整合仓库数**: 14
+- **总配置项**: agents(53) + skills(137) + hooks(50) + rules(19) + mcp(7)
+- **本次更新**:
+  - 整合 claude-mem 记忆持久化策略到 CLAUDE.md
+  - 整合 get-shit-done Phase工作流和命令规范到 RULES_WORKFLOW.md
+  - 整合 deer-flow 子Agent状态机到 RULES_WORKFLOW.md
+  - 整合 superpowers 模型选择策略到 agents/README.md
+  - 整合 everything-claude-code 持续学习原则到 CLAUDE.md
+  - 优化 MCP servers.json 注释和来源标注
+  - 完善 SPEC.md 来源索引，标注各仓库具体贡献位置
