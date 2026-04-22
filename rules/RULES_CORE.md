@@ -3,12 +3,6 @@ description: 代码开发时始终启用
 alwaysApply: true
 ---
 
-# 核心规则
-
-## 角色定位
-
-20 年经验全栈专家。精准、高效、实用。简单方案优先，拒绝过度工程化。
-
 ## 优先级
 
 1. **简单至上** — 最小可行方案，拒绝过度设计
@@ -90,6 +84,72 @@ alwaysApply: true
 - Bug 修复先写复现测试
 - 测试命名描述行为：`should_x_when_y`
 - 不跳过测试（无 .skip/.todo 除非附 Issue 链接）
+
+## 禁用规则
+
+### 禁止使用 `new Date()` / 原生时间 API 获取当前时间
+
+原生时间 API（`new Date()` / `Date.now()` / `datetime.now()` 等）依赖系统时钟，不可控、不可测试。必须使用项目对应语言的时间库，并通过依赖注入获取当前时间。
+
+**各语言推荐时间库**：
+
+| 语言 | 推荐库 | 选型依据 |
+|------|--------|----------|
+| TypeScript/JS | dayjs（首选）/ date-fns（函数式） | 轻量、不可变、链式 API；避免 moment（已弃用、体积大） |
+| Python | pendulum（首选）/ arrow | 比 datetime 更好的 API 和时区支持；delorean 可选 |
+| Go | 标准库 time + Clock 接口 | Go 标准库已足够，通过接口注入即可 |
+| Rust | chrono / time crate | chrono 功能全面；time crate 更轻量 |
+| C# | NodaTime（首选）/ 标准库 + IDateTimeProvider | NodaTime 时区处理远优于 DateTime |
+
+```typescript
+// ❌ 禁止
+const now = new Date();
+const ts = new Date().toISOString();
+const formatted = new Date().toLocaleDateString();
+
+// ✅ 使用 dayjs
+import dayjs from 'dayjs';
+const now = dayjs();
+const ts = dayjs().toISOString();
+const formatted = dayjs().format('YYYY-MM-DD');
+
+// ✅ 依赖注入（业务逻辑）
+type Clock = () => dayjs.Dayjs;
+const defaultClock: Clock = () => dayjs();
+function createService(clock: Clock = defaultClock) {
+  const now = clock(); // 测试时可注入固定时间
+}
+```
+
+```python
+# ❌ 禁止
+from datetime import datetime
+now = datetime.now()
+
+# ✅ 使用 pendulum
+import pendulum
+now = pendulum.now('UTC')
+
+# ✅ 依赖注入（业务逻辑）
+from typing import Callable
+import pendulum
+def create_service(get_now: Callable[[], pendulum.DateTime] = lambda: pendulum.now('UTC')):
+    now = get_now()  # 测试时可注入固定时间
+```
+
+```go
+// ❌ 禁止
+now := time.Now()
+
+// ✅ 标准库 + Clock 接口注入
+type Clock interface { Now() time.Time }
+type realClock struct{}; func (realClock) Now() time.Time { return time.Now() }
+type fakeClock struct{ fixed time.Time }; func (c fakeClock) Now() time.Time { return c.fixed }
+func createService(clock Clock) { now := clock.Now() }
+```
+
+**适用场景**：业务逻辑、数据模型、API 响应中的时间戳
+**例外**：纯 UI 展示（如页面显示当前时间）、CLI 工具的一次性脚本
 
 ## 项目约定
 

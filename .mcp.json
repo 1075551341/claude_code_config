@@ -1,7 +1,6 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP 服务器配置 | 工具自动调用，无需显式指定工具名称",
-
+  "_comment": "MCP 服务器配置 | 精简版：仅保留可用服务，避免进程泄漏导致 Cursor 无法关闭",
   "mcpServers": {
     "redis": {
       "_description": "Redis 缓存/队列/键值存储。场景：缓存热点数据、会话存储、消息队列、分布式锁",
@@ -12,7 +11,42 @@
         "redis://localhost:6379"
       ]
     },
-
+    "fs": {
+      "_description": "文件系统操作。场景：读写项目文件、管理配置、批量重命名",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\apdms",
+        "C:\\Users\\DELL\\.claude"
+      ]
+    },
+    "fetch": {
+      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": {}
+    },
+    "git": {
+      "_description": "Git 版本库直接操作。场景：查看提交历史、diff、blame、本地分支操作",
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
+    },
+    "memory": {
+      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "thinking": {
+      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "time": {
+      "_description": "时间与时区工具。场景：获取当前时间、时区转换、计算时间差",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"]
+    },
     "sqlite": {
       "_description": "SQLite 轻量数据库。场景：本地原型开发、小型数据存储、测试数据库",
       "command": "npx",
@@ -23,44 +57,11 @@
         "D:\\apdms\\database.db"
       ]
     },
-
-    "postgres": {
-      "_description": "PostgreSQL 数据库。场景：生产环境复杂查询、事务处理、JSON 数据存储",
+    "ctx7": {
+      "_description": "Context7 技术文档查询。场景：查 React/Vue/Express/Node 等库的最新 API",
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "${DATABASE_URL}"
-      ]
+      "args": ["-y", "@upstash/context7-mcp"]
     },
-
-    "fs": {
-      "_description": "文件系统操作（D:\\apdms 目录）。场景：读写项目文件、管理配置、批量重命名",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "D:\\apdms",
-        "C:\\Users\\DELL\\.claude"
-      ]
-    },
-
-    "fetch": {
-      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
-      "command": "uvx",
-      "args": ["mcp-server-fetch"],
-      "env": {}
-    },
-
-    "brave": {
-      "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
-    },
-
     "crawl": {
       "_description": "Firecrawl 网页爬取。场景：提取网页正文内容、批量采集数据、抓取文档",
       "command": "npx",
@@ -69,25 +70,6 @@
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
-
-    "pw": {
-      "_description": "Playwright 浏览器自动化（首选）。场景：E2E 测试、网页截图、表单填写、多浏览器兼容",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    },
-
-    "puppeteer": {
-      "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
-    },
-
-    "git": {
-      "_description": "Git 版本库直接操作（新增）。场景：查看提交历史、diff、blame、本地分支操作",
-      "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
-    },
-
     "gh": {
       "_description": "GitHub API 集成。场景：管理 PR/Issue、查看 Actions 状态、搜索仓库",
       "command": "npx",
@@ -96,89 +78,10 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
     },
-
-    "ctx7": {
-      "_description": "Context7 技术文档查询。场景：查 React/Vue/Express/Node 等库的最新 API",
+    "pw": {
+      "_description": "Playwright 浏览器自动化。场景：E2E 测试、网页截图、表单填写",
       "command": "npx",
-      "args": ["-y", "@context7/mcp-server"]
-    },
-
-    "docker": {
-      "_description": "Docker 容器管理（新增）。场景：查看容器状态、启停服务、查看日志、镜像管理",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-docker"]
-    },
-
-    "time": {
-      "_description": "时间与时区工具（新增）。场景：获取当前时间、时区转换、计算时间差",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-time"]
-    },
-
-    "thinking": {
-      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
-
-    "memory": {
-      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    },
-
-    "slack": {
-      "_description": "Slack 消息发送与频道管理。场景：发送通知、管理频道、获取消息",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-slack"],
-      "env": {
-        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
-      }
-    },
-
-    "exa": {
-      "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "command": "npx",
-      "args": ["-y", "@context7/mcp-exa-server"],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
-
-    "linear": {
-      "_description": "Linear 项目管理集成。场景：Issue跟踪、任务管理、项目管理",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-linear"],
-      "env": {
-        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-      }
-    },
-
-    "notion": {
-      "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-notion"],
-      "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
-      }
-    },
-
-    "supabase": {
-      "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-supabase"],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
-      }
-    },
-
-    "figma": {
-      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-figma"],
-      "env": {
-        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
-      }
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }

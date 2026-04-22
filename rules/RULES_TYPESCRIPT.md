@@ -92,6 +92,64 @@ export function Button({ variant = 'primary', onClick, children }: ButtonProps) 
 function useDebounce<T>(value: T, delay: number): T { /* ... */ }
 ```
 
+## 时间处理
+
+### 禁止 `new Date()` / `Date.now()`，使用 dayjs / date-fns
+
+`new Date()` 不可变性问题、API 反人类、时区处理困难。必须使用时间库。
+
+```typescript
+// ❌ 禁止
+const now = new Date();
+const ts = new Date().toISOString();
+const formatted = new Date().toLocaleDateString();
+const stamp = Date.now();
+
+// ✅ dayjs（首选，2KB、不可变、链式）
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc); dayjs.extend(timezone);
+
+const now = dayjs();
+const ts = dayjs().toISOString();
+const formatted = dayjs().format('YYYY-MM-DD HH:mm:ss');
+const inShanghai = dayjs().tz('Asia/Shanghai');
+
+// ✅ date-fns（函数式风格项目）
+import { format, addDays, isAfter } from 'date-fns';
+const formatted = format(new Date(), 'yyyy-MM-dd');
+const tomorrow = addDays(new Date(), 1);
+
+// ❌ 避免 moment（已弃用、体积 67KB、可变对象）
+// import moment from 'moment';  // 除非维护旧项目
+```
+
+### 时间库选型
+
+| 场景 | 推荐 | 理由 |
+|------|------|------|
+| 通用项目 | dayjs | 轻量 2KB、moment 兼容 API、不可变 |
+| 函数式项目 | date-fns | tree-shakeable、纯函数 |
+| 维护旧项目 | moment | 仅限已有依赖，不新引入 |
+
+### 依赖注入（业务逻辑）
+
+```typescript
+import dayjs from 'dayjs';
+type Clock = () => dayjs.Dayjs;
+const defaultClock: Clock = () => dayjs();
+
+function createService(clock: Clock = defaultClock) {
+  const now = clock();
+}
+
+// ✅ 测试中注入固定时间
+const service = createService(() => dayjs('2025-01-01T00:00:00Z'));
+```
+
+例外：纯 UI 展示当前时间（如时钟组件）
+
 ## 模块规范
 
 ```typescript

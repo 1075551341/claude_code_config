@@ -121,6 +121,55 @@ def read_large_file(file_path: str) -> Iterable[str]:
 def fibonacci(n: int) -> int: ...
 ```
 
+## 时间处理
+
+### 禁止 `datetime.now()`，使用 pendulum / arrow
+
+标准库 `datetime` 时区处理繁琐、API 不直观。使用时间库获得更好的时区支持和链式 API。
+
+```python
+# ❌ 禁止
+from datetime import datetime
+now = datetime.now()
+utc_now = datetime.utcnow()  # 已弃用
+
+# ✅ pendulum（首选，API 优雅、时区一流）
+import pendulum
+now = pendulum.now('UTC')
+in_shanghai = pendulum.now('Asia/Shanghai')
+formatted = now.format('YYYY-MM-DD HH:mm:ss')
+parsed = pendulum.parse('2025-01-01T00:00:00Z')
+
+# ✅ arrow（轻量替代）
+import arrow
+now = arrow.now('Asia/Shanghai')
+formatted = now.format('YYYY-MM-DD HH:mm:ss')
+```
+
+### 时间库选型
+
+| 场景 | 推荐 | 理由 |
+|------|------|------|
+| 通用项目 | pendulum | API 最优雅、时区一流、duration 支持 |
+| 轻量需求 | arrow | 更轻量、API 简洁 |
+| 仅格式化 | strftime + babel | 无需额外依赖 |
+
+### 依赖注入（业务逻辑）
+
+```python
+import pendulum
+from typing import Callable
+
+def create_service(get_now: Callable[[], pendulum.DateTime] = lambda: pendulum.now('UTC')):
+    now = get_now()
+
+# ✅ 测试中注入固定时间
+fixed = pendulum.datetime(2025, 1, 1, 0, 0, 0, tz='UTC')
+service = create_service(get_now=lambda: fixed)
+```
+
+例外：CLI 一次性脚本、纯 UI 展示时间
+
 ## 配置管理
 
 ```python

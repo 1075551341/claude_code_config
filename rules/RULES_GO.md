@@ -48,3 +48,34 @@ globs: ["*.go", "go.mod"]
 - 表驱动测试：`[]struct{ name, input, want }`
 - Benchmark：`func BenchmarkXxx(b *testing.B)`
 - 竞态检测：`go test -race`
+
+## 时间处理
+
+### 禁止直接 `time.Now()`，通过 Clock 接口注入
+
+Go 标准库 `time` 已足够强大，无需第三方库，但必须通过 Clock 接口注入实现可测试性。
+
+```go
+// ❌ 禁止在业务逻辑中直接调用
+now := time.Now()
+
+// ✅ Clock 接口注入
+type Clock interface { Now() time.Time }
+
+type realClock struct{}
+func (realClock) Now() time.Time { return time.Now() }
+
+type fakeClock struct{ fixed time.Time }
+func (c fakeClock) Now() time.Time { return c.fixed }
+
+func createService(clock Clock) { now := clock.Now() }
+
+// ✅ 测试中注入固定时间
+svc := createService(fakeClock{fixed: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)})
+
+// ✅ 也可使用社区库 clockwork（提供更丰富的 fake clock 功能）
+// import "github.com/jonboulle/clockwork"
+// fc := clockwork.NewFakeClockAt(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC))
+```
+
+例外：CLI 一次性脚本、纯 UI 展示
