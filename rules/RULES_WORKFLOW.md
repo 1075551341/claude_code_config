@@ -93,6 +93,30 @@ Phase 4: Optimization — 性能、监控
 
 ## 子Agent编排（来自 deer-flow）
 
+### 编排四阶段
+
+```
+Phase 1: 拆解（Decompose）
+  ├─ 识别独立子目标与依赖关系
+  ├─ 为每个子目标指定 Agent + 成功标准
+  └─ 输出：DAG 任务图
+
+Phase 2: 调度（Dispatch）
+  ├─ 无依赖子目标 → 并行派发子Agent
+  ├─ 有依赖子目标 → 等待前置完成后派发
+  └─ 每个子Agent：fresh context + 精确注入必要状态
+
+Phase 3: 整合（Integrate）
+  ├─ 收集所有子Agent结果
+  ├─ 冲突检测与解决
+  └─ 合并为最终交付物
+
+Phase 4: 验证（Validate）
+  ├─ 每个子目标独立验证
+  ├─ 整体集成验证
+  └─ 交叉验证清单全通过
+```
+
 ### 状态机
 ```
 DONE              → 继续 spec 合规性审查

@@ -33,9 +33,9 @@
 ├── CLAUDE.md           # 全局行为规范
 ├── README.md           # 本文件（总览）
 │
-├── agents/             # 52 个专业 AI 代理角色（见 agents/README.md）
-├── skills/             # 136 个可复用技能模块（各技能目录下 SKILL.md）
-├── rules/              # 18 个代码与行为规范
+├── agents/             # 56 个专业 AI 代理角色（见 agents/README.md）
+├── skills/             # 154 个可复用技能模块（各技能目录下 SKILL.md）
+├── rules/              # 22 个代码与行为规范
 ├── hooks/              # 50 个 .py（生命周期钩子 + `_editor_hook_launcher.py` + `_editor_safe_guard.py`；CLI；编辑器内由 editor-guard 快速跳过）
 ├── scripts/            # 工具脚本（sync / check / fix 等，13 个文件，见下文）
 ├── plugins/            # 插件与市场（plugins/cache/ 为下载缓存，可删后自动重建）
@@ -77,7 +77,7 @@ Get-Process | Where-Object { $_.Name -like "*claude*" } | Stop-Process -Force
 
 MCP (Model Context Protocol) 为 AI 助手提供外部环境和数据交互能力。
 
-### 已配置服务器（19，以 `~/.claude/.mcp.json` 为准）
+### 已配置服务器（22，以 `~/.claude/.mcp.json` 为准）
 
 | 服务器        | 类型     | 功能说明                           |
 | ------------- | -------- | ---------------------------------- |
@@ -437,9 +437,9 @@ net stop Redis
 | 类别          | 数量 |
 | ------------- | ---- |
 | MCP 服务器    | 22   |
-| 智能体 Agents | 52   |
-| 技能 Skills   | 136  |
-| 规则文件      | 18   |
+| 智能体 Agents | 56   |
+| 技能 Skills   | 154  |
+| 规则文件      | 22   |
 | 钩子脚本（.py） | 50   |
 | 维护脚本      | 13   |
 

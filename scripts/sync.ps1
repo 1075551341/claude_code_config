@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     从 ~/.claude 向各编辑器用户目录同步以下内容：
-      - skills/、agents/ → 目录联接（Junction）或符号链接
+      - skills/、agents/、commands/ → 目录联接（Junction）或符号链接
       - CLAUDE.md → 编辑器完整版
       - TOOL_MATCHING_GUIDE.md、SYNC_GUIDE.md → 文件复制
       - rules/ → 生成编辑器原生规则文件（.cursorrules/.traerules/.windsurfrules）
@@ -52,7 +52,7 @@ $BACKUP_DIR = Join-Path $CLAUDE_DIR "backups\$(Get-Date -Format 'yyyyMMdd_HHmmss
 $EDITORS = @("cursor", "trae", "windsurf", "qoder")
 # CodeArts agent 编辑器使用 AppData Roaming 目录，不使用 ~/.codearts-agent
 $CODEARTS_EDITORS = @("codearts-agent")
-$SYNC_DIRS = @("skills", "agents")
+$SYNC_DIRS = @("skills", "agents", "commands")
 $COPY_FILES = @("CLAUDE.md", "TOOL_MATCHING_GUIDE.md", "SYNC_GUIDE.md")
 $STALE_LINKS = @("hooks", "scripts")
 
@@ -312,7 +312,8 @@ function Sync-NativeRulesFiles {
         # 转换内容
         $convertedContent = if ($format -eq "cursor") {
             $srcContent  # Cursor .mdc 格式：保留原有 frontmatter
-        } else {
+        }
+        else {
             Convert-RulesFrontmatter -Content $srcContent -Format $format
         }
 
@@ -395,10 +396,12 @@ function Sync-WindsurfGlobalRules {
     )
     <#
     .SYNOPSIS
-        将核心规则合并为 Windsurf 的全局 global_rules.md 单文件
+        同步 Windsurf 的全局 global_rules.md 单文件（仅 CLAUDE.md）
         路径：~/.codeium/windsurf/memories/global_rules.md
         限制：6000 字符/文件
-        策略：精简版 CLAUDE.md 核心段落 + alwaysApply:true 核心规则，遵守字符限制
+        策略：
+          - 优先写入完整 CLAUDE.md
+          - 若超出字符限制：写入精简速查（不注入 rules/ 内容）
     #>
     $targetPath = $WINDSURF_GLOBAL_RULES_FILE
     $targetDir = Split-Path $targetPath -Parent
@@ -406,62 +409,65 @@ function Sync-WindsurfGlobalRules {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
     }
 
-    # 筛选核心规则（alwaysApply:true 的规则）
-    $coreRules = @()
-    foreach ($rf in $RuleFiles) {
-        $srcContent = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
-        # 检查是否 alwaysApply: true
-        if ($srcContent -match 'alwaysApply:\s*true') {
-            $coreRules += $rf
-        }
-    }
-
-    # 构建合并内容：精简版 CLAUDE.md 核心段落 + 核心规则
+    $editorClaudeMd = Get-EditorClaudeMd
     $sb = [System.Text.StringBuilder]::new()
     [void]$sb.AppendLine("---")
     [void]$sb.AppendLine("trigger: always_on")
     [void]$sb.AppendLine("---")
     [void]$sb.AppendLine("")
 
-    # 加入精简版 CLAUDE.md（移除 [CC] 段落的版本）
-    $editorClaudeMd = Get-EditorClaudeMd
+    # 优先写入完整 CLAUDE.md
     if ($editorClaudeMd -ne "") {
         [void]$sb.Append($editorClaudeMd)
-        [void]$sb.AppendLine("")
-        [void]$sb.AppendLine("")
-    }
-
-    foreach ($rf in $coreRules) {
-        $srcContent = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
-        $category = $rf.BaseName -replace "^RULES_", ""
-
-        # 去掉源文件的 frontmatter
-        $body = $srcContent
-        if ($srcContent.StartsWith("---")) {
-            $secondDash = $srcContent.IndexOf("---", 3)
-            if ($secondDash -gt 0) {
-                $body = $srcContent.Substring($secondDash + 3).TrimStart()
-            }
-        }
-
-        [void]$sb.AppendLine("## $category Rules")
-        [void]$sb.AppendLine("")
-        [void]$sb.Append($body)
-        [void]$sb.AppendLine("")
-        [void]$sb.AppendLine("")
     }
 
     $newContent = $sb.ToString()
 
     # 检查字符限制（全局 global_rules.md 限制 6000 字符）
     if ($newContent.Length -gt $WINDSURF_MAX_CHARS_GLOBAL) {
-        # 截断到限制内
-        $newContent = $newContent.Substring(0, $WINDSURF_MAX_CHARS_GLOBAL - 50) + "`n`n<!-- 内容因字符限制被截断 -->"
-        Write-Warn "global_rules.md 超过 $($WINDSURF_MAX_CHARS_GLOBAL) 字符限制，已截断"
+        # 生成精简速查（不注入 rules/）
+        $sb2 = [System.Text.StringBuilder]::new()
+        [void]$sb2.AppendLine("---")
+        [void]$sb2.AppendLine("trigger: always_on")
+        [void]$sb2.AppendLine("---")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("# Claude 全局配置（Windsurf 速查）")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("Windsurf 的 global_rules.md 有 6000 字符限制，因此此处为精简速查。")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("完整内容请查看：`~/.claude/CLAUDE.md` 与 `~/.claude/SPEC.md`。")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("## 铁律（R1–R11）")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("- **任务完成**：必须验证通过才算完成")
+        [void]$sb2.AppendLine("- **修改确认**：Read → Edit → Read 确认")
+        [void]$sb2.AppendLine("- **Bug 修复**：Grep 全项目同类模式 → 全部修复 → Grep 确认零遗漏")
+        [void]$sb2.AppendLine("- **配置变更**：改接口/类型/路由 → Grep 引用 → 全部同步 → 构建验证")
+        [void]$sb2.AppendLine("- **重试上限**：同一方案失败 ≤2 次，先定位根因")
+        [void]$sb2.AppendLine("- **非简单任务**：头脑风暴 → 精炼 → 计划 → 执行 → 交叉验证 → 模式提取")
+        [void]$sb2.AppendLine("- **交叉验证**：无证据禁止声称完成")
+        [void]$sb2.AppendLine("- **高危确认**：删数据/强推 main/destroy 必须用户确认")
+        [void]$sb2.AppendLine("- **命令安全**：禁止 `cd + 重定向` / 禁止 powershell -Command 包裹")
+        [void]$sb2.AppendLine("- **简洁优先**：最小代码解决问题，拒绝过度设计")
+        [void]$sb2.AppendLine("- **安全默认**：不信任输入、最小权限、无硬编码密钥")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("## 非简单任务：文件落点")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("- 规格/验收：`~/.claude/spec/<project>/<task>.md`（或同目录分 spec.md / design.md / tasks.md）")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("## 工具优先（Tool-First）")
+        [void]$sb2.AppendLine("")
+        [void]$sb2.AppendLine("优先顺序：Skills → Agents → MCP → Rules → 再自行实现。")
+
+        $newContent = $sb2.ToString()
+        if ($newContent.Length -gt $WINDSURF_MAX_CHARS_GLOBAL) {
+            $newContent = $newContent.Substring(0, $WINDSURF_MAX_CHARS_GLOBAL - 50) + "`n`n<!-- 内容因字符限制被截断 -->"
+        }
+        Write-Warn "global_rules.md 超过 $($WINDSURF_MAX_CHARS_GLOBAL) 字符限制，已改为写入精简速查"
     }
 
     if ($DryRun) {
-        Write-Fix "[预演] 将更新 global_rules.md ($($coreRules.Count) 个核心规则合并)"
+        Write-Fix "[预演] 将更新 global_rules.md（仅 CLAUDE.md / 或精简速查）"
         return
     }
 
@@ -480,7 +486,7 @@ function Sync-WindsurfGlobalRules {
     }
 
     [System.IO.File]::WriteAllText($targetPath, $newContent, [System.Text.Encoding]::UTF8)
-    Write-Fix "global_rules.md 已更新 ($($coreRules.Count) 个核心规则合并, $($newContent.Length) 字符) → $targetPath"
+    Write-Fix "global_rules.md 已更新 ($($newContent.Length) 字符) → $targetPath"
     $stats.Files++
 }
 
@@ -615,7 +621,8 @@ function Sync-McpToDotDir {
     # Windsurf 使用 ~/.codeium/windsurf/mcp_config.json
     $targetMcpPath = if ($EditorName -eq "windsurf") {
         Join-Path $env:USERPROFILE ".codeium\windsurf\mcp_config.json"
-    } else {
+    }
+    else {
         Join-Path $TargetDir "mcp.json"
     }
 
@@ -644,7 +651,8 @@ function Sync-McpToDotDir {
         # 设置/覆盖到目标
         if ($targetMcp.mcpServers.PSObject.Properties.Match($name).Count) {
             $targetMcp.mcpServers.$name = $server
-        } else {
+        }
+        else {
             $targetMcp.mcpServers | Add-Member -MemberType NoteProperty -Name $name -Value $server -Force
         }
         $convertedCount++
@@ -717,15 +725,15 @@ function Sync-McpToCodeArts {
             $envValue = $server.env
         }
         $reg = [PSCustomObject]@{
-            id = "stdio_$name"
+            id     = "stdio_$name"
             config = [PSCustomObject]@{
-                enabled             = $isEnabled
-                type                = "stdio"
-                command             = if ($server.PSObject.Properties.Match('command').Count) { $server.command } else { "" }
-                args                = if ($server.PSObject.Properties.Match('args').Count) { @($server.args) } else { @() }
-                env                 = $envValue
-                url                 = ""
-                autoApprovedTools   = @()
+                enabled           = $isEnabled
+                type              = "stdio"
+                command           = if ($server.PSObject.Properties.Match('command').Count) { $server.command } else { "" }
+                args              = if ($server.PSObject.Properties.Match('args').Count) { @($server.args) } else { @() }
+                env               = $envValue
+                url               = ""
+                autoApprovedTools = @()
             }
         }
         [void]$newRegs.Add($reg)
@@ -847,7 +855,8 @@ foreach ($editor in $EDITORS | Sort-Object) {
             if (-not $needWrite -and (Test-Path $dst)) {
                 $existingContent = [System.IO.File]::ReadAllText($dst, [System.Text.Encoding]::UTF8)
                 if ($existingContent -ne $editorContent) { $needWrite = $true }
-            } else { $needWrite = $true }
+            }
+            else { $needWrite = $true }
             if ($needWrite) {
                 if ($DryRun) { Write-Ok "[预演] 将写入完整版 CLAUDE.md" }
                 else {
@@ -855,10 +864,12 @@ foreach ($editor in $EDITORS | Sort-Object) {
                     Write-Ok "CLAUDE.md 已写入完整版 ($($editorContent.Length) 字符)"
                 }
                 $stats.Files++
-            } else {
+            }
+            else {
                 Write-Ok "CLAUDE.md 完整版已是最新"
             }
-        } else {
+        }
+        else {
             $needCopy = (-not (Test-Path $dst)) -or $Force -or ((Get-FileMD5 $src) -ne (Get-FileMD5 $dst))
             if ($needCopy) {
                 if ($DryRun) { Write-Ok "[预演] 将复制 $file" }
@@ -1007,7 +1018,8 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
             if (-not $needWrite -and (Test-Path $dst)) {
                 $existingContent = [System.IO.File]::ReadAllText($dst, [System.Text.Encoding]::UTF8)
                 if ($existingContent -ne $editorContent) { $needWrite = $true }
-            } else { $needWrite = $true }
+            }
+            else { $needWrite = $true }
             if ($needWrite) {
                 if ($DryRun) { Write-Ok "[预演] 将写入完整版 CLAUDE.md" }
                 else {
@@ -1015,10 +1027,12 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
                     Write-Ok "CLAUDE.md 已写入完整版 ($($editorContent.Length) 字符)"
                 }
                 $stats.Files++
-            } else {
+            }
+            else {
                 Write-Ok "CLAUDE.md 完整版已是最新"
             }
-        } else {
+        }
+        else {
             $needCopy = (-not (Test-Path $dst)) -or $Force -or ((Get-FileMD5 $src) -ne (Get-FileMD5 $dst))
             if ($needCopy) {
                 if ($DryRun) { Write-Ok "[预演] 将复制 $file" }
@@ -1048,9 +1062,9 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
         $codeartsSettings = Join-Path $targetDir "settings.json"
         $es = Read-Json $codeartsSettings
         if ($null -ne $es) {
-            # 构建 additionalSystemPrompt 内容（精简版 CLAUDE.md + alwaysApply 核心规则）
+            # 构建 additionalSystemPrompt 内容（完整版 CLAUDE.md + alwaysApply 核心规则）
             $sb = [System.Text.StringBuilder]::new()
-            # 使用精简版 CLAUDE.md（移除 [CC] 标记段落）
+            # 使用完整版 CLAUDE.md
             $editorClaudeMd = Get-EditorClaudeMd
             if ($editorClaudeMd -ne "") {
                 [void]$sb.AppendLine("## Project Instructions (CLAUDE.md)")
@@ -1105,12 +1119,14 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
                 if ($oldPrompt -ne $newPrompt) {
                     if (-not $config.PSObject.Properties.Match('additionalSystemPrompt').Count) {
                         $config | Add-Member -MemberType NoteProperty -Name 'additionalSystemPrompt' -Value $newPrompt -Force
-                    } else {
+                    }
+                    else {
                         $config.additionalSystemPrompt = $newPrompt
                     }
                     Write-Fix "additionalSystemPrompt 已更新 ($($newPrompt.Length) 字符)"
                     $needUpdate = $true
-                } else {
+                }
+                else {
                     Write-Ok "additionalSystemPrompt 已是最新"
                 }
 
@@ -1120,10 +1136,12 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
                         $config.promptEnabled = $true
                         Write-Fix "promptEnabled 已启用（原为 false）"
                         $needUpdate = $true
-                    } else {
+                    }
+                    else {
                         Write-Ok "promptEnabled 已启用"
                     }
-                } else {
+                }
+                else {
                     $config | Add-Member -MemberType NoteProperty -Name 'promptEnabled' -Value $true -Force
                     Write-Fix "promptEnabled 已添加并启用"
                     $needUpdate = $true
@@ -1135,7 +1153,8 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
                     Write-Json -Path $codeartsSettings -Obj $es
                     $stats.Files++
                 }
-            } else {
+            }
+            else {
                 Write-Warn "未找到 $configKey，跳过 additionalSystemPrompt 同步"
             }
         }
@@ -1170,10 +1189,10 @@ if ($stats.Errors -gt 0) {
     Write-Host "  错误数           : $($stats.Errors)" -ForegroundColor Red
 }
 Write-Host ""
-Write-Host "  已同步: skills/ agents/（链接） rules/（格式转换复制） CLAUDE.md（精简版） MCP（格式转换）" -ForegroundColor DarkGray
+Write-Host "  已同步: skills/ agents/（链接） rules/（格式转换复制） CLAUDE.md（完整版） MCP（格式转换）" -ForegroundColor DarkGray
 Write-Host "  原生规则: .cursor/rules/*.mdc | .windsurf/rules/*.md | .trae/user_rules/*.md" -ForegroundColor DarkGray
-Write-Host "  Windsurf: global_rules.md(精简CLAUDE.md+核心规则) + skills/ + mcp_config.json → ~/.codeium/windsurf/" -ForegroundColor DarkGray
-Write-Host "  CodeArts: additionalSystemPrompt ← 精简CLAUDE.md + alwaysApply核心规则 | mcpServerRegistrations ← MCP" -ForegroundColor DarkGray
+Write-Host "  Windsurf: global_rules.md(优先完整CLAUDE.md；超限则速查) + skills/ + mcp_config.json → ~/.codeium/windsurf/" -ForegroundColor DarkGray
+Write-Host "  CodeArts: additionalSystemPrompt ← CLAUDE.md + alwaysApply 核心规则 | mcpServerRegistrations ← MCP" -ForegroundColor DarkGray
 Write-Host "  不同步: hooks/ scripts/ settings.json" -ForegroundColor DarkGray
 Write-Host "  CLAUDE_IN_EDITOR: 已写入用户目录与 Roaming 的 settings.json" -ForegroundColor DarkGray
 Write-Host "  terminal.integrated.env.windows: 已移除 CLAUDE_IN_EDITOR（保护 CLI 终端）" -ForegroundColor DarkGray

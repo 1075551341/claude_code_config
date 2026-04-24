@@ -1,15 +1,16 @@
 {
   "env": {
-    "ANTHROPIC_BASE_URL": "https://api.kimi.com/coding/",
-    "ANTHROPIC_AUTH_TOKEN": "sk-kimi-MEQKgCcD0S6ccN3mpbe8sHzLsZj5EycMZEgWTzjwQRFNah49uDl6UcwLxtH91WEj",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "K2.6-code-preview",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "K2.6-code-preview",
-    "ANTHROPIC_MODEL": "K2.6-code-preview",
-    "ANTHROPIC_REASONING_MODEL": "K2.6-code-preview",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "K2.6-code-preview",
-    "CLAUDE_CODE_MAX_AUTONOMY": "true",
-    "CLAUDE_SKIP_CONFIRM_ON_EDIT": "true"
+    "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
+    "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-flash",
+    "ANTHROPIC_MODEL": "deepseek-v4-pro",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-pro"
   },
+  "model": "deepseek-v4-pro",
   "_comment": "Claude Code 主配置文件 - 修改后运行 sync-tools.ps1 同步到其他编辑器",
   "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
   "_mcp_section": "MCP 服务器配置（共 22 个，与 .mcp.json 同步）",
@@ -197,10 +198,7 @@
   "mcpServers": {
     "brave": {
       "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
       "command": "npx",
       "env": {
         "BRAVE_API_KEY": "你的BraveAPIKey"
@@ -208,10 +206,7 @@
     },
     "crawl": {
       "_description": "Firecrawl 网页爬取。场景：提取网页正文内容、批量采集数据、抓取文档",
-      "args": [
-        "-y",
-        "firecrawl-mcp"
-      ],
+      "args": ["-y", "firecrawl-mcp"],
       "command": "npx",
       "env": {
         "FIRECRAWL_API_KEY": "你的FirecrawlAPIKey"
@@ -219,26 +214,17 @@
     },
     "ctx7": {
       "_description": "Context7 技术文档查询。场景：查 React/Vue/Express/Node 等库的最新 API",
-      "args": [
-        "-y",
-        "@context7/mcp-server"
-      ],
+      "args": ["-y", "@context7/mcp-server"],
       "command": "npx"
     },
     "docker": {
       "_description": "Docker 容器管理（新增）。场景：查看容器状态、启停服务、查看日志、镜像管理",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-docker"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-docker"],
       "command": "npx"
     },
     "exa": {
       "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "args": [
-        "-y",
-        "@context7/mcp-exa-server"
-      ],
+      "args": ["-y", "@context7/mcp-exa-server"],
       "command": "npx",
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
@@ -246,18 +232,13 @@
     },
     "fetch": {
       "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
-      "args": [
-        "mcp-server-fetch"
-      ],
+      "args": ["mcp-server-fetch"],
       "command": "uvx",
       "env": {}
     },
     "figma": {
       "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-figma"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-figma"],
       "command": "npx",
       "env": {
         "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
@@ -275,10 +256,7 @@
     },
     "gh": {
       "_description": "GitHub API 集成。场景：管理 PR/Issue、查看 Actions 状态、搜索仓库",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "command": "npx",
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
@@ -286,19 +264,12 @@
     },
     "git": {
       "_description": "Git 版本库直接操作（新增）。场景：查看提交历史、diff、blame、本地分支操作",
-      "args": [
-        "mcp-server-git",
-        "--repository",
-        "D:\\apdms"
-      ],
+      "args": ["mcp-server-git", "--repository", "D:\\apdms"],
       "command": "uvx"
     },
     "linear": {
       "_description": "Linear 项目管理集成。场景：Issue跟踪、任务管理、项目管理",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-linear"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-linear"],
       "command": "npx",
       "env": {
         "LINEAR_API_KEY": "${LINEAR_API_KEY}"
@@ -306,18 +277,12 @@
     },
     "memory": {
       "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
       "command": "npx"
     },
     "notion": {
       "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-notion"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-notion"],
       "command": "npx",
       "env": {
         "NOTION_API_KEY": "${NOTION_API_KEY}"
@@ -334,18 +299,12 @@
     },
     "puppeteer": {
       "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
       "command": "npx"
     },
     "pw": {
       "_description": "Playwright 浏览器自动化（首选）。场景：E2E 测试、网页截图、表单填写、多浏览器兼容",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest"
-      ],
+      "args": ["-y", "@playwright/mcp@latest"],
       "command": "npx"
     },
     "redis": {
@@ -359,10 +318,7 @@
     },
     "slack": {
       "_description": "Slack 消息发送与频道管理。场景：发送通知、管理频道、获取消息",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-slack"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
       "command": "npx",
       "env": {
         "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
@@ -380,10 +336,7 @@
     },
     "supabase": {
       "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-supabase"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-supabase"],
       "command": "npx",
       "env": {
         "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
@@ -391,22 +344,15 @@
     },
     "thinking": {
       "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
       "command": "npx"
     },
     "time": {
       "_description": "时间与时区工具（新增）。场景：获取当前时间、时区转换、计算时间差",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-time"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-time"],
       "command": "npx"
     }
   },
-  "model": "qwen3-coder-plus",
   "permissions": {
     "allow": [
       "Read",

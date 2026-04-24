@@ -39,11 +39,13 @@ description: 跨编辑器配置同步指南
 
 | 目录/文件 | 同步方式 | 目标位置 | 说明 |
 |-----------|---------|---------|------|
-| `CLAUDE.md` | 软链接/复制 | 各编辑器 rules 目录 | 核心行为规范 |
+| `CLAUDE.md` | 复制（完整版） | 各编辑器目录 | 核心行为规范（优先完整，Windsurf 超限则速查） |
 | `rules/*.md` | 软链接/复制 | 各编辑器 rules 目录 | 分类规则文件 |
 | `agents/*.md` | 软链接/复制 | 各编辑器 agents 目录 | Agent 定义 |
 | `skills/*.md` | 软链接/复制 | 各编辑器 skills 目录 | 技能库 |
+| `commands/*.md` | 软链接/复制 | 各编辑器 commands 目录 | 斜杠命令定义 |
 | `TOOL_MATCHING_GUIDE.md` | 复制 | 各编辑器目录 | 工具匹配参考 |
+| `SYNC_GUIDE.md` | 复制 | 各编辑器目录 | 同步指南（可选） |
 
 ### ❌ 不同步项（Claude Code 专用）
 
@@ -138,21 +140,25 @@ Copy-Item "$env:USERPROFILE\.claude\agents\*.md" `
 
 ### Windsurf
 
-**配置路径**：`~/.windsurf/`
+**配置路径**：`~/.windsurf/`（项目级规则）+ `~/.codeium/windsurf/memories/global_rules.md`（全局规则，6000字符限制）
 
 ```powershell
 # 1. 创建目录
 mkdir -Force "$env:USERPROFILE\.windsurf\rules"
 
-# 2. 软链接或复制
-New-Item -ItemType SymbolicLink `
-    -Path "$env:USERPROFILE\.windsurf\CLAUDE.md" `
-    -Target "$env:USERPROFILE\.claude\CLAUDE.md" -Force
+# 2. 复制 CLAUDE.md（完整版；Windsurf 会通过脚本自动处理 global_rules.md）
+Copy-Item "$env:USERPROFILE\.claude\CLAUDE.md" `
+    -Destination "$env:USERPROFILE\.windsurf\CLAUDE.md" -Force
 
-# 3. 复制 rules
+# 3. 复制 rules（项目级）
 Copy-Item "$env:USERPROFILE\.claude\rules\*.md" `
     -Destination "$env:USERPROFILE\.windsurf\rules\" -Force
 ```
+
+**Windsurf global_rules.md 策略**：
+- 优先写入完整 `CLAUDE.md`
+- 若超过 6000 字符限制：自动生成精简速查（仅含铁律、文件落点、工具优先），不注入 `rules/` 内容
+- 完整规则请查看 `~/.claude/CLAUDE.md` 与 `~/.claude/SPEC.md`
 
 ### Trae
 

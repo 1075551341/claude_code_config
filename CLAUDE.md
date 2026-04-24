@@ -1,7 +1,7 @@
 # Claude 全局配置
 
-> 入口文件。详细规范 → `SPEC.md` | 技能库 → `skills/` | 智能体 → `agents/`
-> 除过代码外,优先使用中文输出
+> 入口文件。规范索引 → `SPEC.md` | 技能库 → `skills/` | 智能体 → `agents/` | 命令 → `commands/`
+> 除代码外，优先中文输出。
 
 ---
 
@@ -14,6 +14,8 @@ Default system prompt                             ← 最低
 ```
 
 ---
+
+<important if="任何任务">
 
 ## 铁律（R1–R11）
 
@@ -36,6 +38,8 @@ Default system prompt                             ← 最低
 "太简单不需要设计"是反模式。
 </HARD-GATE>
 
+</important>
+
 ---
 
 ## 任务决策树
@@ -57,10 +61,8 @@ Default system prompt                             ← 最低
 
 ```
 1. 头脑风暴（强制）
-   ├─ 发散 ≥3 方案
-   ├─ 六帽思考 / 决策矩阵评估
-   ├─ 收敛选最优
-   └─ 用户确认后执行 ← HARD-GATE
+   ├─ 发散 ≥3 方案，六帽思考 / 决策矩阵评估
+   ├─ 收敛选最优，用户确认 ← HARD-GATE
 
 2. 迭代精炼
    草案v1 → 反问确认 → v2达成一致 → 锁定
@@ -88,7 +90,20 @@ Default system prompt                             ← 最低
 5. 子Agent精确构造上下文：不继承会话历史，只注入必要状态
 ```
 
+### 编排工作流（Orchestration）
+
+```
+Phase 1: 拆解 → 识别独立子目标与依赖关系 → 输出 DAG 任务图
+Phase 2: 调度 → 无依赖并行派发；有依赖等待前置完成
+Phase 3: 整合 → 收集结果 → 冲突检测 → 合并交付物
+Phase 4: 验证 → 子目标独立验证 + 整体集成验证
+```
+
+**编排原则**：子Agent不共享可变状态，通过消息传递协调；失败最多重试2次；输出结构化结果（非自由文本）。
+
 ---
+
+<important if="声称完成任何任务">
 
 ## 交叉验证清单
 
@@ -110,10 +125,10 @@ Default system prompt                             ← 最低
 □ 无 SQL注入 / XSS / CSRF 风险
 □ 敏感操作有权限检查
 □ 输入验证在系统边界完成
-□ 业务逻辑中无 new Date()等解析不稳定、时区混乱、对象可变的处理 （使用适合项目的时间库,改用 Day.js / date-fns / Temporal 等不可变、语义清晰的库 + 依赖注入）
+□ 无 new Date() 等不稳定时间处理（用 Day.js / date-fns / Temporal + 依赖注入）
 ```
 
-### 反合理化（借口 → 反驳）
+### 反合理化
 
 | 借口               | 反驳                       |
 | ------------------ | -------------------------- |
@@ -122,11 +137,9 @@ Default system prompt                             ← 最低
 | "测试在 CI 里跑"   | 本地先跑，CI 是最后防线    |
 | "太简单不需要验证" | 铁律无一例外               |
 
-### 证据优先
+**证据优先**：任何"已完成"声明必须附验证证据；技术假设通过测试验证；性能优化前后必须有基准数据。
 
-- **Claim → Evidence**：任何"已完成"声明必须附验证证据
-- **假设 → 验证**：技术假设必须通过测试或构建验证
-- **优化 → 测量**：性能优化前后必须有基准数据对比
+</important>
 
 ---
 
@@ -146,28 +159,10 @@ Default system prompt                             ← 最低
 
 ### Karpathy 四原则
 
-1. **先思考再编码（Think Before Coding）**
-
-   - 明确陈述假设，不确定就问而不是猜
-   - 存在歧义时呈现多种解读，不默默选一个
-   - 有更简单的方案，主动指出
-   - 遇到困惑停下来，说清楚哪里不明白
-
-2. **简洁优先（Simplicity First）**
-
-   - 能 50 行解决的不写 200 行；禁止推测性通用化
-   - 不加没被要求的功能，不为只用一次的代码建抽象
-   - 不加没被要求的灵活性或可配置性
-   - 检验标准：资深工程师会不会觉得过度复杂？
-
-3. **外科手术式修改（Surgical Changes）**
-
-   - 只改必须改的；不顺手改善相邻代码/注释/格式
-   - 匹配现有风格；预存在的死代码发现即标注，不擅自删除
-   - 每行改动可追溯到用户请求
-
-4. **目标驱动（Goal-Driven Execution）**
-   - 弱命令 → 强声明式标准
+1. **先思考再编码**：明确陈述假设；有歧义呈现多种解读；有更简单方案主动指出
+2. **简洁优先**：能50行解决的不写200行；禁止推测性通用化；不加未被要求的功能/抽象/灵活性
+3. **外科手术式修改**：只改必须改的；匹配现有风格；不顺手改善相邻代码
+4. **目标驱动**：弱命令 → 强声明式标准
 
 | 弱命令   | 强声明式标准                 |
 | -------- | ---------------------------- |
@@ -189,6 +184,8 @@ Agents（专项委托） ← 领域专家，精确构造上下文
 Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 ```
 
+<important if="匹配任何触发词">
+
 ### P0 强制 Skill（触发即调用，不可绕过）
 
 | Skill                            | 触发词                                 |
@@ -198,6 +195,8 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 | `systematic-debugging`           | 调试、报错、bug、异常、崩溃            |
 | `using-superpowers`              | 开始对话、不确定技能、有什么技能       |
 
+</important>
+
 ### P1 推荐 Skill
 
 | Skill                            | 触发词                            |
@@ -206,12 +205,14 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 | `writing-plans`                  | 写计划、实施计划、任务分解        |
 | `executing-plans`                | 执行计划、实施任务                |
 | `subagent-driven-development`    | 并行 Agent、多任务、子代理        |
-| `dispatching-parallel-agents`    | 并行调度、多 Agent 分发           |
+| `orchestration-workflow`         | 编排工作流、任务编排、Agent协调   |
 | `code-review`                    | 代码审查、PR 审查                 |
-| `finishing-a-development-branch` | 分支完成、合并 PR                 |
-| `receiving-code-review`          | 接收审查、审查反馈                |
 | `context-rot-guard`              | 上下文腐败、上下文退化            |
 | `quality-gate`                   | 质量门禁、质量检查                |
+| `progress-tracking`              | 进度追踪、长任务进度、checkbox    |
+| `memory-compression`             | 记忆压缩、上下文压缩、记忆持久化  |
+| `design-reasoning`               | 设计推理、UI推理、设计决策        |
+| `eval-driven-dev`                | 评估驱动、盲比较、基准测试        |
 
 > 完整 Skill 列表 → `SPEC.md`
 
@@ -237,9 +238,9 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 | AI     | `ai-engineer`, `agentic-orchestrator`, `ml-engineer`, `mcp-builder` |
 | 效能   | `git-expert`, `refactoring-expert`, `build-error-resolver`          |
 
-> 完整 Agent 列表（53 个）→ `SPEC.md`
+> 完整 Agent 列表（56 个）→ `SPEC.md`
 
-### 关键 Hook（自动触发）
+### 关键 Hook
 
 | 类别         | Hook                      | 功能             |
 | ------------ | ------------------------- | ---------------- |
@@ -256,6 +257,18 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 
 > 完整 Hook 列表（50 个）→ `SPEC.md`
 
+### MCP 速查
+
+| Toolset | 服务器                                              | 用途                        |
+| ------- | --------------------------------------------------- | --------------------------- |
+| core    | `memory`, `thinking`, `fs`, `fetch`, `time`         | 记忆/推理/文件/HTTP/时间    |
+| dev     | `gh`, `git`, `ctx7`, `pw`, `crawl`                  | GitHub/Git/文档/浏览器/爬取 |
+| ops     | `redis`, `sqlite`, `docker`, `postgres`, `supabase` | 缓存/DB/容器/BaaS           |
+| search  | `brave`, `exa`                                      | 网页搜索/语义搜索           |
+| collab  | `figma`, `linear`, `notion`, `slack`                | 设计/项目/知识/消息         |
+
+> 权威源：`.mcp.json` | 分组视图：`mcp/servers.json`
+
 ---
 
 ## 上下文管理
@@ -264,9 +277,12 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 
 | 使用率 | 行动                                               |
 | ------ | -------------------------------------------------- |
-| <70%   | 正常执行                                           |
+| <50%   | 正常执行                                           |
+| 50–70% | 战略断点时主动 `/compact`（逻辑完成点，非被动等）  |
 | 70–85% | 主动压缩：摘要 → 保留关键决策 → 丢弃重复           |
 | >85%   | 强制压缩，或启动新子 Agent（fresh context window） |
+
+> 提前于 50% 手动 `/compact` 优于被动等待溢出。切换新任务时用 `/clear` 重置。
 
 ### 分层上下文
 
@@ -276,38 +292,73 @@ Hooks（自动触发）  ← 生命周期守卫，无需手动调用
 底层：skills/ agents/（执行能力，触发时加载）
 ```
 
-### Spec 驱动（非简单任务）
+### 记忆压缩算法（参考 claude-mem）
 
-非简单任务用 `specs/TASK_NAME.md` 记录需求+验收标准，减少上下文膨胀。
-长任务每完成一个子目标，输出"当前状态摘要"释放已完成上下文。
+```
+识别关键信息：决策、偏好、架构、错误模式
+压缩为结构化摘要：{ category, key, value, confidence, timestamp }
+按项目/领域分类存储到 memory MCP
+恢复时按相关性检索注入
+```
 
-### 上下文压缩策略
-
-- 战略断点压缩：在逻辑完成点主动压缩，释放已完成上下文
-
-### 记忆持久化策略
+### 跨会话记忆
 
 ```
 SessionStart → 恢复记忆 → 注入上下文
 SessionEnd   → 保存记忆 → 生成摘要
 ```
 
-- 跨会话记忆通过 MCP `memory` 服务器持久化
-- 关键决策、用户偏好、项目架构自动记忆
-- 会话开始时自动恢复相关上下文
-- 记忆内容按项目/领域分类，避免污染
+关键决策、用户偏好、项目架构通过 MCP `memory` 服务器持久化，按项目/领域分类存储。
 
-### 命令规范
+### Token 优化
 
-| 命令       | 作用                               |
-| ---------- | ---------------------------------- |
-| `/discuss` | 明确需求、识别约束                 |
-| `/plan`    | 设计方案、分解任务                 |
-| `/execute` | 按计划实现                         |
-| `/verify`  | 交叉验证、质量门检查               |
-| `/ship`    | 合并、部署                         |
-| `/compact` | 战略压缩：在逻辑断点主动压缩上下文 |
-| `/status`  | 查看当前工作流状态和进度           |
+| 策略            | 方法                                              |
+| --------------- | ------------------------------------------------- |
+| 子Agent模型选择 | 简单子任务用 Haiku，复杂用 Sonnet/Opus            |
+| 自动压缩阈值   | `AUTOCOMPACT_PCT_OVERRIDE=75`（默认80，提前压缩） |
+| 思考Token限制   | `MAX_THINKING_TOKENS=8000`（复杂任务可上调）      |
+| 高强度推理     | 在 prompt 中加 `ultrathink` 关键词触发深度推理    |
+
+### Spec 驱动
+
+非简单任务用 `spec/<project>/<task>.md`（或同目录分 `spec.md` / `design.md` / `tasks.md`）记录需求+验收标准，减少上下文膨胀。
+长任务每完成一个子目标，输出"当前状态摘要"释放已完成上下文。
+
+### 命令速查
+
+| 命令        | 作用                               |
+| ----------- | ---------------------------------- |
+| `/discuss`  | 明确需求、识别约束                 |
+| `/plan`     | 设计方案、分解任务（Opus 推荐）    |
+| `/execute`  | 按计划实现（Sonnet 推荐）          |
+| `/verify`   | 交叉验证、质量门检查               |
+| `/ship`     | 合并、部署                         |
+| `/compact`  | 战略压缩：在逻辑断点主动压缩上下文 |
+| `/clear`    | 切换新任务时完全重置上下文         |
+| `/rewind`   | 撤销偏轨时回退（Esc Esc 也可）     |
+| `/loop`     | 定期任务：轮询构建/PR（最长3天）   |
+| `/batch`    | 跨文件批量操作                     |
+| `/simplify` | 重构代码，提高可复用性             |
+| `/status`   | 查看当前工作流状态和进度           |
+| `/propose`  | 创建规格提案（OpenSpec 模式）      |
+| `/apply`    | 按提案任务清单执行实现             |
+| `/archive`  | 归档已完成的规格提案               |
+
+---
+
+## 并行开发模式
+
+### Agent Teams + Git Worktrees
+
+```
+git worktree add ../feature-branch feature/x   # 隔离分支
+# 每个 Agent 获得独立工作副本，互不干扰
+# tmux 分屏运行多个 Claude 实例并行开发
+```
+
+- 无依赖子任务 → 并行派发到不同 worktree
+- 同一子任务只有一个 Agent 负责（反左右手互博）
+- 每个 Agent fresh context + 只注入必要状态
 
 ---
 
@@ -318,11 +369,10 @@ SessionEnd   → 保存记忆 → 生成摘要
   → 置信度评估
   → 0.9+：Instinct（自动应用）
   → 0.7–0.9：experiences/patterns/（按需调用）
-  → <0.7：experiences/rejected/（存档观察）
+  → 0.5–0.7：继续观察
+  → <0.5：experiences/rejected/（存档）
   → 验证后升级为 Skill / Rule
 ```
-
-### 置信度标准
 
 | 分数    | 含义                   | 处理        |
 | ------- | ---------------------- | ----------- |
@@ -337,6 +387,7 @@ SessionEnd   → 保存记忆 → 生成摘要
 
 - OWASP Top 10 防护 → `rules/RULES_SECURITY.md`
 - Git 安全禁止 → `rules/RULES_GIT.md`
+- MCP 配置规范 → `rules/RULES_MCP.md`
 - 命令黑名单 → `settings.json` permissions.deny
 
 ---
@@ -351,9 +402,10 @@ SessionEnd   → 保存记忆 → 生成摘要
 | 有工具不用自己实现   | Tool-First：先查 Skills/Agents/MCP |
 | 子 Agent 职责重叠    | 边界清晰，单一负责                 |
 | 未验证即宣称完成     | Claim → Evidence                   |
-| 上下文浪费           | >70%触发压缩，战略断点执行         |
+| 上下文浪费           | >50% 战略断点压缩，切任务用 /clear |
 | 记忆不持久           | 关键决策通过 memory MCP 持久化     |
 | 左右手互博           | 同一模块单一负责，不相互覆盖       |
+| 规则被忽略           | 用 `<important if="...">` 标签包裹 |
 
 ---
 
@@ -369,6 +421,7 @@ SessionEnd   → 保存记忆 → 生成摘要
 | `RULES_FRONTEND.md`   | 前端 UI           |
 | `RULES_DATABASE.md`   | 数据库            |
 | `RULES_DEVOPS.md`     | CI/CD/部署        |
+| `RULES_MCP.md`        | MCP 配置          |
 | `RULES_PYTHON.md`     | Python            |
 | `RULES_TYPESCRIPT.md` | TypeScript        |
 | `RULES_GO.md`         | Go                |
@@ -378,17 +431,20 @@ SessionEnd   → 保存记忆 → 生成摘要
 | `RULES_MOBILE.md`     | 移动端            |
 | `RULES_CSHARP.md`     | C#/.NET           |
 | `RULES_DART.md`       | Dart/Flutter      |
+| `RULES_JAVA.md`       | Java/Spring       |
+| `RULES_RUBY.md`       | Ruby/Rails        |
 
 ---
 
 ## 同步说明
 
 ```
-CLAUDE.md + skills/ + agents/ + rules/ → sync.ps1 → Cursor / Windsurf / Trae / Copilot
+Claude Code 专用（不同步）：hooks/ scripts/ settings.json
+跨编辑器同步（软链接）：   skills/ agents/ commands/ rules/
+完整复制：                  CLAUDE.md
 ```
 
-同步内容：`skills/` `agents/` `rules/`（目录联接）+ `CLAUDE.md`（完整复制）
-不同步：`hooks/` `scripts/` `settings.json`（Claude Code 专用）
+同步目标：Cursor / Windsurf / Trae / Copilot 等支持 AGENTS.md / rules/ 的编辑器。
 
 详见：`SYNC_GUIDE.md`
 
@@ -401,4 +457,5 @@ CLAUDE.md + skills/ + agents/ + rules/ → sync.ps1 → Cursor / Windsurf / Trae
 | 渐进披露      | metadata → SKILL.md → references/           |
 | 示例驱动      | 具体输入输出优先于抽象描述                  |
 | 30 秒约束     | 每个 skill/guide 设计为 30 秒内可读完       |
+| 防规则忽略    | 关键规则用 `<important if="...">` 包裹      |
 | Karpathy 简洁 | 能 50 行解决的不写 200 行；禁止推测性通用化 |

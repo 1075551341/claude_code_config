@@ -1,67 +1,12 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "description": "MCP服务器配置 - 核心服务器，以 settings.json 为权威源同步。Toolset分组：core(核心必开) / dev(开发辅助) / ops(运维部署) / search(搜索查询)",
+  "_comment": "MCP 分组视图 | 权威源：.mcp.json | 本文件仅定义 toolset 分组映射，不重复服务器参数",
   "toolsets": {
-    "core": ["memory", "thinking", "filesystem"],
-    "dev": ["github", "context7", "playwright"],
-    "ops": ["docker", "postgres", "redis"],
-    "search": ["exa", "brave"]
-  },
-  "servers": {
-    "github": {
-      "description": "GitHub API 集成。场景：管理 PR/Issue、查看 Actions 状态、搜索仓库。支持Toolset分组和Header驱动配置",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      },
-      "_toolset": "dev",
-      "_transport": "stdio"
-    },
-    "memory": {
-      "description": "跨会话记忆持久化（来自 claude-mem）。场景：记住项目架构决策、用户偏好、重要上下文。支持按项目/领域分类",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"],
-      "_toolset": "core",
-      "_transport": "stdio"
-    },
-    "thinking": {
-      "description": "结构化逐步推理（来自 sequential-thinking）。场景：复杂架构设计、多方案比较、调试链路分析",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-      "_toolset": "core",
-      "_transport": "stdio"
-    },
-    "filesystem": {
-      "description": "文件系统操作（受限目录）。场景：读写项目文件、管理配置、批量重命名。安全：ALLOWED_DIRECTORIES限制访问范围",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms", "C:\\Users\\DELL\\.claude"],
-      "_toolset": "core",
-      "_transport": "stdio"
-    },
-    "playwright": {
-      "description": "Playwright 浏览器自动化（首选）。场景：E2E 测试、网页截图、表单填写、多浏览器兼容",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"],
-      "_toolset": "dev",
-      "_transport": "stdio"
-    },
-    "exa": {
-      "description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "command": "npx",
-      "args": ["-y", "@context7/mcp-exa-server"],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      },
-      "_toolset": "search",
-      "_transport": "stdio"
-    },
-    "context7": {
-      "description": "Context7 技术文档查询（AST感知分块 + Merkle DAG增量同步）。场景：查 React/Vue/Express/Node 等库的最新 API",
-      "command": "npx",
-      "args": ["-y", "@context7/mcp-server"],
-      "_toolset": "dev",
-      "_transport": "stdio"
-    }
+    "core": ["memory", "thinking", "fs", "fetch", "time"],
+    "dev": ["gh", "git", "ctx7", "pw", "crawl"],
+    "ops": ["redis", "sqlite", "docker", "postgres", "supabase"],
+    "search": ["brave", "exa"],
+    "collab": ["figma", "linear", "notion", "slack"],
+    "extra": ["puppeteer"]
   }
 }

@@ -75,13 +75,32 @@ DEBUG_PATTERNS = {
     ],
 }
 
-# 通用标记检测（所有文件类型）
+# 不检查 debug 残留的文件/目录（文档、配置、规则）
+EXCLUDED_PATHS = [
+    r'\.md$',           # Markdown 文档
+    r'^rules/',         # 规则目录
+    r'^agents/',        # Agent 定义
+    r'^skills/',        # Skill 定义
+    r'^hooks/',         # Hook 自身（防自检）
+    r'^commands/',      # 命令定义
+    r'CLAUDE\.md$',     # 全局配置
+    r'SPEC\.md$',       # 规范索引
+    r'README\.md$',     # 说明文档
+    r'\.json$',         # JSON 配置
+    r'\.yml$',          # YAML 配置
+    r'\.yaml$',         # YAML 配置
+    r'\.toml$',         # TOML 配置
+    r'CHANGELOG',       # 变更日志
+    r'LICENSE',         # 许可证
+]
+
+# 通用标记检测（仅对代码文件）
 GENERAL_MARKERS = [
-    r'TODO\s*[:\-]?\s*DEBUG',
-    r'FIXME\s*[:\-]?\s*debug',
-    r'HACK\s*[:\-]?\s*',
-    r'XXX\s*[:\-]?\s*',
-    r'BUG\s*[:\-]?\s*',
+    r'TODO\s*[:\-]\s*(?i:debug|remove|delete|cleanup)',  # TODO: debug / TODO: remove 等
+    r'FIXME\s*[:\-]\s*(?i:debug|hack|temp)',             # FIXME: debug / FIXME: hack
+    r'HACK\s*[:\-]\s',                                   # HACK: (后面必须有内容)
+    r'\bXXX\s*[:\-]\s',                                  # XXX: (作为标记而非普通词)
+    r'\bBUG\s*[:\-]\s',                                  # BUG: (作为标记而非普通词)
 ]
 
 
@@ -166,6 +185,10 @@ def main():
 
         for filepath in modified_files:
             if not os.path.isfile(filepath):
+                continue
+
+            # 跳过文档/配置/规则文件
+            if any(re.search(pat, filepath, re.IGNORECASE) for pat in EXCLUDED_PATHS):
                 continue
 
             # 检查特定语言的debug模式
