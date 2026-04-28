@@ -10,26 +10,21 @@ description: 跨编辑器配置同步指南
 
 ```text
 ~/.claude/                    # 主配置目录（仅 Claude Code 使用完整功能）
-├── CLAUDE.md                 # ✅ 同步 - 核心规则（所有编辑器）
-├── rules/                    # ✅ 同步 - 各类规则文件
+├── CLAUDE.md                 # ❌ 不同步 - 各编辑器独立维护
+├── rules/                    # ✅ 同步 - 格式转换复制到编辑器原生规则目录
 │   ├── RULES_CORE.md         #     核心规则（alwaysApply）
 │   ├── RULES_FRONTEND.md     #     前端规则
 │   ├── RULES_BACKEND.md     #     后端规则
 │   └── ...
-├── agents/                   # ✅ 同步 - Agent 定义
-│   ├── code-review-workflow.md
-│   ├── debugger.md
-│   └── ...
-├── skills/                   # ✅ 同步 - 技能库（Markdown 格式）
+├── agents/                   # ✅ 同步 - Agent 定义（目录链接）
+├── skills/                   # ✅ 同步 - 技能库（目录链接）
+├── commands/                 # ❌ 不同步 - Claude Code 专用
 ├── hooks/                    # ❌ 不同步 - Claude Code 专用
-│   ├── _editor_hook_launcher.py    # 编辑器检测（v3.0）
-│   ├── pre-bash-guard.py
-│   └── ...
 ├── .mcp.json                 # ❌ 不同步 - 各编辑器独立配置
 ├── settings.json             # ❌ 不同步 - Claude Code 专用
 ├── .claude.json              # ❌ 不同步 - Claude Code 专用
-├── TOOL_MATCHING_GUIDE.md    # ✅ 同步 - 工具匹配指南
-├── SYNC_GUIDE.md             # 📘 本文件
+├── TOOL_MATCHING_GUIDE.md    # ❌ 不同步 - 各编辑器独立
+├── SYNC_GUIDE.md             # ❌ 不同步 - 各编辑器独立
 └── scripts/sync.ps1          # 🚀 Windows 同步脚本
 ```
 
@@ -39,18 +34,18 @@ description: 跨编辑器配置同步指南
 
 | 目录/文件 | 同步方式 | 目标位置 | 说明 |
 |-----------|---------|---------|------|
-| `CLAUDE.md` | 复制（完整版） | 各编辑器目录 | 核心行为规范（优先完整，Windsurf 超限则速查） |
-| `rules/*.md` | 软链接/复制 | 各编辑器 rules 目录 | 分类规则文件 |
-| `agents/*.md` | 软链接/复制 | 各编辑器 agents 目录 | Agent 定义 |
-| `skills/*.md` | 软链接/复制 | 各编辑器 skills 目录 | 技能库 |
-| `commands/*.md` | 软链接/复制 | 各编辑器 commands 目录 | 斜杠命令定义 |
-| `TOOL_MATCHING_GUIDE.md` | 复制 | 各编辑器目录 | 工具匹配参考 |
-| `SYNC_GUIDE.md` | 复制 | 各编辑器目录 | 同步指南（可选） |
+| `skills/` | 目录链接 | 各编辑器目录 | 技能库 |
+| `agents/` | 目录链接 | 各编辑器目录 | Agent 定义 |
+| `rules/*.md` | 格式转换复制 | 各编辑器原生规则目录 | 分类规则文件 |
 
-### ❌ 不同步项（Claude Code 专用）
+### ❌ 不同步项（Claude Code 专用或各编辑器独立）
 
 | 文件 | 原因 | 风险说明 |
 |------|------|---------|
+| `CLAUDE.md` | 各编辑器独立维护 AGENTS.md / CLAUDE.md | 避免覆盖编辑器专属指令 |
+| `commands/` | 各编辑器 slash 命令格式不同 | 避免兼容性问题 |
+| `TOOL_MATCHING_GUIDE.md` | 编辑器无关 | 无需同步 |
+| `SYNC_GUIDE.md` | 编辑器无关 | 无需同步 |
 | `hooks/` | 防止干扰编辑器内模型调用 | **高风险**：Hooks 在编辑器中运行可能导致无限循环、响应延迟、工具调用冲突 |
 | `.mcp.json` | 各编辑器 MCP 配置格式不同 | Cursor/Windsurf 使用不同的 MCP 配置格式 |
 | `settings.json` | 包含 Claude Code 专属设置 | 包含 hooks 配置、权限设置等编辑器不支持的选项 |
@@ -242,12 +237,11 @@ Hooks 使用多层检测确保在编辑器环境中安全跳过：
 ~/.claude/scripts/sync.ps1
 
 # 功能
-- [✓] 软链接 CLAUDE.md 到各编辑器
-- [✓] 复制 rules/ 到各编辑器
-- [✓] 复制 agents/ 到各编辑器
-- [✓] 复制 skills/ 到各编辑器
-- [✗] 排除 hooks/（安全保护）
-- [✗] 排除 .mcp.json（各编辑器独立）
+- [✓] 目录链接 skills/ 到各编辑器
+- [✓] 目录链接 agents/ 到各编辑器
+- [✓] 格式转换复制 rules/ 到各编辑器原生规则目录
+- [✗] 排除 hooks/ scripts/（安全保护）
+- [✗] 排除 commands/ CLAUDE.md MCP配置（各编辑器独立）
 - [✓] 创建备份
 - [✓] 生成同步报告
 ```
@@ -256,13 +250,11 @@ Hooks 使用多层检测确保在编辑器环境中安全跳过：
 
 ```markdown
 □ 1. 备份现有配置
-□ 2. 创建软链接（CLAUDE.md）
-□ 3. 复制 rules/*.md
-□ 4. 复制 agents/*.md
-□ 5. 复制 skills/*.md
-□ 6. 验证文件权限
-□ 7. 重启编辑器
-□ 8. 测试工具调用
+□ 2. 创建软链接（skills/、agents/）
+□ 3. 复制并转换 rules/*.md 到编辑器原生规则目录
+□ 4. 验证文件权限
+□ 5. 重启编辑器
+□ 6. 测试工具调用
 ```
 
 ## 故障排除
@@ -305,8 +297,8 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 │    - 确认 MCP 工具可用                                        │
 ├─────────────────────────────────────────────────────────────┤
 │ 3. 运行 sync.ps1 同步到各编辑器                               │
-│    - 软链接 CLAUDE.md                                        │
-│    - 复制 rules/agents/skills                                │
+│    - 目录链接 skills/ agents/                                 │
+│    - 格式转换复制 rules/                                      │
 ├─────────────────────────────────────────────────────────────┤
 │ 4. 在各编辑器中验证                                           │
 │    - 检查规则是否加载                                        │
@@ -370,4 +362,4 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 
 ---
 
-_版本：v5.0 | 更新：2026-04-15_
+_版本：v6.0 | 更新：2026-04-28_

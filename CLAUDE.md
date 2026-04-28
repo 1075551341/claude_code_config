@@ -439,9 +439,9 @@ git worktree add ../feature-branch feature/x   # 隔离分支
 ## 同步说明
 
 ```
-Claude Code 专用（不同步）：hooks/ scripts/ settings.json
-跨编辑器同步（软链接）：   skills/ agents/ commands/ rules/
-完整复制：                  CLAUDE.md
+Claude Code 专用（不同步）：hooks/ scripts/ settings.json commands/ CLAUDE.md
+跨编辑器同步（软链接）：   skills/ agents/
+格式转换复制：            rules/
 ```
 
 同步目标：Cursor / Windsurf / Trae / Copilot 等支持 AGENTS.md / rules/ 的编辑器。

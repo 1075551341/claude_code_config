@@ -106,38 +106,7 @@
       "env": {
         "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
       }
-    },
-    "linear": {
-      "_description": "Linear 项目管理集成。场景：Issue跟踪、任务管理、项目管理",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-linear"],
-      "env": {
-        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-      }
-    },
-    "notion": {
-      "_description": "Notion 知识库集成。场景：读写 Notion 页面/数据库、项目管理、文档协作",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-notion"],
-      "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
-      }
-    },
-    "slack": {
-      "_description": "Slack 消息发送与频道管理。场景：发送通知、管理频道、获取消息",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-slack"],
-      "env": {
-        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
-      }
-    },
-    "supabase": {
-      "_description": "Supabase 后端即服务。场景：数据库操作、认证、存储、实时订阅",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-supabase"],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
-      }
     }
+
   }
 }
