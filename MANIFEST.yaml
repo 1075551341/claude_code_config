@@ -1,0 +1,123 @@
+# 组件唯一归属源 — 防左右手互博
+# 权威：spec/claude-config-integration/design.md §9
+
+version: "1.0"
+updated: "2026-05-22"
+
+concerns:
+  brainstorming:
+    owner: skill/brainstorming
+    source: obra/superpowers
+    excludes: [agent/planner]
+
+  planning:
+    owner: skill/writing-plans
+    delegates: [agent/planner]
+    command: plan
+    source: obra/superpowers
+    excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
+
+  project_context:
+    owner: hook/pre-context-injector
+    note: 每会话缓存一次，注入项目 CLAUDE.md；不替代 session-start-bootstrap
+    excludes: [hook/session-start-bootstrap]
+
+  multi_agent:
+    owner: agent/agentic-orchestrator
+    skill: skill/subagent-driven-development
+    source: affaan-m/ECC
+    excludes: [agent/planner]
+
+  execution:
+    owner: skill/executing-plans
+    source: obra/superpowers
+
+  verification:
+    owner: skill/verification-before-completion
+    hook: stop-quality-gate
+    source: obra/superpowers
+
+  debugging:
+    owner: skill/systematic-debugging
+    source: obra/superpowers
+
+  tdd:
+    owner: skill/test-driven-development
+    source: obra/superpowers
+
+  code_review_request:
+    owner: skill/requesting-code-review
+    source: obra/superpowers
+
+  code_review_receive:
+    owner: skill/receiving-code-review
+    delegates: [agent/code-reviewer]
+    source: obra/superpowers
+
+  spec_review:
+    owner: skill/spec-validation
+    delegates: [agent/spec-reviewer]
+    source: Fission-AI/OpenSpec
+
+  memory:
+    owner: plugin/claude-mem
+    skill: skill/memory-compression
+    source: thedotmack/claude-mem
+    excludes: [agent/context-manager]
+
+  context_retrieval:
+    owner: agent/context-manager
+    skill: skill/memory-compression
+    note: 仅检索/持久化，不重复 mem 存储逻辑
+
+  context_rot:
+    owner: skill/memory-compression
+    hook: pre-compact-state
+    source: GSD-redux
+
+  shell_token:
+    owner: hook/pre-rtk-rewrite
+    source: rtk-ai/rtk
+
+  output_token:
+    owner: skill/caveman-compress
+    source: JuliusBrussee/caveman
+
+  change_spec:
+    owner: openspec/changes/
+    command: propose
+    source: Fission-AI/OpenSpec
+    excludes: [planning/phases]
+
+  phase_planning:
+    owner: planning/phases/
+    source: GSD-redux
+    excludes: [openspec/changes]
+
+  lite_spec:
+    owner: spec/project/
+    source: local
+
+  ui_token:
+    owner: DESIGN.md
+    skill: catalog/skills/ui-ux-pro-max
+    source: VoltAgent/awesome-design-md
+
+  coding_philosophy:
+    owner: skill/karpathy-guidelines
+    rules_ref: rules/CORE.md
+    source: forrestchang/andrej-karpathy-skills
+
+  bootstrap:
+    owner: hook/session-start-bootstrap
+    skill: skill/using-superpowers
+    note: 唯一 SessionStart 注入
+
+p0_skills:
+  - using-superpowers
+  - brainstorming
+  - verification-before-completion
+  - systematic-debugging
+
+global_skills_max: 20
+global_agents_max: 15

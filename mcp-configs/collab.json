@@ -1,0 +1,5 @@
+{
+  "toolset": "collab",
+  "description": "设计/项目/知识/消息",
+  "servers": ["figma", "linear", "notion", "slack"]
+}

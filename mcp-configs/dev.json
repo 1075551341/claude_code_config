@@ -1,0 +1,5 @@
+{
+  "toolset": "dev",
+  "description": "GitHub/Git/文档/浏览器/爬取",
+  "servers": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"]
+}

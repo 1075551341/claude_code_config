@@ -1,0 +1,5 @@
+{
+  "toolset": "ops",
+  "description": "缓存/DB/容器/BaaS",
+  "servers": ["redis", "sqlite", "docker", "postgres", "supabase"]
+}

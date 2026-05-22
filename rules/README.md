@@ -1,87 +1,35 @@
 # Rules 规则索引
 
-16 个规则文件，覆盖开发全场景。
+全局 **8 文件** alwaysApply/lazy 规则。语言/领域规则在 `catalog/rules/`，按需复制到项目 `.claude/rules/`。
 
 ---
 
-## 规则列表
+## 全局规则（8）
 
-| 规则文件              | 适用场景                   | 自动加载    |
-| --------------------- | -------------------------- | ----------- |
-| `RULES_CORE.md`       | 核心规则（含通用编码规范） | ✅ 始终启用 |
-| `RULES_BACKEND.md`    | 后端 API 开发              | ❌ 按需加载 |
-| `RULES_FRONTEND.md`   | 前端 UI 开发               | ❌ 按需加载 |
-| `RULES_DATABASE.md`   | 数据库设计/查询            | ❌ 按需加载 |
-| `RULES_SECURITY.md`   | 安全开发/审计              | ❌ 按需加载 |
-| `RULES_TESTING.md`    | 测试编写/策略              | ❌ 按需加载 |
-| `RULES_PYTHON.md`     | Python 开发                | ❌ 按需加载 |
-| `RULES_TYPESCRIPT.md` | TypeScript 开发            | ❌ 按需加载 |
-| `RULES_AI.md`         | AI/LLM 应用开发            | ❌ 按需加载 |
-| `RULES_DEVOPS.md`     | CI/CD、容器化、部署        | ❌ 按需加载 |
-| `RULES_GIT.md`        | 版本控制、分支管理         | ❌ 按需加载 |
-| `RULES_MOBILE.md`     | 移动端开发                 | ❌ 按需加载 |
-| `RULES_CSHARP.md`     | C# / .NET 开发             | ❌ 按需加载 |
-| `RULES_DART.md`       | Dart / Flutter 开发        | ❌ 按需加载 |
-| `RULES_GO.md`         | Go 语言开发                | ❌ 按需加载 |
-| `RULES_RUST.md`       | Rust 语言开发              | ❌ 按需加载 |
+| 文件 | 适用 | 加载 |
+|------|------|------|
+| `CORE.md` | 编码规范 + Karpathy 四原则 | ✅ alwaysApply |
+| `SECURITY.md` | OWASP、密钥管理 | lazy |
+| `GIT.md` | 分支、Commit、PR | lazy |
+| `WORKFLOW.md` | discuss→plan→execute→verify→ship | lazy |
+| `AGENTS.md` | 多 Agent 协作、互斥 | lazy |
+| `MCP.md` | .mcp.json 权威源 | lazy |
+| `DESIGN.md` | DESIGN.md token 规范 | lazy |
+| `README.md` | 本索引 | — |
 
 ---
 
-## 使用方式
+## 目录规则（catalog/rules/）
 
-规则通过 `alwaysApply` 配置自动加载，或通过 globs 模式匹配文件类型自动触发。
+语言：PYTHON, TYPESCRIPT, GO, RUST, JAVA, RUBY, CSHARP, DART, MOBILE  
+领域：BACKEND, FRONTEND, DATABASE, TESTING, DEVOPS, AI
 
-### 手动触发
+### 项目级 lazy-load 示例
 
-```
-使用 [规则名] 规则来 [任务描述]
-```
-
-示例：
-
-- "使用数据库规则设计订单表结构"
-- "使用安全规则审计这个 API"
-- "使用测试规则编写单元测试"
+见 `templates/rules/typescript.lazy.md`
 
 ---
 
-## 规则分类
+## 同步
 
-### AlwaysApply（始终启用）
-
-- `RULES_CORE.md` — 核心规则
-
-### 按领域（按需加载）
-
-| 领域 | 规则文件 |
-|------|----------|
-| AI/LLM | RULES_AI.md |
-| 后端 | RULES_BACKEND.md |
-| 前端 | RULES_FRONTEND.md |
-| 数据库 | RULES_DATABASE.md |
-| 安全 | RULES_SECURITY.md |
-| 测试 | RULES_TESTING.md |
-| Git | RULES_GIT.md |
-| DevOps | RULES_DEVOPS.md |
-
-### 按语言（按需加载）
-
-| 语言 | 规则文件 |
-|------|----------|
-| Python | RULES_PYTHON.md |
-| TypeScript | RULES_TYPESCRIPT.md |
-| Go | RULES_GO.md |
-| Rust | RULES_RUST.md |
-| C# | RULES_CSHARP.md |
-| Dart/Flutter | RULES_DART.md |
-| 移动开发 | RULES_MOBILE.md |
-
----
-
-## 同步机制
-
-```powershell
-./sync.ps1
-```
-
-同步内容：`rules/` → 软连接到各编辑器目录，配合 `CLAUDE.md` 全局指令使用。
+`scripts/sync.ps1` 软链接 `rules/` → Cursor/Windsurf/Trae

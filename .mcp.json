@@ -46,12 +46,12 @@
       "args": ["-y", "@upstash/context7-mcp"]
     },
     "pw": {
-      "_description": "Playwright 浏览器自动化。场景：E2E 测试、网页截图、表单填写",
+      "_description": "Microsoft Playwright 官方 MCP（microsoft/playwright-mcp）。场景：浏览器自动化、点击输入、表单、E2E 与数据采集",
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"]
     },
     "crawl": {
-      "_description": "Firecrawl 网页爬取。场景：提取网页正文内容、批量采集数据、抓取文档",
+      "_description": "Firecrawl 官方 MCP（firecrawl/firecrawl-mcp-server，npm: firecrawl-mcp）。场景：网页抓取、结构化提取、爬虫与搜索",
       "command": "npx",
       "args": ["-y", "firecrawl-mcp"],
       "env": {
@@ -94,10 +94,10 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:password@localhost:5432/dbname"]
     },
-    "puppeteer": {
-      "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
+    "chrome-devtools": {
+      "_description": "Chrome DevTools 官方 MCP（ChromeDevTools/chrome-devtools-mcp）。场景：调试网页、控制台与性能面板、接管 Chrome 排障优化",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     },
     "figma": {
       "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",

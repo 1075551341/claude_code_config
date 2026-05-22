@@ -1,0 +1,5 @@
+{
+  "toolset": "core",
+  "description": "记忆/推理/文件/HTTP/时间",
+  "servers": ["memory", "thinking", "fs", "fetch", "time"]
+}

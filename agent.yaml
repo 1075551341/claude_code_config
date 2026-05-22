@@ -1,0 +1,78 @@
+# ECC harness manifest — 全局启用组件清单
+# 权威：.mcp.json | 详情：SPEC.md
+
+version: "1.0"
+harness: claude-code-primary
+
+skills:
+  workflow:
+    source: obra/superpowers
+    enabled:
+      - using-superpowers
+      - brainstorming
+      - writing-plans
+      - executing-plans
+      - verification-before-completion
+      - systematic-debugging
+      - test-driven-development
+      - subagent-driven-development
+      - using-git-worktrees
+      - receiving-code-review
+      - requesting-code-review
+      - finishing-a-development-branch
+      - writing-skills
+  meta:
+    enabled:
+      - memory-compression
+      - spec-validation
+      - karpathy-guidelines
+      - caveman-compress
+
+agents:
+  core:
+    source: ECC + superpowers
+    enabled:
+      - planner
+      - code-explorer
+      - code-reviewer
+      - build-error-resolver
+      - architect
+      - spec-reviewer
+      - context-manager
+      - agentic-orchestrator
+
+hooks:
+  profile_env: ECC_HOOK_PROFILE
+  default: standard
+  core:
+    - session-start-bootstrap
+    - pre-bash-guard
+    - pre-prompt-guard
+    - pre-rtk-rewrite
+    - post-secret-detector
+    - stop-quality-gate
+    - stop-pattern-extraction
+    - pre-compact-state
+
+commands:
+  workflow:
+    - discuss
+    - plan
+    - execute
+    - verify
+    - ship
+    - compact
+    - clear
+  openspec:
+    - propose
+    - apply
+    - archive
+
+catalog:
+  skills: catalog/skills/
+  agents: catalog/agents/
+  rules: catalog/rules/
+  note: 按需复制到项目 .claude/，不全局加载
+
+disabled_hooks:
+  - pre-task-planner  # 互博 writing-plans，见 MANIFEST planning.excludes

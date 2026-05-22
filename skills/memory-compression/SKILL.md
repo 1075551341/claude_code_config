@@ -1,39 +1,33 @@
 ---
 name: memory-compression
-description: 跨会话记忆压缩与持久化，优化上下文使用
-triggers: 记忆压缩, 上下文压缩, 记忆持久化, 压缩策略
+description: 上下文压缩与跨会话记忆协调。触发：记忆压缩、上下文腐败、/compact。
 ---
 
 # 记忆压缩
 
-## 触发条件
-- 上下文使用率 > 70%
-- 逻辑断点（子目标完成）
-- 会话结束需要持久化
+## 职责边界（防互博）
 
-## 执行步骤
+| 层 | 负责 | 不做 |
+|----|------|------|
+| **claude-mem plugin** | 跨会话持久化、mem-search | 不重复写 skill 正文 |
+| **本 skill** | 压缩策略、阈值、摘要格式 | 不替代 plugin 存储 |
+| **memory MCP** | 会话内临时节点 | 非长期 SSOT |
+| **hook/pre-compact-state** | 压缩前状态快照 | — |
 
-1. **识别关键信息**：决策、偏好、架构、错误模式
-2. **压缩为结构化摘要**：
-   ```json
-   { "category": "决策|偏好|架构|错误", "key": "...", "value": "...", "confidence": 0.0-1.0, "timestamp": "..." }
-   ```
-3. **按项目/领域分类存储**到 memory MCP
-4. **恢复时按相关性检索注入**
+## 触发
 
-## 压缩触发
-- 使用率 > 70%：主动压缩
-- 逻辑断点：战略压缩
-- 会话结束：全量持久化
+- 上下文 >70% → `/compact` 或委派 agent/context-manager
+- 逻辑断点（子目标完成）→ 摘要后释放
+- 会话结束 → claude-mem plugin 持久化
 
-## 降级策略
-- memory MCP 不可用时，降级为会话内记忆
+## 压缩格式
 
-## 验收标准
-- 压缩后关键信息可从 memory MCP 恢复
-- 不同项目记忆互不干扰
-- 压缩率 > 50%（上下文减少一半以上）
+```json
+{ "category": "决策|偏好|架构|错误", "key": "...", "value": "...", "confidence": 0.9 }
+```
+
+高置信度模式 → `experiences/patterns/`；拒绝模式 → `experiences/rejected/`
 
 ## 来源
-- 仓库：thedotmack/claude-mem
-- 置信度：0.80
+
+claude-mem + GSD-redux

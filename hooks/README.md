@@ -1,12 +1,14 @@
 # Hooks 钩子系统
 
-> Claude Code 专用，其他编辑器通过 `_editor_hook_launcher.py` 跳过
->
-> 整合自：
->
-> - [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - 60KB+ hooks配置
-> - [obra/superpowers](https://github.com/obra/superpowers) - SessionStart钩子
-> - [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) - Profile-based hooks
+> Claude Code 专用，不同步编辑器。`_editor_hook_launcher.py` 在编辑器环境自动跳过。
+
+## 目录结构
+
+| 目录 | 数量 | 用途 |
+|------|------|------|
+| `hooks/` | 21 | standard profile（settings.json 已注册） |
+| `hooks/_optional/` | 27 | strict profile，需 `ECC_HOOK_PROFILE=strict` 手动注册 |
+| `hooks/_deprecated/` | 1 | 已废弃（pre-task-planner），禁止启用 |
 
 ---
 
@@ -64,7 +66,6 @@ Hook 实现使用 **Node.js** 而非纯 shell，确保 Windows 兼容性。
 | Hook                        | 功能                     | 触发            | 优先级 | 来自                   |
 | --------------------------- | ------------------------ | --------------- | ------ | ---------------------- |
 | `pre-context-injector`      | 上下文注入               | Task/Write/Edit | HIGH   | superpowers            |
-| `pre-task-planner`          | 任务规划                 | Task/Bash/Write | HIGH   | -                      |
 | `pre-bash-guard`            | Bash危险命令拦截         | Bash            | HIGH   | everything-claude-code |
 | `pre-dep-checker`           | 依赖安全检查             | Bash            | HIGH   | -                      |
 | `pre-config-protection`     | 配置文件保护             | Write/Edit      | MEDIUM | -                      |

@@ -10,12 +10,12 @@ description: 跨编辑器配置同步指南
 
 ```text
 ~/.claude/                    # 主配置目录（仅 Claude Code 使用完整功能）
-├── CLAUDE.md                 # ❌ 不同步 - 各编辑器独立维护
+├── CLAUDE.md                 # ✅ 同步 - 文件软链接（v11）
+├── AGENTS.md                 # ✅ 同步 - 跨编辑器 autodiscovery 镜像
 ├── rules/                    # ✅ 同步 - 格式转换复制到编辑器原生规则目录
-│   ├── RULES_CORE.md         #     核心规则（alwaysApply）
-│   ├── RULES_FRONTEND.md     #     前端规则
-│   ├── RULES_BACKEND.md     #     后端规则
-│   └── ...
+│   ├── CORE.md               #     核心规则（alwaysApply）
+│   ├── SECURITY.md           #     安全规则
+│   └── ...（共 8 文件）
 ├── agents/                   # ✅ 同步 - Agent 定义（目录链接）
 ├── skills/                   # ✅ 同步 - 技能库（目录链接）
 ├── commands/                 # ❌ 不同步 - Claude Code 专用
@@ -34,15 +34,17 @@ description: 跨编辑器配置同步指南
 
 | 目录/文件 | 同步方式 | 目标位置 | 说明 |
 |-----------|---------|---------|------|
+| `CLAUDE.md` | 文件软链接 | 各编辑器根目录 | 路由层入口，SSOT |
+| `AGENTS.md` | 文件软链接 | 各编辑器根目录 | autodiscovery 镜像 |
 | `skills/` | 目录链接 | 各编辑器目录 | 技能库 |
 | `agents/` | 目录链接 | 各编辑器目录 | Agent 定义 |
-| `rules/*.md` | 格式转换复制 | 各编辑器原生规则目录 | 分类规则文件 |
+| `rules/*.md` | 格式转换复制 | 各编辑器原生规则目录 | 8 全局规则 |
 
 ### ❌ 不同步项（Claude Code 专用或各编辑器独立）
 
 | 文件 | 原因 | 风险说明 |
 |------|------|---------|
-| `CLAUDE.md` | 各编辑器独立维护 AGENTS.md / CLAUDE.md | 避免覆盖编辑器专属指令 |
+| `CLAUDE.md` | 已 v11 同步为 SSOT 软链接 | — |
 | `commands/` | 各编辑器 slash 命令格式不同 | 避免兼容性问题 |
 | `TOOL_MATCHING_GUIDE.md` | 编辑器无关 | 无需同步 |
 | `SYNC_GUIDE.md` | 编辑器无关 | 无需同步 |

@@ -1,48 +1,50 @@
 ---
 name: using-superpowers
-description: 技能发现与使用规则
-triggers: [开始对话, 不确定技能, 有什么技能, 可用技能, 开始任务]
+description: 技能发现与 Tool-First 路由。触发：会话开始、不确定用什么技能、开始任务。
 ---
 
-# 技能发现与使用规则
+# 技能发现与 Tool-First
 
-## @Examples
+## 铁律
+
+> 1% 可能适用 → 必须先查 skill，禁止即兴替代工作流。
+
+## 调用链（顺序固定）
 
 ```
-用户: "帮我创建一个用户模块"
-Claude: /using-superpowers → 查找相关技能 → brainstorming → 设计方案
-
-用户: "有什么技能可用？"
-Claude: /using-superpowers → 列出P0/P1/P2技能及
+MANIFEST.yaml → P0 skill(4) → 全局 skill(17) → catalog/skills → agent → MCP/hook
 ```
 
-## 核心规则
+## P0（强制 4）
 
-> 即使只有 1% 的可能性技能适用，也必须调用
+| 信号 | Skill |
+|------|-------|
+| 方案/架构/选型 | brainstorming |
+| 完成/验收 | verification-before-completion |
+| 调试/报错 | systematic-debugging |
+| 不确定 | using-superpowers（本 skill） |
 
-## 优先级
+## 工作流扩展
 
-1. **用户显式指令** — 最高优先级
-2. **Superpowers 技能** — 工作流技能（brainstorming, tdd, systematic-debugging 等）
-3. **领域技能** — 语言/框架特定（python-patterns, react-component 等）
-4. **默认系统提示** — 最低优先级
+| 信号 | Skill / Agent |
+|------|---------------|
+| 写计划 | writing-plans → agent/planner |
+| 执行计划 | executing-plans |
+| TDD | test-driven-development |
+| 代码审查 | requesting/receiving-code-review → agent/code-reviewer |
+| 并行子任务 | subagent-driven-development → agent/agentic-orchestrator |
+| 上下文压缩 | memory-compression → agent/context-manager |
+| 输出冗长 | caveman-compress |
 
-## 技能匹配信号
+## 领域能力
 
-| 信号 | 技能 |
-|------|------|
-| "创建功能"、"构建组件"、"添加特性" | brainstorming |
-| "写测试"、"TDD"、"先写测试" | test-driven-development |
-| "debug"、"为什么失败"、"报错" | systematic-debugging |
-| "审查代码"、"code review" | requesting-code-review |
-| "写计划"、"实现方案" | writing-plans |
-| "完成了"、"修复了"、"测试通过" | verification-before-completion |
-| "深度研究"、"调研"、"技术选型" | deep-research |
-| "写文档"、"RFC"、"技术规范" | doc-coauthoring |
+不在全局 17 个内 → `catalog/skills/`（migrate-from-legacy.py 按需复制）
 
-## 技能调用原则
+## Token
 
-1. **不跳过**：技能存在就必须完整执行，不走捷径
-2. **不替代**：不用自己的逻辑替代技能定义的工作流
-3. **不省略**：技能的每个步骤都必须执行，不因"显而易见"而跳过
-4. **铁律优先**：技能中的 Iron Law / 铁律不可违反
+- Shell：`hook/pre-rtk-rewrite`（RTK）
+- 回复：`skill/caveman-compress`
+
+## 原则
+
+不跳过、不替代、不省略 skill 步骤；Iron Law 不可违反。

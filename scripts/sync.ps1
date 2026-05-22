@@ -1,15 +1,16 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 多编辑器同步脚本 v10.0
+    Claude Code 多编辑器同步脚本 v11.0
 
 .DESCRIPTION
     从 ~/.claude 向各编辑器用户目录同步以下内容：
+      - CLAUDE.md、AGENTS.md → 文件符号链接/联接
       - skills/、agents/ → 目录联接（Junction）或符号链接
       - rules/ → 生成编辑器原生规则文件（.cursorrules/.traerules/.windsurfrules）
       - Windsurf global_rules.md：CLAUDE.md + alwaysApply 核心规则合并
 
-    不同步：commands/、CLAUDE.md、TOOL_MATCHING_GUIDE.md、SYNC_GUIDE.md、
+    不同步：commands/、TOOL_MATCHING_GUIDE.md、SYNC_GUIDE.md、
     hooks/、scripts/、MCP 配置、CLAUDE_IN_EDITOR 环境变量。
 
 .PARAMETER Force
@@ -39,6 +40,7 @@ $EDITORS = @("cursor", "trae", "windsurf", "qoder")
 # CodeArts agent 编辑器使用 AppData Roaming 目录，不使用 ~/.codearts-agent
 $CODEARTS_EDITORS = @("codearts-agent")
 $SYNC_DIRS = @("skills", "agents")
+$SYNC_FILES = @("CLAUDE.md", "AGENTS.md")
 $STALE_LINKS = @("hooks", "scripts", "commands")
 
 # 编辑器原生规则目录映射（使用各编辑器真正识别的全局路径）
@@ -66,6 +68,52 @@ $CODEARTS_USER_DIRS = @{
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
+
+function Sync-SingleFile {
+    param(
+        [string]$Source,
+        [string]$Target,
+        [string]$Label
+    )
+    if (-not (Test-Path $Source)) {
+        Write-Skip "源文件缺失: $Label"
+        return
+    }
+    if (Test-Path $Target) {
+        if (IsLink $Target) {
+            if (-not $Force) {
+                $actual = (Get-Item $Target -Force).Target
+                if ($actual -is [array]) { $actual = $actual[0] }
+                if ($actual -eq $Source) { Write-Ok "$Label 链接正确"; return }
+                Write-Warn "$Label 链接目标不一致，将重建"
+            }
+            if (-not $DryRun) { Remove-Item $Target -Force }
+        }
+        elseif (-not $Force) {
+            Write-Ok "$Label 已存在（实体文件，跳过；用 -Force 覆盖为链接）"
+            return
+        }
+        else {
+            if (-not $DryRun) { Remove-Item $Target -Force }
+        }
+    }
+    if ($DryRun) { Write-Ok "[预演] 将创建 $Label 链接"; $script:stats.Links++; return }
+    try {
+        if ($isAdmin) {
+            New-Item -ItemType SymbolicLink -Path $Target -Target $Source -Force | Out-Null
+        }
+        else {
+            $r = & cmd.exe /c "mklink `"$Target`" `"$Source`"" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "mklink failed: $r" }
+        }
+        Write-Ok "$Label 已链接"
+        $script:stats.Links++
+    }
+    catch {
+        Write-Fail "${Label}: $_"
+        $script:stats.Errors++
+    }
+}
 
 function Write-Ok { param($m) Write-Host "    [OK]  $m" -ForegroundColor Green }
 function Write-Warn { param($m) Write-Host "    [!!]  $m" -ForegroundColor Yellow }
@@ -111,9 +159,11 @@ function Sync-NativeRulesFiles {
         return
     }
 
-    $ruleFiles = Get-ChildItem $rulesSrc -Filter "RULES_*.md" | Sort-Object Name
+    $ruleFiles = Get-ChildItem $rulesSrc -Filter "*.md" |
+        Where-Object { $_.Name -ne "README.md" } |
+        Sort-Object Name
     if ($ruleFiles.Count -eq 0) {
-        Write-Skip "无 RULES_*.md 文件，跳过原生规则文件生成"
+        Write-Skip "无规则文件，跳过原生规则文件生成"
         return
     }
 
@@ -135,7 +185,24 @@ function Sync-NativeRulesFiles {
         }
     }
 
-    # Cursor / Windsurf / Trae：每个规则生成一个独立文件
+    # 清理旧规则文件（删除不在源中的 stale 文件，含旧 RULES_*.md/.mdc）
+    if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
+        $validNames = $ruleFiles | ForEach-Object { "$($_.BaseName -replace '^RULES_','')$ext" }
+        $validBaseNames = $ruleFiles | ForEach-Object { $_.BaseName -replace '^RULES_','' }
+        $stalePatterns = @("*.mdc", "*.md")
+        foreach ($pat in $stalePatterns) {
+            $existing = Get-ChildItem $targetRulesDir -Filter $pat -ErrorAction SilentlyContinue
+            foreach ($ef in $existing) {
+                $base = $ef.BaseName -replace '^RULES_',''
+                $isValid = ($ef.Name -in $validNames) -or ($base -in $validBaseNames -and $ef.Extension -eq $ext)
+                if (-not $isValid) {
+                    if ($DryRun) { Write-Fix "[预演] 将删除旧规则: $($ef.Name)" }
+                    else { Remove-Item $ef.FullName -Force; Write-Fix "已删除旧规则: $($ef.Name)"; $stats.Removed++ }
+                }
+            }
+        }
+    }
+
     $syncedCount = 0
     $skippedCount = 0
     $truncatedCount = 0
@@ -143,7 +210,7 @@ function Sync-NativeRulesFiles {
 
     foreach ($rf in $ruleFiles) {
         $srcContent = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
-        $category = $rf.BaseName -replace "^RULES_", ""
+        $category = $rf.BaseName -replace "^RULES_", ""  # 兼容新旧命名
 
         $targetFileName = "$category$ext"
         $targetPath = Join-Path $targetRulesDir $targetFileName
@@ -405,12 +472,12 @@ function Convert-RulesFrontmatter {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code 多编辑器同步脚本 v10.0" -ForegroundColor Cyan
+Write-Host "  Claude Code 多编辑器同步脚本 v11.0" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray
 Write-Host "  目标编辑器: $($EDITORS -join ', '), $($CODEARTS_EDITORS -join ', ')" -ForegroundColor DarkGray
-Write-Host "  同步项 : $($SYNC_DIRS -join ', ')  +  rules/（格式转换复制）" -ForegroundColor DarkGray
+Write-Host "  同步项 : $($SYNC_FILES -join ', '), $($SYNC_DIRS -join ', ')  +  rules/（格式转换复制）" -ForegroundColor DarkGray
 $syncModeLabel = if ($isAdmin) { "管理员（符号链接）" } else { "非管理员（目录联接，Junction）" }
 Write-Host "  模式   : $syncModeLabel" -ForegroundColor DarkGray
 if ($DryRun) { Write-Host "  [预演] 仅预览，不写盘" -ForegroundColor Yellow }
@@ -444,6 +511,13 @@ foreach ($editor in $EDITORS | Sort-Object) {
         }
     }
 
+    # Sync single files (CLAUDE.md, AGENTS.md)
+    foreach ($file in $SYNC_FILES) {
+        $src = Join-Path $CLAUDE_DIR $file
+        $dst = Join-Path $targetDir $file
+        Sync-SingleFile -Source $src -Target $dst -Label $file
+    }
+
     # Sync directories as junctions/symlinks
     foreach ($dir in $SYNC_DIRS) {
         $src = Join-Path $CLAUDE_DIR $dir
@@ -458,7 +532,10 @@ foreach ($editor in $EDITORS | Sort-Object) {
                     if ($actual -eq $src) { Write-Ok "$dir 链接正确"; continue }
                     Write-Warn "$dir 链接目标不一致，将重建"
                 }
-                if (-not $DryRun) { Remove-Item $dst -Force }
+                if (-not $DryRun) {
+                    & cmd.exe /c "rmdir `"$dst`"" 2>&1 | Out-Null
+                    if (Test-Path $dst) { Remove-Item $dst -Force -ErrorAction SilentlyContinue }
+                }
             }
             else {
                 Write-Warn "$dir 为实体目录，将备份后替换为链接"
@@ -482,7 +559,6 @@ foreach ($editor in $EDITORS | Sort-Object) {
     }
 
     # Generate native rules files in editor-specific format
-    # Cursor: ~/.cursor/rules/*.mdc | Windsurf: ~/.codeium/windsurf/memories/global_rules.md | Trae: ~/.trae/user_rules/*.md
     if ($NATIVE_RULES_DIR_MAP.ContainsKey($editor)) {
         $rulesConfig = $NATIVE_RULES_DIR_MAP[$editor]
         if (-not $DryRun) {
@@ -521,7 +597,14 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
         }
     }
 
-    # Sync directories as junctions/symlinks
+    # Sync single files (CLAUDE.md, AGENTS.md)
+    foreach ($file in $SYNC_FILES) {
+        $src = Join-Path $CLAUDE_DIR $file
+        $dst = Join-Path $targetDir $file
+        Sync-SingleFile -Source $src -Target $dst -Label $file
+    }
+
+    # Sync directories as junctions/symlinks (CodeArts)
     foreach ($dir in $SYNC_DIRS) {
         $src = Join-Path $CLAUDE_DIR $dir
         $dst = Join-Path $targetDir $dir
@@ -535,7 +618,10 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
                     if ($actual -eq $src) { Write-Ok "$dir 链接正确"; continue }
                     Write-Warn "$dir 链接目标不一致，将重建"
                 }
-                if (-not $DryRun) { Remove-Item $dst -Force }
+                if (-not $DryRun) {
+                    & cmd.exe /c "rmdir `"$dst`"" 2>&1 | Out-Null
+                    if (Test-Path $dst) { Remove-Item $dst -Force -ErrorAction SilentlyContinue }
+                }
             }
             else {
                 Write-Warn "$dir 为实体目录，将备份后替换为链接"
@@ -574,8 +660,8 @@ if ($stats.Errors -gt 0) {
     Write-Host "  错误数           : $($stats.Errors)" -ForegroundColor Red
 }
 Write-Host ""
-Write-Host "  已同步: skills/ agents/（链接） rules/（格式转换复制）" -ForegroundColor DarkGray
+Write-Host "  已同步: CLAUDE.md AGENTS.md skills/ agents/（链接） rules/（格式转换复制）" -ForegroundColor DarkGray
 Write-Host "  原生规则: .cursor/rules/*.mdc | .windsurf/rules/*.md | .trae/user_rules/*.md" -ForegroundColor DarkGray
 Write-Host "  Windsurf: global_rules.md(完整CLAUDE.md；超限则速查) → ~/.codeium/windsurf/memories/" -ForegroundColor DarkGray
-Write-Host "  不同步: commands/ CLAUDE.md TOOL_MATCHING_GUIDE.md SYNC_GUIDE.md hooks/ scripts/ MCP配置 CLAUDE_IN_EDITOR" -ForegroundColor DarkGray
+Write-Host "  不同步: commands/ TOOL_MATCHING_GUIDE.md SYNC_GUIDE.md hooks/ scripts/ MCP配置 CLAUDE_IN_EDITOR" -ForegroundColor DarkGray
 Write-Host ""

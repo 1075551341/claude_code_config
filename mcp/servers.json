@@ -3,10 +3,10 @@
   "_comment": "MCP 分组视图 | 权威源：.mcp.json | 本文件仅定义 toolset 分组映射，不重复服务器参数",
   "toolsets": {
     "core": ["memory", "thinking", "fs", "fetch", "time"],
-    "dev": ["gh", "git", "ctx7", "pw", "crawl"],
+    "dev": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],
     "ops": ["redis", "sqlite", "docker", "postgres", "supabase"],
-    "search": ["brave", "exa"],
+    "search": ["brave", "exa", "perplexity"],
     "collab": ["figma", "linear", "notion", "slack"],
-    "extra": ["puppeteer"]
+    "extra": ["puppeteer", "glif"]
   }
 }
