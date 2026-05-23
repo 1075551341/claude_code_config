@@ -1,6 +1,6 @@
 # Agents 智能体库
 
-> **全局 8 个**薄编排 + **catalog/agents/** 领域库（38）
+> **全局 8 个**薄编排 + **catalog/agents/** 领域库（43，含 5 gstack 角色）
 
 ---
 

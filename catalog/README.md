@@ -7,7 +7,7 @@
 | 目录 | 数量 | 策略 |
 |------|------|------|
 | skills/ | 97 | 全栈 + 办公 + 移动端/3D 保留 |
-| agents/ | 38 | 领域专家 + 语言 reviewer |
+| agents/ | 43 | 领域专家 + 语言 reviewer + gstack 5 角色 |
 | rules/ | 15 | 语言/领域 lazy-load |
 
 ## 分层

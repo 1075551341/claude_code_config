@@ -34,17 +34,16 @@ description: 跨编辑器配置同步指南
 
 | 目录/文件 | 同步方式 | 目标位置 | 说明 |
 |-----------|---------|---------|------|
-| `CLAUDE.md` | 文件软链接 | 各编辑器根目录 | 路由层入口，SSOT |
-| `AGENTS.md` | 文件软链接 | 各编辑器根目录 | autodiscovery 镜像 |
+| `CLAUDE.md` | 文件链接 | 各编辑器根目录 | 路由层入口，SSOT |
+| `AGENTS.md` | 文件链接 | 各编辑器根目录 | autodiscovery 镜像 |
 | `skills/` | 目录链接 | 各编辑器目录 | 技能库 |
 | `agents/` | 目录链接 | 各编辑器目录 | Agent 定义 |
-| `rules/*.md` | 格式转换复制 | 各编辑器原生规则目录 | 8 全局规则 |
+| `rules/*.md` | 格式转换复制 | 各编辑器原生规则目录 | Cursor `.mdc` / Windsurf `.md` / Trae `user_rules/` |
 
 ### ❌ 不同步项（Claude Code 专用或各编辑器独立）
 
 | 文件 | 原因 | 风险说明 |
 |------|------|---------|
-| `CLAUDE.md` | 已 v11 同步为 SSOT 软链接 | — |
 | `commands/` | 各编辑器 slash 命令格式不同 | 避免兼容性问题 |
 | `TOOL_MATCHING_GUIDE.md` | 编辑器无关 | 无需同步 |
 | `SYNC_GUIDE.md` | 编辑器无关 | 无需同步 |
@@ -177,27 +176,21 @@ Copy-Item "$env:USERPROFILE\.claude\rules\*.md" `
 
 ## 编辑器安全保护机制
 
-### _editor_hook_launcher.py v3.0
+### _editor_hook_launcher.py v2.0
 
-Hooks 使用多层检测确保在编辑器环境中安全跳过：
+Hooks 经 launcher 调用；主判定 **GetConsoleWindow()**（Windows 无控制台 = 编辑器 → 跳过）。
 
 **检测优先级**：
-1. **环境变量**（最高优先级）
+1. **环境变量**
    - `CLAUDE_HOOK_SKIP=1` - 强制跳过
    - `CLAUDE_HOOK_FORCE_CLI=1` - 强制执行
-   - `CLAUDE_CODE_ENTRYPOINT` - 入口点识别
 
-2. **控制台检测**（Windows）
+2. **控制台检测**（Windows，主判定）
    - `GetConsoleWindow() == 0` → 无控制台 → 编辑器环境 → 跳过
 
-3. **TTY 检测**（Unix）
-   - `!isatty(0)` + VS Code 环境标记 → 编辑器环境 → 跳过
-
-4. **环境标记检测**
-   - `VSCODE_PID`, `CURSOR_CHANNEL`, `WINDSURF_APP_VERSION`
-
-5. **工作目录检测**
-   - 路径包含 `.cursor/`, `.windsurf/`, `.trae/` 等
+3. **stdin / 路径 / 父进程链**（补充判定）
+   - 工作目录含 `.cursor/`、`.windsurf/` 等
+   - 父进程含 cursor/windsurf/trae 可执行名
 
 **安全输出**：
 - 编辑器环境：`{"continue": true, "skipped": true}`
@@ -239,11 +232,10 @@ Hooks 使用多层检测确保在编辑器环境中安全跳过：
 ~/.claude/scripts/sync.ps1
 
 # 功能
-- [✓] 目录链接 skills/ 到各编辑器
-- [✓] 目录链接 agents/ 到各编辑器
+- [✓] 链接 CLAUDE.md、AGENTS.md、skills/、agents/
 - [✓] 格式转换复制 rules/ 到各编辑器原生规则目录
 - [✗] 排除 hooks/ scripts/（安全保护）
-- [✗] 排除 commands/ CLAUDE.md MCP配置（各编辑器独立）
+- [✗] 排除 commands/ MCP配置（各编辑器独立）
 - [✓] 创建备份
 - [✓] 生成同步报告
 ```
@@ -284,7 +276,7 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 **症状**：编辑器中工具调用异常、响应延迟
 **原因**：hooks 未正确跳过
 **解决**：
-1. 检查 `_editor_hook_launcher.py` 版本（应为 v3.0+）
+1. 检查 `_editor_hook_launcher.py` 版本（应为 v2.0+，含 GetConsoleWindow）
 2. 验证环境变量 `CLAUDE_HOOK_SKIP` 是否设置
 3. 查看 launcher 检测日志
 
@@ -364,4 +356,4 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 
 ---
 
-_版本：v6.0 | 更新：2026-04-28_
+_版本：v7.0 | 更新：2026-05-23 | sync.ps1 v11.0_

@@ -32,4 +32,12 @@
 
 ## 同步
 
-`scripts/sync.ps1` 软链接 `rules/` → Cursor/Windsurf/Trae
+`scripts/sync.ps1` **格式转换复制**（非软链接）到各编辑器原生规则目录：
+
+| 编辑器 | 目标 |
+|--------|------|
+| Cursor | `~/.cursor/rules/*.mdc` |
+| Windsurf | `~/.windsurf/rules/*.md` + `global_rules.md`（仅 CLAUDE.md 精简） |
+| Trae | `~/.trae/user_rules/*.md` |
+
+源文件变更后需重新执行 `sync.ps1`。

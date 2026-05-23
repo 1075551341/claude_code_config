@@ -21,15 +21,17 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 ### 同步的配置组件
 
-- **技能库**（`skills/`）— 通过软链接或目录联接（Junction）指向 `~\.claude\skills`
+- **技能库**（`skills/`）— 目录联接（Junction）指向 `~\.claude\skills`
 - **代理库**（`agents/`）— 同上
-- **规则库**（`rules/`）— 同上
+- **规则库**（`rules/`）— **格式转换复制**到编辑器原生目录（Cursor `.mdc` / Windsurf `.md` / Trae `user_rules/`），**非**目录联接
 - **`hooks/`** — **不同步到各编辑器**（避免陈旧编辑器配置仍能通过链接调用阻塞型 Hook；编辑器会直接读取 `~\.claude\settings.json` 中的绝对路径）
 - **`scripts/`** — **不同步到各编辑器**（仅在 `~\.claude\scripts` 下维护）
 
-**复制同步的文件**（非链接，改源文件后需重新执行 `sync.ps1`）：
+**复制/链接同步的文件**：
 
-- `CLAUDE.md`
+- `CLAUDE.md`、`AGENTS.md` — 文件符号链接/联接
+- `skills/`、`agents/` — 目录联接
+- `rules/` — 格式转换复制到 `.cursor/rules/*.mdc` 等（改源后需重跑 sync）
 
 **不同步的配置文件**：
 
@@ -56,12 +58,14 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 ## 脚本一览
 
-### `sync.ps1` — 将工具链同步到各编辑器（v8.4）
+### `sync.ps1` — 将工具链同步到各编辑器（v11.0）
 
-**作用**：仅同步 4 项到各编辑器目录：
+**作用**：同步到各编辑器目录：
 
-- `skills/`、`agents/`、`rules/` → **软链接**（Junction/符号链接）
-- `CLAUDE.md` → **复制**（必须是真实文件，不能是软链接）
+- `CLAUDE.md`、`AGENTS.md` → **文件链接**
+- `skills/`、`agents/` → **目录联接**（Junction/符号链接）
+- `rules/` → **格式转换复制**（Cursor `.mdc` / Windsurf `.md` / Trae `user_rules/`）
+- Windsurf 额外更新 `~/.codeium/windsurf/memories/global_rules.md`（CLAUDE.md 或精简速查）
 
 **同时写入（只合并 env，不整文件替换为空白）**：在 **`~\.<editor>\settings.json`** 与 **Roaming `User\settings.json`** 中合并 `env.CLAUDE_IN_EDITOR`，并清理 `terminal.integrated.env.windows.CLAUDE_IN_EDITOR`（编辑器目录不存在则跳过）。脚本头部注释与运行横幅为中文说明。
 
@@ -89,7 +93,7 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -DryRun
 
 ---
 
-### `check.ps1` — 环境健康检查与评分（v3.1）
+### `check.ps1` — 环境健康检查与评分（v3.2）
 
 **作用**：检查目录结构、配置文件格式与安全、`~\.claude` 与各编辑器的链接状态、Hook 风险、Python/Node/Git/Docker 等运行时、（可选）MCP 相关依赖与连通性、工具箱统计，并输出得分与 `logs\check-YYYYMMDD.md` 报告。
 
@@ -203,4 +207,4 @@ powershell -ExecutionPolicy Bypass -File .claude\scripts\fix.ps1 -Restore
 - 脚本内注释与界面文案以中文为主；部分技术字段名（如 JSON 键名）保持英文。
 - `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文；若 CMD/旧控制台仍显示乱码，可改用 **Windows Terminal** 或先执行 `chcp 65001`。
 - 历史文件 `SYNC_RESULT.md` 已合并进本文档，不再单独维护。
-- **文档与脚本版本对齐**：`sync.ps1` **v8.4**，`fix.ps1` **v5.0**（launcher + GetConsoleWindow），`check.ps1` **v3.1**；升级脚本后若 README 未提新版本号，以各 `.ps1` 文件头注释为准。
+- **文档与脚本版本对齐**：`sync.ps1` **v11.0**，`fix.ps1` **v5.0**（launcher + GetConsoleWindow），`check.ps1` **v3.2**；升级脚本后若 README 未提新版本号，以各 `.ps1` 文件头注释为准。

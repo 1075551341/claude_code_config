@@ -23,7 +23,7 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 | 全局 skills | ≤20 | 17（13 workflow + 4 meta） |
 | 全局 agents | ≤15 | 8 core |
 | 全局 rules | 8 文件 | CORE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN + README |
-| CLAUDE.md | ≤200 行 | 132 |
+| CLAUDE.md | ≤200 行 | 144 |
 
 ---
 

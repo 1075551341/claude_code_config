@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 环境检查脚本 v3.1（由原「环境健康检查 v2.0」与「工具箱更新 v2.4」合并；已移除对已废弃 settings.sync.json 的检查）
+    Claude Code 环境检查脚本 v3.2（由原「环境健康检查 v2.0」与「工具箱更新 v2.4」合并；已移除对已废弃 settings.sync.json 的检查）
 
 .DESCRIPTION
     全量环境体检：逐项检查、打分并生成报告。
@@ -32,8 +32,13 @@ $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $EDITORS    = @("cursor", "trae", "windsurf", "qoder")
-$SYNC_DIRS  = @("skills", "agents", "rules")
+$LINK_DIRS  = @("skills", "agents")
 $STALE_LINKS = @("hooks", "scripts")
+$NATIVE_RULES = @{
+    "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc" }
+    "windsurf" = @{ Dir = (Join-Path $env:USERPROFILE ".windsurf\rules"); Ext = ".md" }
+    "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
+}
 
 $results   = [System.Collections.Generic.List[hashtable]]::new()
 $passCount = 0
@@ -94,7 +99,7 @@ function Get-EditorSettingsPath {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Environment Check v3.1" -ForegroundColor Cyan
+Write-Host "  Claude Code Environment Check v3.2" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host "  Dir : $CLAUDE_DIR" -ForegroundColor DarkGray
 Write-Host "  Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor DarkGray
@@ -197,7 +202,7 @@ foreach ($editor in $EDITORS) {
     $linked = 0
     $issues = @()
 
-    foreach ($dir in $SYNC_DIRS) {
+    foreach ($dir in $LINK_DIRS) {
         $lp = Join-Path $editorDir $dir
         $et = Join-Path $CLAUDE_DIR $dir
         if (Test-Path $lp) {
@@ -208,6 +213,27 @@ foreach ($editor in $EDITORS) {
                 if ($actual -eq $et) { $linked++ } else { $issues += "$dir(wrong target)" }
             } else { $issues += "$dir(not a link)" }
         } else { $issues += "$dir(missing)" }
+    }
+
+    # rules/ 为格式转换复制，非目录联接
+    $rulesSrc = Join-Path $CLAUDE_DIR "rules"
+    $expectedRules = if (Test-Path $rulesSrc) {
+        (Get-ChildItem $rulesSrc -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
+    } else { 0 }
+    if ($NATIVE_RULES.ContainsKey($editor) -and $expectedRules -gt 0) {
+        $native = $NATIVE_RULES[$editor]
+        $nativeDir = $native.Dir
+        $nativeExt = $native.Ext
+        if (Test-Path $nativeDir) {
+            $nativeCount = (Get-ChildItem $nativeDir -Filter "*$nativeExt" -ErrorAction SilentlyContinue).Count
+            if ($nativeCount -ge $expectedRules) {
+                $linked++
+            } else {
+                $issues += "rules($nativeCount/$expectedRules native files)"
+            }
+        } else {
+            $issues += "rules(native dir missing)"
+        }
     }
 
     foreach ($stale in $STALE_LINKS) {
@@ -241,10 +267,13 @@ foreach ($editor in $EDITORS) {
         $issues += "settings.json missing at $esPath"
     }
 
+    $expectedLinks = $LINK_DIRS.Count
+    if ($NATIVE_RULES.ContainsKey($editor)) { $expectedLinks++ }
+
     if ($issues.Count -eq 0) {
-        Add-Check "Symlink" ".$editor" "pass" "$linked/$($SYNC_DIRS.Count) dirs linked"
+        Add-Check "Symlink" ".$editor" "pass" "$linked/$expectedLinks sync items OK"
     } elseif ($linked -gt 0) {
-        Add-Check "Symlink" ".$editor" "warn" "$linked linked, issues: $($issues -join ', ')"
+        Add-Check "Symlink" ".$editor" "warn" "$linked OK, issues: $($issues -join ', ')"
     } else {
         Add-Check "Symlink" ".$editor" "warn" "not synced -- run sync.ps1"
     }
@@ -302,28 +331,33 @@ if (Test-Path $hooksDir) {
         }
     }
 
-    $guardedCount = 0
-    $legacyGuardCount = 0
-    $unguardedCount = 0
-    foreach ($py in $pyFiles) {
-        $content = Get-Content $py.FullName -Raw -Encoding utf8
-        if ($content -match '\[editor-guard\]') {
-            if ($content -match 'fastpath-20260406') {
-                $guardedCount++
-            } else {
-                $legacyGuardCount++
+    $launcherPath = Join-Path $hooksDir "_editor_hook_launcher.py"
+    $launcherOk = $false
+    if (Test-Path $launcherPath) {
+        $launcherContent = Get-Content $launcherPath -Raw -Encoding utf8
+        if ($launcherContent -match 'GetConsoleWindow') { $launcherOk = $true }
+    }
+
+    $registeredHooks = 0
+    $launcherHooks = 0
+    if ($settingsObj -and $settingsObj.hooks) {
+        $cats = $settingsObj.hooks | Get-Member -MemberType NoteProperty -EA SilentlyContinue | Select-Object -ExpandProperty Name
+        foreach ($cat in $cats) {
+            foreach ($entry in $settingsObj.hooks.$cat) {
+                foreach ($h in $entry.hooks) {
+                    $registeredHooks++
+                    if ([string]$h.command -match "_editor_hook_launcher") { $launcherHooks++ }
+                }
             }
-        } else {
-            $unguardedCount++
         }
     }
 
-    if ($unguardedCount -gt 0) {
-        Add-Check "Hooks" "Editor guard coverage" "fail" "$unguardedCount hook(s) unguarded -- run fix.ps1 -Fix"
-    } elseif ($legacyGuardCount -gt 0) {
-        Add-Check "Hooks" "Editor guard coverage" "warn" "$legacyGuardCount hook(s) use legacy guard -- run fix.ps1 -Fix"
+    if (-not $launcherOk) {
+        Add-Check "Hooks" "Editor guard (launcher)" "fail" "launcher missing or outdated -- run fix.ps1 -Fix"
+    } elseif ($registeredHooks -gt 0 -and $launcherHooks -lt $registeredHooks) {
+        Add-Check "Hooks" "Editor guard (launcher)" "fail" "$launcherHooks/$registeredHooks hooks use launcher -- run fix.ps1 -Fix"
     } else {
-        Add-Check "Hooks" "Editor guard coverage" "pass" "$guardedCount hook(s) have current editor guard"
+        Add-Check "Hooks" "Editor guard (launcher)" "pass" "launcher v2.0 + $launcherHooks/$registeredHooks hooks routed"
     }
 } else {
     Add-Check "Hooks" "hooks/ directory" "fail" "Directory not found"
@@ -492,8 +526,8 @@ if ($warns | Where-Object { $_.Cat -eq "Symlink" }) {
 if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*ralph*" }) {
     $tips += "run fix.ps1 -Fix     -- remove ralph-loop Stop hook"
 }
-if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*Editor guard coverage*" }) {
-    $tips += "run fix.ps1 -Fix     -- refresh editor guard in all hook files"
+if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*launcher*" }) {
+    $tips += "run fix.ps1 -Fix     -- deploy launcher + route hooks via settings.json"
 }
 if ($tips.Count -gt 0) {
     Write-Host "  Recommended actions:" -ForegroundColor Cyan
