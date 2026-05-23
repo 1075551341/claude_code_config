@@ -4,12 +4,14 @@
 
 ---
 
-## PRIMARY 公式
+## PRIMARY 公式（五柱架构 v1.1）
 
 ```
 RUNTIME = superpowers + ECC(cherry-pick) + anthropics/skills + best-practice + claude-mem
 PROJECT = OpenSpec + GSD-redux + spec/轻量（三轨互斥）
 OPTIMIZATION = RTK(hook) + caveman(skill)
+REVIEW = gstack(eng/ceo/designer/qa/security agents)
+CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 ```
 
 ---
@@ -70,6 +72,16 @@ using-superpowers, brainstorming, writing-plans, executing-plans, verification-b
 
 领域 agent → `catalog/agents/`（按需复制到项目）
 
+### gstack 审查角色（catalog/agents/）
+
+| Agent | 触发 |
+|-------|------|
+| eng-reviewer | 所有变更（必须） |
+| ceo-reviewer | 产品/新功能 |
+| designer | UI/UX 变更 |
+| qa | 测试充分性审查 |
+| security | 安全敏感变更 |
+
 ---
 
 ## 全局 Rules（8）
@@ -119,10 +131,10 @@ using-superpowers, brainstorming, writing-plans, executing-plans, verification-b
 | 目录 | 规模 | 用途 |
 |------|------|------|
 | catalog/skills/ | 97 | 按需 `migrate-from-legacy.py --skill` |
-| catalog/agents/ | 38 | 按需 `--agent` |
+| catalog/agents/ | 43 | 按需 `--agent`（含 5 gstack 角色） |
 | catalog/rules/ | ~15 | 按需 `--rule` |
 
-优点保留在 catalog（97 skills / 38 agents）；已删记录 → `experiences/rejected/deletion-candidates.md`
+优点保留在 catalog（97 skills / 43 agents）；已删记录 → `experiences/rejected/deletion-candidates.md`
 
 ---
 
@@ -141,6 +153,7 @@ Harness 启用清单 → `agent.yaml`
 | SessionStart | session-start-bootstrap | 唯一启动注入 |
 | PreCompact | pre-compact-state | 压缩前快照 |
 | PreToolUse/Bash | pre-rtk-rewrite → pre-bash-guard | RTK + 安全 |
+| PreToolUse/Edit | pre-read-before-edit | GSD read-before-edit |
 | PreToolUse/* | pre-context-injector | 项目上下文（每会话一次） |
 | Stop | stop-quality-gate, stop-pattern-extraction | 质量门 + 模式提取 |
 
@@ -176,22 +189,49 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 
 ---
 
-## 21 仓库映射（P0）
+## 23 仓库映射
+
+### 骨架 PRIMARY（五柱 + 基础）
 
 | 仓库 | 采纳 |
 |------|------|
-| obra/superpowers | 13 workflow skills + commands |
-| affaan-m/ECC | 目录结构、MANIFEST、agents 薄编排 |
-| anthropics/skills | SKILL.md 格式 |
-| Fission-AI/OpenSpec | openspec 模板 + spec-validation |
-| GSD-redux | planning 模板 + /compact |
-| rtk-ai/rtk | pre-rtk-rewrite hook + RTK.md（v0.40.0 已安装） |
-| JuliusBrussee/caveman | caveman-compress |
-| thedotmack/claude-mem | memory plugin |
-| VoltAgent/awesome-design-md | DESIGN.md 模板 |
-| karpathy-skills | karpathy-guidelines |
+| obra/superpowers | 13 workflow skills + P0 skills + commands |
+| gsd-build/get-shit-done | planning 模板 + /compact + 上下文阈值 + read-before-edit |
+| Fission-AI/OpenSpec | openspec 模板 + spec-validation skill |
+| garrytan/gstack | 5 catalog agents (eng/ceo/designer/qa/security) + /review |
+| thedotmack/claude-mem | memory plugin SSOT + 跨会话记忆 |
 
-参考 only：x1xhlol, 30-seconds-of-code, deer-flow, gsd-build 原仓库
+### 结构 + 格式
+
+| 仓库 | 采纳 |
+|------|------|
+| affaan-m/ECC | 目录结构、MANIFEST、agents 薄编排、hook profile |
+| anthropics/skills | SKILL.md 格式规范 |
+| shanraisshan/claude-code-best-practice | CLAUDE.md ≤200 行、config 模式、rules lazy-load |
+| forrestchang/andrej-karpathy-skills | karpathy-guidelines skill + CORE.md 四原则 |
+
+### 优化 + 工具
+
+| 仓库 | 采纳 |
+|------|------|
+| rtk-ai/rtk | pre-rtk-rewrite hook + RTK.md |
+| JuliusBrussee/caveman | caveman-compress skill |
+| github/github-mcp-server | gh MCP server |
+| anthropics/claude-code-action | templates/github-actions/claude-review.yml |
+| VoltAgent/awesome-design-md | DESIGN.md 模板 |
+| nextlevelbuilder/ui-ux-pro-max | catalog/skills/ui-ux-pro-max |
+
+### 参考索引
+
+| 仓库 | 采纳 |
+|------|------|
+| eyaltoledano/claude-task-master | 任务分解模式参考（由 writing-plans + executing-plans 覆盖） |
+| ComposioHQ/awesome-claude-skills | catalog skill 发现索引 |
+| zilliztech/claude-context | 上下文管理策略参考（由 GSD 阈值覆盖） |
+| hesreallyhim/awesome-claude-code | 配置最佳实践参考 |
+| x1xhlol/system-prompts-and-models-of-ai-tools | 系统提示参考 |
+| Chalarangelo/30-seconds-of-code | 代码片段参考 |
+| bytedance/deer-flow | 子 Agent 编排四阶段模式（已整合到 WORKFLOW.md） |
 
 ---
 

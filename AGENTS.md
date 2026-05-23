@@ -14,6 +14,24 @@ brainstorming → writing-plans → executing-plans → verification-before-comp
 
 MANIFEST 查 owner → skill → catalog → agent → hook/MCP
 
+## 审查路由（gstack）
+
+```
+所有变更        → Eng Review (必须)
+产品/新功能     → + CEO Review
+UI/UX 变更      → + Design Review
+安全敏感变更    → + Security Review
+infra/配置      → CEO Review 可跳过
+```
+
+| 角色 | Agent | 位置 |
+|------|-------|------|
+| Eng Reviewer | eng-reviewer | catalog/agents/ |
+| CEO Reviewer | ceo-reviewer | catalog/agents/ |
+| Designer | designer | catalog/agents/ |
+| QA | qa | catalog/agents/ |
+| Security | security | catalog/agents/ |
+
 ## Token
 
 Shell: RTK | 回复: caveman-compress

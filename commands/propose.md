@@ -1,4 +1,4 @@
-# /propose — 创建规格提案
+# /propose（别名: /spec）— 创建规格提案
 
 基于 OpenSpec 模式，为新功能/变更创建规格提案。
 

@@ -31,6 +31,19 @@
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
+## 预发布检查清单（gstack 风格）
+
+```
+□ 构建通过（无错误、无新 warning）
+□ 测试通过（单元 + 集成，覆盖率不低于基线）
+□ Eng Review 通过（eng-reviewer PASS）
+□ 安全审查通过（如触发 security review）
+□ 文档更新（README / API docs / 变更日志）
+□ 无硬编码密钥 / .env 泄露
+□ 依赖无已知漏洞（npm audit / pip audit）
+□ 无回滚风险
+```
+
 ## 门控
 
 - CI 全部通过 ✓

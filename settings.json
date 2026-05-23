@@ -189,6 +189,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-read-before-edit.py",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-config-protection.py",
             "timeout": 5000
           }

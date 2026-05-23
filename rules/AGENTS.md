@@ -11,6 +11,10 @@ alwaysApply: false
 
 planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | context-manager | agentic-orchestrator
 
+## gstack 审查角色（catalog/agents/）
+
+eng-reviewer | ceo-reviewer | designer | qa | security
+
 ## 何时委派
 
 | 条件 | Agent |
@@ -20,6 +24,21 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | 多模块并行 | agentic-orchestrator |
 | 构建失败 | build-error-resolver |
 | spec 审查 | spec-reviewer |
+| 代码审查 | code-reviewer + eng-reviewer |
+| 产品决策 | ceo-reviewer |
+| UI/UX 审查 | designer |
+| 测试审查 | qa |
+| 安全审计 | security |
+
+## 审查路由规则
+
+```
+所有变更        → eng-reviewer (必须)
+产品/新功能     → + ceo-reviewer
+UI/UX 变更      → + designer
+安全敏感变更    → + security
+infra/配置      → CEO Review 可跳过
+```
 
 ## 禁止（防互博）
 
@@ -30,7 +49,8 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 ## 上下文预算
 
-主 agent 60% | subagent 30% | 传递最小必要数据
+主 agent <40%（编排） | subagent 30%（实现） | 传递最小必要数据
+50% compact | 70% 强制压缩或新 subagent
 
 ## 持续学习
 

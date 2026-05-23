@@ -61,6 +61,7 @@ commands:
     - execute
     - verify
     - ship
+    - review
     - compact
     - clear
   openspec:
@@ -73,6 +74,12 @@ catalog:
   agents: catalog/agents/
   rules: catalog/rules/
   note: 按需复制到项目 .claude/，不全局加载
+  gstack_agents:
+    - eng-reviewer
+    - ceo-reviewer
+    - designer
+    - qa
+    - security
 
 disabled_hooks:
   - pre-task-planner  # 互博 writing-plans，见 MANIFEST planning.excludes

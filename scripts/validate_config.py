@@ -102,6 +102,18 @@ def main():
             manifest = yaml.safe_load(fh)
         if not manifest.get("concerns"):
             WARNINGS.append("MANIFEST.yaml has no concerns")
+        else:
+            concerns = manifest["concerns"]
+            required_concerns = {"gsd_context", "gstack_review", "memory_ssot"}
+            missing_concerns = required_concerns - set(concerns.keys())
+            if missing_concerns:
+                WARNINGS.append(f"Missing MANIFEST concerns: {sorted(missing_concerns)}")
+            if "gstack_review" in concerns:
+                gstack_catalog = concerns["gstack_review"].get("catalog", [])
+                expected_gstack = {"eng-reviewer", "ceo-reviewer", "designer", "qa", "security"}
+                missing_gstack = expected_gstack - set(gstack_catalog)
+                if missing_gstack:
+                    WARNINGS.append(f"Missing gstack catalog agents: {sorted(missing_gstack)}")
 
     for tpl in (
         "templates/openspec/proposal.md",
@@ -150,6 +162,14 @@ def main():
         )
         if catalog_count < 50:
             WARNINGS.append(f"catalog/skills count low: {catalog_count}")
+
+    catalog_agents = os.path.join(BASE, "catalog", "agents")
+    if os.path.isdir(catalog_agents):
+        gstack_required = {"eng-reviewer.md", "ceo-reviewer.md", "designer.md", "qa.md", "security.md"}
+        catalog_agent_files = set(os.listdir(catalog_agents))
+        missing_gstack_files = gstack_required - catalog_agent_files
+        if missing_gstack_files:
+            ERRORS.append(f"Missing gstack catalog agent files: {sorted(missing_gstack_files)}")
 
     report(
         agents=len(agent_names),

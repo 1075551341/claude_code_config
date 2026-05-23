@@ -35,7 +35,7 @@
 | 目录 | 数量 |
 |------|------|
 | skills/ | 97 |
-| agents/ | 38 |
+| agents/ | 43 |
 | rules/ | 15 |
 
 恢复：Git 历史或 `migrate-from-legacy.py` 从源仓库 re-import。

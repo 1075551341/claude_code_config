@@ -151,6 +151,12 @@ func createService(clock Clock) { now := clock.Now() }
 **适用场景**：业务逻辑、数据模型、API 响应中的时间戳
 **例外**：纯 UI 展示（如页面显示当前时间）、CLI 工具的一次性脚本
 
+## 工作原则（来自五柱整合）
+
+- **Tool-First**：先查 MANIFEST → skill → catalog → agent → hook/MCP，不重复造轮子
+- **Clear Boundaries**：agent 间职责不重叠，MANIFEST.yaml 定义唯一归属
+- **Report Failures**：失败时报告原因 + 已尝试方案 + 建议下一步，不静默重试超过 2 次
+
 ## 项目约定
 
 - 自动维护 `README.md`（架构概览 + 模块说明）

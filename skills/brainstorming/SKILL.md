@@ -150,3 +150,12 @@ Claude: /brainstorming → 三方案对比 → 决策点确认
 ## 后果
 [这个决策的影响]
 ```
+
+## 输出路径
+
+头脑风暴结论保存至以下位置之一（按场景选择）：
+- `specs/<name>/design.md` — 配合 OpenSpec 流程
+- `.planning/design.md` — 配合 GSD 流程
+- 直接交付给 architect agent — 复杂系统设计
+
+确认后流转：brainstorming → `/spec` or `/plan` → 实施

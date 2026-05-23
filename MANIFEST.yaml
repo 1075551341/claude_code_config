@@ -1,8 +1,8 @@
 # 组件唯一归属源 — 防左右手互博
 # 权威：spec/claude-config-integration/design.md §9
 
-version: "1.0"
-updated: "2026-05-22"
+version: "1.1"
+updated: "2026-05-23"
 
 concerns:
   brainstorming:
@@ -107,6 +107,24 @@ concerns:
     owner: skill/karpathy-guidelines
     rules_ref: rules/CORE.md
     source: forrestchang/andrej-karpathy-skills
+
+  gsd_context:
+    owner: skill/subagent-driven-development
+    hooks: [pre-read-before-edit]
+    rules_ref: rules/WORKFLOW.md
+    source: GSD + Desktop/code
+    excludes: [agent/* 重复相位说明]
+
+  gstack_review:
+    owner: AGENTS.md
+    catalog: [eng-reviewer, ceo-reviewer, designer, qa, security]
+    source: garrytan/gstack + Desktop/code
+    delegates: [agent/code-reviewer, agent/spec-reviewer]
+    excludes: [gstack /autoplan, gstack /ship]
+
+  memory_ssot:
+    owner: plugin/claude-mem
+    excludes: [memory/index.md, hooks/post-session.sh, hooks/on-error.sh]
 
   bootstrap:
     owner: hook/session-start-bootstrap
