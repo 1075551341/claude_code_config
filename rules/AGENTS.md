@@ -1,6 +1,8 @@
 ---
 description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理、任务编排。
 alwaysApply: false
+layer: supplement
+source: affaan-m/ECC + bytedance/deer-flow
 ---
 
 # Agent 协作规则
@@ -11,9 +13,13 @@ alwaysApply: false
 
 planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | context-manager | agentic-orchestrator
 
-## gstack 审查角色（catalog/agents/）
+## gstack 审查 5 + 补全 7
 
-eng-reviewer | ceo-reviewer | designer | qa | security
+审查（skeleton）：eng-reviewer | ceo-reviewer | designer | qa | security-reviewer
+
+补全（supplement）：cso | sre | release-engineer | product-manager | design-engineer | performance-engineer | doc-writer
+
+位置：`agents/` + `catalog/agents/`（按需复制）
 
 ## 何时委派
 

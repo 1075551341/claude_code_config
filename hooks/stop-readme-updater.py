@@ -10,6 +10,7 @@ Stop Hook: README 自动生成/更新器
 - FIX: subprocess 列表参数 + TimeoutExpired 显式捕获
 - FIX: 路径处理改用 os.path.join（修复 Windows 混合分隔符）
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

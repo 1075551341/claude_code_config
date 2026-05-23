@@ -2,6 +2,8 @@
 name: spec-validation
 description: 规格可执行验证，将 spec.md 转化为可验证的验收标准
 triggers: 规格验证, spec验证, 验收标准, 规格检查
+layer: supplement
+source: Fission-AI/OpenSpec
 ---
 
 # 规格验证

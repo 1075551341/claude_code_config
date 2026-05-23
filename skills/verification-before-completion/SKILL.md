@@ -2,6 +2,8 @@
 name: verification-before-completion
 description: ★强制执行★ 完成前必须交叉验证，不可跳过
 triggers: [完成, 声称完成, 验证, check, 确认完成, done, 修好了, 测试通过]
+layer: skeleton
+source: obra/superpowers
 ---
 
 # 完成前强制交叉验证

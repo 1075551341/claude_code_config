@@ -427,4 +427,4 @@ python $env:USERPROFILE\.claude\scripts\migrate-from-legacy.py --dry-run
 
 ---
 
-_版本：2.0 | 日期：2026-05-23 | Phase 0–7 全部完成（sync.ps1 修复 + 编辑器验证通过）_
+_version：2.1 | 日期：2026-05-23 | Phase 0–7 完成 + v2.1 文档/校验对齐_

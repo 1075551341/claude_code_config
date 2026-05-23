@@ -1,6 +1,9 @@
 ---
 name: workflow
 description: 阶段式工作流规则，定义从讨论到发布的完整开发生命周期
+alwaysApply: false
+layer: supplement
+source: gsd-build/get-shit-done + bytedance/deer-flow + obra/superpowers
 triggers:
   - 工作流
   - 阶段式开发

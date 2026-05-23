@@ -9,6 +9,7 @@ PostToolUse Hook: 操作日志
 - FIX: BaseException/SystemExit 分离捕获
 - FIX: 轮转逻辑加独立 try/except，写入失败不影响主流程
 """
+# source: affaan-m/ECC
 import json
 import sys
 import os

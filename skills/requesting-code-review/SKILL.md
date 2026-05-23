@@ -2,6 +2,8 @@
 name: requesting-code-review
 description: 请求代码审查，向审查者提供精确的上下文
 triggers: [请求代码审查, 提供精确上下文, 代码审查请求]
+layer: supplement
+source: obra/superpowers
 ---
 
 # 请求代码审查

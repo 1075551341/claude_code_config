@@ -1,8 +1,25 @@
 # 组件唯一归属源 — 防左右手互博
 # 权威：spec/claude-config-integration/design.md §9
 
-version: "1.1"
+version: "2.1"
 updated: "2026-05-23"
+
+pillars:
+  superpowers:
+    source: obra/superpowers
+    capabilities: [brainstorming, verification, debugging, using-superpowers]
+  gsd:
+    source: GSD-redux
+    capabilities: [context-engineering, continuous-execution, read-before-edit]
+  openspec:
+    source: Fission-AI/OpenSpec
+    capabilities: [proposal-spec-tasks, spec-validation]
+  gstack:
+    source: garrytan/gstack
+    capabilities: [eng-review, ceo-review, design-review, qa-review, security-review]
+  claude_mem:
+    source: thedotmack/claude-mem
+    capabilities: [cross-session-memory, pattern-extraction]
 
 concerns:
   brainstorming:
@@ -68,6 +85,7 @@ concerns:
   context_retrieval:
     owner: agent/context-manager
     skill: skill/memory-compression
+    source: thedotmack/claude-mem
     note: 仅检索/持久化，不重复 mem 存储逻辑
 
   context_rot:
@@ -117,19 +135,172 @@ concerns:
 
   gstack_review:
     owner: AGENTS.md
-    catalog: [eng-reviewer, ceo-reviewer, designer, qa, security]
+    catalog: [eng-reviewer, ceo-reviewer, designer, qa, security-reviewer]
     source: garrytan/gstack + Desktop/code
     delegates: [agent/code-reviewer, agent/spec-reviewer]
     excludes: [gstack /autoplan, gstack /ship]
 
+  gstack_eng:
+    owner: agent/eng-reviewer
+    layer: skeleton
+    source: garrytan/gstack
+
+  gstack_ceo:
+    owner: agent/ceo-reviewer
+    layer: skeleton
+    source: garrytan/gstack
+
+  gstack_designer:
+    owner: agent/designer
+    layer: skeleton
+    source: garrytan/gstack
+
+  gstack_qa:
+    owner: agent/qa
+    layer: skeleton
+    source: garrytan/gstack
+
+  gstack_security:
+    owner: agent/security-reviewer
+    layer: skeleton
+    source: garrytan/gstack
+
+  bestpractice:
+    owner: rules/BESTPRACTICE.md
+    layer: skeleton
+    source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code
+
   memory_ssot:
     owner: plugin/claude-mem
+    source: thedotmack/claude-mem
     excludes: [memory/index.md, hooks/post-session.sh, hooks/on-error.sh]
 
   bootstrap:
     owner: hook/session-start-bootstrap
     skill: skill/using-superpowers
+    source: obra/superpowers
     note: 唯一 SessionStart 注入
+
+  office_hours:
+    owner: skill/office-hours
+    delegates: [agent/product-manager]
+    source: garrytan/gstack
+    excludes: [skill/brainstorming]
+
+  autoplan:
+    owner: skill/autoplan
+    delegates: [agent/ceo-reviewer, agent/designer, agent/eng-reviewer]
+    source: garrytan/gstack
+
+  ship_pipeline:
+    owner: skill/ship
+    delegates: [agent/release-engineer]
+    source: garrytan/gstack + obra/superpowers
+    excludes: [skill/finishing-a-development-branch]
+
+  context_engineering:
+    owner: rules/CONTEXT.md
+    skill: skill/context-engineering
+    source: GSD-redux
+
+  gstack_cso:
+    owner: agent/cso
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_sre:
+    owner: agent/sre
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_release:
+    owner: agent/release-engineer
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_pm:
+    owner: agent/product-manager
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_design_eng:
+    owner: agent/design-engineer
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_perf:
+    owner: agent/performance-engineer
+    layer: supplement
+    source: garrytan/gstack
+
+  gstack_doc:
+    owner: agent/doc-writer
+    layer: supplement
+    source: garrytan/gstack
+
+  instinct_v2:
+    owner: skill/instinct-learning
+    source: affaan-m/ECC
+    excludes: [hook/stop-pattern-extraction]
+
+  task_management:
+    owner: skill/writing-plans
+    source: eyaltoledano/claude-task-master
+    note: 任务分解模式参考，由 writing-plans 覆盖
+
+  design_token:
+    owner: rules/DESIGN.md
+    skill: catalog/skills/ui-ux-pro-max
+    source: VoltAgent/awesome-design-md
+
+  code_snippets:
+    owner: catalog/skills/
+    source: Chalarangelo/30-seconds-of-code
+    note: 代码片段参考索引，按需查用
+
+  system_prompts_ref:
+    owner: rules/BESTPRACTICE.md
+    source: x1xhlol/system-prompts-and-models-of-ai-tools
+    note: 系统 prompt 设计参考
+
+  cicd_action:
+    owner: rules/MCP.md
+    source: anthropics/claude-code-action
+    note: CI/CD review action 模板
+
+  github_mcp:
+    owner: .mcp.json
+    source: github/github-mcp-server
+    note: gh MCP server 集成
+
+  community_skills:
+    owner: catalog/skills/
+    source: ComposioHQ/awesome-claude-skills + hesreallyhim/awesome-claude-code
+    note: 社区技能发现索引
+
+  official_skills:
+    owner: catalog/skills/
+    source: anthropics/skills
+    note: SKILL.md 格式规范参考
+
+  context_mgmt:
+    owner: rules/CONTEXT.md
+    source: zilliztech/claude-context
+    note: 上下文管理策略参考，由 GSD 阈值覆盖
+
+  deer_flow:
+    owner: rules/WORKFLOW.md
+    source: bytedance/deer-flow
+    note: 子 Agent 编排四阶段模式
+
+  security_ops:
+    owner: hook/pre-bash-guard
+    source: shanraisshan/claude-code-best-practice
+    excludes: [hook/pre-config-protection]
+
+  git_workflow:
+    owner: rules/GIT.md
+    source: shanraisshan/claude-code-best-practice
 
 p0_skills:
   - using-superpowers
@@ -137,5 +308,5 @@ p0_skills:
   - verification-before-completion
   - systematic-debugging
 
-global_skills_max: 20
-global_agents_max: 15
+global_skills_max: 25
+global_agents_max: 22

@@ -2,6 +2,8 @@
 name: using-git-worktrees
 description: 使用 Git Worktree 进行并行开发、隔离分支
 triggers: [Git Worktree, 并行开发, 分支隔离, 多分支, worktree]
+layer: supplement
+source: obra/superpowers
 ---
 
 # Git Worktree 并行开发

@@ -22,12 +22,12 @@
 
 | 类型 | PRIMARY 仓库 | 骨架形态 | 全局上限 | 项目级扩展 |
 |------|-------------|----------|----------|------------|
-| **入口** | best-practice + karpathy | CLAUDE.md 路由 ≤200 行 | 1 文件 | 项目 CLAUDE.md |
+| **入口** | best-practice + karpathy | CLAUDE.md 路由 ≤500 行 | 1 文件 | 项目 CLAUDE.md |
 | **索引** | ECC | SPEC.md + MANIFEST.yaml | 2 文件 | — |
-| **Rules** | ECC + karpathy | rules/CORE 等 8 文件 alwaysApply | 8 | `.claude/rules/` lazy-load |
-| **Skills 格式** | anthropics/skills | SKILL.md + frontmatter + references/ | ≤20 global | domain skills 项目内 |
+| **Rules** | ECC + karpathy | rules/CORE 等 9 文件 | 9 | `.claude/rules/` lazy-load |
+| **Skills 格式** | anthropics/skills | SKILL.md + frontmatter + references/ | ≤25 global | domain skills 项目内 |
 | **Workflow** | superpowers | 13 skill 链 + HARD-GATE | 13 | — |
-| **Agents** | ECC + superpowers | 薄编排 .md + skills 预加载 | ≤15 | language reviewer 项目内 |
+| **Agents** | ECC + superpowers + gstack | 薄编排 .md + skills 预加载 | ≤22 | language reviewer 项目内 |
 | **Commands** | superpowers + OpenSpec | slash → pointer skill/agent | ~10 | 项目 commands/ |
 | **Hooks** | superpowers + ECC + RTK | profile-based 生命周期 | 8 核心 | 不同步编辑器 |
 | **MCP** | github-mcp-server + ECC | .mcp.json 权威 + mcp-configs/ | 分组 3 片 | 项目 .mcp.json |

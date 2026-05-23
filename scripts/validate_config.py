@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Validate ~/.claude configuration against v2 PRIMARY design."""
+"""Validate ~/.claude configuration against v2 PRIMARY design (8 checks V1-V8)."""
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -13,21 +14,44 @@ except ImportError:
 BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
 ERRORS = []
 WARNINGS = []
+INFO = []
 
 CORE_AGENTS = {
     "planner", "code-explorer", "code-reviewer", "build-error-resolver",
     "architect", "spec-reviewer", "context-manager", "agentic-orchestrator",
 }
-CORE_SKILLS = {
-    "using-superpowers", "brainstorming", "writing-plans", "executing-plans",
-    "verification-before-completion", "systematic-debugging", "test-driven-development",
+GSTACK_REVIEW_AGENTS = {
+    "eng-reviewer", "ceo-reviewer", "designer", "qa", "security-reviewer",
+}
+GSTACK_SUPPLEMENT_AGENTS = {
+    "cso", "sre", "release-engineer", "product-manager",
+    "design-engineer", "performance-engineer", "doc-writer",
+}
+REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
+GLOBAL_AGENTS_MAX = 22
+
+P0_SKILLS = {
+    "using-superpowers", "brainstorming", "verification-before-completion",
+    "systematic-debugging",
+}
+WORKFLOW_SKILLS = {
+    "writing-plans", "executing-plans", "test-driven-development",
     "subagent-driven-development", "using-git-worktrees", "receiving-code-review",
     "requesting-code-review", "finishing-a-development-branch", "writing-skills",
+}
+META_SKILLS = {
     "memory-compression", "spec-validation", "karpathy-guidelines", "caveman-compress",
 }
+EXTENSION_SKILLS = {
+    "autoplan", "browser-qa", "design-pipeline", "ship", "office-hours",
+    "context-engineering", "structured-artifacts", "instinct-learning",
+}
+REQUIRED_SKILLS = P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
+GLOBAL_SKILLS_MAX = 25
+
 GLOBAL_RULES = {
-    "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
-    "AGENTS.md", "MCP.md", "DESIGN.md",
+    "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
+    "AGENTS.md", "MCP.md", "DESIGN.md", "CONTEXT.md",
 }
 
 
@@ -39,6 +63,169 @@ def check_json(path, label):
             json.load(fh)
     except Exception as exc:
         ERRORS.append(f"{label}: {exc}")
+
+
+def v1_skill_triggers_no_conflict():
+    triggers_map = {}
+    skills_dir = os.path.join(BASE, "skills")
+    if not os.path.isdir(skills_dir):
+        return
+    for d in os.listdir(skills_dir):
+        skill_path = os.path.join(skills_dir, d, "SKILL.md")
+        if not os.path.isfile(skill_path):
+            continue
+        with open(skill_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+        triggers_match = re.search(r'triggers:\s*\[(.+?)\]', content)
+        desc_match = re.search(r'description:\s*(.+)', content)
+        triggers = set()
+        if triggers_match:
+            triggers = {t.strip().strip("'\"") for t in triggers_match.group(1).split(",")}
+        if desc_match:
+            for word in desc_match.group(1).split():
+                if len(word) > 3:
+                    triggers.add(word)
+        if triggers:
+            for t in triggers:
+                if t in triggers_map and triggers_map[t] != d:
+                    WARNINGS.append(f"V1: Trigger '{t}' shared by {triggers_map[t]} and {d}")
+                triggers_map[t] = d
+
+
+def v2_agent_duties_no_overlap():
+    agents_dir = os.path.join(BASE, "agents")
+    if not os.path.isdir(agents_dir):
+        return
+    duties = {}
+    for f in os.listdir(agents_dir):
+        if not f.endswith(".md") or f == "README.md":
+            continue
+        path = os.path.join(agents_dir, f)
+        with open(path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+        desc_match = re.search(r'description:\s*(.+)', content)
+        if desc_match:
+            duties[f] = desc_match.group(1).strip()
+    names = list(duties.keys())
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            words_i = set(duties[names[i]].split()) & set(duties[names[j]].split())
+            significant = {w for w in words_i if len(w) > 2 and w not in {"审查", "触发词", "启用", "时"}}
+            if len(significant) >= 3:
+                WARNINGS.append(f"V2: Possible duty overlap between {names[i]} and {names[j]}: {significant}")
+
+
+def v3_rules_no_contradiction():
+    rules_dir = os.path.join(BASE, "rules")
+    if not os.path.isdir(rules_dir):
+        return
+    core_path = os.path.join(rules_dir, "CORE.md")
+    if not os.path.exists(core_path):
+        ERRORS.append("V3: CORE.md missing")
+        return
+    with open(core_path, "r", encoding="utf-8") as fh:
+        core = fh.read()
+    if "alwaysApply: true" not in core:
+        ERRORS.append("V3: CORE.md missing alwaysApply: true")
+    if "layer: skeleton" not in core:
+        WARNINGS.append("V3: CORE.md missing layer: skeleton")
+
+
+def v4_iron_laws_consistency():
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    claude_path = os.path.join(BASE, "CLAUDE.md")
+    if not os.path.exists(core_path) or not os.path.exists(claude_path):
+        return
+    with open(core_path, "r", encoding="utf-8") as fh:
+        core = fh.read()
+    with open(claude_path, "r", encoding="utf-8") as fh:
+        claude = fh.read()
+    for i in range(1, 12):
+        if f"R{i}" not in claude:
+            ERRORS.append(f"V4: R{i} missing from CLAUDE.md")
+    if "Karpathy" not in core or "Karpathy" not in claude:
+        ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
+
+
+def v5_manifest_completeness():
+    manifest_path = os.path.join(BASE, "MANIFEST.yaml")
+    if not os.path.exists(manifest_path):
+        ERRORS.append("V5: MANIFEST.yaml missing")
+        return
+    if not yaml:
+        WARNINGS.append("V5: PyYAML not installed, skipping MANIFEST check")
+        return
+    with open(manifest_path, "r", encoding="utf-8") as fh:
+        manifest = yaml.safe_load(fh)
+    concerns = manifest.get("concerns", {})
+    if not concerns:
+        ERRORS.append("V5: MANIFEST.yaml has no concerns")
+    required = {
+        "brainstorming", "planning", "verification", "debugging", "memory",
+        "gstack_review", "gstack_eng", "shell_token", "output_token",
+        "change_spec", "phase_planning", "context_engineering",
+    }
+    missing = required - set(concerns.keys())
+    if missing:
+        WARNINGS.append(f"V5: Missing MANIFEST concerns: {sorted(missing)}")
+    agents_max = manifest.get("global_agents_max", GLOBAL_AGENTS_MAX)
+    skills_max = manifest.get("global_skills_max", GLOBAL_SKILLS_MAX)
+    if agents_max != GLOBAL_AGENTS_MAX or skills_max != GLOBAL_SKILLS_MAX:
+        WARNINGS.append(
+            f"V5: MANIFEST limits ({agents_max}/{skills_max}) "
+            f"!= validator ({GLOBAL_AGENTS_MAX}/{GLOBAL_SKILLS_MAX})"
+        )
+
+
+def v6_mcp_security():
+    mcp_path = os.path.join(BASE, ".mcp.json")
+    if not os.path.exists(mcp_path):
+        return
+    with open(mcp_path, "r", encoding="utf-8") as fh:
+        content = fh.read()
+    for pattern in [r'["\'](?:sk-|api_key|secret|token|password)["\']\s*:\s*["\'][^"$\{]']:
+        if re.search(pattern, content, re.IGNORECASE):
+            ERRORS.append("V6: Hardcoded API key/secret in .mcp.json")
+    try:
+        mcp = json.loads(content)
+        servers = mcp.get("mcpServers", {})
+        seen = set()
+        for name in servers:
+            if name in seen:
+                ERRORS.append(f"V6: Duplicate MCP server: {name}")
+            seen.add(name)
+    except Exception:
+        pass
+
+
+def v7_layer_isolation():
+    skills_dir = os.path.join(BASE, "skills")
+    for skill in P0_SKILLS:
+        path = os.path.join(skills_dir, skill, "SKILL.md")
+        if not os.path.exists(path):
+            continue
+        with open(path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+        if "layer: skeleton" not in content:
+            ERRORS.append(f"V7: P0 skill {skill} missing layer: skeleton")
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    if os.path.exists(core_path):
+        with open(core_path, "r", encoding="utf-8") as fh:
+            if "layer: skeleton" not in fh.read():
+                ERRORS.append("V7: CORE.md missing layer: skeleton")
+
+
+def v8_file_references():
+    claude_path = os.path.join(BASE, "CLAUDE.md")
+    if not os.path.exists(claude_path):
+        return
+    with open(claude_path, "r", encoding="utf-8") as fh:
+        content = fh.read()
+    refs = re.findall(r'`([^`]+\.(md|yaml|json))`', content)
+    for ref, _ in refs:
+        full = os.path.join(BASE, ref)
+        if not os.path.exists(full) and not ref.startswith("http"):
+            WARNINGS.append(f"V8: Referenced file not found: {ref}")
 
 
 def main():
@@ -56,136 +243,78 @@ def main():
         for f in os.listdir(agents_dir)
         if f.endswith(".md") and f != "README.md"
     }
-    missing_agents = CORE_AGENTS - agent_names
+    missing_agents = REQUIRED_AGENTS - agent_names
     if missing_agents:
-        ERRORS.append(f"Missing core agents: {sorted(missing_agents)}")
-    if len(agent_names) > 15:
-        ERRORS.append(f"Too many agents: {len(agent_names)} > 15")
+        ERRORS.append(f"Missing agents: {sorted(missing_agents)}")
+    if len(agent_names) > GLOBAL_AGENTS_MAX:
+        ERRORS.append(f"Too many agents: {len(agent_names)} > {GLOBAL_AGENTS_MAX}")
 
     skills_dir = os.path.join(BASE, "skills")
     skill_names = {
         d for d in os.listdir(skills_dir)
         if os.path.isdir(os.path.join(skills_dir, d)) and d != "README.md"
     }
-    missing_skills = CORE_SKILLS - skill_names
+    missing_skills = REQUIRED_SKILLS - skill_names
     if missing_skills:
-        ERRORS.append(f"Missing core skills: {sorted(missing_skills)}")
-    if len(skill_names) > 20:
-        ERRORS.append(f"Too many global skills: {len(skill_names)} > 20")
+        ERRORS.append(f"Missing required skills: {sorted(missing_skills)}")
+    if len(skill_names) > GLOBAL_SKILLS_MAX:
+        ERRORS.append(f"Too many skills: {len(skill_names)} > {GLOBAL_SKILLS_MAX}")
 
     rules_dir = os.path.join(BASE, "rules")
     rule_files = {f for f in os.listdir(rules_dir) if f.endswith(".md") and f != "README.md"}
     missing_rules = GLOBAL_RULES - rule_files
     if missing_rules:
         ERRORS.append(f"Missing global rules: {sorted(missing_rules)}")
-    stale = {f for f in rule_files if f.startswith("RULES_")}
-    if stale:
-        ERRORS.append(f"Stale RULES_* files remain: {sorted(stale)}")
 
     claude_path = os.path.join(BASE, "CLAUDE.md")
+    line_count = 0
     if os.path.exists(claude_path):
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-        if line_count > 200:
-            ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200")
-        if "mcp0_" in claude_md or "mcp1_" in claude_md:
-            ERRORS.append("CLAUDE.md has hardcoded mcp0/mcp1 prefixes")
-    else:
-        ERRORS.append("CLAUDE.md missing")
+    if line_count > 500:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
 
-    manifest_path = os.path.join(BASE, "MANIFEST.yaml")
-    if not os.path.exists(manifest_path):
-        ERRORS.append("MANIFEST.yaml missing")
-    elif yaml:
-        with open(manifest_path, "r", encoding="utf-8") as fh:
-            manifest = yaml.safe_load(fh)
-        if not manifest.get("concerns"):
-            WARNINGS.append("MANIFEST.yaml has no concerns")
-        else:
-            concerns = manifest["concerns"]
-            required_concerns = {"gsd_context", "gstack_review", "memory_ssot"}
-            missing_concerns = required_concerns - set(concerns.keys())
-            if missing_concerns:
-                WARNINGS.append(f"Missing MANIFEST concerns: {sorted(missing_concerns)}")
-            if "gstack_review" in concerns:
-                gstack_catalog = concerns["gstack_review"].get("catalog", [])
-                expected_gstack = {"eng-reviewer", "ceo-reviewer", "designer", "qa", "security"}
-                missing_gstack = expected_gstack - set(gstack_catalog)
-                if missing_gstack:
-                    WARNINGS.append(f"Missing gstack catalog agents: {sorted(missing_gstack)}")
+    commands_dir = os.path.join(BASE, "commands")
+    if os.path.isdir(commands_dir):
+        required_commands = {
+            "discuss", "plan", "execute", "verify", "ship", "review",
+            "compact", "clear", "status", "propose", "apply", "archive",
+            "autoplan", "office-hours",
+        }
+        cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
+        missing_cmds = required_commands - cmd_files
+        if missing_cmds:
+            ERRORS.append(f"Missing commands: {sorted(missing_cmds)}")
 
-    for tpl in (
-        "templates/openspec/proposal.md",
-        "templates/planning/phase-SPEC.md",
-        "templates/spec/spec.md",
-        "templates/DESIGN.md",
-    ):
-        if not os.path.exists(os.path.join(BASE, tpl.replace("/", os.sep))):
-            WARNINGS.append(f"Missing template: {tpl}")
-
-    for cfg in ("mcp-configs/core.json", "mcp-configs/dev.json", "mcp-configs/ops.json"):
-        if not os.path.exists(os.path.join(BASE, cfg.replace("/", os.sep))):
-            WARNINGS.append(f"Missing: {cfg}")
-
-    rtk_exe = os.path.join(os.environ.get("USERPROFILE", ""), ".local", "bin", "rtk.exe")
-    rtk_found = os.path.isfile(rtk_exe) or shutil.which("rtk")
-    if not rtk_found:
-        WARNINGS.append("RTK not installed (~/.local/bin/rtk.exe)")
-    elif not os.path.exists(os.path.join(BASE, "RTK.md")):
-        WARNINGS.append("RTK.md missing (run: rtk init -g --no-patch)")
-
-    settings_path = os.path.join(BASE, "settings.json")
-    if os.path.exists(settings_path):
-        with open(settings_path, "r", encoding="utf-8") as fh:
-            settings_text = fh.read()
-        if rtk_found and "pre-rtk-rewrite" not in settings_text:
-            ERRORS.append("pre-rtk-rewrite hook not registered in settings.json")
-        if "pre-task-planner" in settings_text:
-            ERRORS.append("pre-task-planner hook conflicts with writing-plans — remove from settings.json")
-        for required_hook in (
-            "session-start-bootstrap",
-            "pre-compact-state",
-            "stop-quality-gate",
-            "stop-pattern-extraction",
-        ):
-            if required_hook not in settings_text:
-                ERRORS.append(f"Required hook not registered: {required_hook}")
-        if '"claude-mem@thedotmack": true' not in settings_text.replace(" ", ""):
-            if "claude-mem@thedotmack" not in settings_text:
-                WARNINGS.append("claude-mem plugin not enabled in settings.json")
-
-    catalog_skills = os.path.join(BASE, "catalog", "skills")
-    if os.path.isdir(catalog_skills):
-        catalog_count = len(
-            [d for d in os.listdir(catalog_skills) if os.path.isdir(os.path.join(catalog_skills, d))]
-        )
-        if catalog_count < 50:
-            WARNINGS.append(f"catalog/skills count low: {catalog_count}")
-
-    catalog_agents = os.path.join(BASE, "catalog", "agents")
-    if os.path.isdir(catalog_agents):
-        gstack_required = {"eng-reviewer.md", "ceo-reviewer.md", "designer.md", "qa.md", "security.md"}
-        catalog_agent_files = set(os.listdir(catalog_agents))
-        missing_gstack_files = gstack_required - catalog_agent_files
-        if missing_gstack_files:
-            ERRORS.append(f"Missing gstack catalog agent files: {sorted(missing_gstack_files)}")
+    v1_skill_triggers_no_conflict()
+    v2_agent_duties_no_overlap()
+    v3_rules_no_contradiction()
+    v4_iron_laws_consistency()
+    v5_manifest_completeness()
+    v6_mcp_security()
+    v7_layer_isolation()
+    v8_file_references()
 
     report(
         agents=len(agent_names),
         skills=len(skill_names),
         rules=len(rule_files),
-        claude_lines=line_count if os.path.exists(claude_path) else 0,
+        claude_lines=line_count,
     )
     return 1 if ERRORS else 0
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v2 VALIDATION ===")
-    print(f"Agents: {agents} (max 15, core 8)")
-    print(f"Skills: {skills} (max 20)")
-    print(f"Rules:  {rules} (global 7 + README)")
-    print(f"CLAUDE.md lines: {claude_lines} (max 200)")
+    print("=== .claude v2 VALIDATION (8 checks) ===")
+    print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
+    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print()
+    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"]:
+        related = [e for e in ERRORS if e.startswith(check_name)]
+        related_w = [w for w in WARNINGS if w.startswith(check_name)]
+        status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"
+        print(f"  [{status}] {check_name}")
     print()
     if WARNINGS:
         print(f"WARNINGS ({len(WARNINGS)}):")

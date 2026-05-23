@@ -1,6 +1,8 @@
 ---
 description: 安全开发、安全审计、漏洞修复相关任务时启用
 alwaysApply: false
+layer: supplement
+source: shanraisshan/claude-code-best-practice + OWASP
 ---
 
 # 安全规则（专用）

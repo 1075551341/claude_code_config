@@ -6,6 +6,7 @@ PreToolUse Hook: 配置文件保护
 exit 0 = 允许
 exit 2 = 阻止（stderr 内容会发送给 Claude）
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

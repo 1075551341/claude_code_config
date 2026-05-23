@@ -2,6 +2,8 @@
 name: finishing-a-development-branch
 description: 开发分支完成时检查、清理、创建PR、合并策略
 triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
+layer: supplement
+source: obra/superpowers
 ---
 
 # 分支完成

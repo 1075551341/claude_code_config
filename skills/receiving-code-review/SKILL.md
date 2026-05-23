@@ -2,6 +2,8 @@
 name: receiving-code-review
 description: 接收代码审查反馈，验证后再实施修改
 triggers: [接收代码审查反馈, 验证后再实施修改, 代码审查]
+layer: supplement
+source: obra/superpowers
 ---
 
 # 接收代码审查反馈

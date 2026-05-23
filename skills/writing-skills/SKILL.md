@@ -7,6 +7,8 @@ triggers:
   - 技能设计
   - skill writing
 priority: P2
+layer: supplement
+source: obra/superpowers
 ---
 # 技能编写
 

@@ -10,6 +10,7 @@ Stop Hook: 每日工作总结生成器
 - FIX: sys.stdout.flush() 确保输出缓冲刷新
 - FIX: 文件写入失败独立处理
 """
+# source: thedotmack/claude-mem
 import json
 import sys
 import io

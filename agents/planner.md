@@ -4,6 +4,8 @@ description: 薄编排：调用 writing-plans skill 产出实施计划。触发�
 tools: [Read, Write, Grep, Glob]
 skills:
   - writing-plans
+layer: supplement
+source: obra/superpowers
 ---
 
 # Planner

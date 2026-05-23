@@ -12,6 +12,7 @@ exit 2 = 阻止完成（发现debug产物）
 - Go: fmt.Println调试代码
 - 通用: TODO DEBUG, FIXME, HACK标记
 """
+# source: obra/superpowers
 import json
 import sys
 import io

@@ -2,6 +2,8 @@
 name: writing-plans
 description: 编写详细的实施计划，为零上下文的工程师提供完整指导
 triggers: [写计划, 实施计划, 开发计划, 项目规划, 任务分解, 里程碑规划, 开发排期]
+layer: supplement
+source: obra/superpowers
 ---
 
 # 编写实施计划

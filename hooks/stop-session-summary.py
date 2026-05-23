@@ -5,6 +5,7 @@ Stop Hook: Session Summary
 
 exit 0 = 正常结束
 """
+# source: thedotmack/claude-mem
 import json
 import sys
 import io

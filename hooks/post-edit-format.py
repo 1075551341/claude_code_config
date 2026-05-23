@@ -10,6 +10,7 @@ PostToolUse Hook: 自动代码格式化
 - FIX: subprocess 统一超时 + TimeoutExpired 捕获
 - FIX: find_prettier 使用 shutil.which 跨平台查找
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

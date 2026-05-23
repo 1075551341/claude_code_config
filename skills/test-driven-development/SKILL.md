@@ -2,6 +2,8 @@
 name: test-driven-development
 description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
 triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
+layer: supplement
+source: obra/superpowers
 ---
 
 # 测试驱动开发（TDD）

@@ -10,6 +10,7 @@ PostToolUse Hook: 自动测试运行器
 - FIX: subprocess 列表参数 + TimeoutExpired 显式捕获
 - FIX: shutil.which 检测工具可用性
 """
+# source: obra/superpowers
 import json
 import sys
 import io

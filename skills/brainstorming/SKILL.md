@@ -2,6 +2,8 @@
 name: brainstorming
 description: 设计头脑风暴和方案验证，包括创造性工作前的设计思考
 triggers: [头脑风暴, 方案设计, 设计验证, brainstorming, 方案讨论, 新功能, 架构设计, 需求分析]
+layer: skeleton
+source: obra/superpowers
 ---
 
 # 设计头脑风暴

@@ -2,6 +2,8 @@
 name: systematic-debugging
 description: 当遇到程序报错、运行时异常、测试失败，遵循系统化调试流程（含根因分析/5Why）
 triggers: [程序报错, 运行时异常, 测试失败, 功能异常, 性能问题, 调试]
+layer: skeleton
+source: obra/superpowers
 ---
 
 # 系统化调试

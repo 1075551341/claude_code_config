@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """RTK PreToolUse hook — delegates to `rtk hook claude` for bash rewrite."""
+# source: rtk-ai/rtk
 import json
 import os
 import shutil

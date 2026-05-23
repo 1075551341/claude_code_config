@@ -10,6 +10,7 @@ PostToolUse Hook: 密钥泄露检测器
 - FIX: 补充 Vercel/Clerk/Resend/PlanetScale 等新兴平台密钥
 - FIX: 改进 JWT 检测（减少 base64 误报）
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

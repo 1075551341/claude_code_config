@@ -6,6 +6,7 @@ PreToolUse Hook: Block Git Hook Bypass Flag
 exit 0 = 允许执行
 exit 2 = 阻止执行
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

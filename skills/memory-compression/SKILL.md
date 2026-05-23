@@ -1,6 +1,8 @@
 ---
 name: memory-compression
 description: 上下文压缩与跨会话记忆协调。触发：记忆压缩、上下文腐败、/compact。
+layer: supplement
+source: thedotmack/claude-mem + GSD-redux
 ---
 
 # 记忆压缩

@@ -13,10 +13,17 @@ description: 跨编辑器配置同步指南
 ├── CLAUDE.md                 # ✅ 同步 - 文件软链接（v11）
 ├── AGENTS.md                 # ✅ 同步 - 跨编辑器 autodiscovery 镜像
 ├── rules/                    # ✅ 同步 - 格式转换复制到编辑器原生规则目录
-│   ├── CORE.md               #     核心规则（alwaysApply）
-│   ├── SECURITY.md           #     安全规则
-│   └── ...（共 8 文件）
-├── agents/                   # ✅ 同步 - Agent 定义（目录链接）
+│   ├── CORE.md               #     核心规则（alwaysApply，skeleton）
+│   ├── BESTPRACTICE.md       #     配置最佳实践（alwaysApply，skeleton）
+│   ├── SECURITY.md           #     安全规则（supplement）
+│   └── ...（共 9 文件）
+├── agents/                   # ✅ 同步 - Agent 定义（目录链接，含 gstack 5 角色）
+│   ├── eng-reviewer.md       #     gstack 工程审查
+│   ├── ceo-reviewer.md       #     gstack CEO 审查
+│   ├── designer.md           #     gstack 设计审查
+│   ├── qa.md                 #     gstack QA 审查
+│   ├── security-reviewer.md  #     gstack 安全审查
+│   └── ...（core + gstack 共 13）
 ├── skills/                   # ✅ 同步 - 技能库（目录链接）
 ├── commands/                 # ❌ 不同步 - Claude Code 专用
 ├── hooks/                    # ❌ 不同步 - Claude Code 专用
@@ -240,6 +247,33 @@ Hooks 经 launcher 调用；主判定 **GetConsoleWindow()**（Windows 无控制
 - [✓] 生成同步报告
 ```
 
+**完整参数说明**：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `-DryRun` | 开关 | `$false` | 预览模式，不写入文件，仅输出变更报告 |
+| `-FormatConvert` | 开关 | `$false` | 启用格式转换（移除 `_comment`/`_note`/hooks 等 Claude 专用字段） |
+| `-Rollback` | 开关 | `$false` | 回滚到上次同步的备份 |
+| `-Editors` | string[] | `@('Cursor','Windsurf','Trae')` | 指定目标编辑器，默认全部 |
+| `-SkipBackup` | 开关 | `$false` | 跳过备份创建（加速同步） |
+| `-Verbose` | 开关 | `$false` | 详细输出每个文件操作 |
+
+**示例**：
+
+```powershell
+# 仅同步到 Cursor，预览模式
+~/.claude/scripts/sync.ps1 -DryRun -Editors @('Cursor')
+
+# 同步并转换格式，跳过备份
+~/.claude/scripts/sync.ps1 -FormatConvert -SkipBackup
+
+# 回滚 Windsurf 的配置
+~/.claude/scripts/sync.ps1 -Rollback -Editors @('Windsurf')
+
+# 详细输出
+~/.claude/scripts/sync.ps1 -Verbose
+```
+
 ### 手动同步检查清单
 
 ```markdown
@@ -353,7 +387,21 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 - [obra/superpowers](https://github.com/obra/superpowers) - 多平台增强技能
 - [deer-flow](https://github.com/bytedance/deer-flow) - 工作流模式
 - [claude-context](https://github.com/zilliztech/claude-context) - 上下文管理
+- [garrytan/gstack](https://github.com/garrytan/gstack) - 角色审查
+- [gsd-build/get-shit-done](https://github.com/gsd-build/get-shit-done) - 上下文工程
+- [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) - 规格驱动
+- [thedotmack/claude-mem](https://github.com/thedotmack/claude-mem) - 跨会话记忆
+
+## 已知限制
+
+1. **Windows 软链接需管理员/开发者模式**：非管理员需开启 Windows 开发者模式
+2. **hooks 不同步**：编辑器中无 hook 执行环境，由 `_editor_hook_launcher.py` 自动检测跳过
+3. **MCP 不同步**：各编辑器 MCP 配置格式不同，需独立配置
+4. **rules 格式转换**：frontmatter 字段名可能不同（Claude: `alwaysApply` vs 编辑器: `autoApply`）
+5. **catalog 不同步**：catalog/ 为领域能力库，仅在 Claude Code 环境可用
+6. **SKILL.md 来源标注**：同步后 `source:` frontmatter 保留，编辑器忽略该字段
+7. **软链接更新需重新同步**：源文件变更自动传播，但新增/删除文件需重新运行 sync.ps1
 
 ---
 
-_版本：v7.0 | 更新：2026-05-23 | sync.ps1 v11.0_
+_版本：v7.2 | 更新：2026-05-23 | sync.ps1 v11.0_

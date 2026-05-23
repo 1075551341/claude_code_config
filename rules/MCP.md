@@ -1,3 +1,9 @@
+---
+alwaysApply: false
+layer: supplement
+source: github/github-mcp-server + anthropics/claude-code-action
+---
+
 # MCP 服务器配置规范
 
 ## 适用场景

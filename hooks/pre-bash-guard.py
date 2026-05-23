@@ -13,6 +13,7 @@ exit 2 = 阻止执行（stderr 内容会发送给 Claude）
 - FIX: 补充更多危险命令模式（curl/eval、生产环境 db 操作等）
 - FIX: 改进敏感文件写入检测范围
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

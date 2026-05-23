@@ -1,6 +1,8 @@
 ---
 description: UI/设计项目规范。触发：DESIGN.md、设计系统、design token、UI 规范。
 alwaysApply: false
+layer: supplement
+source: VoltAgent/awesome-design-md + nextlevelbuilder/ui-ux-pro-max-skill
 ---
 
 # DESIGN.md 使用规范

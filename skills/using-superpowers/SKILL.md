@@ -1,6 +1,8 @@
 ---
 name: using-superpowers
 description: 技能发现与 Tool-First 路由。触发：会话开始、不确定用什么技能、开始任务。
+layer: skeleton
+source: obra/superpowers
 ---
 
 # 技能发现与 Tool-First

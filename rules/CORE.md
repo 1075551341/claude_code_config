@@ -1,6 +1,8 @@
 ---
 description: 代码开发时始终启用
 alwaysApply: true
+layer: skeleton
+source: obra/superpowers + forrestchang/andrej-karpathy-skills
 ---
 
 ## 优先级

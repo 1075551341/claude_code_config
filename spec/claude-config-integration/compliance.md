@@ -1,6 +1,6 @@
 # 需求符合性验收报告
 
-> 对照 design.md §18 | 日期：2026-05-23（五柱整合后 v1.1）
+> 对照 design.md §18 + 用户 21 仓库整合要求 | 日期：2026-05-23（v2.1 五柱整合）
 
 ## 验收结果
 
@@ -13,50 +13,59 @@
 | 16 | 错误教训外化（gotchas.md + 5-Why） | ✅ |
 | 17 | 子 agent GSD 连续执行协议 | ✅ |
 | 18 | /review + /spec 命令 | ✅ |
+| 19 | 21 仓库优点整合（PRIMARY 公式） | ✅ |
+| 20 | 跨编辑器同步（CLAUDE.md/skills/agents/rules） | ✅ |
+| 21 | MANIFEST 防互博 + catalog 领域扩展 | ✅ |
+| 22 | Token 双轨（RTK hook + caveman skill） | ✅ |
+| 23 | 规格三轨互斥（OpenSpec/GSD/轻量） | ✅ |
 
-## 规模
+## 规模（MANIFEST v2.1）
 
 | 指标 | 上限 | 实际 |
 |------|------|------|
-| CLAUDE.md | ≤200 | ~145 |
-| 全局 skills | ≤20 | 17 |
-| 全局 agents | ≤15 | 8 |
-| catalog skills | — | **97** |
-| catalog agents | — | **43**（+5 gstack 角色） |
+| CLAUDE.md | ≤500 行 | ~165 |
+| 全局 skills | ≤25 | 25 |
+| 全局 agents | ≤22 | 20 |
+| 全局 rules | 10 文件 | 9 |
+| catalog skills | — | 97 |
+| catalog agents | — | 43 |
 | MCP servers | — | 18 |
-| hooks | — | 22（+1 pre-read-before-edit） |
-| commands | — | 11（+1 review） |
-| MANIFEST concerns | — | 20（+3 gsd/gstack/memory） |
+| hooks（.py） | — | 24 |
+| commands | — | 14 |
+| MANIFEST concerns | — | 55 |
+
+## 组件清单
+
+### Skills（25 = superpowers 13 + 扩展 8 + meta 4）
+
+**Superpowers 13** | **扩展 8** | **Meta 4** → 见 `skills/README.md`
+
+### Agents（20）
+
+**Core ×8** + **gstack 审查 ×5** + **gstack 补全 ×7** → 见 `agents/README.md`
+
+### Rules（9）
+
+CORE, BESTPRACTICE, SECURITY, GIT, WORKFLOW, AGENTS, MCP, DESIGN, CONTEXT
 
 ## 五柱整合变更摘要
 
 | 变更 | 文件 |
 |------|------|
-| MANIFEST +3 concerns | MANIFEST.yaml |
-| 5 gstack catalog agents | catalog/agents/{eng-reviewer,ceo-reviewer,designer,qa,security}.md |
-| 审查路由 | AGENTS.md, rules/AGENTS.md, commands/review.md |
-| read-before-edit hook | hooks/pre-read-before-edit.py, settings.json |
-| 阈值统一 <40%/50%/70% | CLAUDE.md, rules/WORKFLOW.md, rules/AGENTS.md |
-| GSD 连续执行协议 | skills/subagent-driven-development/SKILL.md |
-| 原子任务规则 | skills/writing-plans/SKILL.md |
-| /spec 别名 | commands/propose.md |
-| gotchas 模板 | templates/gotchas.md |
-| 5-Why + 错误外化 | agents/build-error-resolver.md |
-| 五柱表 | CLAUDE.md |
-| 工作原则 | rules/CORE.md |
-| architect 增强 | agents/architect.md |
-| brainstorming 输出路径 | skills/brainstorming/SKILL.md |
-| ship 检查清单 | commands/ship.md |
-| validate_config 更新 | scripts/validate_config.py |
+| 五柱表 + 审查路由 | CLAUDE.md, AGENTS.md |
+| MANIFEST 55 concerns | MANIFEST.yaml |
+| gstack 12 agents | agents/*.md |
+| read-before-edit | hooks/pre-read-before-edit.py |
+| 阈值 <40%/50%/70% | CLAUDE.md, rules/CONTEXT.md, rules/WORKFLOW.md |
+| sync v11 | scripts/sync.ps1, SYNC_GUIDE.md |
+| validate 8 checks | scripts/validate_config.py |
 
-## validate_config.py
+## validate_config.py（预期输出）
 
 ```
-=== .claude v2 VALIDATION ===
-Agents: 8 (max 15, core 8)
-Skills: 17 (max 20)
-Rules:  7 (global 7 + README)
-CLAUDE.md lines: 144 (max 200)
-
+=== .claude v2 VALIDATION (8 checks) ===
+Agents: 20 | Skills: 25 | Rules: 9
+CLAUDE.md: ~165 lines (max 500)
+  [PASS] V1–V8
 ALL CHECKS PASSED
 ```

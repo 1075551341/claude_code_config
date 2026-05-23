@@ -1,7 +1,7 @@
 # ECC harness manifest — 全局启用组件清单
-# 权威：.mcp.json | 详情：SPEC.md
+# 权威：.mcp.json | 详情：SPEC.md | 版本：2.1
 
-version: "1.0"
+version: "2.1"
 harness: claude-code-primary
 
 skills:
@@ -21,6 +21,17 @@ skills:
       - requesting-code-review
       - finishing-a-development-branch
       - writing-skills
+  extension:
+    source: gstack + GSD-redux + ECC
+    enabled:
+      - autoplan
+      - browser-qa
+      - design-pipeline
+      - ship
+      - office-hours
+      - context-engineering
+      - structured-artifacts
+      - instinct-learning
   meta:
     enabled:
       - memory-compression
@@ -40,6 +51,24 @@ agents:
       - spec-reviewer
       - context-manager
       - agentic-orchestrator
+  gstack_review:
+    source: garrytan/gstack
+    enabled:
+      - eng-reviewer
+      - ceo-reviewer
+      - designer
+      - qa
+      - security-reviewer
+  gstack_supplement:
+    source: garrytan/gstack
+    enabled:
+      - cso
+      - sre
+      - release-engineer
+      - product-manager
+      - design-engineer
+      - performance-engineer
+      - doc-writer
 
 hooks:
   profile_env: ECC_HOOK_PROFILE
@@ -64,6 +93,9 @@ commands:
     - review
     - compact
     - clear
+    - status
+    - office-hours
+    - autoplan
   openspec:
     - propose
     - apply

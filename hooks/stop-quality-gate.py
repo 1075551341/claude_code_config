@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Stop Hook: 质量门检查 - 在会话结束时检查schema drift和范围缩减"""
+# source: obra/superpowers
 import sys
 import json
 import os

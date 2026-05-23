@@ -4,6 +4,8 @@ description: 多 Agent 并行编排。触发词：并行 Agent、子代理、任
 tools: [Read, Write, Grep, Glob, Bash]
 skills:
   - subagent-driven-development
+layer: supplement
+source: affaan-m/ECC
 ---
 
 # Agentic Orchestrator

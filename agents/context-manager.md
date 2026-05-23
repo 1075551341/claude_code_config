@@ -5,6 +5,8 @@ tools: [Read, Write]
 skills:
   - memory-compression
   - caveman-compress
+layer: supplement
+source: thedotmack/claude-mem
 ---
 
 # Context Manager

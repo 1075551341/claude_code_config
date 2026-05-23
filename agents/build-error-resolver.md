@@ -4,6 +4,8 @@ description: 构建/编译/类型错误修复。触发词：build error、编译
 tools: [Read, Write, Edit, Grep, Glob, Bash]
 skills:
   - systematic-debugging
+layer: supplement
+source: affaan-m/ECC
 ---
 
 # Build Error Resolver

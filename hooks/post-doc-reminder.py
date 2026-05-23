@@ -10,6 +10,7 @@ PostToolUse Hook: 自动生成函数注释提醒
 - FIX: sys.stdout.flush() 确保输出缓冲刷新
 - FIX: 新增 Go / Rust 函数检测支持
 """
+# source: obra/superpowers
 import json
 import sys
 import io

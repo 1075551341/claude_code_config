@@ -1,6 +1,6 @@
 # SPEC.md — 配置索引与溯源
 
-> CLAUDE.md 为路由层（≤200 行）；本文件为法典索引。设计源：`spec/claude-config-integration/`
+> CLAUDE.md 为路由层（≤500 行）；本文件为法典索引。设计源：`spec/claude-config-integration/`
 
 ---
 
@@ -20,14 +20,14 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 
 | 类型 | 上限 | 当前 |
 |------|------|------|
-| 全局 skills | ≤20 | 17（13 workflow + 4 meta） |
-| 全局 agents | ≤15 | 8 core |
-| 全局 rules | 8 文件 | CORE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN + README |
-| CLAUDE.md | ≤200 行 | 144 |
+| 全局 skills | ≤25 | 25（superpowers 13 + 扩展 8 + meta 4） |
+| 全局 agents | ≤22 | 20（8 core + 5 gstack 审查 + 7 gstack 补全） |
+| 全局 rules | 10 文件 | 9（CORE/BESTPRACTICE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN/CONTEXT） |
+| CLAUDE.md | ≤500 行 | ~165 |
 
 ---
 
-## P0 强制 Skill（4）
+## P0 强制 Skill（4）<!-- layer: skeleton -->
 
 | Skill | 来源 | 触发 |
 |-------|------|------|
@@ -38,15 +38,15 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 
 ---
 
-## Workflow Skills（13）
+## Workflow Skills（13 superpowers + 8 扩展）<!-- layer: skeleton/supplement -->
 
-using-superpowers, brainstorming, writing-plans, executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development, using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch, writing-skills
+**Superpowers 13**：using-superpowers, brainstorming, writing-plans, executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development, using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch, writing-skills
 
-来源：**obra/superpowers**
+**扩展 8**：office-hours, autoplan, browser-qa, design-pipeline, ship, context-engineering, structured-artifacts, instinct-learning
 
 ---
 
-## Meta Skills（4）
+## Meta Skills（4）<!-- layer: supplement -->
 
 | Skill | 来源 |
 |-------|------|
@@ -57,7 +57,7 @@ using-superpowers, brainstorming, writing-plans, executing-plans, verification-b
 
 ---
 
-## 核心 Agents（8）
+## 核心 Agents（8）<!-- layer: skeleton -->
 
 | Agent | 预加载 skills | 来源 |
 |-------|---------------|------|
@@ -72,7 +72,7 @@ using-superpowers, brainstorming, writing-plans, executing-plans, verification-b
 
 领域 agent → `catalog/agents/`（按需复制到项目）
 
-### gstack 审查角色（catalog/agents/）
+### gstack 审查角色（agents/ + catalog/agents/）
 
 | Agent | 触发 |
 |-------|------|
@@ -80,21 +80,35 @@ using-superpowers, brainstorming, writing-plans, executing-plans, verification-b
 | ceo-reviewer | 产品/新功能 |
 | designer | UI/UX 变更 |
 | qa | 测试充分性审查 |
-| security | 安全敏感变更 |
+| security-reviewer | 安全敏感变更 |
+
+### gstack 补全角色（7）
+
+| Agent | 触发 | 来源 |
+|-------|------|------|
+| cso | 全量安全审计 | gstack |
+| sre | 部署后监控/canary | gstack |
+| release-engineer | /ship 发布管线 | gstack |
+| product-manager | /office-hours 六问 | gstack |
+| design-engineer | /design-html 实现 | gstack |
+| performance-engineer | /benchmark 度量 | gstack |
+| doc-writer | /document-release | gstack |
 
 ---
 
-## 全局 Rules（8）
+## 全局 Rules（9）<!-- layer: skeleton/supplement -->
 
-| 文件 | 内容 | alwaysApply |
-|------|------|-------------|
-| CORE.md | 编码规范 + Karpathy 四原则 | ✅ |
-| SECURITY.md | OWASP | lazy |
-| GIT.md | 分支/Commit/PR | lazy |
-| WORKFLOW.md | discuss→ship | lazy |
-| AGENTS.md | 多 Agent 互斥 | lazy |
-| MCP.md | .mcp.json 权威 | lazy |
-| DESIGN.md | DESIGN.md 规范 | lazy |
+| 文件 | 内容 | alwaysApply | layer | source |
+|------|------|-------------|-------|--------|
+| CORE.md | 编码规范 + Karpathy 四原则 | ✅ | skeleton | obra/superpowers + forrestchang/andrej-karpathy-skills |
+| BESTPRACTICE.md | 综合最佳实践 | ✅ | skeleton | shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code |
+| SECURITY.md | OWASP | lazy | supplement | shanraisshan/claude-code-best-practice + OWASP |
+| GIT.md | 分支/Commit/PR | lazy | supplement | shanraisshan/claude-code-best-practice + obra/superpowers |
+| WORKFLOW.md | discuss→ship | lazy | supplement | gsd-build/get-shit-done + bytedance/deer-flow + obra/superpowers |
+| AGENTS.md | 多 Agent 互斥 | lazy | supplement | affaan-m/ECC + bytedance/deer-flow |
+| MCP.md | .mcp.json 权威 | lazy | supplement | github/github-mcp-server + anthropics/claude-code-action |
+| DESIGN.md | DESIGN.md 规范 | lazy | supplement | VoltAgent/awesome-design-md + nextlevelbuilder/ui-ux-pro-max-skill |
+| CONTEXT.md | 上下文工程 | lazy | supplement | gsd-build/get-shit-done + zilliztech/claude-context |
 
 语言/领域规则 → `catalog/rules/`（项目 lazy-load）
 
@@ -161,7 +175,7 @@ Harness 启用清单 → `agent.yaml`
 
 Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 
-目录：`hooks/`（standard 21 个）| `_optional/`（strict 27 个）| `_deprecated/`（已废弃 1 个）
+目录：`hooks/`（24 .py，含 launcher/guard）| `_deprecated/`（pre-task-planner，禁止启用）
 
 ---
 
@@ -189,7 +203,7 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 
 ---
 
-## 23 仓库映射
+## 22 仓库映射
 
 ### 骨架 PRIMARY（五柱 + 基础）
 
@@ -198,16 +212,16 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 | obra/superpowers | 13 workflow skills + P0 skills + commands |
 | gsd-build/get-shit-done | planning 模板 + /compact + 上下文阈值 + read-before-edit |
 | Fission-AI/OpenSpec | openspec 模板 + spec-validation skill |
-| garrytan/gstack | 5 catalog agents (eng/ceo/designer/qa/security) + /review |
+| garrytan/gstack | 5 agents (eng/ceo/designer/qa/security-reviewer) + /review + 7 补全角色 |
 | thedotmack/claude-mem | memory plugin SSOT + 跨会话记忆 |
 
 ### 结构 + 格式
 
 | 仓库 | 采纳 |
 |------|------|
-| affaan-m/ECC | 目录结构、MANIFEST、agents 薄编排、hook profile |
+| affaan-m/ECC | 目录结构、MANIFEST、agents 薄编排、hook profile、instinct-learning |
 | anthropics/skills | SKILL.md 格式规范 |
-| shanraisshan/claude-code-best-practice | CLAUDE.md ≤200 行、config 模式、rules lazy-load |
+| shanraisshan/claude-code-best-practice | CLAUDE.md ≤500 行、config 模式、rules lazy-load + BESTPRACTICE.md + 安全/格式 hooks |
 | forrestchang/andrej-karpathy-skills | karpathy-guidelines skill + CORE.md 四原则 |
 
 ### 优化 + 工具
@@ -218,7 +232,7 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 | JuliusBrussee/caveman | caveman-compress skill |
 | github/github-mcp-server | gh MCP server |
 | anthropics/claude-code-action | templates/github-actions/claude-review.yml |
-| VoltAgent/awesome-design-md | DESIGN.md 模板 |
+| VoltAgent/awesome-design-md | DESIGN.md 模板 + rules/DESIGN.md |
 | nextlevelbuilder/ui-ux-pro-max | catalog/skills/ui-ux-pro-max |
 
 ### 参考索引
@@ -229,8 +243,8 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 | ComposioHQ/awesome-claude-skills | catalog skill 发现索引 |
 | zilliztech/claude-context | 上下文管理策略参考（由 GSD 阈值覆盖） |
 | hesreallyhim/awesome-claude-code | 配置最佳实践参考 |
-| x1xhlol/system-prompts-and-models-of-ai-tools | 系统提示参考 |
-| Chalarangelo/30-seconds-of-code | 代码片段参考 |
+| x1xhlol/system-prompts-and-models-of-ai-tools | 系统 prompt 设计参考（融入 BESTPRACTICE.md） |
+| Chalarangelo/30-seconds-of-code | 代码片段参考（catalog 按需查用） |
 | bytedance/deer-flow | 子 Agent 编排四阶段模式（已整合到 WORKFLOW.md） |
 
 ---
@@ -240,5 +254,5 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 ```powershell
 python C:\Users\DELL\.claude\scripts\validate_config.py
 powershell -ExecutionPolicy Bypass -File C:\Users\DELL\.claude\scripts\sync.ps1 -DryRun
-(Get-Content C:\Users\DELL\.claude\CLAUDE.md).Count  # ≤200
+(Get-Content C:\Users\DELL\.claude\CLAUDE.md).Count  # ≤500
 ```

@@ -5,6 +5,7 @@ SessionStart Hook: Session Bootstrap
 
 exit 0 = 正常结束
 """
+# source: obra/superpowers
 import json
 import sys
 import io

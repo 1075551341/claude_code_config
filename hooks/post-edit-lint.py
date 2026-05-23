@@ -10,6 +10,7 @@ PostToolUse Hook: Lint + 类型检查
 - FIX: subprocess.TimeoutExpired 显式捕获，超时不报错
 - FIX: shutil.which 检查工具可用性，避免命令未安装时报错
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

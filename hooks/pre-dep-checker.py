@@ -10,6 +10,7 @@ npm install / pip install 前检查包是否存在已知风险
 - FIX: 扩展 typosquatting 列表（Vite、shadcn、Radix、tanstack 等）
 - FIX: 支持 bun add 命令解析
 """
+# source: shanraisshan/claude-code-best-practice
 import json
 import sys
 import io

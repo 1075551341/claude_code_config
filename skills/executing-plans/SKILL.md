@@ -7,6 +7,8 @@ triggers:
   - 执行任务
   - 按计划执行
 priority: P1
+layer: supplement
+source: obra/superpowers
 ---
 # 计划执行
 
@@ -22,3 +24,10 @@ priority: P1
 - 每个子任务有明确成功标准
 - 无依赖的子任务可并行
 - 执行过程中发现计划缺陷，返回 plan 阶段修正
+
+## 进度追踪（task-master 风格）
+
+- Checkbox 可视化：`- [ ] 待办` / `- [x] 完成`
+- 阶段进度：`Phase 1/3 — ██████░░░░ 60%`
+- 依赖状态标记：`→ T2（pending）` / `✓ T2（completed）`
+- 每完成一个任务输出进度更新

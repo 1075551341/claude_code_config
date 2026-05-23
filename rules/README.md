@@ -1,21 +1,23 @@
 # Rules 规则索引
 
-全局 **8 文件** alwaysApply/lazy 规则。语言/领域规则在 `catalog/rules/`，按需复制到项目 `.claude/rules/`。
+全局 **10 文件** alwaysApply/lazy 规则。语言/领域规则在 `catalog/rules/`，按需复制到项目 `.claude/rules/`。
 
 ---
 
-## 全局规则（8）
+## 全局规则（10）
 
-| 文件 | 适用 | 加载 |
-|------|------|------|
-| `CORE.md` | 编码规范 + Karpathy 四原则 | ✅ alwaysApply |
-| `SECURITY.md` | OWASP、密钥管理 | lazy |
-| `GIT.md` | 分支、Commit、PR | lazy |
-| `WORKFLOW.md` | discuss→plan→execute→verify→ship | lazy |
-| `AGENTS.md` | 多 Agent 协作、互斥 | lazy |
-| `MCP.md` | .mcp.json 权威源 | lazy |
-| `DESIGN.md` | DESIGN.md token 规范 | lazy |
-| `README.md` | 本索引 | — |
+| 文件 | 适用 | 加载 | layer |
+|------|------|------|-------|
+| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R1-R11 | ✅ alwaysApply | skeleton |
+| `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
+| `GIT.md` | 分支、Commit、PR | lazy | supplement |
+| `WORKFLOW.md` | discuss→plan→execute→verify→ship + deer-flow 编排 | lazy | supplement |
+| `AGENTS.md` | 多 Agent 协作、互斥 | lazy | supplement |
+| `MCP.md` | .mcp.json 权威源 | lazy | supplement |
+| `DESIGN.md` | DESIGN.md token 规范 | lazy | supplement |
+| `BESTPRACTICE.md` | 错误处理 + 提示词设计 + 代码精炼 + API设计 + 日志规范 | lazy | supplement |
+| `CONTEXT.md` | 上下文工程 + 子agent调度 + 腐烂治理 | lazy | supplement |
+| `README.md` | 本索引 | — | — |
 
 ---
 

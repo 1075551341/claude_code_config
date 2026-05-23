@@ -2,6 +2,8 @@
 name: subagent-driven-development
 description: 用于子代理驱动开发模式，每个任务由新子代理执行并经过两阶段审查，含并行调度能力。当有实施计划需要执行
 triggers: [用于子代理驱动开发模式，每个任务由新子代理执行并经过两阶段审查，含并行调度能力。当有实施计划需要执行, 需要将任务分发给子代理, 复杂功能需要分步实现, 并行调度多个子Agent时使用]
+layer: supplement
+source: affaan-m/ECC + GSD-redux
 ---
 
 # 子代理驱动开发

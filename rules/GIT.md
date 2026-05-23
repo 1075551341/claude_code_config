@@ -1,6 +1,8 @@
 ---
 description: Git 版本控制、分支管理、提交规范相关任务时启用
 alwaysApply: false
+layer: supplement
+source: shanraisshan/claude-code-best-practice + obra/superpowers
 ---
 
 # Git 规则
