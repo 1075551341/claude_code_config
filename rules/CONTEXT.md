@@ -45,3 +45,15 @@ triggers:
 - 超过30分钟 → 拆分为独立子Agent
 - 每完成一个子目标 → 输出状态摘要 + 释放上下文
 - 工作流切换 → 保存/恢复规划上下文
+
+## claude-context MCP（optional）
+
+来源：zilliztech/claude-context | 配置：`mcp-configs/dev.json` → `optional.claude-context`
+
+**启用条件**（满足 ≥2）：
+
+1. **Monorepo** — 多包/多模块，grep 不足以定位
+2. **已有向量索引** — 可部署 claude-context 服务
+3. **与 GSD 互补** — 不替代 <40/50/70% 阈值与 claude-mem SSOT
+
+**不启用时**：用 code-explorer agent + ctx7 MCP + 项目 `CONTEXT.md`。

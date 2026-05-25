@@ -17,6 +17,7 @@
 | 5 | 设计层 | 4 | [x] | — |
 | 6 | 同步层 | 8 | [x] | M5 |
 | 7 | 本地迁移 | 6 | [x] | M6 |
+| **8** | **v2.3 文档对齐 + Phase 8 实现** | **8** | **[x]** | **M7** |
 
 ---
 
@@ -158,7 +159,7 @@
 | T3.3 | 创建轻量 spec 三件套模板 | OpenSpec + 本地 | templates/spec/{spec,design,tasks}.md | 小功能可用 | T1.1 | [x] |
 | T3.4 | 更新 commands/propose\|apply\|archive | OpenSpec | commands/propose.md, apply.md, archive.md | 路径 openspec/changes/ | T3.1 | [x] |
 | T3.5 | 更新 spec/README 三轨边界 | — | spec/README.md | 决策树 + 互斥规则 | T3.1~T3.3 | [x] |
-| T3.6 | 可选：task-master 模板 | claude-task-master | templates/taskmaster/{config,example_prd}.md | optional 标记 | T3.1 | [-] |
+| T3.6 | 可选：task-master 模板 | claude-task-master | templates/taskmaster/ | optional 标记 | T3.1 | [x] |
 | T3.7 | OpenSpec config.yaml 模板 | OpenSpec | templates/openspec/config.yaml | 可复制到项目 openspec/ | T3.1 | [x] |
 
 ### T3.5 spec/README 三轨决策树（写入文件）
@@ -389,16 +390,45 @@ python $env:USERPROFILE\.claude\scripts\migrate-from-legacy.py --dry-run
 | 里程碑 | 完成 Phase | 门控条件 | 阻塞下一 Phase |
 |--------|------------|----------|----------------|
 | M0 文档 | 0 | design/spec/tasks 三件套 | Phase 1 |
-| M1 骨架 | 1 | MANIFEST 零冲突 + CLAUDE≤200 | Phase 2/3/5 |
+| M1 骨架 | 1 | MANIFEST 零冲突 + CLAUDE≤500 | Phase 2/3/5 |
 | M2 工作流 | 2 | 13 skills + bootstrap + 链可触发 | Phase 4 |
 | M3 规格 | 3 | templates + /propose 路径 | Phase 4 |
-| M4 运行时 | 4 | mem + RTK + caveman + agents≤15 | Phase 6 |
+| M4 运行时 | 4 | mem + RTK + caveman + agents≤22 | Phase 6 |
 | M5 同步 | 6 | sync DryRun + 三编辑器 | Phase 7 |
-| M6 迁移 | 7 | legacy 审计 + patterns 保留 + compliance 报告 | 完成 |
+| M6 迁移 | 7 | legacy 审计 + patterns 保留 + compliance 报告 | Phase 8 |
+| M7 整合 | 8 | 22 仓库追溯全 ✅ + validate 8 checks | 完成 |
 
 ---
 
-## 21 仓库 → 任务映射速查
+---
+
+## Phase 8 — v2.3 文档对齐 + Phase 8 实现
+
+> **依赖**：Phase 7 | **里程碑 M7**：22 仓库追溯全 ✅ + validate
+
+| ID | 任务 | 来源 | 产出 | 验证 | 状态 |
+|----|------|------|------|------|------|
+| T8.1 | design.md v2.3：§4/§9/§16 漂移 + §15.5 追溯矩阵 | 用户要求 | design.md | §18 自检 | [x] |
+| T8.2 | spec.md v2.3：FR-03.7 + 验收清单 | — | spec.md | FR-03.7, FR-11.2 | [x] |
+| T8.3 | SPEC.md mattpocock catalog 索引 | mattpocock/skills | SPEC.md | migrate 示例 | [x] |
+| T8.4 | catalog 导入 diagnose / grill-with-docs / handoff | mattpocock/skills | catalog/skills/ ×3 | 仅 catalog/ | [x] |
+| T8.5 | templates/taskmaster/ 轻量模板 | claude-task-master | README + example_prd | T3.6 完成 | [x] |
+| T8.6 | mcp-configs/dev.json optional + rules/CONTEXT 启用 | claude-context | dev.json, CONTEXT.md | FR-11.2 | [x] |
+| T8.7 | tasks.md v2.3 里程碑 + Phase 8 扩展 | — | tasks.md | M1/M4/M7 | [x] |
+| T8.8 | SYNC_GUIDE + compliance v2.3 | — | SYNC_GUIDE, compliance.md | agents 20 | [x] |
+
+**M7 门控**：
+```
+□ design/spec/tasks v2.3 互链
+□ design §15.5 追溯矩阵 22 行
+□ mattpocock 3 skill 仅 catalog/
+□ validate_config.py 8 checks PASS
+□ sync.ps1 -DryRun 零错误
+```
+
+---
+
+## 22 仓库 → 任务映射速查
 
 | 仓库 | 主要任务 ID |
 |------|-------------|
@@ -415,16 +445,17 @@ python $env:USERPROFILE\.claude\scripts\migrate-from-legacy.py --dry-run
 | awesome-design-md | T5.1, T5.2 |
 | ui-ux-pro-max | T2.7, T5.3 |
 | github-mcp-server | T4.6, T1.8 |
-| claude-context | T4.6 optional |
+| claude-context | T4.6, T8.6 |
 | claude-code-action | T5.4 |
-| claude-task-master | T3.6 |
+| claude-task-master | T3.6, T8.5 |
 | ComposioHQ | T6.8, T7.2 CATALOG |
 | hesreallyhim/awesome-claude-code | T6.8 |
 | 30-seconds-of-code | T2.5 skills README |
 | x1xhlol | T6.8 索引 only |
 | deer-flow | T6.8 注明非 IDE |
+| mattpocock/skills | T8.1–T8.4 |
 | 本地 legacy | T7.1~T7.6 |
 
 ---
 
-_version：2.1 | 日期：2026-05-23 | Phase 0–7 完成 + v2.1 文档/校验对齐_
+_version：2.3 | 日期：2026-05-25 | Phase 8 完成_

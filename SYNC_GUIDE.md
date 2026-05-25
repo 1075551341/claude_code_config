@@ -23,7 +23,7 @@ description: 跨编辑器配置同步指南
 │   ├── designer.md           #     gstack 设计审查
 │   ├── qa.md                 #     gstack QA 审查
 │   ├── security-reviewer.md  #     gstack 安全审查
-│   └── ...（core + gstack 共 13）
+│   └── ...（core 8 + gstack 12，共 20）
 ├── skills/                   # ✅ 同步 - 技能库（目录链接）
 ├── commands/                 # ❌ 不同步 - Claude Code 专用
 ├── hooks/                    # ❌ 不同步 - Claude Code 专用

@@ -1,25 +1,29 @@
 # 需求符合性验收报告
 
-> 对照 design.md §18 + 用户 21 仓库整合要求 | 日期：2026-05-23（v2.1 五柱整合）
+> 对照 design.md §18 + 用户 22 仓库整合要求 | 日期：2026-05-25（v2.3）
 
 ## 验收结果
 
 | # | 用户要求 | 状态 |
 |---|----------|------|
 | 1–12 | design §18 全部项 | ✅ |
-| 13 | 五柱架构（Superpowers/GSD/OpenSpec/gstack/claude-mem） | ✅ |
-| 14 | gstack 审查路由（eng/ceo/designer/qa/security） | ✅ |
-| 15 | GSD 上下文工程（read-before-edit + <40%/50%/70%） | ✅ |
-| 16 | 错误教训外化（gotchas.md + 5-Why） | ✅ |
-| 17 | 子 agent GSD 连续执行协议 | ✅ |
+| 13 | 五柱架构 | ✅ |
+| 14 | gstack 审查路由 | ✅ |
+| 15 | GSD 上下文工程 | ✅ |
+| 16 | 错误教训外化 | ✅ |
+| 17 | 子 agent GSD 连续执行 | ✅ |
 | 18 | /review + /spec 命令 | ✅ |
-| 19 | 21 仓库优点整合（PRIMARY 公式） | ✅ |
-| 20 | 跨编辑器同步（CLAUDE.md/skills/agents/rules） | ✅ |
-| 21 | MANIFEST 防互博 + catalog 领域扩展 | ✅ |
-| 22 | Token 双轨（RTK hook + caveman skill） | ✅ |
-| 23 | 规格三轨互斥（OpenSpec/GSD/轻量） | ✅ |
+| 19 | 22 仓库优点整合 | ✅ |
+| 20 | 跨编辑器同步 | ✅ |
+| 21 | MANIFEST 防互博 + catalog | ✅ |
+| 22 | Token 双轨 | ✅ |
+| 23 | 规格三轨互斥 | ✅ |
+| 24 | mattpocock catalog×3 + 去重 | ✅ |
+| 25 | task-master 轻量模板 | ✅ |
+| 26 | claude-context optional MCP | ✅ |
+| 27 | design §15.5 追溯矩阵 | ✅ |
 
-## 规模（MANIFEST v2.1）
+## 规模（v2.3）
 
 | 指标 | 上限 | 实际 |
 |------|------|------|
@@ -27,38 +31,20 @@
 | 全局 skills | ≤25 | 25 |
 | 全局 agents | ≤22 | 20 |
 | 全局 rules | 10 文件 | 9 |
-| catalog skills | — | 97 |
+| catalog skills | — | ~100（+mattpocock×3） |
 | catalog agents | — | 43 |
-| MCP servers | — | 18 |
-| hooks（.py） | — | 24 |
-| commands | — | 14 |
-| MANIFEST concerns | — | 55 |
+| MANIFEST concerns | — | 55+ |
 
-## 组件清单
+## Phase 8 交付物
 
-### Skills（25 = superpowers 13 + 扩展 8 + meta 4）
-
-**Superpowers 13** | **扩展 8** | **Meta 4** → 见 `skills/README.md`
-
-### Agents（20）
-
-**Core ×8** + **gstack 审查 ×5** + **gstack 补全 ×7** → 见 `agents/README.md`
-
-### Rules（9）
-
-CORE, BESTPRACTICE, SECURITY, GIT, WORKFLOW, AGENTS, MCP, DESIGN, CONTEXT
-
-## 五柱整合变更摘要
-
-| 变更 | 文件 |
+| 交付 | 路径 |
 |------|------|
-| 五柱表 + 审查路由 | CLAUDE.md, AGENTS.md |
-| MANIFEST 55 concerns | MANIFEST.yaml |
-| gstack 12 agents | agents/*.md |
-| read-before-edit | hooks/pre-read-before-edit.py |
-| 阈值 <40%/50%/70% | CLAUDE.md, rules/CONTEXT.md, rules/WORKFLOW.md |
-| sync v11 | scripts/sync.ps1, SYNC_GUIDE.md |
-| validate 8 checks | scripts/validate_config.py |
+| mattpocock diagnose | catalog/skills/diagnose/SKILL.md |
+| mattpocock grill-with-docs | catalog/skills/grill-with-docs/SKILL.md |
+| mattpocock handoff | catalog/skills/handoff/SKILL.md |
+| task-master 模板 | templates/taskmaster/ |
+| claude-context optional | mcp-configs/dev.json + rules/CONTEXT.md |
+| 文档 v2.3 | design/spec/tasks/compliance |
 
 ## validate_config.py（预期输出）
 

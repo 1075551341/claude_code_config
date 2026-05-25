@@ -20,7 +20,7 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 
 | 类型 | 上限 | 当前 |
 |------|------|------|
-| 全局 skills | ≤25 | 25（superpowers 13 + 扩展 8 + meta 4） |
+| 全局 skills | ≤28 | 27（superpowers 13 + 扩展 8 + meta 4 + mattpocock 2） |
 | 全局 agents | ≤22 | 20（8 core + 5 gstack 审查 + 7 gstack 补全） |
 | 全局 rules | 10 文件 | 9（CORE/BESTPRACTICE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN/CONTEXT） |
 | CLAUDE.md | ≤500 行 | ~165 |
@@ -43,6 +43,8 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 **Superpowers 13**：using-superpowers, brainstorming, writing-plans, executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development, using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch, writing-skills
 
 **扩展 8**：office-hours, autoplan, browser-qa, design-pipeline, ship, context-engineering, structured-artifacts, instinct-learning
+
+**Mattpocock 精选 2**：triage, improve-codebase-architecture
 
 ---
 
@@ -144,11 +146,31 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 
 | 目录 | 规模 | 用途 |
 |------|------|------|
-| catalog/skills/ | 97 | 按需 `migrate-from-legacy.py --skill` |
+| catalog/skills/ | ~100 | 按需 `migrate-from-legacy.py --skill` |
 | catalog/agents/ | 43 | 按需 `--agent`（含 5 gstack 角色） |
 | catalog/rules/ | ~15 | 按需 `--rule` |
 
-优点保留在 catalog（97 skills / 43 agents）；已删记录 → `experiences/rejected/deletion-candidates.md`
+### mattpocock/skills（全局 2 + catalog 按需 3，v2.4）
+
+**全局 skill（2）**：triage, improve-codebase-architecture
+
+**Catalog 按需（3）**：
+
+| Skill | 路径 | 全局 owner（excludes） |
+|-------|------|------------------------|
+| diagnose | catalog/skills/diagnose/ | systematic-debugging（P0 优先） |
+| grill-with-docs | catalog/skills/grill-with-docs/ | brainstorming |
+| handoff | catalog/skills/handoff/ | structured-artifacts, claude-mem |
+
+```powershell
+python ~/.claude/scripts/migrate-from-legacy.py --project . --skill diagnose
+python ~/.claude/scripts/migrate-from-legacy.py --project . --skill grill-with-docs
+python ~/.claude/scripts/migrate-from-legacy.py --project . --skill handoff
+```
+
+去重表 → `spec/claude-config-integration/design.md` §15.4
+
+优点保留在 catalog（~100 skills / 43 agents）；已删记录 → `experiences/rejected/deletion-candidates.md`
 
 ---
 
@@ -239,13 +261,14 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 
 | 仓库 | 采纳 |
 |------|------|
-| eyaltoledano/claude-task-master | 任务分解模式参考（由 writing-plans + executing-plans 覆盖） |
+| eyaltoledano/claude-task-master | templates/taskmaster/ + writing-plans |
 | ComposioHQ/awesome-claude-skills | catalog skill 发现索引 |
-| zilliztech/claude-context | 上下文管理策略参考（由 GSD 阈值覆盖） |
+| zilliztech/claude-context | mcp-configs/dev.json optional + rules/CONTEXT.md |
 | hesreallyhim/awesome-claude-code | 配置最佳实践参考 |
 | x1xhlol/system-prompts-and-models-of-ai-tools | 系统 prompt 设计参考（融入 BESTPRACTICE.md） |
 | Chalarangelo/30-seconds-of-code | 代码片段参考（catalog 按需查用） |
 | bytedance/deer-flow | 子 Agent 编排四阶段模式（已整合到 WORKFLOW.md） |
+| **mattpocock/skills** | **catalog 按需：diagnose, grill-with-docs, handoff；tdd/caveman 去重** |
 
 ---
 

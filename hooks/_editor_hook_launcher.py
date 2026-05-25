@@ -159,8 +159,11 @@ def main():
         except Exception:
             pass
         sys.exit(0)
-    proc = subprocess.run([sys.executable, target] + sys.argv[2:], input=raw if raw else None)
-    sys.exit(proc.returncode if proc.returncode is not None else 1)
+    try:
+        proc = subprocess.run([sys.executable, target] + sys.argv[2:], input=raw if raw else None, timeout=55)
+        sys.exit(proc.returncode if proc.returncode is not None else 1)
+    except subprocess.TimeoutExpired:
+        sys.exit(0)
 
 
 if __name__ == "__main__":

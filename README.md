@@ -33,9 +33,9 @@
 ├── CLAUDE.md           # 全局行为规范
 ├── README.md           # 本文件（总览）
 │
-├── agents/             # 8 核心 Agent + catalog 43（见 agents/README.md）
-├── skills/             # 17 全局 skill + catalog 97（见 skills/README.md）
-├── rules/              # 8 全局规则 + catalog 15（见 rules/README.md）
+├── agents/             # 20 核心 Agent + catalog 43（见 agents/README.md）
+├── skills/             # 25 全局 skill + catalog ~100（见 skills/README.md）
+├── rules/              # 10 全局规则 + catalog 15（见 rules/README.md）
 ├── hooks/              # 24 个 .py 生命周期钩子（CLI 专用，见 hooks/README.md）
 ├── scripts/            # 维护脚本 sync/check/fix 等（14 个，见 scripts/README.md）
 ├── plugins/            # 插件与市场（plugins/cache/ 为下载缓存，可删后自动重建）

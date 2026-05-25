@@ -38,7 +38,8 @@
     "API_TIMEOUT_MS": "3000000",
     "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-pro"
+    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-pro",
+    "ENABLE_TOOL_SEARCH": "true"
   },
   "extraKnownMarketplaces": {
     "thedotmack": {
@@ -93,7 +94,7 @@
             "type": "command"
           }
         ],
-        "matcher": "Bash|Read|Glob|Grep"
+        "matcher": "Bash"
       }
     ],
     "PreCompact": [

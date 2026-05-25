@@ -246,7 +246,8 @@ concerns:
   task_management:
     owner: skill/writing-plans
     source: eyaltoledano/claude-task-master
-    note: 任务分解模式参考，由 writing-plans 覆盖
+    note: 任务分解模式参考；模板 templates/taskmaster/
+    template: templates/taskmaster/
 
   design_token:
     owner: rules/DESIGN.md
@@ -283,6 +284,24 @@ concerns:
     source: anthropics/skills
     note: SKILL.md 格式规范参考
 
+  mattpocock_skills:
+    owner: catalog/skills/
+    source: mattpocock/skills
+    note: diagnose/grill/handoff 按需；tdd/caveman 与 superpowers 去重见 design §15.4
+    excludes: [skill/test-driven-development, skill/caveman-compress, skill/systematic-debugging, skill/brainstorming]
+
+  triage:
+    owner: skill/triage
+    source: mattpocock/skills
+    excludes: [skill/systematic-debugging]
+    note: 问题分诊 → 分类路由；debugging 做根因分析
+
+  architecture_improvement:
+    owner: skill/improve-codebase-architecture
+    source: mattpocock/skills
+    excludes: [skill/brainstorming, agent/code-reviewer]
+    note: 架构渐进改进；brainstorming 做新功能设计，code-reviewer 做单次 PR
+
   context_mgmt:
     owner: rules/CONTEXT.md
     source: zilliztech/claude-context
@@ -308,5 +327,5 @@ p0_skills:
   - verification-before-completion
   - systematic-debugging
 
-global_skills_max: 25
+global_skills_max: 28
 global_agents_max: 22

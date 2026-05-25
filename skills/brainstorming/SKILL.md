@@ -8,6 +8,10 @@ source: obra/superpowers
 
 # 设计头脑风暴
 
+> **HARD-GATE：用户批准设计前禁止实现。未经过 brainstorming 确认的方案不得进入 writing-plans/executing-plans。**
+
+
+
 ## @Examples
 
 ```

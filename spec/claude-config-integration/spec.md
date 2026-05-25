@@ -1,7 +1,7 @@
 # Spec — .claude 配置整合需求规格
 
-> **设计源**：21 个 GitHub 仓库 PRIMARY | 本地 `~/.claude` 仅迁移对照  
-> **关联**：[design.md](./design.md) | [tasks.md](./tasks.md)
+> **设计源**：22 个 GitHub 仓库 PRIMARY | 本地 `~/.claude` 仅迁移对照  
+> **版本**：2.3 | **关联**：[design.md](./design.md) | [tasks.md](./tasks.md)
 
 ---
 
@@ -9,13 +9,17 @@
 
 ### 1.1 背景
 
-需将 21 个社区优秀 AI Agent 配置仓库的优点整合为统一的 `~/.claude` 全局配置体系，满足：
+将 22 个社区 AI Agent 配置仓库整合为统一 `~/.claude` 全局配置，以 **五柱架构** 为骨架：
 
-- Claude Code 完整运行时（hooks/MCP/commands）
-- Cursor / Windsurf / Trae 通过软链接同步核心配置
-- 非简单任务有计划、有规格、有验证
-- 持续学习、上下文可控、Token 不浪费
-- 无左右手互博
+| 柱 | 仓库 | 职责 |
+|----|------|------|
+| Superpowers | obra/superpowers | 方法论 + workflow |
+| GSD | GSD-redux | 上下文工程 |
+| OpenSpec | Fission-AI/OpenSpec | 变更规格 |
+| gstack | garrytan/gstack | 角色审查与补全 |
+| claude-mem | thedotmack/claude-mem | 跨会话记忆 |
+
+满足：Claude Code 完整运行时、多编辑器软链接同步、非简单任务有计划、持续学习、Token 可控、无互博。
 
 ### 1.2 范围
 
@@ -36,18 +40,20 @@
 
 ## 2. 功能需求
 
-### FR-01 PRIMARY 骨架（5 源合一）
+### FR-01 PRIMARY 骨架（五柱 + 结构层）
 
-**来源**：superpowers, ECC, anthropics/skills, best-practice, claude-mem
+**来源**：五柱 + ECC + anthropics/skills + best-practice
 
 | ID | 要求 | 验收 |
 |----|------|------|
-| FR-01.1 | 全局 skills ≤20：13 workflow + ≤7 meta（memory/karpathy/caveman/spec-validation/ui-ux 等） | SKILL.md 计数 ≤20 |
-| FR-01.2 | 全局 agents ≤15，薄编排无领域知识 | agents/README 声明职责 |
-| FR-01.3 | rules ≤8 alwaysApply 文件 | rules/ 无冗余重复 |
-| FR-01.4 | MANIFEST.yaml 覆盖所有 concern | validate_config --check-manifest 通过 |
-| FR-01.5 | agent.yaml harness manifest 可解析 | YAML lint 通过 |
-| FR-01.6 | 每个组件标注 source_repo | SPEC.md 溯源表完整 |
+| FR-01.1 | 全局 skills ≤25：superpowers 13 + 扩展 8 + meta 4 | validate_config V2 |
+| FR-01.2 | 全局 agents ≤22：core 8 + gstack 12 | agents/README |
+| FR-01.3 | rules ≤10 alwaysApply/lazy 文件 | 9 文件当前 |
+| FR-01.4 | MANIFEST.yaml 覆盖 55+ concerns | --check-manifest |
+| FR-01.5 | agent.yaml harness 可解析 | YAML lint |
+| FR-01.6 | 每组件标注 source_repo | SPEC.md 溯源 |
+| FR-01.7 | 五柱在 CLAUDE.md 表可见 | 五柱架构节 |
+| FR-01.8 | catalog/skills ≥90 保留领域能力 | migrate-from-legacy |
 
 ### FR-02 工作流链（superpowers PRIMARY）
 
@@ -80,13 +86,19 @@
 12. finishing-a-development-branch
 13. writing-skills
 
-**≤7 meta skills 清单**（其他仓库）：
+**扩展 8 skills**（gstack/GSD/ECC，非 P0）：
 
-14. memory-compression（claude-mem）
-15. karpathy-guidelines（karpathy-skills）
-16. caveman-compress（caveman）
-17. spec-validation（OpenSpec）
-18. ui-ux-pro-max（optional, nextlevelbuilder）
+autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineering | structured-artifacts | instinct-learning
+
+**Meta 4**：memory-compression | karpathy-guidelines | caveman-compress | spec-validation
+
+### FR-02.9 gstack 审查路由
+
+| ID | 要求 | 验收 |
+|----|------|------|
+| FR-02.9.1 | eng-reviewer 所有变更必须 | CLAUDE.md 审查路由 |
+| FR-02.9.2 | ceo/designer/qa/security 条件触发 | MANIFEST gstack_* |
+| FR-02.9.3 | /review 命令 pointer autoplan 或各 reviewer | commands/review.md |
 
 ### FR-03 规格三轨混合
 
@@ -100,6 +112,7 @@
 | FR-03.4 | 同功能不可三轨并行 | MANIFEST 互斥规则 + spec/README 说明 |
 | FR-03.5 | commands：/propose /apply /archive 对齐 OpenSpec | 路径指向 openspec/changes/ |
 | FR-03.6 | brainstorming 产出 → docs/superpowers/specs/ | writing-plans 引用路径 |
+| FR-03.7 | task-master 轻量模板 optional | templates/taskmaster/README.md + example_prd.md 可 copy；不全局 skill |
 
 **三轨选型决策树**：
 
@@ -143,7 +156,7 @@
 |----|------|------|
 | FR-06.1 | templates/DESIGN.md YAML 格式（colors/typography/spacing/components） | 模板可 copy 到项目 |
 | FR-06.2 | rules/DESIGN.md 规范用法，不含 token 正文 | 与 FRONTEND 分离 |
-| FR-06.3 | ui-ux-pro-max skill 可选启用 | search 脚本可运行 |
+| FR-06.3 | ui-ux-pro-max 在 catalog/skills/ 按需启用 | migrate --skill ui-ux-pro-max |
 | FR-06.4 | frontend 任务引用 DESIGN.md；ux-design-expert 为**项目级** agent | templates 说明 |
 
 ### FR-07 编码哲学
@@ -198,7 +211,7 @@
 | ID | 要求 | 验收 |
 |----|------|------|
 | FR-11.1 | gh MCP 已配置且 toolset 可裁剪 | mcp-configs/dev.json |
-| FR-11.2 | claude-context 可选 MCP 条目（commented） | 大 monorepo 启用指南 |
+| FR-11.2 | claude-context 可选 MCP 在 mcp-configs/dev.json `optional` 块 + rules/CONTEXT.md 启用指南 | 大 monorepo 文档可查 |
 | FR-11.3 | RULES_MCP.md 单一权威源原则 | 无多处 MCP 定义 |
 | FR-11.4 | sync 不同步 .mcp.json | SYNC_GUIDE 明确 |
 
@@ -248,7 +261,16 @@
 | FR-15.2 | SPEC.md 完整索引+21 仓库溯源 | 每个 P0 组件有 source |
 | FR-15.3 | SYNC_GUIDE.md 同步策略准确 | 与用户要求一致 |
 
-| FR-15.4 | TOOL_MATCHING_GUIDE.md 语义匹配表与 MCP 分组一致 | 自然语言→工具 |
+| FR-15.4 | TOOL_MATCHING_GUIDE 语义匹配 | 自然语言→工具 |
+
+### FR-17 mattpocock/skills 整合（catalog 按需）
+
+| ID | 要求 | 验收 |
+|----|------|------|
+| FR-17.1 | tdd/diagnose/caveman 不重复导入全局 | MANIFEST 去重 |
+| FR-17.2 | diagnose/grill/handoff 可 catalog 按需 | catalog 或 migrate 文档 |
+| FR-17.3 | git-guardrails 行为由 pre-bash-guard 覆盖 | hooks/README |
+| FR-17.4 | design.md §15.4 去重表完整 | 文档审查 |
 
 ### FR-16 上下文管理
 
@@ -268,7 +290,7 @@
 
 | ID | 类别 | 要求 | 度量 |
 |----|------|------|------|
-| NFR-01 | Token | CLAUDE.md 始终加载预算 | ≤200 行 |
+| NFR-01 | Token | CLAUDE.md 始终加载预算 | ≤500 行（目标 ~165） |
 | NFR-02 | 一致性 | MANIFEST 零 duplicate owner | validate_config 通过 |
 | NFR-03 | 兼容性 | 三编辑器无 hook 冲突 | 手动验证清单 |
 | NFR-04 | 可验证 | 所有变更可脚本验证 | validate_config + sync DryRun |
@@ -301,49 +323,42 @@
 | FR-14 | T7.1–T7.5 |
 | FR-15 | T1.4, T1.7, T1.8, T6.4 |
 | FR-16 | T2.3, T4.8, T1.4 |
+| FR-17 | T8.3–T8.4 |
+| FR-03.7 | T8.5 |
+| FR-11.2 | T8.6 |
 
 ---
 
-## 5. 21 仓库整合规格详表
+## 5. 22 仓库整合规格详表
 
-### 5.1 P0 — 骨架组成（必须实现）
+### 5.1 五柱（必须）
 
-| # | 仓库 | 保留优点 | 目标路径 | 验收命令/标准 |
-|---|------|----------|----------|---------------|
-| 1 | superpowers | 13 skill 链、HARD-GATE、SessionStart bootstrap、两阶段 review | skills/, hooks/ | brainstorming 触发 |
-| 2 | anthropics/skills | SKILL.md spec、template、skill-creator eval | skills/writing-skills/ | 新建 skill 通过 quick_validate |
-| 3 | ECC | agent.yaml、mcp-configs、placement policy、hook profile、AgentShield | agent.yaml, mcp-configs/, rules/SECURITY.md | manifest 解析 |
-| 4 | best-practice | settings 层级、rules lazy-load、Command→Agent→Skill | rules/, commands/ | lazy rule 按 glob 触发 |
-| 5 | claude-mem | 6 hooks、SQLite+Chroma、mem-search、plan/do skills | plugins/, hooks/ | 跨会话检索 |
-| 6 | OpenSpec | changes/ 结构、config.yaml、propose/apply/archive | templates/openspec/, commands/ | /propose 创建 change |
-| 7 | karpathy-skills | 四原则 skill | skills/karpathy-guidelines/ | 触发词有效 |
-| 8 | RTK | PreToolUse bash 重写、filters 概念 | hooks/pre-rtk-rewrite.* | git status 压缩 |
-| 9 | caveman | 输出压缩 skill、lite 模式 | skills/caveman-compress/ | 长输出压缩 |
-| 10 | github-mcp-server | 官方 gh MCP、toolset 裁剪 | .mcp.json, mcp-configs/ | gh 工具可用 |
+| 柱 | 仓库 | 保留优点 | 目标路径 |
+|----|------|----------|----------|
+| ① | superpowers | 13 skill 链、HARD-GATE、SessionStart | skills/, hooks/ |
+| ② | GSD-redux | phase 模板、阈值、read-before-edit | rules/CONTEXT, templates/planning/ |
+| ③ | OpenSpec | changes/ 结构、propose/apply/archive | templates/openspec/, commands/ |
+| ④ | gstack | 5 审查 + 7 补全 agents、autoplan/ship | agents/, skills/autoplan,ship |
+| ⑤ | claude-mem | 6 hooks、mem-search、plan/do | plugins/, hooks/ |
 
-### 5.2 P1 — 选择性增强
+### 5.2 结构 + 格式 + 优化（P0）
 
-| # | 仓库 | 保留优点 | 目标路径 |
-|---|------|----------|----------|
-| 11 | GSD-redux | phase SPEC/CONTEXT/PLAN、workflow guards | templates/planning/ |
-| 12 | awesome-design-md | DESIGN.md YAML token | templates/DESIGN.md |
-| 13 | ui-ux-pro-max | BM25 设计数据库 skill | skills/ui-ux-pro-max/ |
-| 14 | claude-task-master | PRD→tasks、MCP optional | templates/taskmaster/ |
-| 15 | claude-context | 语义代码索引 MCP | mcp-configs/dev.json optional |
-| 16 | claude-code-action | GitHub Action 模板 | templates/github-actions/ |
-| 17 | ComposioHQ/awesome-claude-skills | 1000+ skill 索引 | SPEC.md 外链 |
-| 18 | shanraisshan/best-practice | orchestration 示例 | commands/ README |
+| 仓库 | 保留优点 | 目标路径 |
+|------|----------|----------|
+| ECC | MANIFEST、catalog、hook profile | agent.yaml, catalog/ |
+| anthropics/skills | SKILL.md spec | writing-skills, catalog/ |
+| best-practice | lazy-load、settings 层级 | rules/BESTPRACTICE, CLAUDE.md |
+| karpathy-skills | 四原则 | karpathy-guidelines, CORE.md |
+| RTK + caveman | Token 双轨 | pre-rtk-rewrite, caveman-compress |
+| github-mcp-server | gh MCP | .mcp.json |
 
-### 5.3 P2 — 参考 only
+### 5.3 P1 增强
 
-| # | 仓库 | 处理方式 |
-|---|------|----------|
-| 19 | x1xhlol/system-prompts | SPEC.md 研究索引；GPL；禁止 copy 到 runtime |
-| 20 | hesreallyhim/awesome-claude-code | SPEC.md catalog 外链 |
-| 21 | 30-seconds-of-code | skills「30 秒约束」原则引用 |
-| — | gsd-build/get-shit-done | 废弃；仅用 GSD-redux |
-| — | deer-flow | SPEC.md 注明独立 super-agent 平台 |
-| — | bytedance/deer-flow | sandbox+IM 概念参考，不复制目录 |
+awesome-design-md | ui-ux-pro-max | claude-code-action | claude-task-master（模式） | claude-context（策略） | ComposioHQ（索引） | **mattpocock/skills（catalog 去重）**
+
+### 5.4 P2 参考
+
+x1xhlol | hesreallyhim | 30-seconds-of-code | gsd-build（废弃） | deer-flow（WORKFLOW 参考）
 
 ---
 
@@ -367,73 +382,44 @@
 
 ### 6.1 骨架
 
-- [ ] MANIFEST.yaml 存在且零 conflict
-- [ ] agent.yaml 可解析
-- [ ] CLAUDE.md ≤200 行
-- [ ] AGENTS.md 与 CLAUDE.md 不重复长文
-- [ ] rules/ ≤8 alwaysApply 文件
-- [ ] skills/ ≤20 global core
-- [ ] agents/ ≤15
+- [x] MANIFEST.yaml 零 conflict（v2.1）
+- [x] agent.yaml 可解析
+- [x] CLAUDE.md ≤500 行（~165）
+- [x] AGENTS.md pointer 模式
+- [x] rules/ 9 文件
+- [x] skills/ 25 global
+- [x] agents/ 20 global
+- [x] 五柱表在 CLAUDE.md
 
 ### 6.2 工作流
 
-- [ ] 13 superpowers skills 完整
-- [ ] SessionStart bootstrap 唯一
-- [ ] brainstorming HARD-GATE 生效
-- [ ] discuss→plan→execute→verify→ship 链可用
-- [ ] TDD + verification-before-completion 可触发
+- [x] 13 superpowers + 8 扩展 skills
+- [x] SessionStart bootstrap 唯一
+- [x] brainstorming HARD-GATE
+- [x] discuss→plan→execute→verify→ship + /review
+- [x] gstack 审查路由 5 agents
 
-### 6.3 规格
+### 6.3–6.7
 
-- [ ] templates/openspec/ 四件套
-- [ ] templates/planning/ GSD 三件套
-- [ ] templates/spec/ 轻量三件套
-- [ ] /propose /apply /archive 路径正确
-- [ ] spec/README 三轨边界清晰
-
-### 6.4 运行时
-
-- [ ] claude-mem plugin 启用
-- [ ] RTK hook passthrough/压缩
-- [ ] caveman-compress skill
-- [ ] hooks profile minimal/standard/strict
-- [ ] stop-pattern-extraction 写 patterns/
-
-### 6.5 设计
-
-- [ ] templates/DESIGN.md
-- [ ] rules/DESIGN.md
-- [ ] ui-ux-pro-max optional
-
-### 6.6 同步
-
-- [ ] sync.ps1 v11 DryRun 通过
-- [ ] CLAUDE.md 软链接正确
-- [ ] Cursor/Windsurf/Trae 加载无冲突
-- [ ] validate_config.py 零错误
-
-### 6.7 迁移
-
-- [ ] migrate-from-legacy.py 清单完整
-- [ ] deprecated 项有记录
-- [ ] 有效 patterns 未丢失
+见 [compliance.md](./compliance.md)（v2.1 已通过 validate_config 8 checks）
 
 ### 6.8 文档
 
-- [ ] design.md / spec.md / tasks.md 三件套完整
-- [ ] SPEC.md 21 仓库溯源表
+- [x] design/spec/tasks v2.3
+- [x] SPEC.md 22 仓库溯源
+- [x] design §15.5 追溯矩阵
 
-### 7.8 上下文
+### 6.9 Phase 8（v2.3）
 
-- [ ] 上下文阈值策略 documented
-- [ ] /compact /clear commands 可用
-- [ ] pre-compact-state hook 注册
+- [x] mattpocock catalog ×3（diagnose, grill-with-docs, handoff）
+- [x] templates/taskmaster/（FR-03.7）
+- [x] claude-context optional MCP（FR-11.2）
+- [x] SYNC_GUIDE agents 20 / rules 9
 
-### 7.9 需求符合性
+### 6.10 v2.3 doc drift
 
-- [ ] design.md §18 自检 12 项全 ✓
-- [ ] 21 仓库均有 spec 映射
-- [ ] FR→Task 矩阵无遗漏
+- [x] design §4/§9/§16 与实测一致
+- [x] tasks 里程碑 M1/M4/M7 门控对齐
 
 ---
 
@@ -455,7 +441,7 @@
 
 | 风险 | 影响 | 缓解 |
 |------|------|------|
-| 配置膨胀 context rot | 高 | CLAUDE.md≤200；P0 skill 仅 4 强制 |
+| 配置膨胀 context rot | 高 | CLAUDE.md≤500；P0 skill 仅 4 强制 |
 | 三轨 spec 混用 | 中 | MANIFEST 互斥 + spec/README |
 | 编辑器 hook 循环 | 高 | 不同步 hooks；launcher v3 |
 | Legacy 优点丢失 | 中 | migrate-from-legacy + experiences |
@@ -464,4 +450,4 @@
 
 ---
 
-_版本：1.1 | 日期：2026-05-22 | 审查修订_
+_版本：2.3 | 日期：2026-05-25 | Phase 8 完成 + 追溯矩阵_

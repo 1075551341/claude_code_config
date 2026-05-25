@@ -5,8 +5,6 @@
 
 ---
 
-<!-- LAYER: skeleton -->
-
 ## 五柱架构
 
 | 柱 | 来源 | 职责 |
@@ -49,6 +47,7 @@ Karpathy 四原则 → `rules/CORE.md` + skill/karpathy-guidelines
 
 ```
 收到任务
+├─ Bug 报告/Issue → skill/triage → 分类路由
 ├─ 简单（≤3文件、需求明确、无方案选择）→ 执行 → 验证
 └─ 非简单 → skill/brainstorming → skill/writing-plans → 执行 → skill/verification-before-completion
 ```
@@ -61,6 +60,13 @@ Karpathy 四原则 → `rules/CORE.md` + skill/karpathy-guidelines
 | brainstorming | 头脑风暴、方案设计、架构决策 |
 | verification-before-completion | 完成、验收、声称完成 |
 | systematic-debugging | 调试、报错、bug |
+
+## Mattpocock 精选 Skill（2）
+
+| Skill | 触发 |
+|-------|------|
+| triage | Bug 报告/Issue → 分类 → 路由 |
+| improve-codebase-architecture | 架构改进、跨文件重构、模块拆分 |
 
 ## Tool-First 五级路由
 
@@ -115,8 +121,6 @@ infra/配置      → CEO Review 可跳过
 
 ---
 
-<!-- LAYER: supplement -->
-
 ## 命令速查
 
 | 命令 | 作用 |
@@ -133,6 +137,7 @@ infra/配置      → CEO Review 可跳过
 | /status | 查看工作流阶段与进度 |
 | /office-hours | 产品问题六问框架（→ brainstorming） |
 | /autoplan | 自动审查流水线（CEO→Design→Eng） |
+| /triage | 问题分诊（→ triage skill） |
 
 ## caveman-compress
 
@@ -143,8 +148,6 @@ infra/配置      → CEO Review 可跳过
 ---
 
 ## 指针
-
-<!-- LAYER: index -->
 
 | 内容 | 位置 | 来源 |
 |------|------|------|

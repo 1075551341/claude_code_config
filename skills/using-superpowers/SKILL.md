@@ -14,7 +14,7 @@ source: obra/superpowers
 ## 调用链（顺序固定）
 
 ```
-MANIFEST.yaml → P0 skill(4) → 全局 skill(17) → catalog/skills → agent → MCP/hook
+MANIFEST.yaml → P0 skill(4) → 全局 skill(25) → catalog/skills → agent → MCP/hook
 ```
 
 ## P0（强制 4）
