@@ -46,8 +46,9 @@ EXTENSION_SKILLS = {
     "autoplan", "browser-qa", "design-pipeline", "ship", "office-hours",
     "context-engineering", "structured-artifacts", "instinct-learning",
 }
-REQUIRED_SKILLS = P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
-GLOBAL_SKILLS_MAX = 25
+MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
+REQUIRED_SKILLS = P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS | MATTPOCOCK_SKILLS
+GLOBAL_SKILLS_MAX = 28
 
 GLOBAL_RULES = {
     "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
@@ -228,6 +229,23 @@ def v8_file_references():
             WARNINGS.append(f"V8: Referenced file not found: {ref}")
 
 
+def v9_security_deny_paths():
+    """Warn if credential path deny rules missing (source: trailofbits/claude-code-config)."""
+    settings_path = os.path.join(BASE, "settings.json")
+    if not os.path.exists(settings_path):
+        return
+    with open(settings_path, "r", encoding="utf-8") as fh:
+        settings = json.load(fh)
+    deny = settings.get("permissions", {}).get("deny", [])
+    deny_text = " ".join(str(d) for d in deny)
+    for pattern in ("~/.ssh", "~/.aws", "~/.config/gcloud"):
+        if pattern not in deny_text:
+            WARNINGS.append(f"V9: settings.json deny missing credential path: {pattern}")
+    default_mode = settings.get("permissions", {}).get("defaultMode", "")
+    if default_mode == "bypassPermissions":
+        WARNINGS.append("V9: defaultMode is bypassPermissions; enterprise default is acceptEdits")
+
+
 def main():
     if not os.path.isdir(BASE):
         ERRORS.append(f"Base dir missing: {BASE}")
@@ -295,6 +313,7 @@ def main():
     v6_mcp_security()
     v7_layer_isolation()
     v8_file_references()
+    v9_security_deny_paths()
 
     report(
         agents=len(agent_names),
@@ -306,11 +325,11 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v2 VALIDATION (8 checks) ===")
+    print("=== .claude v2 VALIDATION (9 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
-    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"]:
+    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9"]:
         related = [e for e in ERRORS if e.startswith(check_name)]
         related_w = [w for w in WARNINGS if w.startswith(check_name)]
         status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"

@@ -2,7 +2,7 @@
 description: 安全开发、安全审计、漏洞修复相关任务时启用
 alwaysApply: false
 layer: supplement
-source: shanraisshan/claude-code-best-practice + OWASP
+source: shanraisshan/claude-code-best-practice + OWASP + trailofbits/claude-code-config + dwarvesf/claude-guardrails + lasso-security/claude-hooks + marc-shade/claude-code-security
 ---
 
 # 安全规则（专用）
@@ -94,4 +94,39 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 代码审查：□ 无硬编码密钥 □ 输入验证覆盖 □ 输出编码覆盖 □ SQL 参数化 □ 文件上传检查
 配置检查：□ HTTPS 强制 □ 安全 Headers □ CORS 配置 □ 调试模式关闭
 运行监控：□ 异常登录告警 □ 接口异常监控 □ 依赖漏洞扫描
+
+## 11. OS Sandbox 三层防御
+
+> **source**: [trailofbits/claude-code-config](https://github.com/trailofbits/claude-code-config)
+
+```
+Layer 1: permissions.deny — 阻断凭证路径 Read/Edit
+Layer 2: hooks（pre-bash-guard）— 阻断危险 Bash
+Layer 3: /sandbox — OS 隔离，Bash 无法绕过 Layer 1
+```
+
+每会话 `/sandbox`；无 sandbox 时 deny 不约束 Bash。devcontainer → `templates/devcontainer/README.md`
+
+## 12. SSRF 与供应链
+
+> **source**: [marc-shade/claude-code-security](https://github.com/marc-shade/claude-code-security) + Snyk ToxicSkills
+
+curl 禁无审查内网/metadata；第三方 SKILL.md 视为不可信；`.mcp.json` 纳入 git 审查
+
+## 13. STRIDE 速查（Agentic）
+
+> **source**: OWASP Agentic 2026 + agent/security-reviewer
+
+Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosure→deny+secret-detector | DoS→rate limit/R5 | Elevation→RBAC+pre-bash-guard
+
+## 14. 渐进硬化 Checklist
+
+> **source**: [marc-shade/claude-code-security](https://github.com/marc-shade/claude-code-security)
+
+```
+□ settings deny + acceptEdits □ pre-bash-guard + post-secret-detector □ /sandbox
+□ strict: lasso 注入扫描（可选） □ npm audit + 技能来源审查
+```
+
+延伸阅读：[efij/awesome-claude-code-security](https://github.com/efij/awesome-claude-code-security)
 ```

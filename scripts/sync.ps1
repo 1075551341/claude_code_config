@@ -51,6 +51,7 @@ $NATIVE_RULES_DIR_MAP = @{
     "cursor"   = @{ TargetDir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc"; Format = "cursor" }
     "windsurf" = @{ TargetDir = (Join-Path $env:USERPROFILE ".windsurf\rules"); Ext = ".md"; Format = "windsurf" }
     "trae"     = @{ TargetDir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md"; Format = "trae" }
+    "qoder"    = @{ TargetDir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc"; Format = "cursor" }
 }
 
 # Windsurf 全局 rules 单文件路径（核心规则，受 6000 字符限制）

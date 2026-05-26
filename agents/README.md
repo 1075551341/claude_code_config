@@ -51,6 +51,20 @@
 2. 同一模块 **单一负责**（`MANIFEST.yaml` 查 owner）
 3. 无依赖任务 **并行**；失败隔离，不污染其他子目标
 
+## 触发表（source: domengabrovsek/claude）
+
+| 触发 | Agent |
+|------|-------|
+| 探索/只读/where is | code-explorer |
+| 写计划/分解 | planner |
+| 构建失败/编译错误 | build-error-resolver |
+| 架构/方案 | architect |
+| spec 审查 | spec-reviewer |
+| 多模块并行 | agentic-orchestrator |
+| 代码/PR 审查 | code-reviewer + eng-reviewer |
+| 安全审计 | security-reviewer / cso |
+| UI/UX | designer / design-engineer |
+
 ---
 
 ## Catalog（按需）

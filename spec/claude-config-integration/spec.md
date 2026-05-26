@@ -1,7 +1,7 @@
 # Spec — .claude 配置整合需求规格
 
-> **设计源**：22 个 GitHub 仓库 PRIMARY | 本地 `~/.claude` 仅迁移对照  
-> **版本**：2.3 | **关联**：[design.md](./design.md) | [tasks.md](./tasks.md)
+> **设计源**：24 个 GitHub 仓库 PRIMARY + P3 安全补强 | 本地 `~/.claude` 仅迁移对照  
+> **版本**：2.4 | **关联**：[design.md](./design.md) | [tasks.md](./tasks.md) | [design-round3.md](./design-round3.md)
 
 ---
 
@@ -46,7 +46,7 @@
 
 | ID | 要求 | 验收 |
 |----|------|------|
-| FR-01.1 | 全局 skills ≤25：superpowers 13 + 扩展 8 + meta 4 | validate_config V2 |
+| FR-01.1 | 全局 skills ≤28：superpowers 13 + 扩展 8 + meta 4 + mattpocock 2 | validate_config V2 |
 | FR-01.2 | 全局 agents ≤22：core 8 + gstack 12 | agents/README |
 | FR-01.3 | rules ≤10 alwaysApply/lazy 文件 | 9 文件当前 |
 | FR-01.4 | MANIFEST.yaml 覆盖 55+ concerns | --check-manifest |
@@ -91,6 +91,8 @@
 autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineering | structured-artifacts | instinct-learning
 
 **Meta 4**：memory-compression | karpathy-guidelines | caveman-compress | spec-validation
+
+**Mattpocock 全局 2**：triage | improve-codebase-architecture
 
 ### FR-02.9 gstack 审查路由
 
@@ -272,6 +274,36 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 | FR-17.3 | git-guardrails 行为由 pre-bash-guard 覆盖 | hooks/README |
 | FR-17.4 | design.md §15.4 去重表完整 | 文档审查 |
 
+### FR-18 mattpocock 全局 skill + triage 路由
+
+**来源**：mattpocock/skills
+
+| ID | 要求 | 验收 |
+|----|------|------|
+| FR-18.1 | 全局 skill triage + improve-codebase-architecture | skills/ 存在且 frontmatter 合法 |
+| FR-18.2 | CLAUDE.md 决策树含 Bug→triage 路由 | 决策树可见 |
+| FR-18.3 | 与 systematic-debugging/brainstorming 无 trigger 重叠 | grep 互博检查 |
+
+### FR-19 安全三层防御
+
+**来源**：trailofbits/claude-code-config, dwarvesf/claude-guardrails, marc-shade/claude-code-security
+
+| ID | 要求 | 验收 |
+|----|------|------|
+| FR-19.1 | settings.json deny 含凭证路径（~/.ssh, ~/.aws 等） | settings 审查 |
+| FR-19.2 | defaultMode 非 bypassPermissions（企业默认 acceptEdits） | settings 审查 |
+| FR-19.3 | rules/SECURITY.md §11 `/sandbox` 文档 | SECURITY.md |
+| FR-19.4 | strict profile 可选 UserPromptSubmit 密钥扫描 | hooks/_optional/ + hooks/README |
+| FR-19.5 | deny 须配合 `/sandbox` 才防 Bash 绕过（文档说明） | SECURITY.md §11 |
+
+### FR-20 P3 外部仓库溯源
+
+| ID | 要求 | 验收 |
+|----|------|------|
+| FR-20.1 | 每个 P3 concern 在 MANIFEST.yaml 有 source 字段 | YAML 审查 |
+| FR-20.2 | design.md §15.6 与 SPEC.md 溯源表一致 | 文档交叉检查 |
+| FR-20.3 | rules/SECURITY.md frontmatter 标注 P3 来源 | frontmatter source |
+
 ### FR-16 上下文管理
 
 **来源**：GSD-redux, claude-mem, 本地 context-engineering
@@ -323,13 +355,16 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 | FR-14 | T7.1–T7.5 |
 | FR-15 | T1.4, T1.7, T1.8, T6.4 |
 | FR-16 | T2.3, T4.8, T1.4 |
-| FR-17 | T8.3–T8.4 |
+| FR-17 | T8.3–T8.4, T10 |
+| FR-18 | T10 |
+| FR-19 | T11 |
+| FR-20 | T10 |
 | FR-03.7 | T8.5 |
 | FR-11.2 | T8.6 |
 
 ---
 
-## 5. 22 仓库整合规格详表
+## 5. 24 + P3 仓库整合规格详表
 
 ### 5.1 五柱（必须）
 
@@ -354,11 +389,26 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 
 ### 5.3 P1 增强
 
-awesome-design-md | ui-ux-pro-max | claude-code-action | claude-task-master（模式） | claude-context（策略） | ComposioHQ（索引） | **mattpocock/skills（catalog 去重）**
+awesome-design-md | ui-ux-pro-max | claude-code-action | claude-task-master（模式） | claude-context（策略） | ComposioHQ（索引） | **mattpocock/skills（全局 2 + catalog 3）**
 
 ### 5.4 P2 参考
 
-x1xhlol | hesreallyhim | 30-seconds-of-code | gsd-build（废弃） | deer-flow（WORKFLOW 参考）
+x1xhlol | hesreallyhim | 30-seconds-of-code | gsd-build（废弃） | deer-flow（WORKFLOW 参考） | ruflo（排除，WORKFLOW 吸收）
+
+### 5.5 P3 安全补强（cherry-pick，非柱）
+
+| 仓库 | source | 落地 |
+|------|--------|------|
+| trailofbits/claude-code-config | main | SECURITY.md §11, settings.json |
+| trailofbits/claude-code-devcontainer | main | templates/devcontainer/ |
+| dwarvesf/claude-guardrails | main | hooks/_optional/pre-userprompt-secret-scan.py |
+| lasso-security/claude-hooks | main | hooks/_optional/post-prompt-injection-scan.py |
+| efij/awesome-claude-code-security | main | SPEC.md 外链 |
+| EveryInc/compound-engineering-plugin | main | SPEC.md Cursor plugin 注明 |
+| kumaran-is/claude-code-guide | main | rules/CONTEXT.md |
+| domengabrovsek/claude | main | agents/README.md |
+| marc-shade/claude-code-security | main | SECURITY.md §14 |
+| disler/claude-code-hooks-mastery | main | hooks/tests/fixtures/ |
 
 ---
 

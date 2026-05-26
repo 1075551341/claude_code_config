@@ -4,14 +4,15 @@
 
 ---
 
-## PRIMARY 公式（五柱架构 v1.1）
+## PRIMARY 公式（五柱架构 v1.2）
 
 ```
 RUNTIME = superpowers + ECC(cherry-pick) + anthropics/skills + best-practice + claude-mem
-PROJECT = OpenSpec + GSD-redux + spec/轻量（三轨互斥）
+PROJECT = OpenSpec(templates) + GSD-redux + spec/轻量（三轨互斥）
 OPTIMIZATION = RTK(hook) + caveman(skill)
 REVIEW = gstack(eng/ceo/designer/qa/security agents)
 CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
+MANIFEST = 57 concerns (add: openspec_templates, claude_mem_commands, frontend_design)
 ```
 
 ---
@@ -23,7 +24,7 @@ CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
 | 全局 skills | ≤28 | 27（superpowers 13 + 扩展 8 + meta 4 + mattpocock 2） |
 | 全局 agents | ≤22 | 20（8 core + 5 gstack 审查 + 7 gstack 补全） |
 | 全局 rules | 10 文件 | 9（CORE/BESTPRACTICE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN/CONTEXT） |
-| CLAUDE.md | ≤500 行 | ~165 |
+| CLAUDE.md | ≤500 行 | ~168 |
 
 ---
 
@@ -268,11 +269,23 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 | x1xhlol/system-prompts-and-models-of-ai-tools | 系统 prompt 设计参考（融入 BESTPRACTICE.md） |
 | Chalarangelo/30-seconds-of-code | 代码片段参考（catalog 按需查用） |
 | bytedance/deer-flow | 子 Agent 编排四阶段模式（已整合到 WORKFLOW.md） |
-| **mattpocock/skills** | **catalog 按需：diagnose, grill-with-docs, handoff；tdd/caveman 去重** |
+| **mattpocock/skills** | **全局 2：triage, improve-codebase-architecture；catalog 按需：diagnose, grill-with-docs, handoff** |
+| ruvnet/ruflo | 参考排除；WORKFLOW 制品持久化 |
 
----
+### P3 安全补强（source 见 design.md §15.6）
 
-## 验证命令
+| 仓库 | 采纳 |
+|------|------|
+| trailofbits/claude-code-config | SECURITY.md §11, settings.json deny, /sandbox |
+| trailofbits/claude-code-devcontainer | templates/devcontainer/README.md |
+| dwarvesf/claude-guardrails | hooks/_optional/pre-userprompt-secret-scan.py |
+| lasso-security/claude-hooks | hooks/_optional/post-prompt-injection-scan.py |
+| efij/awesome-claude-code-security | [安全资源索引](https://github.com/efij/awesome-claude-code-security) |
+| EveryInc/compound-engineering-plugin | Cursor plugin；Claude Code → experiences/ + instinct-learning |
+| marc-shade/claude-code-security | SECURITY.md §14 渐进硬化 checklist |
+| kumaran-is/claude-code-guide | rules/CONTEXT.md 自改进要点 |
+| disler/claude-code-hooks-mastery | hooks/tests/fixtures/ |
+| domengabrovsek/claude | agents/README.md 触发表 |
 
 ```powershell
 python C:\Users\DELL\.claude\scripts\validate_config.py

@@ -7,6 +7,12 @@
 
 using-superpowers | brainstorming | verification-before-completion | systematic-debugging
 
+## 任务路由
+
+Bug/Issue → triage → systematic-debugging | brainstorming
+
+Mattpocock 精选：triage | improve-codebase-architecture
+
 ## 非简单任务
 
 brainstorming → writing-plans → executing-plans → verification-before-completion

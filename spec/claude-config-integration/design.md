@@ -1,7 +1,7 @@
 # Design — .claude 配置整合架构
 
-> **设计源优先级**：22 个 GitHub 仓库 PRIMARY → 本地 `~/.claude` 仅迁移对照  
-> **版本**：2.3 | **关联**：[spec.md](./spec.md) | [tasks.md](./tasks.md)
+> **设计源优先级**：24 个 GitHub 仓库 PRIMARY + P3 安全补强 → 本地 `~/.claude` 仅迁移对照  
+> **版本**：2.4 | **关联**：[spec.md](./spec.md) | [tasks.md](./tasks.md) | [design-round3.md](./design-round3.md)
 
 ---
 
@@ -42,11 +42,11 @@
 | 同步 | 本地 sync.ps1 v11 | CLAUDE+skills+agents+rules 软链 | 脚本 |
 | 工程补强 | mattpocock/skills | diagnose/grill/handoff 等 | **catalog 按需**，不全局堆叠 |
 
-### 2.2 规模约束（v2.2 实测）
+### 2.2 规模约束（v2.4 实测）
 
 | 类型 | 上限 | 当前 | 组成 |
 |------|------|------|------|
-| 全局 skills | ≤25 | 25 | superpowers 13 + 扩展 8 + meta 4 |
+| 全局 skills | ≤28 | 27 | superpowers 13 + 扩展 8 + meta 4 + mattpocock 2 |
 | 全局 agents | ≤22 | 20 | core 8 + gstack 审查 5 + gstack 补全 7 |
 | 全局 rules | 10 | 9 | CORE/BESTPRACTICE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN/CONTEXT |
 | catalog/skills | — | 100 | ComposioHQ + anthropics + mattpocock 等 |
@@ -438,7 +438,9 @@ flowchart LR
 | 16 | eyaltoledano/claude-task-master | templates/taskmaster/ | PRD→tasks 轻量模板 |
 | 17 | zilliztech/claude-context | mcp-configs/dev.json optional + rules/CONTEXT | 大 monorepo 语义索引 |
 | 18 | ComposioHQ/awesome-claude-skills | catalog/skills/ 索引 | 发现，不全局堆 |
-| 19 | **mattpocock/skills** | **catalog/ 按需** | 见 §15.4 去重表 |
+| 19 | **mattpocock/skills** | **全局 2 + catalog/ 按需** | triage + improve-codebase-architecture；见 §15.4 |
+| 20 | mattpocock/skills (global) | skills/triage, improve-codebase-architecture | 问题分诊 + 架构渐进改进 |
+| 21 | ruvnet/ruflo | 参考排除 | 制品持久化 → WORKFLOW.md；见 §15.6 |
 
 ### 15.3 P2 参考 only
 
@@ -449,12 +451,15 @@ flowchart LR
 | 22 | Chalarangelo/30-seconds-of-code | catalog 片段参考 |
 | — | gsd-build/get-shit-done | 废弃；概念已入 GSD-redux |
 | — | bytedance/deer-flow | 四阶段编排 → rules/WORKFLOW；非 IDE 栈 |
+| — | ruvnet/ruflo | 排除 swarm/MCP 栈；编排优点 → WORKFLOW 制品持久化 |
 
 ### 15.4 mattpocock/skills 去重（防互博）
 
 | mattpocock skill | 全局 owner | 处置 |
 |------------------|------------|------|
 | tdd | skill/test-driven-development | ❌ 不导入；superpowers 覆盖 |
+| triage | skill/triage | ✅ 全局；systematic-debugging 前置分诊 |
+| improve-codebase-architecture | skill/improve-codebase-architecture | ✅ 全局；brainstorming/code-reviewer 边界见 MANIFEST |
 | diagnose | skill/systematic-debugging | catalog 可选；references 可吸收 |
 | grill / grill-with-docs | skill/brainstorming + structured-artifacts | catalog；CONTEXT.md 模式入 templates |
 | to-prd / to-issues | skill/writing-plans + gh MCP | catalog 按需 |
@@ -466,9 +471,7 @@ flowchart LR
 
 **anthropics document skills**（docx/pdf/pptx/xlsx）→ catalog + 项目 `.claude/skills/`，不全局。
 
-**anthropics document skills**（docx/pdf/pptx/xlsx）→ catalog + 项目 `.claude/skills/`，不全局。
-
-### 15.5 22 仓库追溯矩阵（FR × Task × 状态）
+### 15.5 24 仓库追溯矩阵（FR × Task × 状态）
 
 | # | 仓库 | FR | Task | 落地 | 状态 |
 |---|------|-----|------|------|------|
@@ -490,20 +493,39 @@ flowchart LR
 | 16 | eyaltoledano/claude-task-master | FR-03.7 | T8.5 | templates/taskmaster/ | ✅ |
 | 17 | zilliztech/claude-context | FR-11.2 | T8.6 | mcp-configs optional | ✅ |
 | 18 | ComposioHQ/awesome-claude-skills | FR-01.8 | T6.8 | catalog 索引 | ✅ |
-| 19 | mattpocock/skills | FR-17 | T8.3–T8.4 | catalog×3 | ✅ |
-| 20 | x1xhlol/system-prompts | — | T6.8 | BESTPRACTICE 原则 | ✅ 参考 |
-| 21 | hesreallyhim/awesome-claude-code | — | T6.8 | SPEC 外链 | ✅ 参考 |
-| 22 | Chalarangelo/30-seconds-of-code | — | T6.8 | catalog 片段 | ✅ 参考 |
+| 19 | mattpocock/skills | FR-17, FR-18 | T8.3–T8.4, T10 | catalog×3 + global×2 | ✅ |
+| 20 | mattpocock/skills (global) | FR-18 | T10 | triage, improve-codebase-architecture | ✅ |
+| 21 | ruvnet/ruflo | — | T10 | WORKFLOW 参考排除 | ✅ |
+| 22 | x1xhlol/system-prompts | — | T6.8 | BESTPRACTICE 原则 | ✅ 参考 |
+| 23 | hesreallyhim/awesome-claude-code | — | T6.8 | SPEC 外链 | ✅ 参考 |
+| 24 | Chalarangelo/30-seconds-of-code | — | T6.8 | catalog 片段 | ✅ 参考 |
 | — | gsd-build/get-shit-done | — | — | GSD-redux 概念 | ✅ 废弃 clone |
 | — | bytedance/deer-flow | — | T1.6 | WORKFLOW 四阶段 | ✅ 参考 |
 
+### 15.6 P3 安全补强仓库（非柱，cherry-pick）
+
+> **来源三处同步**：design §15.6 + MANIFEST.yaml + SPEC.md
+
+| 仓库 | source | 吸收优点 | 落地 | excludes |
+|------|--------|----------|------|----------|
+| trailofbits/claude-code-config | main | `/sandbox`、deny 凭证路径、PreToolUse Bash | rules/SECURITY.md §11, settings.json | pre-bash-guard owner |
+| trailofbits/claude-code-devcontainer | main | devcontainer 主机隔离 | templates/devcontainer/README.md | — |
+| dwarvesf/claude-guardrails | main | UserPromptSubmit 密钥扫描 | hooks/_optional/pre-userprompt-secret-scan.py | post-secret-detector |
+| lasso-security/claude-hooks | main | 注入模式扫描（warn） | hooks/_optional/post-prompt-injection-scan.py | — |
+| efij/awesome-claude-code-security | main | 安全资源索引 | SPEC.md 外链 | — |
+| EveryInc/compound-engineering-plugin | main | Plan→Compound 闭环 | SPEC.md Cursor plugin 注明 | gstack + superpowers |
+| kumaran-is/claude-code-guide | main | 自改进/错误恢复 | rules/CONTEXT.md | — |
+| domengabrovsek/claude | main | agent routing 表 | agents/README.md | — |
+| marc-shade/claude-code-security | main | 渐进硬化 checklist | rules/SECURITY.md §14 | — |
+| disler/claude-code-hooks-mastery | main | hook fixture 测试 | hooks/tests/fixtures/ | — |
+
 ---
 
-## 16. 本地配置对照策略（v2.3 实测）
+## 16. 本地配置对照策略（v2.4 实测）
 
 | 组件 | 迁移前 | 当前 | 处置 |
 |------|--------|------|------|
-| skills/ 全局 | ~120 | 25 | superpowers 13 + 扩展 8 + meta 4 |
+| skills/ 全局 | ~120 | 27 | superpowers 13 + 扩展 8 + meta 4 + mattpocock 2 |
 | skills/ catalog | — | ~100 | 领域 + mattpocock 按需 |
 | agents/ 全局 | ~56 | 20 | core 8 + gstack 12 |
 | hooks/ | ~50 | 24 .py | 8 核心 + profile |
@@ -535,9 +557,13 @@ flowchart LR
 | D-11 | legacy 有效 patterns 保留 | 零优点丢失 | experiences/ |
 | D-12 | 五柱为骨架，gstack 为执行层 | 非 gstack 主方法论 | desktop prototype |
 | D-13 | mattpocock catalog 按需 | 与 superpowers 去重 | mattpocock/skills |
-| D-14 | 全局 skills≤25 agents≤22 | v2.1 实测通过 validate | 本地 |
+| D-14 | 全局 skills≤28 agents≤22 | v2.4 实测通过 validate | 本地 |
 | D-15 | task-master 仅模板不全局 skill | writing-plans 已覆盖 | claude-task-master |
 | D-16 | claude-context optional MCP | 大 monorepo 按需启用 | zilliztech/claude-context |
+| D-17 | ruflo 参考排除 | 与 orchestrator + claude-mem 互博 | ruvnet/ruflo |
+| D-18 | ToB 三层防御 | deny + hooks + `/sandbox` 文档 | trailofbits/claude-code-config |
+| D-19 | compound-engineering Cursor 互补 | Claude Code 用 experiences/ 闭环 | EveryInc/compound-engineering-plugin |
+| D-20 | P3 来源三处同步 | design + MANIFEST + SPEC | 本地 v2.4 |
 
 ---
 
@@ -545,7 +571,8 @@ flowchart LR
 
 | 用户要求 | 设计对应 | 状态 |
 |----------|----------|------|
-| 22 仓库 PRIMARY | §15 + §15.5 追溯矩阵 | ✓ |
+| 24 仓库 PRIMARY | §15 + §15.5 追溯矩阵 | ✓ |
+| 24 仓库 + P3 安全补强 | §15.6 + design-round3.md | ✓ |
 | 五柱骨架清晰 | §2 五柱表 | ✓ |
 | 每类型主要骨架 | §2.1 辅助层 | ✓ |
 | 本地仅参考 | §16 对照策略 | ✓ |
@@ -561,7 +588,12 @@ flowchart LR
 | FR-17 mattpocock catalog | §15.4 + catalog/×3 | ✓ |
 | FR-03.7 task-master 模板 | templates/taskmaster/ | ✓ |
 | FR-11.2 claude-context MCP | mcp-configs optional | ✓ |
+| FR-18 mattpocock 全局 2 + triage 路由 | §15.4 + CLAUDE.md | ✓ |
+| FR-19 安全三层防御 | §15.6 + SECURITY.md §11 | ✓ |
+| FR-20 P3 来源三处同步 | MANIFEST + SPEC | ✓ |
+| P3 安全层 | §15.6 | ✓ |
+| 来源三处同步 | D-20 | ✓ |
 
 ---
 
-_版本：2.3 | 日期：2026-05-25 | 追溯矩阵 + Phase 8 缺口补齐_
+_版本：2.4 | 日期：2026-05-26 | Round 3 P3 安全补强 + mattpocock 全局 2_

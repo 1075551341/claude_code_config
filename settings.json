@@ -1,6 +1,7 @@
 {
   "_comment": "Claude Code 主配置文件 - 修改后运行 sync-tools.ps1 同步到其他编辑器",
   "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
+  "_permissions_note": "source: trailofbits/claude-code-config — deny 须配合 /sandbox 才防 Bash 绕过",
   "_mcp_section": "MCP 服务器配置（共 21 个，与 .mcp.json 同步）",
   "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
   "_plugins_section": "插件配置",
@@ -454,7 +455,7 @@
       "mcp__*",
       "Bash(*)"
     ],
-    "defaultMode": "bypassPermissions",
+    "defaultMode": "acceptEdits",
     "deny": [
       "Bash(rm -rf /)",
       "Bash(rm -rf /*)",
@@ -495,7 +496,12 @@
       "Read(**/*.pem)",
       "Read(**/*.key)",
       "Read(**/*.pfx)",
-      "Read(**/*.p12)"
+      "Read(**/*.p12)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.kube/config)"
     ]
   },
   "skipDangerousModePermissionPrompt": true

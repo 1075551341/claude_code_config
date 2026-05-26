@@ -139,3 +139,11 @@ BLOCKED           → 评估阻止因素并重新派遣
 - 子Agent之间职责边界清晰，不重叠执行范围
 - 同一上下文内只有一个执行者负责某模块
 - 工具调用不相互覆盖（PostToolUse不撤销PreToolUse成果）
+
+### 跨会话制品（来自 ruflo/deer-flow 思想）
+
+> **source**: ruvnet/ruflo — 参考排除，仅吸收制品持久化模式
+
+- 子 Agent 结果写入结构化制品（STATE.md、spec 制品、openspec/tasks.md）
+- 新会话优先加载制品，而非依赖对话历史
+- 压缩前 `pre-compact-state` 保留决策与制品指针

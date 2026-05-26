@@ -5,7 +5,12 @@ on:
     types: [opened, synchronize]
   issue_comment:
     types: [created]
+    # 触发: 评论包含 @claude
     if: contains(github.event.comment.body, '@claude')
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
 
 jobs:
   review:
@@ -21,15 +26,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Claude Code Action
+      - name: Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            Review this PR and provide feedback:
-            - Check for bugs, security issues, and code quality
-            - Verify tests cover the changes
-            - Check for breaking changes
-            - Use checkbox progress tracking for long reviews
+            Review this PR as a senior engineer:
+
+            1. **Correctness**: Logic errors, race conditions, edge cases
+            2. **Security**: Input validation, auth, OWASP Top 10
+            3. **Tests**: Coverage of new changes, boundary cases
+            4. **Breaking changes**: Public API, schema, config changes
+            5. **Code quality**: Dead code, error handling, naming
+
+            Provide checkbox progress tracking during long reviews.
+            End with a summary: ✅ / ⚠️ / ❌ status per category.
+
+            If called via @claude comment, respond to the specific question.
           model: claude-sonnet-4-20250514
           timeout_minutes: 10

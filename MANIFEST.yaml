@@ -1,8 +1,8 @@
 # 组件唯一归属源 — 防左右手互博
 # 权威：spec/claude-config-integration/design.md §9
 
-version: "2.1"
-updated: "2026-05-23"
+version: "2.4"
+updated: "2026-05-26"
 
 pillars:
   superpowers:
@@ -13,7 +13,7 @@ pillars:
     capabilities: [context-engineering, continuous-execution, read-before-edit]
   openspec:
     source: Fission-AI/OpenSpec
-    capabilities: [proposal-spec-tasks, spec-validation]
+    capabilities: [proposal-spec-tasks, spec-validation, openspec-templates]
   gstack:
     source: garrytan/gstack
     capabilities: [eng-review, ceo-review, design-review, qa-review, security-review]
@@ -290,6 +290,21 @@ concerns:
     note: diagnose/grill/handoff 按需；tdd/caveman 与 superpowers 去重见 design §15.4
     excludes: [skill/test-driven-development, skill/caveman-compress, skill/systematic-debugging, skill/brainstorming]
 
+  openspec_templates:
+    owner: templates/openspec/
+    source: Fission-AI/OpenSpec
+    note: proposal→spec→design→tasks 四件套模板
+
+  claude_mem_commands:
+    owner: plugin/claude-mem
+    source: thedotmack/claude-mem
+    note: learn-codebase, knowledge-agent, mem-search, smart-explore, how-it-works 命令
+
+  frontend_design:
+    owner: plugin/frontend-design
+    source: claude-plugins-official
+    note: Figma 设计稿转代码管线
+
   triage:
     owner: skill/triage
     source: mattpocock/skills
@@ -320,6 +335,64 @@ concerns:
   git_workflow:
     owner: rules/GIT.md
     source: shanraisshan/claude-code-best-practice
+
+  ruflo_reference:
+    owner: rules/WORKFLOW.md
+    source: ruvnet/ruflo@main
+    excludes: [agent/agentic-orchestrator, plugin/claude-mem]
+    note: 参考排除；swarm/联邦/MCP 栈不导入；编排优点已吸收
+
+  tob_sandbox:
+    owner: rules/SECURITY.md
+    source: trailofbits/claude-code-config@main
+    note: /sandbox 三层防御 + settings deny
+
+  guardrails_scan:
+    owner: hook/_optional/pre-userprompt-secret-scan
+    source: dwarvesf/claude-guardrails@main
+    excludes: [hook/post-secret-detector]
+    note: UserPromptSubmit 粘贴密钥；strict profile
+
+  lasso_injection:
+    owner: hook/_optional/post-prompt-injection-scan
+    source: lasso-security/claude-hooks@main
+    note: PostToolUse 注入 warn；strict profile
+
+  security_index:
+    owner: SPEC.md
+    source: efij/awesome-claude-code-security@main
+    note: 安全资源 curated 外链
+
+  compound_engineering:
+    owner: experiences/
+    source: EveryInc/compound-engineering-plugin@main
+    excludes: [skill/instinct-learning, agents/*]
+    note: Cursor plugin 已有；Claude Code 侧 experiences/ 闭环
+
+  devcontainer_isolation:
+    owner: templates/devcontainer/
+    source: trailofbits/claude-code-devcontainer@main
+    note: 主机隔离工作流指针
+
+  agent_routing:
+    owner: agents/README.md
+    source: domengabrovsek/claude@main
+    note: 触发表 + 9-section agent 结构参考
+
+  context_guide:
+    owner: rules/CONTEXT.md
+    source: kumaran-is/claude-code-guide@main
+    note: 自改进/错误恢复/会话切换要点
+
+  progressive_hardening:
+    owner: rules/SECURITY.md
+    source: marc-shade/claude-code-security@main
+    note: §14 渐进硬化 checklist
+
+  hook_test_fixtures:
+    owner: hooks/tests/fixtures/
+    source: disler/claude-code-hooks-mastery@main
+    note: stdin fixture 测试模式
 
 p0_skills:
   - using-superpowers

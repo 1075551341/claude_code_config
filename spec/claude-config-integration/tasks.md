@@ -396,7 +396,9 @@ python $env:USERPROFILE\.claude\scripts\migrate-from-legacy.py --dry-run
 | M4 运行时 | 4 | mem + RTK + caveman + agents≤22 | Phase 6 |
 | M5 同步 | 6 | sync DryRun + 三编辑器 | Phase 7 |
 | M6 迁移 | 7 | legacy 审计 + patterns 保留 + compliance 报告 | Phase 8 |
-| M7 整合 | 8 | 22 仓库追溯全 ✅ + validate 8 checks | 完成 |
+| M7 整合 | 8 | 24 仓库追溯全 ✅ + validate 8 checks | Phase 9 |
+| M8 Round2 | 9 | mattpocock 全局 2 + 文档对齐 | Phase 10 |
+| M9 Round3 | 10–12 | P3 安全补强 + validate PASS | 完成 |
 
 ---
 
@@ -458,4 +460,71 @@ python $env:USERPROFILE\.claude\scripts\migrate-from-legacy.py --dry-run
 
 ---
 
-_version：2.3 | 日期：2026-05-25 | Phase 8 完成_
+_version：2.4 | 日期：2026-05-26 | Phase 10–12 Round 3_
+
+---
+
+## Phase 9 — Round 2 收尾（mattpocock 全局 2）
+
+> **依赖**：Phase 8 | **里程碑 M8**
+
+| ID | 任务 | 来源 | 产出 | 验证 | 状态 |
+|----|------|------|------|------|------|
+| T9.1 | skills/triage/SKILL.md | mattpocock/skills | skills/triage/ | 文件存在 | [x] |
+| T9.2 | skills/improve-codebase-architecture/SKILL.md | mattpocock/skills | skills/improve-codebase-architecture/ | 文件存在 | [x] |
+| T9.3 | CLAUDE.md 决策树 + mattpocock 表 | — | CLAUDE.md | triage 路由 | [x] |
+| T9.4 | SPEC.md skills 27/28 | — | SPEC.md | 规模表 | [x] |
+| T9.5 | MANIFEST triage + architecture_improvement | — | MANIFEST.yaml | YAML valid | [x] |
+| T9.6 | rules/CONTEXT.md 50% 措辞 | GSD-redux | rules/CONTEXT.md | grep compact | [x] |
+
+---
+
+## Phase 10 — 文档 v2.4 + P3 来源同步
+
+> **依赖**：Phase 9 | **里程碑 M9 文档**
+
+| ID | 任务 | 来源 | 产出 | 验证 | 状态 |
+|----|------|------|------|------|------|
+| T10.1 | design.md v2.4 §15.6 P3 表 | P3 仓库 | design.md | §18 自检 | [x] |
+| T10.2 | spec.md FR-18/19/20 | — | spec.md | FR 完整 | [x] |
+| T10.3 | design-round3.md | — | design-round3.md | 来源索引 | [x] |
+| T10.4 | compliance.md v2.4 | — | compliance.md | #29 #30 | [x] |
+| T10.5 | SPEC.md P3 外链 + compound 注明 | efij/EveryInc | SPEC.md | 溯源 | [x] |
+
+---
+
+## Phase 11 — 运行时补强
+
+> **依赖**：Phase 10
+
+| ID | 任务 | 来源 | 产出 | 验证 | 状态 |
+|----|------|------|------|------|------|
+| T11.1 | validate_config skills=28 + mattpocock 2 | 本地 | validate_config.py | skills=27 PASS | [x] |
+| T11.2 | settings.json deny + defaultMode | trailofbits | settings.json | deny 凭证路径 | [x] |
+| T11.3 | SECURITY.md §11–14 | ToB + marc-shade | rules/SECURITY.md | ≤120 行 | [x] |
+| T11.4 | 可选 hooks ×2 | dwarvesf + lasso | hooks/_optional/ | strict profile | [x] |
+| T11.5 | hooks/tests/fixtures | disler | hooks/tests/ | README | [x] |
+| T11.6 | AGENTS.md + agent.yaml + MANIFEST P3 | — | 多文件 | triage 镜像 | [x] |
+| T11.7 | WORKFLOW/AGENTS ruflo 吸收 | ruflo | rules/ | ≤10 行/文件 | [x] |
+| T11.8 | templates/openspec/specs/.gitkeep | OpenSpec | templates/ | 目录存在 | [x] |
+| T11.9 | templates/devcontainer/README | trailofbits | templates/devcontainer/ | 指针 | [x] |
+
+---
+
+## Phase 12 — 验证
+
+| ID | 任务 | 验证 | 状态 |
+|----|------|------|------|
+| T12.1 | validate_config.py | ALL PASS skills=27 | [x] |
+| T12.2 | sync.ps1 -DryRun | 零错误 | [x] |
+| T12.3 | trigger 互博 grep | triage/debugging | [x] |
+| T12.4 | P3 source 三处 grep | MANIFEST + design + SPEC | [x] |
+| T12.5 | tasks-round2.md 勾选 | Task 4–9 [x] | [x] |
+
+**M9 门控**：
+```
+□ validate_config V1–V9 PASS
+□ skills=27 agents=20
+□ P3 concerns 在 MANIFEST 有 source
+□ sync.ps1 -DryRun 零错误
+```

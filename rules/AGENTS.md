@@ -2,7 +2,7 @@
 description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理、任务编排。
 alwaysApply: false
 layer: supplement
-source: affaan-m/ECC + bytedance/deer-flow
+source: affaan-m/ECC + bytedance/deer-flow + ruvnet/ruflo
 ---
 
 # Agent 协作规则
@@ -61,3 +61,10 @@ infra/配置      → CEO Review 可跳过
 ## 持续学习
 
 失败模式 → `experiences/rejected/` | 成功模式 → `experiences/patterns/` | hook/stop-pattern-extraction
+
+## 委派原则（ruflo 吸收）
+
+> **source**: ruvnet/ruflo — 参考排除
+
+- 按 MANIFEST concern→owner 路由，禁止并行多 orchestrator
+- 按能力委派（探索/计划/审查/执行），非按 agent 名称堆叠

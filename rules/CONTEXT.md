@@ -57,3 +57,11 @@ triggers:
 3. **与 GSD 互补** — 不替代 <40/50/70% 阈值与 claude-mem SSOT
 
 **不启用时**：用 code-explorer agent + ctx7 MCP + 项目 `CONTEXT.md`。
+
+## 自改进要点
+
+> **source**: [kumaran-is/claude-code-guide](https://github.com/kumaran-is/claude-code-guide)
+
+- 错误恢复：失败模式写入 `experiences/rejected/`，成功模式写入 `experiences/patterns/`
+- 会话切换：优先 `/clear` 加载制品，避免 `/compact` 丢失决策上下文
+- 长任务：每子目标完成后输出状态摘要，便于 stop-pattern-extraction 提取

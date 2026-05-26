@@ -1,7 +1,7 @@
 # ECC harness manifest — 全局启用组件清单
-# 权威：.mcp.json | 详情：SPEC.md | 版本：2.1
+# 权威：.mcp.json | 详情：SPEC.md | 版本：2.4
 
-version: "2.1"
+version: "2.4"
 harness: claude-code-primary
 
 skills:
@@ -38,6 +38,11 @@ skills:
       - spec-validation
       - karpathy-guidelines
       - caveman-compress
+  mattpocock:
+    source: mattpocock/skills
+    enabled:
+      - triage
+      - improve-codebase-architecture
 
 agents:
   core:

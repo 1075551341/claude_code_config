@@ -7,7 +7,7 @@
 | 目录 | 数量 | 用途 |
 |------|------|------|
 | `hooks/` | 21 | standard profile（settings.json 已注册） |
-| `hooks/_optional/` | 27 | strict profile，需 `ECC_HOOK_PROFILE=strict` 手动注册 |
+| `hooks/_optional/` | 29 | strict profile，需 `ECC_HOOK_PROFILE=strict` 手动注册 |
 | `hooks/_deprecated/` | 1 | 已废弃（pre-task-planner），禁止启用 |
 
 ---
@@ -321,7 +321,14 @@ export CLAUDE_DISABLED_HOOKS="pre:bash:tmux-reminder,post:edit:typecheck"  # 禁
 
 ### strict
 
-完整配置：所有钩子启用
+完整配置：所有钩子启用。P3 安全补强（strict profile 额外注册）：
+
+| Hook | 事件 | source |
+|------|------|--------|
+| pre-userprompt-secret-scan.py | UserPromptSubmit | dwarvesf/claude-guardrails |
+| post-prompt-injection-scan.py | PostToolUse | lasso-security/claude-hooks |
+
+测试夹具 → `hooks/tests/fixtures/`（source: disler/claude-code-hooks-mastery）
 
 ## 跨平台兼容性
 

@@ -1,6 +1,6 @@
 # 24 仓库审计整合实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 从 mattpocock/skills 精选 2 个 skill 补入 .claude，更新关联索引文件
 
@@ -15,13 +15,13 @@
 **Files:**
 - Create: `C:\Users\DELL\.claude\skills\triage\SKILL.md`
 
-- [ ] **Step 1: 创建目录**
+- [x] **Step 1: 创建目录**
 
 ```bash
 mkdir -p /c/Users/DELL/.claude/skills/triage
 ```
 
-- [ ] **Step 2: 写入 SKILL.md**
+- [x] **Step 2: 写入 SKILL.md**
 
 写入文件 `C:\Users\DELL\.claude\skills\triage\SKILL.md`：
 
@@ -73,13 +73,13 @@ source: mattpocock/skills
 - 与 systematic-debugging 的边界：triage 回答"这是什么问题"，debugging 回答"为什么发生"
 ```
 
-- [ ] **Step 3: 验证文件**
+- [x] **Step 3: 验证文件**
 
 ```bash
 wc -l /c/Users/DELL/.claude/skills/triage/SKILL.md
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add skills/triage/SKILL.md
@@ -93,13 +93,13 @@ git commit -m "feat: add triage skill (mattpocock/skills)"
 **Files:**
 - Create: `C:\Users\DELL\.claude\skills\improve-codebase-architecture\SKILL.md`
 
-- [ ] **Step 1: 创建目录**
+- [x] **Step 1: 创建目录**
 
 ```bash
 mkdir -p /c/Users/DELL/.claude/skills/improve-codebase-architecture
 ```
 
-- [ ] **Step 2: 写入 SKILL.md**
+- [x] **Step 2: 写入 SKILL.md**
 
 写入文件 `C:\Users\DELL\.claude\skills\improve-codebase-architecture\SKILL.md`：
 
@@ -154,13 +154,13 @@ source: mattpocock/skills
 - 与 code-reviewer 的边界：code-reviewer 审查单次 PR，本 skill 做跨文件的架构层面改进
 ```
 
-- [ ] **Step 3: 验证文件**
+- [x] **Step 3: 验证文件**
 
 ```bash
 wc -l /c/Users/DELL/.claude/skills/improve-codebase-architecture/SKILL.md
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add skills/improve-codebase-architecture/SKILL.md
@@ -174,13 +174,13 @@ git commit -m "feat: add improve-codebase-architecture skill (mattpocock/skills)
 **Files:**
 - Modify: `C:\Users\DELL\.claude\CLAUDE.md`
 
-- [ ] **Step 1: 读取当前文件**
+- [x] **Step 1: 读取当前文件**
 
 ```bash
 cat /c/Users/DELL/.claude/CLAUDE.md
 ```
 
-- [ ] **Step 2: 找到 "P0 强制 Skill" 段落后插入新 skill 索引**
+- [x] **Step 2: 找到 "P0 强制 Skill" 段落后插入新 skill 索引**
 
 在 CLAUDE.md 的 "P0 强制 Skill（4 个）" 表格之后、"任务决策树" 之前，插入：
 
@@ -193,7 +193,7 @@ cat /c/Users/DELL/.claude/CLAUDE.md
 | improve-codebase-architecture | 架构改进、跨文件重构、模块拆分 |
 ```
 
-- [ ] **Step 3: 更新任务决策树**
+- [x] **Step 3: 更新任务决策树**
 
 将现有的：
 ```
@@ -210,7 +210,7 @@ cat /c/Users/DELL/.claude/CLAUDE.md
 └─ 非简单 → skill/brainstorming → skill/writing-plans → 执行 → skill/verification-before-completion
 ```
 
-- [ ] **Step 4: 更新命令速查表**
+- [x] **Step 4: 更新命令速查表**
 
 在命令速查表中新增一行：
 
@@ -218,13 +218,13 @@ cat /c/Users/DELL/.claude/CLAUDE.md
 | /triage | 问题分诊（→ triage skill） |
 ```
 
-- [ ] **Step 5: 验证 CLAUDE.md 行数**
+- [x] **Step 5: 验证 CLAUDE.md 行数**
 
 ```bash
 wc -l /c/Users/DELL/.claude/CLAUDE.md
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add CLAUDE.md
@@ -238,9 +238,9 @@ git commit -m "docs: update CLAUDE.md with triage and improve-codebase-architect
 **Files:**
 - Modify: `C:\Users\DELL\.claude\SPEC.md`
 
-- [ ] **Step 1: 读取当前 SPEC.md skills 相关段落**
+- [x] **Step 1: 读取当前 SPEC.md skills 相关段落**
 
-- [ ] **Step 2: 更新规模约束表**
+- [x] **Step 2: 更新规模约束表**
 
 将：
 ```
@@ -251,13 +251,13 @@ git commit -m "docs: update CLAUDE.md with triage and improve-codebase-architect
 | 全局 skills | ≤28 | 27（superpowers 13 + 扩展 8 + meta 4 + mattpocock 2） |
 ```
 
-- [ ] **Step 3: 在 "扩展 8" 之后新增 "mattpocock 精选 2"**
+- [x] **Step 3: 在 "扩展 8" 之后新增 "mattpocock 精选 2"**
 
 ```markdown
 **mattpocock 精选 2**：triage, improve-codebase-architecture
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add SPEC.md
@@ -271,7 +271,7 @@ git commit -m "docs: update SPEC.md skills inventory (25→27, limit 25→28)"
 **Files:**
 - Modify: `C:\Users\DELL\.claude\MANIFEST.yaml`
 
-- [ ] **Step 1: 在 concerns 段新增 triage 和 improve-codebase-architecture 归属**
+- [x] **Step 1: 在 concerns 段新增 triage 和 improve-codebase-architecture 归属**
 
 在 `concerns:` 下新增：
 
@@ -287,13 +287,13 @@ git commit -m "docs: update SPEC.md skills inventory (25→27, limit 25→28)"
     excludes: [skill/brainstorming, agent/code-reviewer]
 ```
 
-- [ ] **Step 2: 验证 YAML 语法**
+- [x] **Step 2: 验证 YAML 语法**
 
 ```bash
 python -c "import yaml; yaml.safe_load(open('/c/Users/DELL/.claude/MANIFEST.yaml'))" && echo "YAML valid"
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add MANIFEST.yaml
@@ -307,7 +307,7 @@ git commit -m "docs: add triage and architecture_improvement to MANIFEST"
 **Files:**
 - Modify: `C:\Users\DELL\.claude\rules\CONTEXT.md`
 
-- [ ] **Step 1: 更新阈值表措辞**
+- [x] **Step 1: 更新阈值表措辞**
 
 将：
 ```markdown
@@ -318,7 +318,7 @@ git commit -m "docs: add triage and architecture_improvement to MANIFEST"
 | 50% | 逻辑断点 `/compact`，释放已完成上下文 |
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add rules/CONTEXT.md
@@ -329,7 +329,7 @@ git commit -m "docs: clarify 50% threshold action in CONTEXT.md"
 
 ### Task 7: 验证 — sync 兼容性
 
-- [ ] **Step 1: Dry-run 同步**
+- [x] **Step 1: Dry-run 同步**
 
 ```bash
 powershell -ExecutionPolicy Bypass -File /c/Users/DELL/.claude/scripts/sync.ps1 -DryRun
@@ -337,7 +337,7 @@ powershell -ExecutionPolicy Bypass -File /c/Users/DELL/.claude/scripts/sync.ps1 
 
 Expected: 无报错，新 skills/triage 和 skills/improve-codebase-architecture 出现在 skills/ 目录链接中
 
-- [ ] **Step 2: 确认新 skill 目录可被 sync 发现**
+- [x] **Step 2: 确认新 skill 目录可被 sync 发现**
 
 ```bash
 ls /c/Users/DELL/.claude/skills/triage/SKILL.md && echo "triage OK"
@@ -348,14 +348,14 @@ ls /c/Users/DELL/.claude/skills/improve-codebase-architecture/SKILL.md && echo "
 
 ### Task 8: 验证 — 职责重叠检查
 
-- [ ] **Step 1: Grep 检查 triage 与 systematic-debugging 无 trigger 重叠**
+- [x] **Step 1: Grep 检查 triage 与 systematic-debugging 无 trigger 重叠**
 
 ```bash
 grep -i "triage\|分诊" /c/Users/DELL/.claude/skills/systematic-debugging/SKILL.md || echo "No overlap with debugging"
 grep -i "debug\|调试\|根因" /c/Users/DELL/.claude/skills/triage/SKILL.md || echo "No overlap with triage"
 ```
 
-- [ ] **Step 2: Grep 检查 improve-codebase-architecture 与 brainstorming 无 trigger 重叠**
+- [x] **Step 2: Grep 检查 improve-codebase-architecture 与 brainstorming 无 trigger 重叠**
 
 ```bash
 grep -i "refactor\|重构\|架构改进" /c/Users/DELL/.claude/skills/brainstorming/SKILL.md || echo "No overlap with brainstorming"
@@ -366,13 +366,13 @@ grep -i "新功能\|brainstorm\|头脑风暴" /c/Users/DELL/.claude/skills/impro
 
 ### Task 9: 验证 — Git diff 全量审查
 
-- [ ] **Step 1: 查看完整 diff**
+- [x] **Step 1: 查看完整 diff**
 
 ```bash
 git diff HEAD~6..HEAD --stat
 ```
 
-- [ ] **Step 2: 确认变更范围**
+- [x] **Step 2: 确认变更范围**
 
 Expected 输出应包含：
 ```
@@ -385,7 +385,7 @@ Expected 输出应包含：
 ```
 6 个文件，无意外变更。
 
-- [ ] **Step 3: 最终验证**
+- [x] **Step 3: 最终验证**
 
 ```bash
 git status
