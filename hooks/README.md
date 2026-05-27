@@ -1,4 +1,4 @@
-# Hooks 钩子系统 v3.0
+# Hooks 钩子系统 v4.0
 
 > Claude Code 专用，不同步编辑器。15 核心 hooks + 37 _optional
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)

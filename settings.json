@@ -1,5 +1,5 @@
 {
-  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 3.0",
+  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 4.0",
   "autoUpdaterStatus": "disabled",
   "cleanupPeriodDays": 30,
   "effortLevel": "high",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "_comment": "MCP 分组视图 v3.0 | 权威源: .mcp.json | 仅定义toolset分组映射",
+  "_comment": "MCP 分组视图 v4.0 | 权威源: .mcp.json | 仅定义toolset分组映射",
   "toolsets": {
     "always": ["memory", "thinking", "fs", "fetch", "time"],
     "dev": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],

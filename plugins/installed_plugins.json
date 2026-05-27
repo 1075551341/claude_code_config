@@ -4,31 +4,31 @@
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\frontend-design\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\frontend-design\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:36:07.313Z",
-        "lastUpdated": "2026-05-27T01:04:18.059Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.506Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\context7\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\context7\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:36:19.484Z",
-        "lastUpdated": "2026-05-27T01:04:18.001Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.486Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "github@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\github\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\github\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:37:00.904Z",
-        "lastUpdated": "2026-05-27T01:04:17.994Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.489Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "typescript-lsp@claude-plugins-official": [
@@ -54,31 +54,31 @@
     "skill-creator@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\skill-creator\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\skill-creator\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:38:51.384Z",
-        "lastUpdated": "2026-05-27T01:04:18.190Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.580Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "code-review@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\code-review\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\code-review\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:41:10.820Z",
-        "lastUpdated": "2026-05-27T01:04:18.049Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.502Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "commit-commands@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\commit-commands\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\commit-commands\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-19T05:41:32.147Z",
-        "lastUpdated": "2026-05-27T01:04:18.071Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.512Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "claude-code-setup@claude-plugins-official": [
@@ -113,21 +113,21 @@
     "feature-dev@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\feature-dev\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\feature-dev\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-20T05:12:06.295Z",
-        "lastUpdated": "2026-05-27T01:04:18.097Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.526Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\playwright\\4d2c1b6aa448",
-        "version": "4d2c1b6aa448",
+        "installPath": "C:\\Users\\DELL\\.claude\\plugins\\cache\\claude-plugins-official\\playwright\\53e6d03ff2cc",
+        "version": "53e6d03ff2cc",
         "installedAt": "2026-03-20T05:14:04.729Z",
-        "lastUpdated": "2026-05-27T01:04:17.998Z",
-        "gitCommitSha": "4d2c1b6aa4480ce06bdb0b810e028c71082e31c9"
+        "lastUpdated": "2026-05-27T03:56:38.483Z",
+        "gitCommitSha": "53e6d03ff2cc457a4077ad74095c44cbda091a70"
       }
     ],
     "security-guidance@claude-plugins-official": [

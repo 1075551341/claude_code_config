@@ -47,7 +47,7 @@
 | R12 | 子Agent隔离 | fresh context + 三态制品通信，禁止共享可变状态 |
 | R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
 
-> 扩展说明 → `rules/CORE.md` |
+> 扩展说明 → `rules/CORE.md`
 
 Karpathy 四原则 → `rules/CORE.md` + skill/karpathy-guidelines
 
