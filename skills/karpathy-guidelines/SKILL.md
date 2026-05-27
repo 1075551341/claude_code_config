@@ -14,8 +14,12 @@ source: forrestchang/andrej-karpathy-skills
 3. **Surgical Changes** — 只改必须改的；匹配现有风格
 4. **Goal-Driven Execution** — 弱命令转强声明式标准（见 CLAUDE.md R1–R11）
 
+## 铁律关联
+
+R1–R11 → `CLAUDE.md` | R12(子Agent隔离) R13(制品存活) → `rules/CORE.md`
+
 ## 自检
 
-资深工程师会说「过度设计」？→ 重写。
+资深工程师会说「过度设计」？→ 重写。能删一半行数且不丢功能？→ 做。
 
 来源：forrestchang/andrej-karpathy-skills

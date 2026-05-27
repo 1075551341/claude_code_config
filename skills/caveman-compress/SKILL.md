@@ -26,10 +26,12 @@ source: JuliusBrussee/caveman
 
 ## 模式
 
-- **lite**：删除冗余句（默认 SessionStart 激活）
-- **full**：结构化摘要 + 指针
-- **ultra**：仅结论 + 下一步
-- **wenyan**：文言文式极简（中文项目推荐，最短表达）
+## 四级压缩（确认）
+
+- **L1 lite**：删除冗余句（默认 SessionStart 激活）
+- **L2 full**：结构化摘要 + 指针
+- **L3 ultra**：仅结论 + 下一步
+- **L4 wenyan**：文言文式极简（中文项目推荐，最短表达）
 
 ### wenyan 示例
 - 原："你需要使用 useMemo 来避免不必要的重新渲染"
