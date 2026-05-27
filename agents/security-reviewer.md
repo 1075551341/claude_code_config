@@ -20,6 +20,17 @@ source: garrytan/gstack
 | 依赖安全 | 已知漏洞（npm audit / pip audit） |
 | 配置安全 | 安全Headers、CORS、CSP |
 
+## STRIDE 威胁模型（Agentic 2026）
+
+```
+Spoofing       → 认证绑定（JWT/OAuth 短有效期）
+Tampering      → git/PR 签名验证 + 制品完整性
+Repudiation    → 结构化日志 + 审计追踪
+Disclosure     → permissions.deny + post-secret-detector
+DoS            → rate limit + R5 重试上限
+Elevation      → RBAC + pre-bash-guard + 最小权限
+```
+
 ## 触发条件
 
 ```
