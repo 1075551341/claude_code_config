@@ -1,19 +1,40 @@
-# SPEC.md — 配置索引与溯源
+# SPEC.md — 配置法典索引
 
-> CLAUDE.md 为路由层（≤500 行）；本文件为法典索引。设计源：`spec/claude-config-integration/`
+> CLAUDE.md 为路由层（≤300行）；本文件为法典索引。
+> 版本：4.0 | 五阶段×三层矩阵架构 | 26仓库全量整合
 
 ---
 
-## PRIMARY 公式（五柱架构 v1.2）
+## 架构公式
 
 ```
-RUNTIME = superpowers + ECC(cherry-pick) + anthropics/skills + best-practice + claude-mem
-PROJECT = OpenSpec(templates) + GSD-redux + spec/轻量（三轨互斥）
-OPTIMIZATION = RTK(hook) + caveman(skill)
-REVIEW = gstack(eng/ceo/designer/qa/security agents)
-CONTEXT = GSD(read-before-edit + <40%/50%/70% 三级阈值)
-MANIFEST = 57 concerns (add: openspec_templates, claude_mem_commands, frontend_design)
+RUNTIME = superpowers(methodology) + GSD(context) + OpenSpec(spec) + gstack(review) + claude-mem(memory)
+STRUCTURE = ECC(manifest) + anthropics/skills(format) + best-practice(entry)
+OPTIMIZATION = RTK(shell) + caveman(output)
+REVIEW = gstack 5角色 + gstack 7补全
 ```
+
+## 五阶段处理流程
+
+```
+用户输入 → ①规划(/discuss) → ②规格(/plan) → ③执行(/execute) → ④验证(/verify) → ⑤学习(/compact)
+              │                  │               │                 │                  │
+          HARD-GATE          spec-valid       子agent          质量门+审查       模式提取
+```
+
+每阶段嵌入三层加载：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+
+---
+
+## 五柱声明
+
+| 柱 | 来源 | 职责 | 本地位置 |
+|----|------|------|----------|
+| Superpowers | obra/superpowers | 方法论 + P0 skill + HARD-GATE | skills/×13, hooks/bootstrap |
+| GSD | gsd-build/get-shit-done | 上下文工程 + 三级阈值 + read-before-edit | rules/CONTEXT, templates/planning/ |
+| OpenSpec | Fission-AI/OpenSpec | 规格格式 proposal→spec→tasks | templates/openspec/, spec-validation |
+| gstack | garrytan/gstack | 角色审查 5+7 + 浏览器QA | agents/×12, autoplan/ship |
+| claude-mem | thedotmack/claude-mem | 跨会话记忆 SSOT + 渐进式披露 | plugins/marketplaces/thedotmack/ |
 
 ---
 
@@ -21,184 +42,156 @@ MANIFEST = 57 concerns (add: openspec_templates, claude_mem_commands, frontend_d
 
 | 类型 | 上限 | 当前 |
 |------|------|------|
-| 全局 skills | ≤28 | 27（superpowers 13 + 扩展 8 + meta 4 + mattpocock 2） |
-| 全局 agents | ≤22 | 20（8 core + 5 gstack 审查 + 7 gstack 补全） |
-| 全局 rules | 10 文件 | 9（CORE/BESTPRACTICE/SECURITY/GIT/WORKFLOW/AGENTS/MCP/DESIGN/CONTEXT） |
-| CLAUDE.md | ≤500 行 | ~168 |
+| 全局 skills | ≤28 | 27 (superpowers 13 + 扩展 8 + meta 4 + mattpocock 2) |
+| 全局 agents | ≤22 | 20 (core 8 + gstack审查 5 + gstack补全 7) |
+| 全局 rules | 10 | 10 (CORE + BESTPRACTICE + SECURITY + GIT + WORKFLOW + AGENTS + MCP + DESIGN + CONTEXT + README) |
+| CLAUDE.md | ≤300 | ~260 |
+| 全局 hooks | 15 | 15 |
 
 ---
 
-## P0 强制 Skill（4）<!-- layer: skeleton -->
+## P0 强制 Skill (4)
 
-| Skill | 来源 | 触发 |
+| Skill | 触发 | 阶段 |
 |-------|------|------|
-| using-superpowers | obra/superpowers | 会话开始 |
-| brainstorming | obra/superpowers | 方案/架构 |
-| verification-before-completion | obra/superpowers | 完成/验收 |
-| systematic-debugging | obra/superpowers | 调试/bug |
+| using-superpowers | 会话开始 | 骨架 |
+| brainstorming | 方案/架构/非简单任务 | ①规划 |
+| verification-before-completion | 完成/验收 | ④验证 |
+| systematic-debugging | 调试/bug | ③执行 |
 
----
-
-## Workflow Skills（13 superpowers + 8 扩展）<!-- layer: skeleton/supplement -->
+## Workflow Skills (13 superpowers + 8 扩展 + 4 meta + 2 mattpocock)
 
 **Superpowers 13**：using-superpowers, brainstorming, writing-plans, executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development, using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch, writing-skills
 
 **扩展 8**：office-hours, autoplan, browser-qa, design-pipeline, ship, context-engineering, structured-artifacts, instinct-learning
 
-**Mattpocock 精选 2**：triage, improve-codebase-architecture
+**Meta 4**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress
+
+**Mattpocock 2**：triage, improve-codebase-architecture
 
 ---
 
-## Meta Skills（4）<!-- layer: supplement -->
+## 核心 Agents (8)
 
-| Skill | 来源 |
-|-------|------|
-| memory-compression | claude-mem + GSD-redux |
-| spec-validation | Fission-AI/OpenSpec |
-| karpathy-guidelines | forrestchang/andrej-karpathy-skills |
-| caveman-compress | JuliusBrussee/caveman |
+| Agent | 预加载 skill | 阶段 |
+|-------|-------------|------|
+| planner | writing-plans | ①规划 |
+| code-explorer | — | ③执行 |
+| code-reviewer | requesting/receiving-code-review | ④验证 |
+| build-error-resolver | systematic-debugging | ③执行 |
+| architect | brainstorming | ①规划 |
+| spec-reviewer | spec-validation | ②规格 |
+| context-manager | memory-compression, caveman-compress | ⑤学习 |
+| agentic-orchestrator | subagent-driven-development | ③执行 |
 
----
+## gstack 审查 5 + 补全 7
 
-## 核心 Agents（8）<!-- layer: skeleton -->
-
-| Agent | 预加载 skills | 来源 |
-|-------|---------------|------|
-| planner | writing-plans | superpowers |
-| code-explorer | — | ECC |
-| code-reviewer | requesting/receiving-code-review | superpowers |
-| build-error-resolver | systematic-debugging | ECC |
-| architect | brainstorming | ECC |
-| spec-reviewer | spec-validation | OpenSpec |
-| context-manager | memory-compression, caveman-compress | claude-mem |
-| agentic-orchestrator | subagent-driven-development | ECC |
-
-领域 agent → `catalog/agents/`（按需复制到项目）
-
-### gstack 审查角色（agents/ + catalog/agents/）
-
-| Agent | 触发 |
-|-------|------|
-| eng-reviewer | 所有变更（必须） |
-| ceo-reviewer | 产品/新功能 |
-| designer | UI/UX 变更 |
-| qa | 测试充分性审查 |
-| security-reviewer | 安全敏感变更 |
-
-### gstack 补全角色（7）
-
-| Agent | 触发 | 来源 |
-|-------|------|------|
-| cso | 全量安全审计 | gstack |
-| sre | 部署后监控/canary | gstack |
-| release-engineer | /ship 发布管线 | gstack |
-| product-manager | /office-hours 六问 | gstack |
-| design-engineer | /design-html 实现 | gstack |
-| performance-engineer | /benchmark 度量 | gstack |
-| doc-writer | /document-release | gstack |
+**审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, qa, security-reviewer
+**补全 (supplement)**：cso, sre, release-engineer, product-manager, design-engineer, performance-engineer, doc-writer
 
 ---
 
-## 全局 Rules（9）<!-- layer: skeleton/supplement -->
+## 规格三轨（互斥）
 
-| 文件 | 内容 | alwaysApply | layer | source |
-|------|------|-------------|-------|--------|
-| CORE.md | 编码规范 + Karpathy 四原则 | ✅ | skeleton | obra/superpowers + forrestchang/andrej-karpathy-skills |
-| BESTPRACTICE.md | 综合最佳实践 | ✅ | skeleton | shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code |
-| SECURITY.md | OWASP | lazy | supplement | shanraisshan/claude-code-best-practice + OWASP |
-| GIT.md | 分支/Commit/PR | lazy | supplement | shanraisshan/claude-code-best-practice + obra/superpowers |
-| WORKFLOW.md | discuss→ship | lazy | supplement | gsd-build/get-shit-done + bytedance/deer-flow + obra/superpowers |
-| AGENTS.md | 多 Agent 互斥 | lazy | supplement | affaan-m/ECC + bytedance/deer-flow |
-| MCP.md | .mcp.json 权威 | lazy | supplement | github/github-mcp-server + anthropics/claude-code-action |
-| DESIGN.md | DESIGN.md 规范 | lazy | supplement | VoltAgent/awesome-design-md + nextlevelbuilder/ui-ux-pro-max-skill |
-| CONTEXT.md | 上下文工程 | lazy | supplement | gsd-build/get-shit-done + zilliztech/claude-context |
-
-语言/领域规则 → `catalog/rules/`（项目 lazy-load）
-
----
-
-## 规格三轨
-
-| 轨道 | 路径 | 模板 |
-|------|------|------|
-| OpenSpec | `openspec/changes/<id>/` | templates/openspec/ |
-| GSD-redux | `.planning/phases/` | templates/planning/ |
-| 轻量 | `spec/<project>/` | templates/spec/ |
-
-决策树 → `spec/README.md`
+| 轨道 | 路径 | 场景 | 入口 |
+|------|------|------|------|
+| OpenSpec | `openspec/changes/<id>/` | 功能变更/brownfield | /propose |
+| GSD | `.planning/phases/` | 大功能多阶段 | /plan |
+| 轻量 | `spec/<project>/` | ≤3文件小功能 | /plan |
 
 ---
 
 ## MCP 分组
 
-| 分组 | 文件 | 服务器 |
-|------|------|--------|
-| core | mcp-configs/core.json | memory, thinking, fs, fetch, time |
-| dev | mcp-configs/dev.json | gh, git, ctx7, pw, crawl, chrome-devtools |
-| ops | mcp-configs/ops.json | redis, sqlite, docker, postgres, supabase |
-| search | mcp-configs/search.json | brave, exa |
-| collab | mcp-configs/collab.json | figma, linear, notion, slack |
+| 分组 | 服务器 | 加载 |
+|------|--------|------|
+| always | memory, thinking, fs, fetch, time | 会话启动 |
+| dev | gh, git, ctx7, pw, crawl, chrome-devtools | 开发会话 |
+| ops | redis, sqlite, docker, postgres | 需要时 |
+| search | brave, exa | 搜索时 |
+| design | figma | 设计时 |
+| optional | puppeteer, glif | 明确触发 |
 
-完整分组 → `mcp/servers.json` | 权威 → `.mcp.json`
+权威 → `.mcp.json` | 分组 → `mcp/servers.json`
 
 ---
 
-## Catalog（领域能力库）
+## Hooks (15核心)
 
-| 目录 | 规模 | 用途 |
+| 事件 | Hook | 阶段 |
 |------|------|------|
-| catalog/skills/ | ~100 | 按需 `migrate-from-legacy.py --skill` |
-| catalog/agents/ | 43 | 按需 `--agent`（含 5 gstack 角色） |
-| catalog/rules/ | ~15 | 按需 `--rule` |
+| SessionStart | bootstrap | 骨架 |
+| PreToolUse/Bash | rtk-rewrite, bash-guard | ③执行 |
+| PreToolUse/Write | read-before-edit, config-protection | ③执行 |
+| PreToolUse/全局 | context-injector, manifest-validator | 全流程 |
+| PostToolUse/Edit | secret-detector, edit-format | ④验证 |
+| PostToolUse/全局 | operation-log | 全流程 |
+| PreCompact | compact-state | ⑤学习 |
+| Stop | quality-gate, pattern-extraction, session-summary, readme-updater | ⑤学习 |
 
-### mattpocock/skills（全局 2 + catalog 按需 3，v2.4）
-
-**全局 skill（2）**：triage, improve-codebase-architecture
-
-**Catalog 按需（3）**：
-
-| Skill | 路径 | 全局 owner（excludes） |
-|-------|------|------------------------|
-| diagnose | catalog/skills/diagnose/ | systematic-debugging（P0 优先） |
-| grill-with-docs | catalog/skills/grill-with-docs/ | brainstorming |
-| handoff | catalog/skills/handoff/ | structured-artifacts, claude-mem |
-
-```powershell
-python ~/.claude/scripts/migrate-from-legacy.py --project . --skill diagnose
-python ~/.claude/scripts/migrate-from-legacy.py --project . --skill grill-with-docs
-python ~/.claude/scripts/migrate-from-legacy.py --project . --skill handoff
-```
-
-去重表 → `spec/claude-config-integration/design.md` §15.4
-
-优点保留在 catalog（~100 skills / 43 agents）；已删记录 → `experiences/rejected/deletion-candidates.md`
+Profile: `ECC_HOOK_PROFILE=standard` (minimal/standard/strict)
 
 ---
 
-## 归属与互斥
+## 26+ 仓库完整映射
 
-完整 concern → owner 映射 → `MANIFEST.yaml`
+### 五柱 (5)
 
-Harness 启用清单 → `agent.yaml`
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 1 | obra/superpowers | 14技能+HARD-GATE+双阶段审查+证据驱动 | skills/×13, hooks/ |
+| 2 | gsd-build/get-shit-done | 可grep规则+三级阈值+read-before-edit | rules/CONTEXT, templates/planning/ |
+| 3 | Fission-AI/OpenSpec | proposal→spec→tasks+brownfield+archive | templates/openspec/, spec-validation |
+| 4 | garrytan/gstack | 5角色审查+7补全+浏览器QA | agents/×12 |
+| 5 | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT | plugins/marketplaces/thedotmack/ |
 
----
+### 结构格式 (6)
 
-## Hooks（Claude Code 专用，不同步编辑器）
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 6 | affaan-m/ECC | MANIFEST+agent路由+instinct-learning | MANIFEST, agent.yaml, catalog/ |
+| 7 | anthropics/skills | SKILL.md格式标准+跨平台 | skills/*/SKILL.md |
+| 8 | shanraisshan/best-practice | 80+提示+10+方法论+编排模式 | rules/BESTPRACTICE |
+| 9 | forrestchang/karpathy | 四原则+LLM失效模式对策 | rules/CORE, karpathy-guidelines |
+| 10 | mattpocock/skills | triage分诊+grill反推+DDD重构+handoff | skills/triage, improve-codebase-architecture |
+| 11 | VoltAgent/awesome-design-md | 9节结构+73品牌+零依赖 | rules/DESIGN, templates/DESIGN.md |
 
-| 事件 | Hook | 职责 |
-|------|------|------|
-| SessionStart | session-start-bootstrap | 唯一启动注入 |
-| PreCompact | pre-compact-state | 压缩前快照 |
-| PreToolUse/Bash | pre-rtk-rewrite → pre-bash-guard | RTK + 安全 |
-| PreToolUse/Edit | pre-read-before-edit | GSD read-before-edit |
-| PreToolUse/* | pre-context-injector | 项目上下文（每会话一次） |
-| Stop | stop-quality-gate, stop-pattern-extraction | 质量门 + 模式提取 |
+### 优化工具 (4)
 
-**已禁用（互博）**：hook/pre-task-planner → 由 skill/writing-plans + /plan 替代
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 12 | rtk-ai/rtk | Rust CLI 60-90%压缩+100+命令预置 | hooks/pre-rtk-rewrite |
+| 13 | JuliusBrussee/caveman | 四级压缩+仅压输出+学术佐证 | skill/caveman-compress |
+| 14 | github/github-mcp-server | 20+工具+Enterprise+精细权限 | .mcp.json (gh) |
+| 15 | anthropics/claude-code-action | 4后端CI+结构化JSON | templates/github-actions/ |
 
-Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
+### 编排增强 (4)
 
-目录：`hooks/`（24 .py，含 launcher/guard）| `_deprecated/`（pre-task-planner，禁止启用）
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 16 | eyaltoledano/task-master | PRD→结构任务+3级工具裁剪 | templates/taskmaster/ |
+| 17 | nextlevelbuilder/ui-ux-pro-max | 67风格+161色板+99UX | catalog/skills/ui-ux-pro-max |
+| 18 | zilliztech/claude-context | Milvus+BM25+40% token节省 | mcp-configs/ optional |
+| 19 | bytedance/deer-flow | 渐进式加载+Docker沙箱+DAG | WORKFLOW.md |
+
+### 参考索引 (5)
+
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 20 | ComposioHQ/awesome-claude-skills | 1000+技能索引+渐进式加载 | catalog/ 索引 |
+| 21 | hesreallyhim/awesome-claude-code | 配置范式+工具发现 | 外链索引 |
+| 22 | x1xhlol/system-prompts | 30+提示词比较+注入防护 | BESTPRACTICE 原则 |
+| 23 | Chalarangelo/30-seconds-of-code | 多语言代码片段 | catalog 参考 |
+| 24 | ruvnet/ruflo | 蜂群拓扑+HNSW加速 | 概念→WORKFLOW |
+
+### 安全补强 (4)
+
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 25 | trailofbits/claude-code-config | /sandbox+deny+三层防御 | SECURITY.md §11 |
+| 26 | dwarvesf/claude-guardrails | 密钥扫描 | hooks/_optional/ |
+| 27 | lasso-security/claude-hooks | 注入扫描 | hooks/_optional/ |
+| 28 | marc-shade/claude-code-security | 渐进硬化checklist | SECURITY.md §14 |
 
 ---
 
@@ -206,89 +199,36 @@ Profile：`ECC_HOOK_PROFILE=minimal|standard|strict`（见 hooks/README.md）
 
 | 场景 | Owner | 禁止 |
 |------|-------|------|
-| 计划 | writing-plans | pre-task-planner, planning-expert |
+| 计划 | skill/writing-plans | pre-task-planner, agentic-orchestrator |
 | 审查 | requesting/receiving-code-review | 独立 code-review skill |
 | 记忆 | claude-mem plugin | memory MCP 作 SSOT |
-| Shell token | pre-rtk-rewrite | skill 重复压缩 shell |
-| 输出 token | caveman-compress | RTK 压缩 agent 文本 |
+| Shell token | hook/pre-rtk-rewrite | skill 重复压缩 |
+| 输出 token | skill/caveman-compress | RTK 压缩 agent 文本 |
+| 功能 spec | openspec/ | .planning 同功能重写 |
+| plugin vs skill | MANIFEST concern→owner | plugin 替代已有 skill 同名功能 |
+| hook vs plugin | settings.json hooks | plugin hook 与全局 hook 同事件链重复 |
+| context-manager | agent/context-manager | 重复 claude-mem 存储逻辑 |
 
 ---
 
-## 同步架构
+## Catalog（按需）
+
+| 目录 | 规模 | 加载 |
+|------|------|------|
+| catalog/skills/ | ~120 | 按需 `python scripts/migrate-from-legacy.py --skill` |
+| catalog/agents/ | 43 | 按需 `python scripts/migrate-from-legacy.py --agent` |
+| catalog/rules/ | ~15 | 按需 `python scripts/migrate-from-legacy.py --rule` |
+
+---
+
+## 同步
 
 | 同步 | 方式 |
 |------|------|
-| CLAUDE.md, AGENTS.md, skills/, agents/ | 软链接（sync.ps1 v11） |
-| rules/ | 格式转换复制到编辑器原生目录 |
-| hooks/, commands/, MCP | ❌ 不同步（Claude Code 专用） |
-
-详见 `SYNC_GUIDE.md`
+| CLAUDE.md, AGENTS.md, skills/, agents/ | 软链接 (sync.ps1) |
+| rules/ | 格式转换到编辑器原生目录 |
+| hooks/, commands/, MCP | ❌ 不同步 |
 
 ---
 
-## 22 仓库映射
-
-### 骨架 PRIMARY（五柱 + 基础）
-
-| 仓库 | 采纳 |
-|------|------|
-| obra/superpowers | 13 workflow skills + P0 skills + commands |
-| gsd-build/get-shit-done | planning 模板 + /compact + 上下文阈值 + read-before-edit |
-| Fission-AI/OpenSpec | openspec 模板 + spec-validation skill |
-| garrytan/gstack | 5 agents (eng/ceo/designer/qa/security-reviewer) + /review + 7 补全角色 |
-| thedotmack/claude-mem | memory plugin SSOT + 跨会话记忆 |
-
-### 结构 + 格式
-
-| 仓库 | 采纳 |
-|------|------|
-| affaan-m/ECC | 目录结构、MANIFEST、agents 薄编排、hook profile、instinct-learning |
-| anthropics/skills | SKILL.md 格式规范 |
-| shanraisshan/claude-code-best-practice | CLAUDE.md ≤500 行、config 模式、rules lazy-load + BESTPRACTICE.md + 安全/格式 hooks |
-| forrestchang/andrej-karpathy-skills | karpathy-guidelines skill + CORE.md 四原则 |
-
-### 优化 + 工具
-
-| 仓库 | 采纳 |
-|------|------|
-| rtk-ai/rtk | pre-rtk-rewrite hook + RTK.md |
-| JuliusBrussee/caveman | caveman-compress skill |
-| github/github-mcp-server | gh MCP server |
-| anthropics/claude-code-action | templates/github-actions/claude-review.yml |
-| VoltAgent/awesome-design-md | DESIGN.md 模板 + rules/DESIGN.md |
-| nextlevelbuilder/ui-ux-pro-max | catalog/skills/ui-ux-pro-max |
-
-### 参考索引
-
-| 仓库 | 采纳 |
-|------|------|
-| eyaltoledano/claude-task-master | templates/taskmaster/ + writing-plans |
-| ComposioHQ/awesome-claude-skills | catalog skill 发现索引 |
-| zilliztech/claude-context | mcp-configs/dev.json optional + rules/CONTEXT.md |
-| hesreallyhim/awesome-claude-code | 配置最佳实践参考 |
-| x1xhlol/system-prompts-and-models-of-ai-tools | 系统 prompt 设计参考（融入 BESTPRACTICE.md） |
-| Chalarangelo/30-seconds-of-code | 代码片段参考（catalog 按需查用） |
-| bytedance/deer-flow | 子 Agent 编排四阶段模式（已整合到 WORKFLOW.md） |
-| **mattpocock/skills** | **全局 2：triage, improve-codebase-architecture；catalog 按需：diagnose, grill-with-docs, handoff** |
-| ruvnet/ruflo | 参考排除；WORKFLOW 制品持久化 |
-
-### P3 安全补强（source 见 design.md §15.6）
-
-| 仓库 | 采纳 |
-|------|------|
-| trailofbits/claude-code-config | SECURITY.md §11, settings.json deny, /sandbox |
-| trailofbits/claude-code-devcontainer | templates/devcontainer/README.md |
-| dwarvesf/claude-guardrails | hooks/_optional/pre-userprompt-secret-scan.py |
-| lasso-security/claude-hooks | hooks/_optional/post-prompt-injection-scan.py |
-| efij/awesome-claude-code-security | [安全资源索引](https://github.com/efij/awesome-claude-code-security) |
-| EveryInc/compound-engineering-plugin | Cursor plugin；Claude Code → experiences/ + instinct-learning |
-| marc-shade/claude-code-security | SECURITY.md §14 渐进硬化 checklist |
-| kumaran-is/claude-code-guide | rules/CONTEXT.md 自改进要点 |
-| disler/claude-code-hooks-mastery | hooks/tests/fixtures/ |
-| domengabrovsek/claude | agents/README.md 触发表 |
-
-```powershell
-python C:\Users\DELL\.claude\scripts\validate_config.py
-powershell -ExecutionPolicy Bypass -File C:\Users\DELL\.claude\scripts\sync.ps1 -DryRun
-(Get-Content C:\Users\DELL\.claude\CLAUDE.md).Count  # ≤500
-```
+_版本：4.0 | 日期：2026-05-27 | 五阶段×三层矩阵架构 | 28仓库全量整合_

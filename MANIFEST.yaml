@@ -1,30 +1,28 @@
-# 组件唯一归属源 — 防左右手互博
-# 权威：spec/claude-config-integration/design.md §9
+# 组件唯一归属源 — 防左右手互博 — v4.0
+# 权威: spec/claude-config-integration/design-v4.md
 
-version: "2.4"
-updated: "2026-05-26"
+version: "4.0"
+updated: "2026-05-27"
 
 pillars:
-  superpowers:
-    source: obra/superpowers
-    capabilities: [brainstorming, verification, debugging, using-superpowers]
-  gsd:
-    source: GSD-redux
-    capabilities: [context-engineering, continuous-execution, read-before-edit]
-  openspec:
-    source: Fission-AI/OpenSpec
-    capabilities: [proposal-spec-tasks, spec-validation, openspec-templates]
-  gstack:
-    source: garrytan/gstack
-    capabilities: [eng-review, ceo-review, design-review, qa-review, security-review]
-  claude_mem:
-    source: thedotmack/claude-mem
-    capabilities: [cross-session-memory, pattern-extraction]
+  superpowers: { source: obra/superpowers, capabilities: [brainstorming, verification, debugging] }
+  gsd: { source: gsd-build/get-shit-done, capabilities: [context-engineering, continuous-execution, read-before-edit] }
+  openspec: { source: Fission-AI/OpenSpec, capabilities: [proposal-spec-tasks, spec-validation] }
+  gstack: { source: garrytan/gstack, capabilities: [eng-review, ceo-review, design-review, qa-review, security-review] }
+  claude_mem: { source: thedotmack/claude-mem, capabilities: [cross-session-memory, pattern-extraction] }
+
+phases:
+  plan:    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
+  spec:    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
+  execute: { stage: ③执行, command: /execute, pillar: gsd, gate: build-pass }
+  verify:  { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
+  learn:   { stage: ⑤学习, command: /compact, pillar: claude_mem, gate: pattern-extracted }
 
 concerns:
   brainstorming:
     owner: skill/brainstorming
     source: obra/superpowers
+    stage: plan
     excludes: [agent/planner]
 
   planning:
@@ -32,94 +30,112 @@ concerns:
     delegates: [agent/planner]
     command: plan
     source: obra/superpowers
+    stage: spec
     excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
 
   project_context:
     owner: hook/pre-context-injector
-    note: 每会话缓存一次，注入项目 CLAUDE.md；不替代 session-start-bootstrap
+    note: 每会话缓存一次，注项目CLAUDE.md
     excludes: [hook/session-start-bootstrap]
 
   multi_agent:
     owner: agent/agentic-orchestrator
     skill: skill/subagent-driven-development
     source: affaan-m/ECC
+    stage: execute
     excludes: [agent/planner]
 
   execution:
     owner: skill/executing-plans
     source: obra/superpowers
+    stage: execute
 
   verification:
     owner: skill/verification-before-completion
     hook: stop-quality-gate
     source: obra/superpowers
+    stage: verify
 
   debugging:
     owner: skill/systematic-debugging
     source: obra/superpowers
+    stage: execute
 
   tdd:
     owner: skill/test-driven-development
     source: obra/superpowers
+    stage: execute
 
   code_review_request:
     owner: skill/requesting-code-review
     source: obra/superpowers
+    stage: verify
 
   code_review_receive:
     owner: skill/receiving-code-review
     delegates: [agent/code-reviewer]
     source: obra/superpowers
+    stage: verify
 
   spec_review:
     owner: skill/spec-validation
     delegates: [agent/spec-reviewer]
     source: Fission-AI/OpenSpec
+    stage: spec
 
   memory:
     owner: plugin/claude-mem
     skill: skill/memory-compression
     source: thedotmack/claude-mem
+    stage: learn
     excludes: [agent/context-manager]
 
   context_retrieval:
     owner: agent/context-manager
     skill: skill/memory-compression
     source: thedotmack/claude-mem
-    note: 仅检索/持久化，不重复 mem 存储逻辑
+    note: 仅检索/持久化，不重复mem存储逻辑
 
   context_rot:
     owner: skill/memory-compression
     hook: pre-compact-state
     source: GSD-redux
+    stage: learn
 
   shell_token:
     owner: hook/pre-rtk-rewrite
     source: rtk-ai/rtk
+    stage: execute
+    excludes: [skill/caveman-compress]
 
   output_token:
     owner: skill/caveman-compress
     source: JuliusBrussee/caveman
+    excludes: [hook/pre-rtk-rewrite]
 
   change_spec:
     owner: openspec/changes/
     command: propose
     source: Fission-AI/OpenSpec
+    stage: spec
     excludes: [planning/phases]
 
   phase_planning:
     owner: planning/phases/
     source: GSD-redux
+    stage: spec
     excludes: [openspec/changes]
 
   lite_spec:
     owner: spec/project/
     source: local
+    stage: spec
 
   ui_token:
     owner: DESIGN.md
     skill: catalog/skills/ui-ux-pro-max
     source: VoltAgent/awesome-design-md
+    stage: spec
 
   coding_philosophy:
     owner: skill/karpathy-guidelines
@@ -130,72 +146,54 @@ concerns:
     owner: skill/subagent-driven-development
     hooks: [pre-read-before-edit]
     rules_ref: rules/WORKFLOW.md
-    source: GSD + Desktop/code
-    excludes: [agent/* 重复相位说明]
+    source: GSD
+    stage: execute
 
   gstack_review:
     owner: AGENTS.md
     catalog: [eng-reviewer, ceo-reviewer, designer, qa, security-reviewer]
-    source: garrytan/gstack + Desktop/code
+    source: garrytan/gstack
+    stage: verify
     delegates: [agent/code-reviewer, agent/spec-reviewer]
-    excludes: [gstack /autoplan, gstack /ship]
 
-  gstack_eng:
-    owner: agent/eng-reviewer
-    layer: skeleton
-    source: garrytan/gstack
-
-  gstack_ceo:
-    owner: agent/ceo-reviewer
-    layer: skeleton
-    source: garrytan/gstack
-
-  gstack_designer:
-    owner: agent/designer
-    layer: skeleton
-    source: garrytan/gstack
-
-  gstack_qa:
-    owner: agent/qa
-    layer: skeleton
-    source: garrytan/gstack
-
-  gstack_security:
-    owner: agent/security-reviewer
-    layer: skeleton
-    source: garrytan/gstack
+  gstack_eng:    { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
+  gstack_ceo:    { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
+  gstack_designer: { owner: agent/designer, layer: skeleton, stage: spec }
+  gstack_qa:     { owner: agent/qa, layer: skeleton, stage: verify }
+  gstack_security: { owner: agent/security-reviewer, layer: skeleton, stage: verify }
 
   bestpractice:
     owner: rules/BESTPRACTICE.md
     layer: skeleton
-    source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code
+    source: shanraisshan/best-practice
 
   memory_ssot:
     owner: plugin/claude-mem
     source: thedotmack/claude-mem
-    excludes: [memory/index.md, hooks/post-session.sh, hooks/on-error.sh]
+    stage: learn
+    excludes: [memory/index.md]
 
   bootstrap:
     owner: hook/session-start-bootstrap
     skill: skill/using-superpowers
     source: obra/superpowers
-    note: 唯一 SessionStart 注入
 
   office_hours:
     owner: skill/office-hours
     delegates: [agent/product-manager]
     source: garrytan/gstack
-    excludes: [skill/brainstorming]
+    stage: plan
 
   autoplan:
     owner: skill/autoplan
     delegates: [agent/ceo-reviewer, agent/designer, agent/eng-reviewer]
     source: garrytan/gstack
+    stage: verify
 
   ship_pipeline:
     owner: skill/ship
     delegates: [agent/release-engineer]
-    source: garrytan/gstack + obra/superpowers
+    source: garrytan/gstack
     excludes: [skill/finishing-a-development-branch]
 
   context_engineering:
@@ -203,196 +201,57 @@ concerns:
     skill: skill/context-engineering
     source: GSD-redux
 
-  gstack_cso:
-    owner: agent/cso
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_sre:
-    owner: agent/sre
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_release:
-    owner: agent/release-engineer
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_pm:
-    owner: agent/product-manager
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_design_eng:
-    owner: agent/design-engineer
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_perf:
-    owner: agent/performance-engineer
-    layer: supplement
-    source: garrytan/gstack
-
-  gstack_doc:
-    owner: agent/doc-writer
-    layer: supplement
-    source: garrytan/gstack
-
-  instinct_v2:
-    owner: skill/instinct-learning
-    source: affaan-m/ECC
-    excludes: [hook/stop-pattern-extraction]
-
-  task_management:
-    owner: skill/writing-plans
-    source: eyaltoledano/claude-task-master
-    note: 任务分解模式参考；模板 templates/taskmaster/
-    template: templates/taskmaster/
-
-  design_token:
-    owner: rules/DESIGN.md
-    skill: catalog/skills/ui-ux-pro-max
-    source: VoltAgent/awesome-design-md
-
-  code_snippets:
-    owner: catalog/skills/
-    source: Chalarangelo/30-seconds-of-code
-    note: 代码片段参考索引，按需查用
-
-  system_prompts_ref:
-    owner: rules/BESTPRACTICE.md
-    source: x1xhlol/system-prompts-and-models-of-ai-tools
-    note: 系统 prompt 设计参考
-
-  cicd_action:
-    owner: rules/MCP.md
-    source: anthropics/claude-code-action
-    note: CI/CD review action 模板
-
-  github_mcp:
-    owner: .mcp.json
-    source: github/github-mcp-server
-    note: gh MCP server 集成
-
-  community_skills:
-    owner: catalog/skills/
-    source: ComposioHQ/awesome-claude-skills + hesreallyhim/awesome-claude-code
-    note: 社区技能发现索引
-
-  official_skills:
-    owner: catalog/skills/
-    source: anthropics/skills
-    note: SKILL.md 格式规范参考
-
-  mattpocock_skills:
-    owner: catalog/skills/
-    source: mattpocock/skills
-    note: diagnose/grill/handoff 按需；tdd/caveman 与 superpowers 去重见 design §15.4
-    excludes: [skill/test-driven-development, skill/caveman-compress, skill/systematic-debugging, skill/brainstorming]
-
-  openspec_templates:
-    owner: templates/openspec/
-    source: Fission-AI/OpenSpec
-    note: proposal→spec→design→tasks 四件套模板
-
-  claude_mem_commands:
-    owner: plugin/claude-mem
-    source: thedotmack/claude-mem
-    note: learn-codebase, knowledge-agent, mem-search, smart-explore, how-it-works 命令
-
-  frontend_design:
-    owner: plugin/frontend-design
-    source: claude-plugins-official
-    note: Figma 设计稿转代码管线
+  manifest_validation:
+    owner: hook/pre-manifest-validator
+    source: local
+    note: PreToolUse校验MANIFEST归属，防互博
 
   triage:
     owner: skill/triage
     source: mattpocock/skills
     excludes: [skill/systematic-debugging]
-    note: 问题分诊 → 分类路由；debugging 做根因分析
+    stage: plan
 
   architecture_improvement:
     owner: skill/improve-codebase-architecture
     source: mattpocock/skills
     excludes: [skill/brainstorming, agent/code-reviewer]
-    note: 架构渐进改进；brainstorming 做新功能设计，code-reviewer 做单次 PR
+    stage: execute
 
-  context_mgmt:
-    owner: rules/CONTEXT.md
-    source: zilliztech/claude-context
-    note: 上下文管理策略参考，由 GSD 阈值覆盖
+  instinct_v2:
+    owner: skill/instinct-learning
+    source: affaan-m/ECC
+    stage: learn
+
+  task_management:
+    owner: skill/writing-plans
+    source: eyaltoledano/claude-task-master
+    template: templates/taskmaster/
+
+  plugin_attribution:
+    owner: MANIFEST.yaml
+    note: 所有 plugin 必须在此注册 concern→owner，禁止 plugin 间功能重叠
+    stage: skeleton
 
   deer_flow:
     owner: rules/WORKFLOW.md
     source: bytedance/deer-flow
-    note: 子 Agent 编排四阶段模式
+    stage: execute
+    note: DAG四阶段编排 + middleware chain，与 agent/agentic-orchestrator 互补
+    excludes: [agent/planner]
 
-  security_ops:
-    owner: hook/pre-bash-guard
-    source: shanraisshan/claude-code-best-practice
-    excludes: [hook/pre-config-protection]
+  ci_claude_code_action:
+    owner: templates/github-actions/
+    source: anthropics/claude-code-action
+    stage: ship
+    note: CI模板引用，4后端 + 结构化JSON输出
 
-  git_workflow:
-    owner: rules/GIT.md
-    source: shanraisshan/claude-code-best-practice
-
-  ruflo_reference:
-    owner: rules/WORKFLOW.md
-    source: ruvnet/ruflo@main
-    excludes: [agent/agentic-orchestrator, plugin/claude-mem]
-    note: 参考排除；swarm/联邦/MCP 栈不导入；编排优点已吸收
-
-  tob_sandbox:
-    owner: rules/SECURITY.md
-    source: trailofbits/claude-code-config@main
-    note: /sandbox 三层防御 + settings deny
-
-  guardrails_scan:
-    owner: hook/_optional/pre-userprompt-secret-scan
-    source: dwarvesf/claude-guardrails@main
-    excludes: [hook/post-secret-detector]
-    note: UserPromptSubmit 粘贴密钥；strict profile
-
-  lasso_injection:
-    owner: hook/_optional/post-prompt-injection-scan
-    source: lasso-security/claude-hooks@main
-    note: PostToolUse 注入 warn；strict profile
-
-  security_index:
-    owner: SPEC.md
-    source: efij/awesome-claude-code-security@main
-    note: 安全资源 curated 外链
-
-  compound_engineering:
-    owner: experiences/
-    source: EveryInc/compound-engineering-plugin@main
-    excludes: [skill/instinct-learning, agents/*]
-    note: Cursor plugin 已有；Claude Code 侧 experiences/ 闭环
-
-  devcontainer_isolation:
-    owner: templates/devcontainer/
-    source: trailofbits/claude-code-devcontainer@main
-    note: 主机隔离工作流指针
-
-  agent_routing:
-    owner: agents/README.md
-    source: domengabrovsek/claude@main
-    note: 触发表 + 9-section agent 结构参考
-
-  context_guide:
-    owner: rules/CONTEXT.md
-    source: kumaran-is/claude-code-guide@main
-    note: 自改进/错误恢复/会话切换要点
-
-  progressive_hardening:
-    owner: rules/SECURITY.md
-    source: marc-shade/claude-code-security@main
-    note: §14 渐进硬化 checklist
-
-  hook_test_fixtures:
-    owner: hooks/tests/fixtures/
-    source: disler/claude-code-hooks-mastery@main
-    note: stdin fixture 测试模式
+  claude_context_mcp:
+    owner: .mcp.json
+    source: zilliztech/claude-context
+    stage: execute
+    note: optional 分组，启用条件见 rules/CONTEXT.md
+    excludes: [agent/code-explorer]
 
 p0_skills:
   - using-superpowers

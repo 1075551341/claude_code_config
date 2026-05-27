@@ -1,19 +1,27 @@
-# ECC harness manifest — 全局启用组件清单
-# 权威：.mcp.json | 详情：SPEC.md | 版本：2.4
+# ECC harness manifest — 全局启用组件清单 v4.0
+# 权威: .mcp.json | 详情: SPEC.md | 五阶段×三层矩阵
 
-version: "2.4"
+version: "4.0"
 harness: claude-code-primary
 
+phases:
+  plan:    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
+  spec:    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
+  execute: { stage: ③执行, command: /execute, pillar: gsd, gate: build-pass }
+  verify:  { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
+  learn:   { stage: ⑤学习, command: /compact, pillar: claude_mem, gate: pattern-extracted }
+
 skills:
+  p0:
+    - using-superpowers
+    - brainstorming
+    - verification-before-completion
+    - systematic-debugging
   workflow:
     source: obra/superpowers
     enabled:
-      - using-superpowers
-      - brainstorming
       - writing-plans
       - executing-plans
-      - verification-before-completion
-      - systematic-debugging
       - test-driven-development
       - subagent-driven-development
       - using-git-worktrees
@@ -22,7 +30,7 @@ skills:
       - finishing-a-development-branch
       - writing-skills
   extension:
-    source: gstack + GSD-redux + ECC
+    source: gstack + GSD + ECC
     enabled:
       - autoplan
       - browser-qa
@@ -81,12 +89,28 @@ hooks:
   core:
     - session-start-bootstrap
     - pre-bash-guard
-    - pre-prompt-guard
     - pre-rtk-rewrite
+    - pre-read-before-edit
+    - pre-config-protection
+    - pre-context-injector
+    - pre-manifest-validator
     - post-secret-detector
+    - post-edit-format
+    - post-operation-log
+    - pre-compact-state
     - stop-quality-gate
     - stop-pattern-extraction
-    - pre-compact-state
+    - stop-session-summary
+    - stop-readme-updater
+  _optional:
+    - pre-dep-checker
+    - pre-git-hook-bypass-block
+    - post-edit-lint
+    - post-test-runner
+    - post-doc-reminder
+    - stop-notify
+    - stop-debug-checker
+    - stop-daily-summary
 
 commands:
   workflow:
@@ -111,12 +135,15 @@ catalog:
   agents: catalog/agents/
   rules: catalog/rules/
   note: 按需复制到项目 .claude/，不全局加载
-  gstack_agents:
-    - eng-reviewer
-    - ceo-reviewer
-    - designer
-    - qa
-    - security
 
 disabled_hooks:
-  - pre-task-planner  # 互博 writing-plans，见 MANIFEST planning.excludes
+  - pre-task-planner
+
+mcp_loading:
+  always: [memory, thinking, fs, fetch, time]
+  dev: [gh, git, ctx7, pw, crawl, chrome-devtools]
+  ops: [redis, sqlite, docker, postgres]
+  search: [brave, exa]
+  design: [figma]
+  optional: [puppeteer, glif]
+  profile_env: CLAUDE_MCP_PROFILE

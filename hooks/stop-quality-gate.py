@@ -19,7 +19,7 @@ def check_quality_gates():
                 plans = json.load(f)
             if plans:
                 issues.append("ℹ️ 存在活跃计划，建议在ship前执行quality-gate技能验证")
-        except:
+        except (json.JSONDecodeError, FileNotFoundError, OSError):
             pass
     
     return issues
