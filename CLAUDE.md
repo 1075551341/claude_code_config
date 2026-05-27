@@ -29,9 +29,7 @@
 
 ---
 
-## 铁律 R1–R11
-
-> 完整定义 → `rules/CORE.md`
+## 铁律 R1–R13
 
 | # | 约束 | 核心 |
 |---|------|------|
@@ -46,8 +44,10 @@
 | R9 | 命令安全 | 禁 `cd+重定向` / `powershell -Command` |
 | R10 | 简洁优先 | 最小代码 |
 | R11 | 安全默认 | 不信任输入、无硬编码密钥 |
-| R12 | 子Agent隔离 | fresh context + 结构化制品通信，禁止共享可变状态 |
+| R12 | 子Agent隔离 | fresh context + 三态制品通信，禁止共享可变状态 |
 | R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
+
+> 扩展说明 → `rules/CORE.md` |
 
 Karpathy 四原则 → `rules/CORE.md` + skill/karpathy-guidelines
 

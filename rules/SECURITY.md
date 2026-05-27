@@ -129,4 +129,3 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 ```
 
 延伸阅读：[efij/awesome-claude-code-security](https://github.com/efij/awesome-claude-code-security)
-```
