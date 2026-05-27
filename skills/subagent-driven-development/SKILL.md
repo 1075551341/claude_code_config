@@ -1,273 +1,100 @@
 ---
 name: subagent-driven-development
-description: 用于子代理驱动开发模式，每个任务由新子代理执行并经过两阶段审查，含并行调度能力。当有实施计划需要执行
-triggers: [用于子代理驱动开发模式，每个任务由新子代理执行并经过两阶段审查，含并行调度能力。当有实施计划需要执行, 需要将任务分发给子代理, 复杂功能需要分步实现, 并行调度多个子Agent时使用]
+description: 将原子任务计划分派给子Agent，两阶段审查（spec合规→代码质量），连续执行不问"继续"。与writing-plans配对。
+triggers: [子代理执行, 任务分派, 两阶段审查, 连续执行, 子agent]
 layer: supplement
-source: affaan-m/ECC + GSD-redux
+source: obra/superpowers
 ---
 
-# 子代理驱动开发
+# 子Agent驱动开发
 
-## 核心理念
+将 writing-plans 产出的原子任务计划按 DAG 顺序派发给子Agent，每个子任务经过两阶段审查。
 
-将复杂任务拆分为独立子任务，分发给专门的子代理并行处理，最后整合结果
+## 前置条件
 
-```
-┌─────────────┐
-│   主代理    │ ← 协调和整合
-└──────┬──────┘
-       │
-  ┌────┼────┬────────┐
-  ↓    ↓    ↓        ↓
-┌───┐┌───┐┌───┐  ┌───┐
-│子1││子2││子3│  │子4│  ← 并行执行
-└───┘└───┘└───┘  └───┘
-```
+- writing-plans 已产出原子任务计划
+- 任务 DAG 图明确（无依赖 = 可并行）
 
-## 工作流程
-
-### 第一阶段：规范制定
-
-主代理定义清晰的接口规范：
-
-```markdown
-## 任务规范
-
-### 目标
-
-[明确的任务目标]
-
-### 输入
-
-- 参数1：类型、说明
-- 参数2：类型、说明
-
-### 输出
-
-- 返回值：类型、说明
-- 格式要求：JSON Schema / 文件格式
-
-### 约束
-
-- 性能要求
-- 兼容性要求
-- 安全要求
-
-### 验收标准
-
-- [ ] 标准1
-- [ ] 标准2
-```
-
-### 第二阶段：任务分发
-
-```typescript
-// 将大任务拆分为独立子任务
-const tasks = [
-  {
-    id: "auth",
-    agent: "backend-developer",
-    spec: "实现用户认证模块，包含登录、注册、Token 刷新",
-    dependencies: [],
-    output: "auth-module/",
-  },
-  {
-    id: "user-ui",
-    agent: "frontend-developer",
-    spec: "实现用户登录注册页面，对接 auth API",
-    dependencies: ["auth"], // 依赖认证模块的 API 文档
-    output: "src/pages/auth/",
-  },
-  {
-    id: "db",
-    agent: "database-architect",
-    spec: "设计用户表结构，支持多种登录方式",
-    dependencies: [],
-    output: "migrations/",
-  },
-];
-
-// 并行启动无依赖的任务
-await Promise.all([
-  runAgent(
-    "backend-developer",
-    tasks.find((t) => t.id === "auth"),
-  ),
-  runAgent(
-    "database-architect",
-    tasks.find((t) => t.id === "db"),
-  ),
-]);
-
-// 等待依赖完成后启动后续任务
-await runAgent(
-  "frontend-developer",
-  tasks.find((t) => t.id === "user-ui"),
-);
-```
-
-### 第三阶段：质量审查
-
-```markdown
-## 审查清单
-
-### 规范符合性
-
-- [ ] 输出格式符合规范
-- [ ] 接口定义一致
-- [ ] 命名规范一致
-
-### 代码质量
-
-- [ ] 无明显 bug
-- [ ] 错误处理完善
-- [ ] 代码可读性好
-
-### 集成检查
-
-- [ ] 模块间接口正确
-- [ ] 依赖关系正确
-- [ ] 无循环依赖
-```
-
-## 子代理类型
-
-### 按职责划分
-
-| 代理类型           | 适用任务          | 输出                |
-| ------------------ | ----------------- | ------------------- |
-| frontend-developer | UI 组件、页面开发 | Vue/React 组件      |
-| backend-developer  | API、服务开发     | Express/NestJS 代码 |
-| database-expert | 数据库设计        | Migration 脚本      |
-| tester             | 测试用例编写      | 测试文件            |
-| doc-writer         | 文档编写          | Markdown 文档       |
-
-### 按领域划分
-
-| 代理类型        | 适用场景           |
-| --------------- | ------------------ |
-| auth-expert     | 认证授权相关       |
-| payment-expert  | 支付相关           |
-| search-expert   | 搜索功能           |
-| realtime-expert | WebSocket/实时通信 |
-
-## 通信协议
-
-### 任务分配消息
-
-```json
-{
-  "taskId": "auth-001",
-  "agentType": "backend-developer",
-  "spec": {
-    "goal": "实现 JWT 认证中间件",
-    "input": {
-      "userSchema": "参考 models/user.ts"
-    },
-    "output": {
-      "format": "TypeScript 文件",
-      "path": "src/middlewares/auth.ts"
-    },
-    "constraints": ["Token 有效期 15 分钟", "支持刷新 Token"]
-  }
-}
-```
-
-### 结果反馈消息
-
-```json
-{
-  "taskId": "auth-001",
-  "status": "completed",
-  "output": {
-    "files": ["src/middlewares/auth.ts"],
-    "exports": ["authMiddleware", "refreshToken"],
-    "usage": "参考 README.md"
-  },
-  "issues": []
-}
-```
-
-## GSD 连续执行协议
-
-子 agent 必须遵循以下规则：
-
-1. **Fresh context**：每个子 agent 启动时只注入完成任务所需的最小上下文（spec + 相关文件路径 + 接口定义）
-2. **连续执行**：子 agent 完成当前任务后，主 agent 立即派发下一个可执行任务（无依赖阻塞的），不等待用户确认
-3. **状态回传**：子 agent 完成时返回 `DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED` + 产出物路径
-4. **上下文预算**：子 agent 上下文 ≤30%，超出则拆分为更小的子任务
-5. **失败重试**：同一方案失败 ≤2 次，第 3 次切换方案或上报主 agent
-
-## 最佳实践
-
-### 1. 任务粒度
+## 核心流程
 
 ```
-✅ 合适：一个子任务 1-4 小时完成
-❌ 过大：一个子任务需要几天
-❌ 过小：一个子任务几分钟
+writing-plans 原子任务
+  → 按波次派发子Agent
+    → 每个子Agent: fresh context + 单任务
+      → 两阶段审查
+        → 通过 → 合并结果 → 下一个任务
+        → 失败 → 打回修改 → 重新审查
 ```
 
-### 2. 接口先行
+## 两阶段审查
 
-```typescript
-// 先定义接口，再分发任务
-interface AuthService {
-  login(email: string, password: string): Promise<LoginResult>;
-  register(data: RegisterData): Promise<User>;
-  refresh(token: string): Promise<TokenPair>;
-}
+每个子Agent 完成任务后，审查者独立审查：
 
-// 前端代理基于接口开发
-// 后端代理基于接口实现
-```
+### Phase 1: Spec 合规性
+- 任务的所有要求都满足了吗？
+- 输出格式/文件路径/接口定义与 spec 一致吗？
+- 有无超出 spec 范围的额外改动？
 
-### 3. 隔离原则
+### Phase 2: 代码质量
+- 代码可直接工作吗？（不是框架/占位符）
+- 有测试吗？测试通过吗？
+- 命名清晰吗？风格一致吗？
+- 有无安全/性能问题？
 
-- 每个子代理在独立目录工作
-- 共享代码通过接口访问
-- 避免直接修改其他模块代码
+任一阶段失败 = 打回修改。两阶段都通过 = 合并。
 
-### 4. 增量集成
+## 连续执行协议
 
 ```
-完成一个 → 集成一个 → 验证一个
-而不是全部完成再集成
+任务完成 → 立即派发下一个无依赖任务
+           └─ 不问"是否继续"
+           └─ 不等待用户确认
+           └─ 直到当前波次所有任务完成
+
+任务阻塞 → 立即停止，报告：
+           ├─ 阻塞原因（缺上下文/外部依赖/方案不可行）
+           ├─ 已尝试的方案
+           └─ 建议下一步
+           └─ 禁止猜测、禁止跳过、禁止自行补全
 ```
 
-## 错误处理
+## 状态机
 
-### 子任务失败
+| 状态 | 含义 | 后续动作 |
+|------|------|---------|
+| DONE | 两阶段审查通过，已合并 | 派发下一个任务 |
+| DONE_WITH_CONCERNS | 审查通过但有保留意见 | 记录 concern，继续 |
+| NEEDS_CONTEXT | 缺少信息无法继续 | 注入缺失上下文，重试 |
+| BLOCKED | 依赖外部/方案不可行 | 报告阻塞，等待干预 |
 
-```typescript
-try {
-  await runSubAgent(task);
-} catch (error) {
-  // 1. 记录失败原因
-  logger.error("Subtask failed", { task, error });
+## 上下文预算
 
-  // 2. 决定处理策略
-  if (task.critical) {
-    // 关键任务失败，停止整个流程
-    throw error;
-  } else {
-    // 非关键任务，跳过并记录
-    skippedTasks.push(task);
-  }
+- 每个子Agent ≤30% 上下文使用率
+- 注入最小必要上下文：任务 spec + 相关文件路径 + 接口定义
+- 任务完成立即释放上下文
+- 主会话保持 30-40%，仅做编排
 
-  // 3. 尝试替代方案
-  if (task.fallback) {
-    await runSubAgent(task.fallback);
-  }
-}
+## DAG 派发规则
+
+```
+无依赖子目标 → 同一批次并行派发
+有依赖子目标 → 等待前置完成 + 制品写入后派发
+冲突检测：同一制品路径禁止并行写入
+失败传播：关键任务失败 → 终止后续依赖任务
 ```
 
-### 冲突解决
+## 失败重试限制
 
-```markdown
-当多个子代理修改同一文件时：
+同一方案失败 ≤2 次。第 3 次必须切换方案或上报主Agent（铁律 R5）。
 
-1. 预防：通过任务划分避免冲突
-2. 检测：使用 git diff 检查冲突
-3. 解决：主代理协调合并
-```
+## 模型选择
+
+| 任务级别 | 模型 | 场景 |
+|---------|------|------|
+| P0 (关键) | Opus | 核心逻辑、安全敏感、复杂算法 |
+| P1 (重要) | Sonnet | 业务逻辑、数据模型 |
+| P2 (一般) | Haiku | 格式化、简单修复、文档 |
+
+## 与 writing-plans 的对接
+
+writing-plans 输出原子任务 → subagent-driven-development 按 DAG 执行 → 每个任务两阶段审查 → 全部通过 → verification-before-completion 验证

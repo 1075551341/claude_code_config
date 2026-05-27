@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 _editor_hook_launcher.py v2.0
 Fast no-op in editor/IDE context; delegates to real hook in CLI.

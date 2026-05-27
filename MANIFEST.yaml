@@ -1,7 +1,7 @@
-# 组件唯一归属源 — 防左右手互博 — v4.0
-# 权威: spec/claude-config-integration/design-v4.md
+# 组件唯一归属源 — 防左右手互博 — v5.0
+# 权威: .planning/phases/design-v5.md | 五柱×五阶段×三层
 
-version: "4.0"
+version: "5.0"
 updated: "2026-05-27"
 
 pillars:
@@ -91,10 +91,10 @@ concerns:
     excludes: [agent/context-manager]
 
   context_retrieval:
-    owner: agent/context-manager
+    owner: plugin/claude-mem
     skill: skill/memory-compression
     source: thedotmack/claude-mem
-    note: 仅检索/持久化，不重复mem存储逻辑
+    note: 检索/持久化由 claude-mem 统一负责，原 agent/context-manager 已合并
 
   context_rot:
     owner: skill/memory-compression

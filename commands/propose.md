@@ -4,10 +4,10 @@
 
 ## 输出
 
-在 `specs/CHANGE_NAME/` 下创建：
+在 `openspec/changes/CHANGE_NAME/` 下创建：
 
 ```
-specs/CHANGE_NAME/
+openspec/changes/CHANGE_NAME/
 ├── proposal.md   # 为什么要做、改什么、影响范围
 ├── specs/        # 需求规格与场景
 ├── design.md     # 技术方案（可选）

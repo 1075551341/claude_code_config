@@ -14,7 +14,6 @@ source: garrytan/gstack
 
 | 维度 | 说明 |
 |------|------|
-| 测试覆盖 | 新增/修改代码是否有对应测试 |
 | 边界用例 | 空值、极值、并发、错误路径 |
 | 回归风险 | 变更是否可能破坏现有功能 |
 | 测试质量 | 断言是否充分、是否有 flaky 风险 |
@@ -37,6 +36,15 @@ source: garrytan/gstack
 - [受影响的现有功能] → 建议验证方式
 ```
 
-## 边界
+## 互斥声明
 
-不负责：编写测试代码（→ qa-engineer）、代码审查（→ eng-reviewer）
+本 agent 不负责：
+- 覆盖率评估 → `agent/eng-reviewer`（eng-reviewer 审"是否写了必要测试"）
+- 测试代码编写 → `qa-engineer`
+- 代码风格审查 → `agent/code-reviewer`
+- 安全审查 → `agent/security-reviewer`
+
+**分工边界**：
+- eng-reviewer 回答"测试覆盖量是否足够"
+- QA 回答"边界用例和回归风险是否被覆盖"
+- 两者互补，不重复评分

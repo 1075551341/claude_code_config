@@ -28,9 +28,9 @@
       "args": ["-y", "@modelcontextprotocol/server-time"]
     },
     "gh": {
-      "_description": "GitHub MCP 服务器（@modelcontextprotocol/server-github）。场景：PR/Issue/Actions/Code Search/Dependabot/Discussions。注：已 deprecated，后续迁移至 github/github-mcp-server OAuth 版",
+      "_description": "GitHub MCP 服务器（github/github-mcp-server）。80+工具覆盖 Pull Requests/Issues/Actions/Code Security/Copilot/Dependabot/Discussions/Gists/Labels/Notifications/Orgs/Projects/Secret Protection/Advisories/Stargazers。OAuth 远程模式免 PAT 管理。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": ["-y", "@anthropic/github-mcp-server"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }

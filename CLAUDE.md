@@ -8,7 +8,7 @@
 ## 优先级链
 
 ```
-用户显式指令 > CLAUDE.md 指针 > 激活 skill > lazy rules > alwaysApply rules > default prompt
+用户显式指令 > CLAUDE.md 指针 > 激活 skill > lazy规则 > alwaysApply规则 > 默认
 ```
 
 ---
@@ -18,14 +18,24 @@
 ```
 用户输入
 ├─ 简单（≤3文件、需求明确）→ 执行 → 验证
-├─ Bug/Issue → skill/triage → 路由
-└─ 非简单 → ①规划(brainstorming) → ②规格(writing-plans) 
-           → ③执行(executing-plans) → ④验证(verification) → ⑤学习
+├─ Bug/Issue → skill/triage（P0-P3+状态机）→ 路由
+└─ 非简单 → ①规划(brainstorming) → ②规格(writing-plans 原子) 
+           → ③执行(executing-plans / SDD+TDD) → ④验证(verification) → ⑤学习
 
-每阶段: 骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+每阶段: 骨架层(always-on) + 执行层(reactive) + 护栏层(guardrails)
 ```
 
 <HARD-GATE>用户批准设计前禁止实现。详见 skill/brainstorming</HARD-GATE>
+
+---
+
+## 执行模式：SDD + TDD 组合
+
+```
+SDD: spec/design → writing-plans(原子任务 2-5min) → subagent(两阶段审查) → verify
+TDD: RED(失败测试) → GREEN(最小通过) → REFACTOR → verify
+组合: writing-plans → 每个task: RED→GREEN→REFACTOR → 两阶段审查 → verify
+```
 
 ---
 
@@ -44,12 +54,10 @@
 | R9 | 命令安全 | 禁 `cd+重定向` / `powershell -Command` |
 | R10 | 简洁优先 | 最小代码 |
 | R11 | 安全默认 | 不信任输入、无硬编码密钥 |
-| R12 | 子Agent隔离 | fresh context + 三态制品通信，禁止共享可变状态 |
-| R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
+| R12 | 子Agent隔离 | fresh context + 三态制品通信 |
+| R13 | 制品存活 | 跨会话持久化 |
 
-> 扩展说明 → `rules/CORE.md`
-
-Karpathy 四原则 → `rules/CORE.md` + skill/karpathy-guidelines
+> 扩展 → `rules/CORE.md` | Karpathy 四原则 → skill/karpathy-guidelines
 
 ---
 
@@ -72,6 +80,7 @@ MANIFEST.yaml 查 owner → P0 skill → catalog skill → agent 委派 → hook
 
 **Token 双轨**：Shell → RTK hook | 回复 → caveman-compress skill
 **上下文阈值**：<40% 正常 / 50% compact / 70% 强制压缩
+**护栏层**：骨架4 + 按需4 + 学习4 → `SPEC.md`
 
 ---
 
@@ -102,20 +111,25 @@ infra/配置   → CEO可跳过
 | 命令 | 阶段 | 作用 |
 |------|------|------|
 | /discuss | ①规划 | 明确需求 |
-| /plan | ②规格 | 设计方案 |
-| /execute | ③执行 | 按计划实现 |
-| /verify | ④验证 | 交叉验证 |
+| /plan | ②规格 | 设计方案(/propose → openspec) |
+| /execute | ③执行 | 按原子任务计划实现 |
+| /verify | ④验证 | 交叉验证 + gstack审查 |
 | /ship | — | 合并部署 |
-| /review | ④验证 | gstack审查 |
-| /compact | ⑤学习 | 压缩上下文 |
-| /status | — | 查看进度 |
+| /compact | ⑤学习 | 压缩上下文 + 模式提取 |
 
 ---
 
-## caveman-compress
+## Token 效率
 
-触发：输出>500字 / 上下文>50% / 用户要求
-规则：去冗余→去解释→保留关键信息→保留代码
+- **输出压缩**：500字 / >50%上下文 → caveman-compress
+- **Shell压缩**：Bash 命令 → pre-rtk-rewrite hook
+- **上下文管理**：CONTEXT.md 三级阈值 + subagent 30%预算
+
+---
+
+## 回复语言
+
+所有回复优先使用中文。代码块原文保留。
 
 ---
 
@@ -123,15 +137,13 @@ infra/配置   → CEO可跳过
 
 | 内容 | 位置 |
 |------|------|
-| 完整索引 | SPEC.md |
+| 配置法典 | SPEC.md (v5.0) |
 | 组件归属 | MANIFEST.yaml |
-| 规则铁律 | rules/CORE.md |
+| 铁律+编码 | rules/CORE.md |
 | 上下文工程 | rules/CONTEXT.md |
+| 最佳实践 | rules/BESTPRACTICE.md |
+| 工作流 | rules/WORKFLOW.md |
 | MCP 定义 | .mcp.json |
-| 审查 agent | agents/ |
-| 领域库 | catalog/ |
-| 命令定义 | commands/ |
-| 模板 | templates/ |
 | 同步指南 | SYNC_GUIDE.md |
 
 ---
@@ -139,6 +151,6 @@ infra/配置   → CEO可跳过
 ## 同步
 
 Claude Code 主环境；Cursor/Windsurf/Trae 软链接同步：CLAUDE.md + skills/ + agents/ + rules/
-hooks/commands/MCP 不同步。
+hooks/commands/MCP/plugins 不同步。
 
 @RTK.md

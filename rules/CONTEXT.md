@@ -38,6 +38,28 @@ triggers:
 
 新会话启动：优先加载三态制品 → 其次 rules/CONTEXT.md → 最后对话历史。
 
+## Canonical Source Precedence（规范引用链）
+
+> **来源**: GSD-redux | 子Agent 须逐字引用规范文档，禁止凭记忆转述
+
+| 优先级 | 文档类型 | 引用方式 |
+|--------|---------|---------|
+| 1 | CONTRIBUTING.md / CLAUDE.md | 逐字引用原文 |
+| 2 | ADR (docs/adr/*) | 逐字引用架构决策 |
+| 3 | CONTEXT.md (制品) | 逐字引用当前事实 |
+| 4 | Agent 记忆 | 仅参考，不可作为决策依据 |
+
+违反此链 = 子Agent 不可信。规范文档是唯一权威。
+
+## Trust-But-Verify 纪律
+
+> **来源**: GSD-redux | Agent 自述不可信，一律通过 API 直接验证
+
+- 子Agent 声称"CI 通过"→ 通过 `gh api` 直接查询 check runs 状态
+- 子Agent 声称"测试覆盖完整"→ 检查实际测试文件和覆盖率报告
+- 子Agent 声称"无 lint 错误"→ 运行 lint 命令直接验证
+- 违反验证纪律 = DONE_WITH_CONCERNS，需补充验证证据
+
 ## 子Agent调度原则
 
 - 研究者/计划者/执行者各自 fresh context（200K token）

@@ -4,7 +4,7 @@
 
 ## 流程
 
-1. 读取 `specs/CHANGE_NAME/tasks.md`
+1. 读取 `openspec/changes/CHANGE_NAME/tasks.md`
 2. 按顺序执行任务清单
 3. 每完成一项，标记 `[x]`
 4. 全部完成后运行 `/verify`
