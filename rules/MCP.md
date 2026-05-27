@@ -15,11 +15,12 @@ source: github/github-mcp-server + anthropics/claude-code-action
 
 ### 1. 单一权威源
 
-`.mcp.json` 是 MCP 服务器配置的唯一权威源。
+`.mcp.json` 是 MCP 服务器配置的**唯一权威源**。
 
 - 添加服务器 → 只修改 `.mcp.json`
 - 删除服务器 → 只修改 `.mcp.json`
 - 修改参数 → 只修改 `.mcp.json`
+- settings.json 不再重复定义 MCP 服务器（v3.0 起删除冗余）
 
 ### 2. 分组视图
 
@@ -28,11 +29,12 @@ source: github/github-mcp-server + anthropics/claude-code-action
 ```json
 {
   "toolsets": {
-    "core": ["memory", "thinking", "fs", "fetch", "time"],
-    "dev": ["gh", "git", "ctx7", "pw", "crawl"],
-    "ops": ["redis", "sqlite", "docker", "postgres", "supabase"],
-    "search": ["brave", "exa"],
-    "collab": ["figma", "linear", "notion", "slack"]
+    "always": ["memory", "thinking", "fs", "fetch", "time"],
+    "dev": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],
+    "ops": ["redis", "sqlite", "docker"],
+    "search": ["brave", "exa", "perplexity"],
+    "design": ["figma"],
+    "optional": ["postgres", "puppeteer", "glif"]
   }
 }
 ```
@@ -40,12 +42,15 @@ source: github/github-mcp-server + anthropics/claude-code-action
 - servers.json 中的服务器名必须在 .mcp.json 中存在
 - servers.json 不重复服务器参数定义
 
-### 3. 运行时覆盖
+### 3. 按需加载策略
 
-`settings.json` 中 `mcpServers` 仅保留需要运行时环境覆盖的条目。
+通过环境变量 `CLAUDE_MCP_PROFILE` 控制加载分组：
 
-- 不与 .mcp.json 重复定义同一服务器
-- 仅当需要覆盖 env 时才在 settings.json 中添加条目
+```bash
+# 默认: always (5个基础服务器)
+# 开发: CLAUDE_MCP_PROFILE=dev → + dev (6个) = 11个
+# 完整: CLAUDE_MCP_PROFILE=all → 全量 (18个)
+```
 
 ### 4. 配置变更流程
 
@@ -59,8 +64,9 @@ source: github/github-mcp-server + anthropics/claude-code-action
 
 ### 5. 禁止项
 
-- 禁止在三处配置中定义同一服务器但参数不一致
-- 禁止在 settings.json mcpServers 中硬编码 API 密钥
+- 禁止在 .mcp.json 外重复定义 MCP 服务器
+- 禁止在 settings.json 中定义 mcpServers（v3.0+）
+- 禁止硬编码 API 密钥（使用 ${ENV_VAR} 引用）
 - 禁止删除 .mcp.json 中的服务器而不更新 servers.json 分组映射
 
 ## 验证清单
@@ -68,7 +74,7 @@ source: github/github-mcp-server + anthropics/claude-code-action
 ```
 □ .mcp.json 包含所有需要的 MCP 服务器
 □ servers.json 分组中的服务器名均在 .mcp.json 中存在
-□ settings.json mcpServers 无与 .mcp.json 重复的完整定义
-□ 同一服务器在三处配置中参数一致
+□ settings.json 无 mcpServers 定义（v3.0+）
 □ 无硬编码 API 密钥
+□ CLAUDE_MCP_PROFILE 分组与实际使用一致
 ```
