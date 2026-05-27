@@ -1,12 +1,23 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "_comment": "MCP 分组视图 | 权威源：.mcp.json | 本文件仅定义 toolset 分组映射，不重复服务器参数",
+  "_comment": "MCP 分组视图 v3.0 | 权威源: .mcp.json | 仅定义toolset分组映射",
   "toolsets": {
-    "core": ["memory", "thinking", "fs", "fetch", "time"],
+    "always": ["memory", "thinking", "fs", "fetch", "time"],
     "dev": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],
-    "ops": ["redis", "sqlite", "docker", "postgres", "supabase"],
-    "search": ["brave", "exa", "perplexity"],
-    "collab": ["figma", "linear", "notion", "slack"],
-    "extra": ["puppeteer", "glif"]
+    "ops": ["redis", "sqlite", "docker", "postgres"],
+    "search": ["brave", "exa"],
+    "design": ["figma"],
+    "optional": ["claude-context", "puppeteer", "glif"]
+  },
+  "loading": {
+    "default": "always",
+    "env": "CLAUDE_MCP_PROFILE",
+    "profiles": {
+      "dev": "always + dev",
+      "ops": "always + ops",
+      "search": "always + search",
+      "design": "always + design",
+      "full": "always + dev + ops + search + design"
+    }
   }
 }
