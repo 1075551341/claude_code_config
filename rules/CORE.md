@@ -153,11 +153,22 @@ func createService(clock Clock) { now := clock.Now() }
 **适用场景**：业务逻辑、数据模型、API 响应中的时间戳
 **例外**：纯 UI 展示（如页面显示当前时间）、CLI 工具的一次性脚本
 
+## 铁律 R12–R13
+
+> R1–R11 → `CLAUDE.md`
+
+| # | 约束 | 核心 |
+|---|------|------|
+| R12 | 子Agent隔离 | fresh context + 结构化制品通信，禁止共享可变状态 |
+| R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
+
 ## 工作原则（来自五柱整合）
 
 - **Tool-First**：先查 MANIFEST → skill → catalog → agent → hook/MCP，不重复造轮子
 - **Clear Boundaries**：agent 间职责不重叠，MANIFEST.yaml 定义唯一归属
 - **Report Failures**：失败时报告原因 + 已尝试方案 + 建议下一步，不静默重试超过 2 次
+- **子Agent隔离(R12)**：每个子agent fresh context，通过 openspec/ + .planning/ + memory/ 三态制品通信
+- **制品存活(R13)**：新会话优先加载结构化制品，而非依赖对话历史
 
 ## 项目约定
 

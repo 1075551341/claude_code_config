@@ -48,10 +48,13 @@ infra/配置      → CEO Review 可跳过
 
 ## 禁止（防互博）
 
-- agent 间共享可变状态
+- agent 间共享可变状态（包括全局变量/文件锁/环境变量隐式共享）
 - planner 与 agentic-orchestrator 同时编排同一任务
 - hook/pre-task-planner 替代 skill/writing-plans
 - context-manager 重复 claude-mem 存储逻辑
+- 同一制品路径并行写入（DAG冲突检测阻断）
+- 子agent 回写主会话上下文（仅通过三态制品通信）
+- 按 agent 名称堆叠委派（应按 MANIFEST concern→owner 路由）
 
 ## 上下文预算
 
