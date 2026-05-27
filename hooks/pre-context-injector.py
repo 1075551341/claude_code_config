@@ -164,6 +164,39 @@ def read_package_info(project_root: str) -> str | None:
     return None
 
 
+def read_three_state_artifacts(project_root: str) -> str | None:
+    """加载三态制品：openspec/ + .planning/ + memory/ 的最新状态"""
+    parts = []
+    # openspec/changes/
+    openspec_dir = os.path.join(project_root, "openspec", "changes")
+    try:
+        if os.path.isdir(openspec_dir):
+            changes = sorted(os.listdir(openspec_dir))[-3:]
+            if changes:
+                parts.append(f"OpenSpec changes: {', '.join(changes)}")
+    except Exception:
+        pass
+    # .planning/phases/
+    planning_dir = os.path.join(project_root, ".planning", "phases")
+    try:
+        if os.path.isdir(planning_dir):
+            phases = sorted(os.listdir(planning_dir))[-3:]
+            if phases:
+                parts.append(f"Planning phases: {', '.join(phases)}")
+    except Exception:
+        pass
+    # memory/
+    memory_dir = os.path.join(project_root, "memory")
+    try:
+        if os.path.isdir(memory_dir):
+            mem_files = sorted(os.listdir(memory_dir))[-5:]
+            if mem_files:
+                parts.append(f"Memory files: {', '.join(mem_files)}")
+    except Exception:
+        pass
+    return "\n".join(parts) if parts else None
+
+
 def main():
     try:
         # ── Step 1: 读入 stdin ─────────────────────────────────────────────
@@ -209,6 +242,14 @@ def main():
 
         # ── Step 5: 收集上下文（各自独立 try/except）─────────────────────
         context_parts = []
+
+        # 三态制品加载：openspec/ + .planning/ + memory/
+        try:
+            artifact_context = read_three_state_artifacts(project_root)
+            if artifact_context:
+                context_parts.append(f"## 三态制品（跨会话）\n\n{artifact_context}")
+        except Exception:
+            pass
 
         pkg_info = read_package_info(project_root)
         if pkg_info:

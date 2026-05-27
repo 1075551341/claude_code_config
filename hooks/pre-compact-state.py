@@ -34,11 +34,28 @@ def main():
         
         state_file = os.path.join(state_dir, "pre-compact-state.json")
         
+        # 收集 openspec/ 状态快照
+        openspec_state = {}
+        openspec_dir = os.path.join(os.getcwd(), "openspec", "changes")
+        try:
+            if os.path.isdir(openspec_dir):
+                for change_id in os.listdir(openspec_dir):
+                    change_path = os.path.join(openspec_dir, change_id)
+                    if os.path.isdir(change_path):
+                        tasks_file = os.path.join(change_path, "tasks.md")
+                        openspec_state[change_id] = {
+                            "has_tasks": os.path.exists(tasks_file),
+                            "files": os.listdir(change_path)[:10],
+                        }
+        except Exception:
+            pass
+
         state = {
             "timestamp": datetime.utcnow().isoformat(),
             "cwd": os.getcwd(),
             "event": "pre_compact",
-            "note": "State saved before context compaction"
+            "note": "State saved before context compaction",
+            "openspec_snapshot": openspec_state,
         }
         
         with open(state_file, "w", encoding="utf-8") as f:

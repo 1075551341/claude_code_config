@@ -49,7 +49,24 @@ def main():
                 "description": "读取后编辑模式",
                 "confidence": 0.7
             })
-        
+
+        # DAG 执行模式检测
+        agent_tool_usages = [
+            call for call in tool_calls
+            if call.get("tool_name") == "Agent"
+        ]
+        if len(agent_tool_usages) >= 3:
+            subagent_types = [
+                c.get("tool_input", {}).get("subagent_type", "unknown")
+                for c in agent_tool_usages
+            ]
+            patterns.append({
+                "type": "dag_execution",
+                "description": f"DAG执行：{len(agent_tool_usages)}子Agent（{', '.join(set(subagent_types))}）",
+                "subagent_count": len(agent_tool_usages),
+                "confidence": 0.9,
+            })
+
         if not patterns:
             sys.exit(0)
 
