@@ -1,12 +1,12 @@
-# 组件唯一归属源 — 防左右手互博 — v5.0
-# 权威: .planning/phases/design-v5.md | 五柱×五阶段×三层
+# 组件唯一归属源 — 防左右手互博 — v7.0
+# 权威: SPEC.md v7.0 | 五柱×五阶段×三层 | 28仓库全量整合
 
-version: "5.0"
-updated: "2026-05-27"
+version: "7.0"
+updated: "2026-05-28"
 
 pillars:
   superpowers: { source: obra/superpowers, capabilities: [brainstorming, verification, debugging] }
-  gsd: { source: gsd-build/get-shit-done, capabilities: [context-engineering, continuous-execution, read-before-edit] }
+  gsd: { source: open-gsd/get-shit-done-redux, capabilities: [context-engineering, continuous-execution, read-before-edit] }
   openspec: { source: Fission-AI/OpenSpec, capabilities: [proposal-spec-tasks, spec-validation] }
   gstack: { source: garrytan/gstack, capabilities: [eng-review, ceo-review, design-review, qa-review, security-review] }
   claude_mem: { source: thedotmack/claude-mem, capabilities: [cross-session-memory, pattern-extraction] }
@@ -99,7 +99,7 @@ concerns:
   context_rot:
     owner: skill/memory-compression
     hook: pre-compact-state
-    source: GSD-redux
+    source: open-gsd/get-shit-done-redux
     stage: learn
 
   shell_token:
@@ -122,7 +122,7 @@ concerns:
 
   phase_planning:
     owner: planning/phases/
-    source: GSD-redux
+    source: open-gsd/get-shit-done-redux
     stage: spec
     excludes: [openspec/changes]
 
@@ -146,7 +146,7 @@ concerns:
     owner: skill/subagent-driven-development
     hooks: [pre-read-before-edit]
     rules_ref: rules/WORKFLOW.md
-    source: GSD
+    source: open-gsd/get-shit-done-redux
     stage: execute
 
   gstack_review:
@@ -199,7 +199,7 @@ concerns:
   context_engineering:
     owner: rules/CONTEXT.md
     skill: skill/context-engineering
-    source: GSD-redux
+    source: open-gsd/get-shit-done-redux
 
   manifest_validation:
     owner: hook/pre-manifest-validator
@@ -251,6 +251,50 @@ concerns:
     source: zilliztech/claude-context
     stage: execute
     note: optional 分组，启用条件见 rules/CONTEXT.md
+    excludes: [agent/code-explorer]
+
+  design_pipeline:
+    owner: skill/design-pipeline
+    source: garrytan/gstack + VoltAgent/awesome-design-md
+    stage: spec
+    note: shotgun多方案→对比板→HTML转化，品味记忆跨会话学习
+
+  gstack_learn:
+    owner: rules/WORKFLOW.md
+    source: garrytan/gstack
+    stage: learn
+    note: 跨会话学习管理，与 claude-mem 互补（项目级 vs 会话级）
+
+  gstack_cso:
+    owner: agent/cso
+    source: garrytan/gstack
+    stage: verify
+    note: OWASP Top 10 + STRIDE 威胁模型，17 误报排除
+
+  deer_dag:
+    owner: rules/WORKFLOW.md
+    source: bytedance/deer-flow
+    stage: execute
+    note: DAG四阶段（拆解→调度→整合→验证）+ 状态机
+
+  claude_mem_search:
+    owner: rules/CONTEXT.md
+    source: thedotmack/claude-mem
+    stage: execute
+    note: search→timeline→get_observations 三层渐进式检索，~10x token 节省
+
+  codegraph_mcp:
+    owner: .mcp.json
+    source: colbymchenry/codegraph
+    stage: execute
+    note: 预索引代码知识图谱 MCP，~35% token 节省，20+ 语言，按需启用
+
+  understand_anything:
+    owner: plugin/understand-anything
+    skill: skill/understand-anything
+    source: Lum1104/Understand-Anything
+    stage: execute
+    note: 交互式知识图 + 引导导览，多 Agent 管线，团队共享图谱 JSON
     excludes: [agent/code-explorer]
 
 p0_skills:

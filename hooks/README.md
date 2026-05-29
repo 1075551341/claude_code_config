@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v4.0
+# Hooks 钩子系统 v5.0
 
-> Claude Code 专用，不同步编辑器。15 核心 hooks + 37 _optional
+> Claude Code 专用，不同步编辑器。14 核心 hooks + 37 _optional
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.0 变更**：SessionStart 改由 superpowers + claude-mem 插件负责，本地不再重复
 
 ## 目录结构
 
@@ -13,12 +14,15 @@
 
 ---
 
-## 15 核心 Hook 清单
+## 14 核心 Hook 清单（SessionStart 由插件负责）
 
-### SessionStart (1)
-| Hook | 功能 | 层 |
-|------|------|-----|
-| `session-start-bootstrap.py` | 注入 using-superpowers + claude-mem 初始化 | 骨架 |
+### SessionStart — 由插件负责
+| 提供者 | 功能 |
+|--------|------|
+| superpowers plugin | using-superpowers bootstrap |
+| claude-mem plugin | worker 启动 + 上下文注入 |
+
+> 本地 `session-start-bootstrap.py` 保留备用（无插件环境），但不在 settings.local.json 中注册。
 
 ### PreToolUse (6)
 | Hook | 触发 | 功能 | 层 |

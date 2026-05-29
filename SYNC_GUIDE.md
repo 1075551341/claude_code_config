@@ -404,4 +404,4 @@ Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModel
 
 ---
 
-_版本：v7.2 | 更新：2026-05-23 | sync.ps1 v11.0_
+_版本：v7.3 | 更新：2026-05-28 | sync.ps1 v12.0_

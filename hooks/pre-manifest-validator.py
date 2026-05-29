@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# source: local (built from MANIFEST.yaml anti-conflict pattern)
 """pre-manifest-validator: PreToolUse MANIFEST 归属校验，防左右手互博
 
 读取 MANIFEST.yaml，解析当前调用 intent，校验 owner 与 excludes。

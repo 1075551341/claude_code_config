@@ -5,7 +5,7 @@ PreCompact Hook: Pre-Compact State
 
 exit 0 = 正常结束
 """
-# source: gsd-build/get-shit-done
+# source: open-gsd/get-shit-done-redux
 import json
 import sys
 import io

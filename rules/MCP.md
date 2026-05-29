@@ -69,6 +69,23 @@ source: github/github-mcp-server + anthropics/claude-code-action
 - 禁止硬编码 API 密钥（使用 ${ENV_VAR} 引用）
 - 禁止删除 .mcp.json 中的服务器而不更新 servers.json 分组映射
 
+### 6. 代码智能工具（按需安装）
+
+**codegraph** — 预索引代码知识图谱 MCP（colbymchenry/codegraph）
+- 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`
+- 已注册到 .mcp.json，按需启用
+- 效果：~35% token 节省，~70% 工具调用减少，100% 本地
+- 20+ 语言 + 14 框架路由识别 + iOS/RN 跨语言桥接
+- MCP 工具：codegraph_search | context | trace | callers | callees | impact | node | explore | files | status
+- 文件监听自动增量同步，无需手动 `codegraph sync`
+
+**Understand-Anything** — 交互式代码知识图（Lum1104/Understand-Anything）
+- 安装：`/plugin marketplace add Lum1104/Understand-Anything` → `/plugin install understand-anything`
+- 命令：`/understand`（分析构建知识图）、`/understand-dashboard`（可视化面板）、`/understand-chat`（自然语言问答）、`/understand-diff`（变更影响分析）、`/understand-explain`（文件/函数深读）、`/understand-onboard`（新成员入门指南）、`/understand-domain`（业务领域提取）、`/understand-knowledge`（Wiki 知识图）
+- 多 Agent 管线：project-scanner → file-analyzer → architecture-analyzer → tour-builder → graph-reviewer → domain-analyzer
+- 团队共享：提交 `.understand-anything/knowledge-graph.json`，队友跳过分析管线
+- 增量更新：`/understand --auto-update` 通过 post-commit hook 自动补丁
+
 ## 验证清单
 
 ```

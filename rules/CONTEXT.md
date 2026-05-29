@@ -3,7 +3,7 @@ name: context-engineering
 description: 上下文工程规则，管理上下文窗口质量与子agent调度
 alwaysApply: false
 layer: supplement
-source: gsd-build/get-shit-done + zilliztech/claude-context
+source: open-gsd/get-shit-done-redux + zilliztech/claude-context + colbymchenry/codegraph + thedotmack/claude-mem
 triggers:
   - 上下文管理
   - 子agent调度
@@ -99,6 +99,45 @@ triggers:
 3. **与 GSD 互补** — 不替代 <40/50/70% 阈值与 claude-mem SSOT
 
 **不启用时**：用 code-explorer agent + ctx7 MCP + 项目 `CONTEXT.md`。
+
+## codegraph MCP 使用策略
+
+> **来源**: colbymchenry/codegraph | 预索引知识图谱，~35% token 节省，~70% 工具调用减少
+
+**何时用 codegraph（而非 explore agent）**：
+- 项目已有 `.codegraph/` 索引（`codegraph init -i`）
+- 问"X 如何调用 Y"、"这个函数的调用链"等结构性问题
+- 需要在改代码前评估影响范围
+- 大项目（>500 文件）中探索性搜索
+
+**工具选择指南**：
+| 意图 | 工具 |
+|------|------|
+| 了解某个区域 | `codegraph_context` |
+| "X 如何到达 Y" | `codegraph_trace` |
+| 找调用者/被调用者 | `codegraph_callers` / `codegraph_callees` |
+| 改代码前评估影响 | `codegraph_impact` |
+| 查找符号 | `codegraph_search` |
+| 批量读取符号源码 | `codegraph_explore` |
+| 检查索引新鲜度 | `codegraph_status` |
+
+**规则**：
+- codegraph 返回的源码视为已读取，不重复 grep/Read
+- 无 `.codegraph/` 时回退到 explore agent
+- 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
+
+## claude-mem 三层搜索工作流
+
+> **来源**: thedotmack/claude-mem v13 | token 高效渐进式检索
+
+```
+search（compact index, ~50-100 tokens/条）
+  ↓ 筛选相关 ID
+timeline（时间线上下文）
+  ↓ 确认相关性
+get_observations（完整详情, ~500-1000 tokens/条）
+```
+~10x token 节省：先过滤再取详情，而非一次拉全量。
 
 ## 自改进要点
 

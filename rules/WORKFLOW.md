@@ -3,7 +3,7 @@ name: workflow
 description: 阶段式工作流规则，定义从讨论到发布的完整开发生命周期
 alwaysApply: false
 layer: supplement
-source: gsd-build/get-shit-done + bytedance/deer-flow + obra/superpowers
+source: open-gsd/get-shit-done-redux + bytedance/deer-flow + obra/superpowers + garrytan/gstack
 triggers:
   - 工作流
   - 阶段式开发
@@ -47,6 +47,15 @@ discuss → plan → execute → verify → ship
 - 目标：合并、部署、监控
 - 产出：合并PR、部署记录
 - 门控：CI通过、无回滚风险
+
+### 6. Learn 阶段（gstack /learn）
+> **来源**: garrytan/gstack | 跨会话学习管理
+
+- 目标：提取可复用模式，跨会话积累项目知识
+- 产出：`experiences/patterns/` + `experiences/rejected/`
+- `/learn`：查看/搜索/修剪跨会话学习内容
+- 与 claude-mem 互补：/learn 管项目级经验，claude-mem 管会话级记忆
+- 学习内容：项目特定模式、陷阱、偏好决策
 
 ## 质量门
 

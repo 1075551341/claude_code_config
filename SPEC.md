@@ -1,17 +1,18 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤280行）；本文件为法典索引。
-> 版本：5.0 | 五柱×五阶段×三层（骨架/执行/护栏） | 27仓库全量整合
+> 版本：7.0 | 五柱×五阶段×三层（骨架/执行/护栏） | 28仓库全量整合
 
 ---
 
 ## 架构公式
 
 ```
-RUNTIME  = Superpowers(方法论) + GSD(上下文工程) + OpenSpec(规格) + gstack(审查) + claude-mem(记忆)
+RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gstack(审查) + claude-mem(记忆)
 FORMAT   = ECC(路由) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 5审查 + 7补全
 OPTIMIZE = RTK(shell token) + caveman(输出token)
+INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 ```
 
 ## 三层架构
@@ -40,7 +41,7 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 | 柱 | 来源 | 职责 | 骨架 | 执行 | 护栏 |
 |----|------|------|------|------|------|
 | Superpowers | obra/superpowers | 方法论 + P0 + HARD-GATE | P0×4 | brainstorming→writing-plans(原子)→TDD→verify | def-in-depth + 反合理化 |
-| GSD | gsd-build/get-shit-done | 上下文工程 + 阈值 | 三级阈值 + 制品优先 | subagent(两阶段审查) + context-engineering | read-before-edit + canonical-source + trust-but-verify |
+| GSD Redux | open-gsd/get-shit-done-redux | 上下文工程 + 阈值 | 三级阈值 + 制品优先 | subagent(两阶段审查) + context-engineering | read-before-edit + canonical-source + trust-but-verify |
 | OpenSpec | Fission-AI/OpenSpec | 规格格式 | 三轨互斥 | spec-validation + /propose→/apply→/archive | spec-reviewer门控 |
 | gstack | garrytan/gstack | 审查角色 | 审查路由5+7 + autoplan/ship | eng/ceo/design/qa/security review | browser-qa + quality-gate |
 | claude-mem | thedotmack/claude-mem | 跨会话记忆 | SSOT 渐进式披露 | mem-search/timeline/knowledge-agent | MEMORY.md↔claude-mem统一 + Chroma |
@@ -49,14 +50,15 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 
 ## 规模约束
 
-| 类型 | v5.0 | 说明 |
+| 类型 | v7.0 | 说明 |
 |------|------|------|
-| 全局 skills | 26 | superpowers 13 + 扩展 7 + meta 4 + mattpocock 2 |
+| 全局 skills | 28 | superpowers 13 + 扩展 7 + meta 4 + mattpocock 2 + instinct-learning 1 + understand-anything 1 |
 | 全局 agents | 19 | core 7 + gstack审查 5 + gstack补全 7 |
-| 全局 rules | 10 | BESTPRACTICE 扩展至 200 行 |
-| CLAUDE.md | ≤280 | 精简路由层 |
-| 全局 hooks | 12 | 骨架4 + 按需4 + 学习3 + bootstrap1 |
-| 全局 plugins | 6 | 核心2 + 互补4 |
+| 全局 rules | 10 | CONTEXT 扩展 codegraph+claude-mem 搜索策略 |
+| CLAUDE.md | ≤290 | 精简路由层 + codegraph/understand-anything/plugins 指针 |
+| 全局 hooks | 14 | 核心14（SessionStart 由插件负责）+ _optional 37 |
+| 全局 MCP | 19 | 基础 18 + codegraph (optional) |
+| 全局 plugins | 18 | 安装18 / 启用15 / 禁用3（ralph-loop/claude-code-setup/claude-md-management） |
 
 ---
 
@@ -78,6 +80,8 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 **Meta 4**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress
 
 **Mattpocock 2**：triage, improve-codebase-architecture
+
+**项目洞察 1**：understand-anything
 
 ---
 
@@ -138,8 +142,8 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 
 | 轨道 | 路径 | 场景 | 入口 |
 |------|------|------|------|
-| OpenSpec | `openspec/changes/<id>/` | 功能变更/brownfield | /propose |
-| GSD | `.planning/phases/` | 大功能多阶段 | /plan |
+| OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更/brownfield | /opsx:propose |
+| GSD Redux | `.planning/phases/` | 大功能多阶段 | /plan |
 | 轻量 | `spec/<project>/` | ≤3文件小功能 | /plan |
 
 ---
@@ -153,6 +157,7 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 | ops | redis, sqlite, docker, postgres |
 | search | brave, exa |
 | design | figma |
+| optional | postgres, codegraph |
 
 权威 → `.mcp.json` | 分组 → `mcp/servers.json`
 
@@ -173,16 +178,16 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 
 ---
 
-## 26+ 仓库完整映射
+## 28 仓库完整映射
 
 ### 五柱 (5)
 | # | 仓库 | 吸收 | 落地 |
 |---|------|------|------|
 | 1 | obra/superpowers | 14技能+HARD-GATE+Red Flags+原子任务+两阶段审查 | skills/×13, hooks/ |
-| 2 | gsd-build/get-shit-done | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 | rules/CONTEXT, templates/planning/ |
+| 2 | open-gsd/get-shit-done-redux | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 | rules/CONTEXT, rules/WORKFLOW |
 | 3 | Fission-AI/OpenSpec | proposal→spec→tasks+brownfield+archive | templates/openspec/, spec-validation, commands/propose+apply+archive |
 | 4 | garrytan/gstack | 5审查+7补全+浏览器QA+autoplan/ship | agents/×12 |
-| 5 | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT | plugins/marketplaces/thedotmack/ |
+| 5 | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT+15技能 | plugin/claude-mem |
 
 ### 结构格式 (6)
 | # | 仓库 | 吸收 | 落地 |
@@ -225,6 +230,12 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 | 25 | trailofbits/claude-code-config | /sandbox+deny+三层防御 | SECURITY.md §11 |
 | 26 | marc-shade/claude-code-security | 渐进硬化checklist | SECURITY.md §14 |
 
+### 项目洞察 (2)
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 27 | colbymchenry/codegraph | 预索引知识图谱MCP，~35% token节省，20+语言+14框架+跨语言桥接 | .mcp.json (optional), rules/CONTEXT.md |
+| 28 | Lum1104/Understand-Anything | 交互式知识图+引导导览+多Agent管线 | skill/understand-anything, plugin/understand-anything |
+
 ---
 
 ## 同步
@@ -236,4 +247,4 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 
 ---
 
-_版本：5.0 | 日期：2026-05-27 | 五柱×五阶段×三层(骨架/执行/护栏) | 26仓库全量整合 | 9 Agent 并行审查驱动_
+_版本：7.0 | 日期：2026-05-28 | 五柱×五阶段×三层(骨架/执行/护栏) | 28仓库全量整合_

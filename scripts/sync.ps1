@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 多编辑器同步脚本 v11.0
+    Claude Code 多编辑器同步脚本 v12.0
 
 .DESCRIPTION
     从 ~/.claude 向各编辑器用户目录同步以下内容：
@@ -473,7 +473,7 @@ function Convert-RulesFrontmatter {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code 多编辑器同步脚本 v11.0" -ForegroundColor Cyan
+Write-Host "  Claude Code 多编辑器同步脚本 v12.0" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray

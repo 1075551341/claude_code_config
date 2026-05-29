@@ -54,7 +54,15 @@
 | triage | Bug报告/Issue分类 | ①规划 |
 | improve-codebase-architecture | 架构改进/跨文件重构 | ③执行 |
 
+## 项目洞察 (1)
+
+| Skill | 触发条件 | 阶段 |
+|-------|---------|------|
+| understand-anything | 项目架构理解/知识图谱/新人导览 | ①规划 |
+
 ---
+
+**总计 28 skills**（P0 4 + Workflow 9 + 扩展 8 + Meta 4 + Mattpocock 2 + 洞察 1）
 
 **加载策略**：P0 4个自动触发 → 其余按阶段和触发条件匹配 → catalog 按需
 **互斥声明**：同一功能不允许多个 skill 同时激活（见 MANIFEST.yaml excludes）
