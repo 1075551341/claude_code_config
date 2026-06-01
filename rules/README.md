@@ -8,7 +8,7 @@
 
 | 文件 | 适用 | 加载 | layer |
 |------|------|------|-------|
-| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R1-R11 | ✅ alwaysApply | skeleton |
+| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R12–R15（R1–R11 见 CLAUDE.md） | ✅ alwaysApply | skeleton |
 | `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
 | `GIT.md` | 分支、Commit、PR | lazy | supplement |
 | `WORKFLOW.md` | discuss→plan→execute→verify→ship + deer-flow 编排 | lazy | supplement |

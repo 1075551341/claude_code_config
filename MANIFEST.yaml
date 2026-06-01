@@ -305,3 +305,31 @@ p0_skills:
 
 global_skills_max: 28
 global_agents_max: 22
+
+# ═══════════════════════════════════════════════════════════════
+# SuperAgent Forge — 动态知识库智能体锻造系统 (v1.0)
+# 归属: .codeartsdoer/specs/superagent-forge/spec.md
+# 文档: spec.md → design.md → tasks.md | Schema ×4 + 示例 ×2
+# 引擎: .codeartsdoer/agents/superagent_forge/ (Python 12 模块)
+# ═══════════════════════════════════════════════════════════════
+superagent_forge:
+  owner: specs/superagent-forge
+  engine: agents/superagent_forge
+  source: local
+  stage: execute
+  concerns:
+    agent_definition: { owner: schema/agent-definition.yaml, source: local }
+    knowledge_base: { owner: schema/knowledge-base.yaml, source: local }
+    model_adapter: { owner: model_provider.py, source: local }
+    tool_registry: { owner: tool_registry.py, source: local }
+    dynamic_generation: { owner: agent_factory.py, source: local }
+  examples:
+    - ecommerce-cs-v1: "电商客服智能体"
+    - industrial-kb-v1: "工业知识库智能体"
+  platforms:
+    - web: "FastAPI + Streamlit"
+    - api: "REST API / SSE"
+    - chrome-extension: "Chrome Extension (框架)"
+  models:
+    online: [openai, anthropic, deepseek]
+    local: [ollama, lm-studio, llama-cpp]

@@ -1,28 +1,33 @@
 {
-  "_comment": "Claude Code 主配置 v7.0 | MCP权威源: .mcp.json | Plugin策略: 15启用/3禁用，与 .claude/settings.local.json 一致",
-  "_plugin_note": "superpowers 插件 13技能被本地 skills/ 同名覆盖(本地>插件)；dispatching-parallel-agents 仅插件。纯skills插件全启用无冲突",
+  "_comment": "Claude Code 主配置 v6.0 | MCP权威源: .mcp.json | Plugin策略: 启用=加载门控，本地skills/同名覆盖插件",
+  "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
+  "_mcp_section": "MCP 服务器配置（共 21 个，与 .mcp.json 同步）",
+  "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
+  "_permissions_note": "source: trailofbits/claude-code-config — deny 须配合 /sandbox 才防 Bash 绕过",
+  "_plugin_note": "superpowers 插件 13 技能被本地 skills/ 同名覆盖(优先级:本地>插件)；dispatching-parallel-agents 仅插件提供",
+  "_plugins_section": "插件配置",
   "autoUpdaterStatus": "disabled",
   "cleanupPeriodDays": 30,
   "effortLevel": "high",
   "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": false,
+    "claude-code-setup@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
     "claude-mem@thedotmack": true,
-    "understand-anything@Lum1104": true,
-    "chrome-devtools-mcp@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
+    "code-review@claude-plugins-official": false,
     "commit-commands@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true,
-    "firecrawl@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
+    "context7@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": false,
+    "firecrawl@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "github@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
     "ralph-loop@claude-plugins-official": false,
-    "security-guidance@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": false,
     "skill-creator@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": false,
-    "claude-md-management@claude-plugins-official": false
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": false,
+    "understand-anything@Lum1104": true
   },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
@@ -244,203 +249,6 @@
     ]
   },
   "language": "Chinese",
-  "mcpServers": {
-    "brave": {
-      "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-brave-search"
-      ],
-      "command": "npx",
-      "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
-    },
-    "chrome-devtools": {
-      "_description": "Chrome DevTools 官方 MCP（ChromeDevTools/chrome-devtools-mcp）。场景：调试网页、控制台与性能面板、接管 Chrome 排障优化",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@latest"
-      ],
-      "command": "npx"
-    },
-    "crawl": {
-      "_description": "Firecrawl 官方 MCP（firecrawl/firecrawl-mcp-server，npm: firecrawl-mcp）。场景：网页抓取、结构化提取、爬虫与搜索",
-      "args": [
-        "-y",
-        "firecrawl-mcp"
-      ],
-      "command": "npx",
-      "env": {
-        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
-      }
-    },
-    "ctx7": {
-      "_description": "Context7 技术文档查询（AST感知分块+Merkle DAG增量同步）。场景：查 React/Vue/Express/Node 等库的最新 API",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ],
-      "command": "npx"
-    },
-    "docker": {
-      "_description": "Docker 容器管理。场景：查看容器状态、启停服务、查看日志、镜像管理",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-docker"
-      ],
-      "command": "npx"
-    },
-    "exa": {
-      "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "args": [
-        "-y",
-        "@context7/mcp-exa-server"
-      ],
-      "command": "npx",
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
-    "fetch": {
-      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
-      "args": [
-        "mcp-server-fetch"
-      ],
-      "command": "uvx"
-    },
-    "figma": {
-      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-figma"
-      ],
-      "command": "npx",
-      "env": {
-        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
-      }
-    },
-    "fs": {
-      "_description": "文件系统操作。场景：读写项目文件、管理配置、批量重命名",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "D:\\apdms",
-        "C:\\Users\\DELL\\.claude"
-      ],
-      "command": "npx"
-    },
-    "gh": {
-      "_description": "GitHub 官方 MCP（github/github-mcp-server）。场景：PR/Issue/Actions/Code Search/Dependabot/Discussions",
-      "args": [
-        "-y",
-        "@github/mcp-server"
-      ],
-      "command": "npx",
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
-    "git": {
-      "_description": "Git 版本库直接操作。场景：查看提交历史、diff、blame、本地分支操作",
-      "args": [
-        "mcp-server-git",
-        "--repository",
-        "D:\\apdms"
-      ],
-      "command": "uvx"
-    },
-    "glif": {
-      "_description": "Glif 官方 MCP（glifxyz/glif-mcp-server）。场景：多模型图像/视频生成、提示词优化",
-      "args": [
-        "-y",
-        "@glifxyz/glif-mcp-server@latest"
-      ],
-      "command": "npx",
-      "env": {
-        "GLIF_API_TOKEN": "${GLIF_API_TOKEN}"
-      }
-    },
-    "memory": {
-      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
-      "command": "npx"
-    },
-    "perplexity": {
-      "_description": "Perplexity 官方 MCP（ppl-ai/modelcontextprotocol）。场景：实时联网搜索、最新资料、突破模型知识截止日期",
-      "args": [
-        "-y",
-        "@perplexity-ai/mcp-server"
-      ],
-      "command": "npx",
-      "env": {
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
-      }
-    },
-    "postgres": {
-      "_description": "PostgreSQL 数据库。场景：生产环境复杂查询、事务处理、JSON 数据存储",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://user:password@localhost:5432/dbname"
-      ],
-      "command": "npx"
-    },
-    "puppeteer": {
-      "_description": "Puppeteer Chrome 自动化（备选）。场景：PDF 生成、性能分析、DevTools 调试",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ],
-      "command": "npx"
-    },
-    "pw": {
-      "_description": "Microsoft Playwright 官方 MCP（microsoft/playwright-mcp）。场景：浏览器自动化、点击输入、表单、E2E 与数据采集",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest"
-      ],
-      "command": "npx"
-    },
-    "redis": {
-      "_description": "Redis 缓存/队列/键值存储。场景：缓存热点数据、会话存储、消息队列、分布式锁",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-redis",
-        "redis://localhost:6379"
-      ],
-      "command": "npx"
-    },
-    "sqlite": {
-      "_description": "SQLite 軽量数据库。场景：本地原型开发、小型数据存储、测试数据库",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sqlite",
-        "--db-path",
-        "D:\\apdms\\database.db"
-      ],
-      "command": "npx"
-    },
-    "thinking": {
-      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ],
-      "command": "npx"
-    },
-    "time": {
-      "_description": "时间与时区工具。场景：获取当前时间、时区转换、计算时间差",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-time"
-      ],
-      "command": "npx"
-    }
-  },
   "model": "deepseek-v4-pro",
   "permissions": {
     "allow": [

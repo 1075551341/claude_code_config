@@ -3,29 +3,20 @@
   "_comment": "MCP 分组视图 v4.0 | 权威源: .mcp.json | 仅定义toolset分组映射",
   "toolsets": {
     "always": [
-      "memory",
-      "thinking",
       "fs",
-      "fetch",
       "time"
     ],
     "dev": [
-      "gh",
       "git",
-      "ctx7",
-      "pw",
       "crawl",
-      "chrome-devtools"
+      "chrome-devtools",
+      "codegraph"
     ],
     "ops": [
       "redis",
       "sqlite",
       "docker",
       "postgres"
-    ],
-    "search": [
-      "brave",
-      "exa"
     ],
     "design": [
       "figma"
@@ -38,9 +29,8 @@
     "profiles": {
       "dev": "always + dev",
       "ops": "always + ops",
-      "search": "always + search",
       "design": "always + design",
-      "full": "always + dev + ops + search + design"
+      "full": "always + dev + ops + design"
     }
   }
 }

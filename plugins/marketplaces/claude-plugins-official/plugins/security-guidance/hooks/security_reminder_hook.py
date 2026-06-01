@@ -594,8 +594,21 @@ _COMMIT_SHA_RE = re.compile(r'^\[[^\]]*?\b([0-9a-f]{7,40})\]', re.MULTILINE)
 # detection — it does NOT tolerate `git -c k=v commit` global options, which
 # keeps this hook aligned with CC's commit attribution on what counts as a
 # commit.
-_GIT_COMMIT_RE = re.compile(r'\bgit\s+commit(?:\s|$)')
-_GIT_AMEND_RE = re.compile(r'\s--amend\b')
+#
+# Also matches `gt create` and `gt modify` — Graphite's stacked-PR wrapper
+# around git. `gt create` produces a new commit (mapped to git commit
+# semantics); `gt modify` amends the current commit (mapped to git commit
+# --amend, also flagged by _GIT_AMEND_RE below). The hooks.json matcher
+# widening for `gt create:*` / `gt modify:*` / `gt submit:*` ships in the
+# same change set — without that widening this regex change is dead code
+# because the hook subprocess never spawns for gt invocations. See #2048.
+_GIT_COMMIT_RE = re.compile(r'\b(?:git\s+commit|gt\s+(?:create|modify))(?:\s|$)')
+# Match either the `--amend` flag (with the leading whitespace boundary
+# preserved from the original) OR `gt modify` which is semantically an
+# amend. The handler treats matches as "find the pre-amend SHA via reflog
+# and diff against THAT, not against the post-amend HEAD's parent" — same
+# code path for both git --amend and gt modify.
+_GIT_AMEND_RE = re.compile(r'(?:\s--amend\b|\bgt\s+modify\b)')
 
 # Rolling-window cap on LLM commit-review calls. See atomic_check_rate_limit
 # docstring for the rationale that motivated the switch from a lifetime cap.
@@ -624,8 +637,13 @@ COMMIT_REVIEW_RATE_WINDOW_S = int(
 # entry would buy minimal extra coverage (sessions that push only via gh) at
 # the cost of an extra python spawn on every `... && gh pr create` compound
 # (the common case). Those sessions are caught on their next standalone `git push`.
+# Matches `git push` (with optional `-c k=v` / `-C path` global options
+# CC's hooks.json matcher doesn't tolerate) OR `gt submit` — Graphite's
+# stacked-PR push command. gt submit forwards to `git push` internally,
+# but the bash hook fires on Claude's top-level command so we need to
+# recognize gt submit at the matcher level. See #2048.
 _GIT_PUSH_RE = re.compile(
-    r'\bgit(?:\s+-[cC]\s+\S+|\s+--\S+=\S+)*\s+push\b'
+    r'(?:\bgit(?:\s+-[cC]\s+\S+|\s+--\S+=\S+)*\s+push\b|\bgt\s+submit\b)'
 )
 
 # `git push` stdout: "abc1234..def5678  branch -> branch" (or `+abc..def` on

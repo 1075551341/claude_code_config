@@ -55,7 +55,7 @@ source: forrestchang/andrej-karpathy-skills
 
 ## 铁律关联
 
-R1–R11 → `CLAUDE.md` | R12(子Agent隔离) R13(制品存活) → `rules/CORE.md`
+R1–R11 → `CLAUDE.md` | R12(子Agent隔离) R13(制品存活) R14(版本克制) R15(pnpm优先) → `rules/CORE.md`
 
 ## 效果指标
 

@@ -40,7 +40,7 @@ TDD: RED(失败测试) → GREEN(最小通过) → REFACTOR → verify
 
 ---
 
-## 铁律 R1–R13
+## 铁律 R1–R15
 
 | # | 约束 | 核心 |
 |---|------|------|
@@ -57,6 +57,8 @@ TDD: RED(失败测试) → GREEN(最小通过) → REFACTOR → verify
 | R11 | 安全默认 | 不信任输入、无硬编码密钥 |
 | R12 | 子Agent隔离 | fresh context + 三态制品通信 |
 | R13 | 制品存活 | 跨会话持久化 |
+| R14 | 版本克制 | 非必要不升 major；优先 patch/minor |
+| R15 | 包管理器 | pnpm 优先；npm 兜底 |
 
 > 扩展 → `rules/CORE.md` | Karpathy 四原则 → skill/karpathy-guidelines
 

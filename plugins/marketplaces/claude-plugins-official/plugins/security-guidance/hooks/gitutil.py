@@ -259,19 +259,29 @@ def _git_reflog_recent_commits(repo_root, max_age_s=120, max_n=5):
         # %gs (the reflog subject) is `commit: <commit-msg first line>` and can
         # contain `|`; put it LAST so split("|", 2) leaves it intact. %H is
         # hex and %ct is integer, so the first two fields are delimiter-safe.
+        #
+        # Bytes + decode utf-8/replace: %gs embeds commit-message subjects
+        # which git stores as raw bytes — commits can be authored in
+        # latin-1 / cp1252 / shift-jis etc., and text=True would raise
+        # UnicodeDecodeError in the subprocess reader thread on Windows
+        # cp1252 (subprocess.run returns r.stdout=None, then
+        # r.stdout.splitlines() AttributeErrors). Mirrors the existing
+        # migration at security_reminder_hook.py:540 — same pattern was
+        # missed here. See anthropics/claude-plugins-official#2056.
         r = subprocess.run(
             [*GIT_CMD, "log", "-g", "-n", str(max_n),
              "--format=%H|%ct|%gs", "HEAD"],
-            cwd=repo_root, capture_output=True, text=True, timeout=5,
+            cwd=repo_root, capture_output=True, timeout=5,
         )
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError, ValueError):
         return [], 0
     if r.returncode != 0:
         return [], 0
+    stdout = (r.stdout or b"").decode("utf-8", errors="replace")
     import time as _time
     now = int(_time.time())
     fresh, stale = [], 0
-    for idx, line in enumerate(r.stdout.splitlines()):
+    for idx, line in enumerate(stdout.splitlines()):
         parts = line.split("|", 2)
         if len(parts) != 3:
             continue
@@ -306,23 +316,31 @@ def _git_name_only(cwd, base, include_untracked=False):
     must distinguish None (error → don't trust as a filter) from set()
     (genuinely nothing changed). `-c core.quotePath=false -z` keeps non-ASCII
     and space-containing paths intact."""
+    # Decode stdout/stderr as UTF-8 with errors="replace" instead of using
+    # text=True. core.quotePath=false makes git emit raw UTF-8 for non-ASCII
+    # paths, and text=True on Windows decodes via cp1252 strict — a non-ASCII
+    # changed path would crash the subprocess reader thread, leave
+    # result.stdout=None, and propagate AttributeError out of the helper.
+    # Same fix shape as diffstate._list_untracked. See #2056.
     def _run(env):
         result = subprocess.run(
             [*GIT_CMD, "-c", "core.quotePath=false", "diff", "--name-only", "-z", base],
-            cwd=cwd, capture_output=True, text=True, timeout=30,
+            cwd=cwd, capture_output=True, timeout=30,
             env=env,
         )
         if result.returncode != 0:
-            debug_log(f"_git_name_only({base!r}) rc={result.returncode}: {result.stderr[:200]}")
+            stderr_str = (result.stderr or b"").decode("utf-8", errors="replace")
+            debug_log(f"_git_name_only({base!r}) rc={result.returncode}: {stderr_str[:200]}")
             return None
-        return {p for p in result.stdout.split("\0") if p}
+        stdout = (result.stdout or b"").decode("utf-8", errors="replace")
+        return {p for p in stdout.split("\0") if p}
 
     try:
         if not include_untracked:
             return _run(None)
         with _temp_index(cwd) as env:
             return _run(env)
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError, ValueError) as e:
         debug_log(f"_git_name_only({base!r}) error: {e}")
         return None
 
@@ -339,17 +357,22 @@ def _git_status_porcelain(cwd):
     collapses to `dir/`). Required so the untracked set subtracts cleanly
     against the UPS-time `_list_untracked` snapshot, which uses ls-files and
     therefore always lists individual files."""
+    # Lenient decode: same UTF-8 + errors="replace" pattern as the
+    # sibling helpers — a non-ASCII path in the worktree would otherwise
+    # crash the cp1252 reader thread on Windows. See #2056.
     try:
         r = subprocess.run(
             [*GIT_CMD, "-c", "core.quotePath=false", "status",
              "--porcelain=v1", "-uall", "-z"],
-            cwd=cwd, capture_output=True, text=True, timeout=30,
+            cwd=cwd, capture_output=True, timeout=30,
         )
         if r.returncode != 0:
-            debug_log(f"_git_status_porcelain rc={r.returncode}: {r.stderr[:200]}")
+            stderr_str = (r.stderr or b"").decode("utf-8", errors="replace")
+            debug_log(f"_git_status_porcelain rc={r.returncode}: {stderr_str[:200]}")
             return None, None
         tracked, untracked = set(), set()
-        entries = r.stdout.split("\0")
+        stdout = (r.stdout or b"").decode("utf-8", errors="replace")
+        entries = stdout.split("\0")
         i = 0
         while i < len(entries):
             e = entries[i]
@@ -368,7 +391,9 @@ def _git_status_porcelain(cwd):
                     i += 1
             i += 1
         return tracked, untracked
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError, ValueError) as e:
+        # ValueError guards against any future strict-decode regression
+        # so the helper degrades to (None, None) instead of crashing.
         debug_log(f"_git_status_porcelain error: {e}")
         return None, None
 

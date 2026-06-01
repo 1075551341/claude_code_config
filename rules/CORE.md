@@ -153,7 +153,7 @@ func createService(clock Clock) { now := clock.Now() }
 **适用场景**：业务逻辑、数据模型、API 响应中的时间戳
 **例外**：纯 UI 展示（如页面显示当前时间）、CLI 工具的一次性脚本
 
-## 铁律 R12–R13
+## 铁律 R12–R15
 
 > R1–R11 → `CLAUDE.md`
 
@@ -161,6 +161,22 @@ func createService(clock Clock) { now := clock.Now() }
 |---|------|------|
 | R12 | 子Agent隔离 | fresh context + 结构化制品通信，禁止共享可变状态 |
 | R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
+| R14 | 版本克制 | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认 |
+| R15 | 包管理器 | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm` |
+
+### R14 适用范围
+
+- **依赖**：npm/pip/cargo 等默认锁定当前 major；安全补丁用同 major 最新版
+- **插件/MCP/工具链**：`plugins/`、`.mcp.json`、`installed_plugins.json` 等不做「追 latest major」
+- **允许 major**：用户明确要求；CVE 无同 major 修复；阻塞缺陷且 changelog 已评估
+- **禁止**：`npm-check-updates -u` 无差别 major、无 changelog/无验证的批量升级
+
+### R15 适用范围（Node / JS）
+
+- **默认**：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`
+- **尊重项目**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 `pnpm` → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm
+- **npm 兜底**：本机无 pnpm、pnpm 执行失败且用户未要求换工具链、或脚本/文档明确写 `npm` 时
+- **禁止**：在 pnpm 项目中混用 `npm install` 生成/改写 lock（避免双 lock 漂移）
 
 ## 工作原则（来自五柱整合）
 
@@ -169,6 +185,8 @@ func createService(clock Clock) { now := clock.Now() }
 - **Report Failures**：失败时报告原因 + 已尝试方案 + 建议下一步，不静默重试超过 2 次
 - **子Agent隔离(R12)**：每个子agent fresh context，通过 openspec/ + .planning/ + memory/ 三态制品通信
 - **制品存活(R13)**：新会话优先加载结构化制品，而非依赖对话历史
+- **版本克制(R14)**：维护/升级任务先列变更与风险，默认 minor/patch；major 单独说明理由
+- **包管理器(R15)**：Node 任务先判 lock/`packageManager`，能 pnpm 则 pnpm，否则 npm 并说明原因
 
 ## 项目约定
 

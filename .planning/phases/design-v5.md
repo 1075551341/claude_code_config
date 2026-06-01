@@ -14,7 +14,7 @@ OPTIMIZE = RTK(shell token) + caveman(输出token)
 ## 三层架构
 
 ```
-骨架层 (methodology)  → P0 skills ×4 + CORE铁律 R1-R13 + 审查路由 + MCP basic
+骨架层 (methodology)  → P0 skills ×4 + CORE铁律 R1-R15 + 审查路由 + MCP basic
 执行层 (capability)   → 阶段 skill + agent + domain rules（按需 reactive）
 护栏层 (guardrails)   → 安全/治理/效率 hook（骨架级4 + 按需级4）
                         + 学习 loop（Stop/PreCompact 触发）

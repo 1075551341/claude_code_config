@@ -1,57 +1,24 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP 服务器配置 | 权威源：所有 MCP 服务器定义的唯一来源。派生：mcp/servers.json（分组视图）",
+  "_comment": "MCP 服务器配置 v2.0 | 权威源 | 去重后 11/19 服务器 — 移除与内置工具重复的 memory/thinking/fetch/gh/ctx7/pw/brave/exa",
   "mcpServers": {
-    "memory": {
-      "_description": "跨会话记忆持久化。场景：记住项目架构决策、用户偏好、重要上下文",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    },
-    "thinking": {
-      "_description": "结构化逐步推理。场景：复杂架构设计、多方案比较、调试链路分析",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
     "fs": {
       "_description": "文件系统操作。场景：读写项目文件、管理配置、批量重命名",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms", "C:\\Users\\DELL\\.claude"]
-    },
-    "fetch": {
-      "_description": "HTTP 请求工具。场景：获取网页内容、调用 REST API、下载远程资源",
-      "command": "uvx",
-      "args": ["mcp-server-fetch"]
     },
     "time": {
       "_description": "时间与时区工具。场景：获取当前时间、时区转换、计算时间差",
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-time"]
     },
-    "gh": {
-      "_description": "GitHub MCP 服务器（@modelcontextprotocol/server-github）。覆盖 Pull Requests/Issues/Actions/Code Security/Copilot/Dependabot/Discussions/Gists/Labels/Notifications/Orgs/Projects/Secret Protection/Advisories/Stargazers。",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
-    },
     "git": {
       "_description": "Git 版本库直接操作。场景：查看提交历史、diff、blame、本地分支操作",
       "command": "uvx",
       "args": ["mcp-server-git", "--repository", "D:\\apdms"]
     },
-    "ctx7": {
-      "_description": "Context7 技术文档查询（AST感知分块+Merkle DAG增量同步）。场景：查 React/Vue/Express/Node 等库的最新 API",
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
-    },
-    "pw": {
-      "_description": "Microsoft Playwright 官方 MCP（microsoft/playwright-mcp）。场景：浏览器自动化、点击输入、表单、E2E 与数据采集",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    },
     "crawl": {
-      "_description": "Firecrawl 官方 MCP（firecrawl/firecrawl-mcp-server，npm: firecrawl-mcp）。场景：网页抓取、结构化提取、爬虫与搜索",
+      "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索",
       "command": "npx",
       "args": ["-y", "firecrawl-mcp"],
       "env": {
@@ -68,22 +35,6 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "D:\\apdms\\database.db"]
     },
-    "brave": {
-      "_description": "Brave 网页搜索。场景：搜索技术文档、查找错误解决方案、查询最新资讯",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
-    },
-    "exa": {
-      "_description": "Exa AI 语义搜索引擎。场景：智能搜索、语义检索、AI搜索",
-      "command": "npx",
-      "args": ["-y", "@context7/mcp-exa-server"],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
     "docker": {
       "_description": "Docker 容器管理。场景：查看容器状态、启停服务、查看日志、镜像管理",
       "command": "npx",
@@ -95,7 +46,7 @@
       "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:password@localhost:5432/dbname"]
     },
     "chrome-devtools": {
-      "_description": "Chrome DevTools 官方 MCP（ChromeDevTools/chrome-devtools-mcp）。场景：调试网页、控制台与性能面板、接管 Chrome 排障优化",
+      "_description": "Chrome DevTools 官方 MCP。场景：调试网页、控制台与性能面板、接管 Chrome 排障优化",
       "command": "npx",
       "args": ["-y", "chrome-devtools-mcp@latest"]
     },
@@ -108,10 +59,9 @@
       }
     },
     "codegraph": {
-      "_description": "代码知识图谱 MCP（colbymchenry/codegraph）。预索引符号关系/调用图/代码结构，~35% token 节省，~70% 工具调用减少。场景：项目结构探索、符号追踪、影响分析。按需安装：npx @colbymchenry/codegraph → codegraph init -i",
+      "_description": "代码知识图谱 MCP。预索引符号关系/调用图/代码结构。场景：项目结构探索、符号追踪、影响分析。",
       "command": "npx",
       "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"]
     }
-
   }
 }
