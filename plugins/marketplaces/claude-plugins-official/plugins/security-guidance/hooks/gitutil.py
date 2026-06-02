@@ -26,18 +26,34 @@ GIT_CMD = [
     "git",
     "-c", "core.fsmonitor=false",
     "-c", "core.hooksPath=/dev/null",
+    # core.quotePath=false: emit raw UTF-8 in path-emitting commands instead
+    # of C-quoting non-ASCII bytes (default `"\\303\\201vila/..."` vs
+    # `Ávila/...`). Downstream parsers — both ours (parse_diff_into_files,
+    # extract_file_paths_from_diff) and Python stdlib (os.path.isabs,
+    # os.path.join) — expect raw paths and silently drop / mishandle the
+    # quoted form. Adding the flag globally to GIT_CMD covers every
+    # subprocess.run site that uses the splat — diff feeders, rev-parse
+    # path queries (--show-toplevel, --git-dir, --git-common-dir),
+    # reflog %gs subjects, ls-files, status, etc. — without per-site
+    # flag duplication. See #2082, #2099.
+    "-c", "core.quotePath=false",
 ]
 
 
 def _git_rev_parse_head(cwd):
     """Return the current HEAD SHA, or None if not a git repo / no commits."""
     try:
+        # See #2099: text=True on Windows cp1252 crashes the reader thread on
+        # any UTF-8 byte undefined in cp1252 (e.g. via a git error message
+        # referencing a non-ASCII filename in stderr). stdout is a SHA so it
+        # IS safe; stderr is not. capture_output=True with bytes-by-default
+        # never decodes, so the reader thread can't crash.
         result = subprocess.run(
             [*GIT_CMD, "rev-parse", "HEAD"],
-            cwd=cwd, capture_output=True, text=True, timeout=5
+            cwd=cwd, capture_output=True, timeout=5
         )
         if result.returncode == 0 and result.stdout.strip():
-            return result.stdout.strip()
+            return result.stdout.decode("utf-8", errors="replace").strip()
         return None
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
@@ -52,13 +68,17 @@ def _find_git_index(cwd):
     Returns the absolute path to the index file, or None.
     """
     try:
+        # See #2099: stdout here is a PATH which can contain non-ASCII bytes
+        # (e.g. C:\אבטחה\repo\.git). text=True decodes via cp1252 strict on
+        # Windows → crashes the reader thread → returns stdout=None →
+        # caller does .strip() on None → AttributeError. Decode manually.
         result = subprocess.run(
             [*GIT_CMD, "rev-parse", "--git-dir"],
-            cwd=cwd, capture_output=True, text=True, timeout=5
+            cwd=cwd, capture_output=True, timeout=5
         )
         if result.returncode != 0:
             return None
-        git_dir = result.stdout.strip()
+        git_dir = result.stdout.decode("utf-8", errors="replace").strip()
         if not os.path.isabs(git_dir):
             git_dir = os.path.join(cwd, git_dir)
         index_path = os.path.join(git_dir, "index")
@@ -128,9 +148,13 @@ def _temp_index(cwd, untracked_paths=None):
         else:
             add_args = None
         if add_args:
+            # No stdout used here (only returncode matters), but text=True
+            # still spawns reader threads that decode stderr — git error
+            # messages can reference non-ASCII filenames and crash on
+            # cp1252. See #2099. Drop text=True so bytes stay raw.
             subprocess.run(
                 [*GIT_CMD, "add", "--intent-to-add"] + add_args,
-                cwd=cwd, capture_output=True, text=True, timeout=10,
+                cwd=cwd, capture_output=True, timeout=10,
                 env=env,
             )
         yield env
@@ -144,11 +168,17 @@ def _temp_index(cwd, untracked_paths=None):
 def _git_toplevel(cwd):
     """Absolute repo root for `cwd`, or None if not in a work tree."""
     try:
+        # See #2099: stdout is a PATH — `C:\אבטחה\repo` returned as UTF-8
+        # bytes by git. text=True would decode via cp1252 strict on Windows
+        # → reader-thread crash. Decode manually with errors="replace".
         r = subprocess.run(
             [*GIT_CMD, "rev-parse", "--show-toplevel"],
-            cwd=cwd, capture_output=True, text=True, timeout=5,
+            cwd=cwd, capture_output=True, timeout=5,
         )
-        return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
+        if r.returncode != 0:
+            return None
+        path = r.stdout.decode("utf-8", errors="replace").strip()
+        return path if path else None
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
 
@@ -164,13 +194,15 @@ def _git_dir(repo_root):
     callers can degrade (push-sweep state is best-effort).
     """
     try:
+        # See #2099: stdout is a PATH (shared gitdir), may be non-ASCII.
+        # Decode bytes manually to avoid cp1252 reader-thread crash.
         r = subprocess.run(
             [*GIT_CMD, "rev-parse", "--git-common-dir"],
-            cwd=repo_root, capture_output=True, text=True, timeout=5,
+            cwd=repo_root, capture_output=True, timeout=5,
         )
         if r.returncode != 0:
             return None
-        d = r.stdout.strip()
+        d = r.stdout.decode("utf-8", errors="replace").strip()
         return d if os.path.isabs(d) else os.path.join(repo_root, d)
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return None
@@ -179,13 +211,15 @@ def _git_dir(repo_root):
 def _git_rev_list_range(repo_root, base, head="HEAD"):
     """Shas in `base..head`, oldest→newest. Empty list on error."""
     try:
+        # See #2099: stdout is ASCII SHAs, but stderr can carry git error
+        # messages referencing non-ASCII filenames — keep bytes raw.
         r = subprocess.run(
             [*GIT_CMD, "rev-list", "--reverse", f"{base}..{head}"],
-            cwd=repo_root, capture_output=True, text=True, timeout=10,
+            cwd=repo_root, capture_output=True, timeout=10,
         )
         if r.returncode != 0:
             return []
-        return [s for s in r.stdout.strip().split("\n") if s]
+        return [s for s in r.stdout.decode("utf-8", errors="replace").strip().split("\n") if s]
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return []
 
@@ -199,6 +233,10 @@ def _git_diff_range(repo_root, base, head="HEAD"):
     them reviewed — otherwise unreviewed commits get permanently silenced.
     """
     try:
+        # GIT_CMD globally passes core.quotePath=false (see definition) so
+        # non-ASCII paths in `diff --git a/... b/...` headers come through as
+        # raw UTF-8, not C-quoted. Required by the downstream
+        # parse_diff_into_files / extract_file_paths_from_diff regex.
         r = subprocess.run(
             [*GIT_CMD, "diff", "-p", "--no-color", "--no-ext-diff", base, head],
             cwd=repo_root, capture_output=True, timeout=30,
@@ -213,9 +251,11 @@ def _git_diff_range(repo_root, base, head="HEAD"):
 def _detect_main_branch(repo_root):
     for ref in ("origin/HEAD", "origin/main", "origin/master", "main", "master"):
         try:
+            # See #2099: stdout is a SHA but stderr can carry non-ASCII git
+            # warnings — keep bytes raw to avoid cp1252 reader-thread crash.
             r = subprocess.run(
                 [*GIT_CMD, "rev-parse", "--verify", "-q", ref],
-                cwd=repo_root, capture_output=True, text=True, timeout=5,
+                cwd=repo_root, capture_output=True, timeout=5,
             )
             if r.returncode == 0 and r.stdout.strip():
                 return ref
@@ -323,8 +363,9 @@ def _git_name_only(cwd, base, include_untracked=False):
     # result.stdout=None, and propagate AttributeError out of the helper.
     # Same fix shape as diffstate._list_untracked. See #2056.
     def _run(env):
+        # core.quotePath=false comes from GIT_CMD globally (see definition).
         result = subprocess.run(
-            [*GIT_CMD, "-c", "core.quotePath=false", "diff", "--name-only", "-z", base],
+            [*GIT_CMD, "diff", "--name-only", "-z", base],
             cwd=cwd, capture_output=True, timeout=30,
             env=env,
         )
@@ -361,9 +402,9 @@ def _git_status_porcelain(cwd):
     # sibling helpers — a non-ASCII path in the worktree would otherwise
     # crash the cp1252 reader thread on Windows. See #2056.
     try:
+        # core.quotePath=false comes from GIT_CMD globally (see definition).
         r = subprocess.run(
-            [*GIT_CMD, "-c", "core.quotePath=false", "status",
-             "--porcelain=v1", "-uall", "-z"],
+            [*GIT_CMD, "status", "--porcelain=v1", "-uall", "-z"],
             cwd=cwd, capture_output=True, timeout=30,
         )
         if r.returncode != 0:
@@ -403,9 +444,12 @@ def _is_ancestor(cwd, maybe_ancestor, descendant):
     """True if `maybe_ancestor` is reachable from `descendant` (i.e. HEAD
     moved forward via commit/merge, not sideways via checkout)."""
     try:
+        # See #2099: only returncode matters, but text=True spawns reader
+        # threads that decode stderr — git error messages can carry non-ASCII
+        # filenames. Drop text=True to keep bytes raw, avoid cp1252 crash.
         result = subprocess.run(
             [*GIT_CMD, "merge-base", "--is-ancestor", maybe_ancestor, descendant],
-            cwd=cwd, capture_output=True, text=True, timeout=5,
+            cwd=cwd, capture_output=True, timeout=5,
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
@@ -436,6 +480,7 @@ def get_git_diff(cwd, baseline_sha, full_context=False, paths=None, untracked_pa
         # change exists to fix.
         return ""
 
+    # core.quotePath=false comes from GIT_CMD globally (see definition).
     cmd = [*GIT_CMD, "diff", "--no-color", "--no-ext-diff", baseline_sha] + (["--unified=99999"] if full_context else []) + pathspec
     try:
         with _temp_index(cwd, untracked_paths) as env:

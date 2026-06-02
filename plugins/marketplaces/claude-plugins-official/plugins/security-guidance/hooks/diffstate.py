@@ -355,9 +355,9 @@ def _list_untracked(cwd):
     the holdouts."""
     try:
         repo = _git_toplevel(cwd) or cwd
+        # core.quotePath=false comes from GIT_CMD globally (see gitutil.py).
         r = subprocess.run(
-            [*GIT_CMD, "-c", "core.quotePath=false", "ls-files",
-             "--others", "--exclude-standard", "-z"],
+            [*GIT_CMD, "ls-files", "--others", "--exclude-standard", "-z"],
             cwd=repo, capture_output=True, timeout=15,
         )
         if r.returncode != 0:

@@ -1,11 +1,5 @@
 {
-  "_comment": "Claude Code 主配置 v6.0 | MCP权威源: .mcp.json | Plugin策略: 启用=加载门控，本地skills/同名覆盖插件",
-  "_hooks_section": "Hooks 执行顺序经过优化：格式化→检查→日志→安全→文档→测试→提交",
-  "_mcp_section": "MCP 服务器配置（共 21 个，与 .mcp.json 同步）",
-  "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
-  "_permissions_note": "source: trailofbits/claude-code-config — deny 须配合 /sandbox 才防 Bash 绕过",
-  "_plugin_note": "superpowers 插件 13 技能被本地 skills/ 同名覆盖(优先级:本地>插件)；dispatching-parallel-agents 仅插件提供",
-  "_plugins_section": "插件配置",
+  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 5.0",
   "autoUpdaterStatus": "disabled",
   "cleanupPeriodDays": 30,
   "effortLevel": "high",
@@ -26,8 +20,7 @@
     "security-guidance@claude-plugins-official": false,
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": false,
-    "understand-anything@Lum1104": true
+    "typescript-lsp@claude-plugins-official": false
   },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
@@ -35,9 +28,9 @@
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-flash",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro[1M]",
     "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME": "deepseek-v4-pro",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-flash[1M]",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "deepseek-v4-flash",
-    "ANTHROPIC_MODEL": "deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro[1M]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "deepseek-v4-pro",
+    "ANTHROPIC_MODEL": "deepseek-v4-pro",
     "API_TIMEOUT_MS": "3000000",
     "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
     "CLAUDE_CODE_DISABLE_AUTOUPDATER": "true",
@@ -55,6 +48,7 @@
   },
   "extraKnownMarketplaces": {
     "thedotmack": {
+      "autoUpdate": true,
       "source": {
         "repo": "thedotmack/claude-mem",
         "source": "github"
@@ -71,42 +65,16 @@
             "type": "command"
           },
           {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/post-edit-lint.py",
-            "timeout": 30000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
-            "timeout": 10000,
-            "type": "command"
-          },
-          {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
             "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/post-doc-reminder.py",
-            "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/post-test-runner.py",
-            "timeout": 60000,
             "type": "command"
           }
         ],
         "matcher": "Edit|Write|MultiEdit"
       },
       {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-operation-log.py",
-            "timeout": 10000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
+        "hooks": [],
+        "matcher": ""
       }
     ],
     "PreCompact": [
@@ -140,18 +108,8 @@
             "type": "command"
           },
           {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/pre-dep-checker.py",
-            "timeout": 10000,
-            "type": "command"
-          },
-          {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
             "timeout": 5000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/pre-git-hook-bypass-block.py",
-            "timeout": 3000,
             "type": "command"
           }
         ],
@@ -165,12 +123,22 @@
             "type": "command"
           },
           {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-config-protection.py",
-            "timeout": 5000,
+            "command": "echo pre-config-protection-removed-v5",
+            "timeout": 1000,
             "type": "command"
           }
         ],
         "matcher": "Write|Edit|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-manifest-validator.py",
+            "timeout": 3000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ],
     "SessionStart": [
@@ -189,55 +157,15 @@
       {
         "hooks": [
           {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/stop-notify.py",
-            "timeout": 5000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      },
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/stop-debug-checker.py",
-            "timeout": 10000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      },
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/_optional/stop-daily-summary.py",
-            "timeout": 15000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      },
-      {
-        "hooks": [
-          {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-quality-gate.py",
             "timeout": 15000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-pattern-extraction.py",
-            "timeout": 20000,
             "type": "command"
           },
           {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-session-summary.py",
             "timeout": 10000,
             "type": "command"
-          }
-        ],
-        "matcher": ""
-      },
-      {
-        "hooks": [
+          },
           {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
             "timeout": 30000,
