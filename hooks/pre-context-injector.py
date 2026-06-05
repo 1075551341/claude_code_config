@@ -27,8 +27,8 @@ from datetime import datetime
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 GLOBAL_CLAUDE_DIR = os.path.normpath(os.path.join(os.path.expanduser("~"), ".claude"))
 SESSION_CACHE = os.path.join(GLOBAL_CLAUDE_DIR, "context_cache.json")
@@ -39,8 +39,8 @@ def load_cache() -> dict:
         if os.path.exists(SESSION_CACHE):
             with open(SESSION_CACHE, encoding="utf-8") as f:
                 return json.load(f)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return {}
 
 
@@ -52,8 +52,8 @@ def save_cache(cache: dict):
                 del cache[k]
         with open(SESSION_CACHE, "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
 
 def find_project_root(start=None) -> str:
@@ -67,8 +67,8 @@ def find_project_root(start=None) -> str:
             if parent == directory:
                 break
             directory = parent
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     try:
         return os.getcwd()
     except Exception:
@@ -99,8 +99,8 @@ def read_latest_plan(project_root: str) -> str | None:
             if mtime.date() == datetime.now().date():
                 with open(latest, encoding="utf-8", errors="replace") as f:
                     return f.read()[:800]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return None
 
 
@@ -116,12 +116,12 @@ def read_recent_git_log(project_root: str) -> str | None:
         )
         if r.returncode == 0 and r.stdout.strip():
             return r.stdout.strip()
-    except subprocess.TimeoutExpired:
-        pass  # FIX: 显式捕获超时，不向上传播
-    except FileNotFoundError:
-        pass  # git 未安装
-    except Exception:
-        pass
+    except subprocess.TimeoutExpired as e:
+        print(f"⚠️ {e}", file=sys.stderr)
+    except FileNotFoundError as e:
+        print(f"⚠️ {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return None
 
 
@@ -143,8 +143,8 @@ def read_package_info(project_root: str) -> str | None:
             if tech:
                 parts.append(f"主要依赖：{', '.join(tech)}")
             return "\n".join(parts) if parts else None
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     pyproj = os.path.join(project_root, "pyproject.toml")
     try:
@@ -159,8 +159,8 @@ def read_package_info(project_root: str) -> str | None:
             if desc_m:
                 parts.append(f"描述：{desc_m.group(1)}")
             return "\n".join(parts) if parts else None
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return None
 
 
@@ -174,8 +174,8 @@ def read_three_state_artifacts(project_root: str) -> str | None:
             changes = sorted(os.listdir(openspec_dir))[-3:]
             if changes:
                 parts.append(f"OpenSpec changes: {', '.join(changes)}")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     # .planning/phases/
     planning_dir = os.path.join(project_root, ".planning", "phases")
     try:
@@ -183,8 +183,8 @@ def read_three_state_artifacts(project_root: str) -> str | None:
             phases = sorted(os.listdir(planning_dir))[-3:]
             if phases:
                 parts.append(f"Planning phases: {', '.join(phases)}")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     # memory/
     memory_dir = os.path.join(project_root, "memory")
     try:
@@ -192,8 +192,8 @@ def read_three_state_artifacts(project_root: str) -> str | None:
             mem_files = sorted(os.listdir(memory_dir))[-5:]
             if mem_files:
                 parts.append(f"Memory files: {', '.join(mem_files)}")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return "\n".join(parts) if parts else None
 
 
@@ -232,8 +232,8 @@ def main():
                 candidate_dir = os.path.dirname(os.path.abspath(str(file_path)))
                 if os.path.isdir(candidate_dir):
                     infer_dir = candidate_dir
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️ {e}", file=sys.stderr)
 
         project_root = find_project_root(infer_dir)
 
@@ -248,8 +248,8 @@ def main():
             artifact_context = read_three_state_artifacts(project_root)
             if artifact_context:
                 context_parts.append(f"## 三态制品（跨会话）\n\n{artifact_context}")
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
         pkg_info = read_package_info(project_root)
         if pkg_info:
@@ -294,8 +294,8 @@ def main():
 
     except SystemExit:
         raise  # 让 sys.exit() 正常传播
-    except Exception:
-        pass  # 绝不让 hook 崩溃
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

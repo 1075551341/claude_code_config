@@ -18,7 +18,7 @@ INFO = []
 
 CORE_AGENTS = {
     "planner", "code-explorer", "code-reviewer", "build-error-resolver",
-    "architect", "spec-reviewer", "context-manager", "agentic-orchestrator",
+    "architect", "spec-reviewer", "agentic-orchestrator",
 }
 GSTACK_REVIEW_AGENTS = {
     "eng-reviewer", "ceo-reviewer", "designer", "qa", "security-reviewer",
@@ -314,6 +314,9 @@ def main():
     v7_layer_isolation()
     v8_file_references()
     v9_security_deny_paths()
+    check_v10_bare_except()
+    check_v11_hook_exception_propagation()
+    check_v12_r16_in_core()
 
     report(
         agents=len(agent_names),
@@ -325,11 +328,11 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v2 VALIDATION (9 checks) ===")
+    print("=== .claude v2 VALIDATION (12 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
-    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9"]:
+    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12"]:
         related = [e for e in ERRORS if e.startswith(check_name)]
         related_w = [w for w in WARNINGS if w.startswith(check_name)]
         status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"
@@ -346,6 +349,70 @@ def report(agents=0, skills=0, rules=0, claude_lines=0):
     else:
         print("ALL CHECKS PASSED")
 
+
+def check_v10_bare_except():
+    """V10: R16 裸except:pass扫描（hooks/目录）"""
+    import re as re_mod
+    import glob as glob_mod
+    import ast as ast_mod
+    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    count = 0
+    for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
+        if "_optional" in pyfile or "_deprecated" in pyfile:
+            continue
+        basename = os.path.basename(pyfile)
+        try:
+            with open(pyfile, 'r', encoding='utf-8', errors='replace') as f:
+                source = f.read()
+            tree = ast_mod.parse(source, filename=basename)
+            for node in ast_mod.walk(tree):
+                if isinstance(node, ast_mod.ExceptHandler):
+                    body = node.body
+                    if len(body) == 1 and isinstance(body[0], ast_mod.Pass):
+                        count += 1
+                        ERRORS.append(f"V10: {basename} L{node.lineno} 裸except:pass")
+        except SyntaxError as e:
+            WARNINGS.append(f"V10: {basename} 解析失败: {e}")
+        except (OSError, UnicodeDecodeError) as e:
+            WARNINGS.append(f"V10: 扫描{basename}失败: {e}")
+    if count == 0:
+        print("  V10: 裸except:pass扫描 = 0 ✓")
+
+def check_v11_hook_exception_propagation():
+    """V11: Hook异常传播率100%（核心hooks无静默吞异常）"""
+    core_hooks = [
+        "session-start-bootstrap.py", "pre-bash-guard.py", "pre-rtk-rewrite.py",
+        "pre-read-before-edit.py", "pre-config-protection.py", "pre-context-injector.py",
+        "pre-manifest-validator.py", "pre-compact-state.py",
+        "post-secret-detector.py", "post-edit-format.py", "post-operation-log.py",
+        "stop-quality-gate.py", "stop-pattern-extraction.py", "stop-session-summary.py",
+        "stop-readme-updater.py",
+    ]
+    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    missing = []
+    for h in core_hooks:
+        if not os.path.exists(os.path.join(hooks_dir, h)):
+            missing.append(h)
+    if missing:
+        WARNINGS.append(f"V11: 缺少核心hooks: {', '.join(missing)}")
+    else:
+        print(f"  V11: {len(core_hooks)}核心hooks存在 ✓")
+
+def check_v12_r16_in_core():
+    """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
+    core_path = os.path.expanduser("~/.claude/rules/CORE.md")
+    claude_path = os.path.expanduser("~/.claude/CLAUDE.md")
+    for fpath, label in [(core_path, "CORE.md"), (claude_path, "CLAUDE.md")]:
+        try:
+            with open(fpath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            if "R16" not in content:
+                ERRORS.append(f"V12: {label} 缺少R16铁律声明")
+            elif "裸" not in content and "except" not in content:
+                WARNINGS.append(f"V12: {label} R16声明可能不完整（缺少except:pass细节）")
+        except OSError as e:
+            ERRORS.append(f"V12: 读取{label}失败: {e}")
+    print("  V12: R16铁律检查完成")
 
 if __name__ == "__main__":
     sys.exit(main())

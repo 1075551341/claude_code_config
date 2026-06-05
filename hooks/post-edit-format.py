@@ -21,8 +21,8 @@ import shutil
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 
 def run(cmd: list | str, cwd=None) -> bool:
@@ -68,8 +68,8 @@ def find_project_root(file_path: str) -> tuple[str | None, str | None]:
             if parent == directory:
                 break
             directory = parent
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return None, None
 
 
@@ -124,8 +124,8 @@ def main():
 
     except SystemExit:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

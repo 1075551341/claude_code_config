@@ -199,8 +199,8 @@ def _win_parent_chain_check(max_depth: int = 15) -> bool:
         finally:
             k32.CloseHandle(snap)
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     return False
 
@@ -239,8 +239,8 @@ def _scan_payload_for_editor(raw_payload: bytes) -> bool:
                 if any(pat in s for pat in (".cursor/", ".windsurf/", "/.trae/")):
                     return True
 
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     return False
 
@@ -314,8 +314,8 @@ if __name__ == "__main__":
             raw = sys.stdin.buffer.read()
         else:
             raw = sys.stdin.read().encode("utf-8")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     # 测试模式
     if len(sys.argv) > 1 and sys.argv[1] == "--test":

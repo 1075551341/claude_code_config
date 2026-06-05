@@ -50,6 +50,9 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/build-error-resolver": "debugging",
     "agent/architect": "brainstorming",
     "agent/code-explorer": "multi_agent",
+    "mcp/codegraph": "code_exploration",
+    "plugin/understand-anything": "concept_navigation",
+    "skill/understand-anything": "concept_navigation",
 }
 
 # key: blocking concern, value: set of excluded agents/skills

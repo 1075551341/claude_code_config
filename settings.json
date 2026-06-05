@@ -4,23 +4,24 @@
   "cleanupPeriodDays": 30,
   "effortLevel": "high",
   "enabledPlugins": {
-    "chrome-devtools-mcp@claude-plugins-official": false,
-    "claude-code-setup@claude-plugins-official": true,
-    "claude-md-management@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": false,
     "claude-mem@thedotmack": true,
-    "code-review@claude-plugins-official": false,
+    "code-review@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
-    "context7@claude-plugins-official": false,
-    "feature-dev@claude-plugins-official": false,
-    "firecrawl@claude-plugins-official": false,
-    "frontend-design@claude-plugins-official": false,
-    "github@claude-plugins-official": false,
-    "playwright@claude-plugins-official": false,
+    "context7@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": false,
-    "security-guidance@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": false
+    "typescript-lsp@claude-plugins-official": true,
+    "understand-anything@Lum1104": true
   },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
@@ -44,7 +45,9 @@
     "CLAUDE_MEM_SEMANTIC_INJECT": "true",
     "CLAUDE_MEM_TIER_SIMPLE_MODEL": "deepseek-v4-flash",
     "CLAUDE_MEM_TIER_SUMMARY_MODEL": "deepseek-v4-pro",
-    "ENABLE_TOOL_SEARCH": "true"
+    "ECC_HOOK_PROFILE": "standard",
+    "ENABLE_TOOL_SEARCH": "true",
+    "cleanupPeriodDays": 9999
   },
   "extraKnownMarketplaces": {
     "thedotmack": {
@@ -109,6 +112,11 @@
           },
           {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-loop-guard.py",
             "timeout": 5000,
             "type": "command"
           }

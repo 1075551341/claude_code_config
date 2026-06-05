@@ -24,8 +24,8 @@ import os
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 # ── 危险命令模式（阻止，exit 2）──────────────────────────────────────────────
 DANGER_PATTERNS = [
@@ -173,8 +173,8 @@ def main():
 
     except SystemExit:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

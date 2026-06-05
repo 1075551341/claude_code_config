@@ -1,22 +1,100 @@
-# 组件唯一归属源 — 防左右手互博 — v7.0
-# 权威: SPEC.md v7.0 | 五柱×五阶段×三层 | 28仓库全量整合
+# 组件唯一归属源 — 防左右手互博 — v7.2
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 27仓库全量重新调研
 
-version: "7.0"
-updated: "2026-05-28"
+version: "7.2"
+updated: "2026-06-05"
 
 pillars:
-  superpowers: { source: obra/superpowers, capabilities: [brainstorming, verification, debugging] }
-  gsd: { source: open-gsd/get-shit-done-redux, capabilities: [context-engineering, continuous-execution, read-before-edit] }
-  openspec: { source: Fission-AI/OpenSpec, capabilities: [proposal-spec-tasks, spec-validation] }
-  gstack: { source: garrytan/gstack, capabilities: [eng-review, ceo-review, design-review, qa-review, security-review] }
-  claude_mem: { source: thedotmack/claude-mem, capabilities: [cross-session-memory, pattern-extraction] }
+  superpowers:
+    {
+      source: obra/superpowers,
+      version: "5.1.0",
+      capabilities: [brainstorming, verification, debugging],
+    }
+  gsd:
+    {
+      source: open-gsd/gsd-core,
+      version: "1.42.3",
+      capabilities:
+        [context-engineering, continuous-execution, read-before-edit],
+    }
+  openspec:
+    {
+      source: Fission-AI/OpenSpec,
+      version: "1.4.1",
+      capabilities: [proposal-spec-tasks, spec-validation],
+    }
+  gstack:
+    {
+      source: garrytan/gstack,
+      version: "0.19",
+      capabilities:
+        [
+          eng-review,
+          ceo-review,
+          design-review,
+          qa-review,
+          security-review,
+          ios-specialist,
+          codex-review,
+          ml-defense,
+          taste-learning,
+        ],
+    }
+  claude_mem:
+    {
+      source: thedotmack/claude-mem,
+      version: "13.4.0",
+      capabilities: [cross-session-memory, pattern-extraction],
+    }
+
+horizontal_layers:
+  L1_governance:
+    description: 治理横切层 — 防互博 + hook分级 + 编排
+    owners:
+      - source: affaan-m/ECC
+        version: "2.0.0-rc.1"
+        concerns: [manifest-validation, hook-profile, loop-guard, selective-install]
+      - source: bytedance/deer-flow
+        version: "2.0"
+        concerns: [LangGraph-orchestration, flash-standard-pro-ultra, claude-bridge]
+  L2_optimization:
+    description: 优化横切层 — Token压缩 + 上下文治理
+    owners:
+      - source: rtk-ai/rtk
+        version: "0.42.1"
+        concerns: [shell-compression, 60-90pct-savings]
+      - source: JuliusBrussee/caveman
+        version: "1.8.2"
+        concerns: [output-compression, lite-full-ultra-wenyan]
+      - source: internal
+        concerns: [context-threshold-40-50-70]
+  L3_insight:
+    description: 洞察横切层 — 代码图谱 + 知识图 + 外部搜索
+    owners:
+      - source: colbymchenry/codegraph
+        version: "0.9.9"
+        concerns: [pre-indexed-knowledge-graph, 47pct-token-reduction]
+      - source: Lum1104/Understand-Anything
+        version: "2.7.3"
+        concerns: [interactive-knowledge-graph, guided-tour, 5-agent-pipeline]
+      - source: Firecrawl/Exa
+        concerns: [web-scraping, external-search]
 
 phases:
-  plan:    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
-  spec:    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
+  plan:
+    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
+  spec:
+    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
   execute: { stage: ③执行, command: /execute, pillar: gsd, gate: build-pass }
-  verify:  { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
-  learn:   { stage: ⑤学习, command: /compact, pillar: claude_mem, gate: pattern-extracted }
+  verify: { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
+  learn:
+    {
+      stage: ⑤学习,
+      command: /compact,
+      pillar: claude_mem,
+      gate: pattern-extracted,
+    }
 
 concerns:
   brainstorming:
@@ -99,7 +177,7 @@ concerns:
   context_rot:
     owner: skill/memory-compression
     hook: pre-compact-state
-    source: open-gsd/get-shit-done-redux
+    source: open-gsd/gsd-core
     stage: learn
 
   shell_token:
@@ -146,7 +224,7 @@ concerns:
     owner: skill/subagent-driven-development
     hooks: [pre-read-before-edit]
     rules_ref: rules/WORKFLOW.md
-    source: open-gsd/get-shit-done-redux
+    source: open-gsd/gsd-core
     stage: execute
 
   gstack_review:
@@ -156,11 +234,12 @@ concerns:
     stage: verify
     delegates: [agent/code-reviewer, agent/spec-reviewer]
 
-  gstack_eng:    { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
-  gstack_ceo:    { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
+  gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
+  gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
   gstack_designer: { owner: agent/designer, layer: skeleton, stage: spec }
-  gstack_qa:     { owner: agent/qa, layer: skeleton, stage: verify }
-  gstack_security: { owner: agent/security-reviewer, layer: skeleton, stage: verify }
+  gstack_qa: { owner: agent/qa, layer: skeleton, stage: verify }
+  gstack_security:
+    { owner: agent/security-reviewer, layer: skeleton, stage: verify }
 
   bestpractice:
     owner: rules/BESTPRACTICE.md
@@ -236,9 +315,31 @@ concerns:
   deer_flow:
     owner: rules/WORKFLOW.md
     source: bytedance/deer-flow
+    version: "2.0"
     stage: execute
-    note: DAG四阶段编排 + middleware chain，与 agent/agentic-orchestrator 互补
+    note: LangGraph-based 2.0 ground-up rewrite，flash/standard/pro/ultra 四模式 + claude-to-deerflow 桥接
     excludes: [agent/planner]
+
+  gstack_ios:
+    owner: agent/ios-specialist
+    source: garrytan/gstack
+    version: "0.19"
+    stage: verify
+    note: iOS 专用审查 (ios-qa/ios-fix/ios-design-review/ios-clean/ios-sync)
+
+  gstack_codex:
+    owner: agent/codex-reviewer
+    source: garrytan/gstack
+    version: "0.19"
+    stage: verify
+    note: Codex 跨模型独立审查，与 eng-reviewer 互补
+
+  gstack_ml_defense:
+    owner: rules/SECURITY.md
+    source: garrytan/gstack
+    version: "0.19"
+    stage: verify
+    note: 22MB 本地 ML 分类器 + canary tokens + Haiku 转录检查 三层注入防御
 
   ci_claude_code_action:
     owner: templates/github-actions/
@@ -296,6 +397,26 @@ concerns:
     stage: execute
     note: 交互式知识图 + 引导导览，多 Agent 管线，团队共享图谱 JSON
     excludes: [agent/code-explorer]
+
+  code_exploration:
+    owner: mcp/codegraph
+    source: colbymchenry/codegraph
+    stage: execute
+    note: 预索引代码结构查询，替代Grep大量搜索
+    excludes: [skill重复索引]
+
+  concept_navigation:
+    owner: plugin/understand-anything
+    source: Lum1104/Understand-Anything
+    stage: execute
+    note: 交互式概念导览+领域聚类，替代长文解释
+    excludes: [skill重复导览]
+
+  vibe_coding_cn:
+    owner: catalog/skills/vibe-coding-cn
+    source: 2025Emma/vibe-coding-cn
+    stage: execute
+    note: 道/法/术/器框架 + α(生成器)/Ω(优化器)元技能 + 五步协作流程
 
 p0_skills:
   - using-superpowers

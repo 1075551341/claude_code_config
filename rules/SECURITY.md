@@ -70,13 +70,13 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 ## 敏感数据处理
 
-| 用途 | 推荐算法 |
-|------|----------|
-| 密码存储 | bcrypt / scrypt / Argon2 |
-| 对称加密 | AES-256-GCM |
-| 非对称加密 | RSA-4096 / Ed25519 |
-| 哈希 | SHA-256 / SHA-3 |
-| 签名 | HMAC-SHA256 |
+| 用途       | 推荐算法                 |
+| ---------- | ------------------------ |
+| 密码存储   | bcrypt / scrypt / Argon2 |
+| 对称加密   | AES-256-GCM              |
+| 非对称加密 | RSA-4096 / Ed25519       |
+| 哈希       | SHA-256 / SHA-3          |
+| 签名       | HMAC-SHA256              |
 
 密钥管理：不存代码库 / 环境变量或密钥管理服务 / 定期轮换 / 最小权限 / 不在日志中打印
 
@@ -94,15 +94,18 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 代码审查：□ 无硬编码密钥 □ 输入验证覆盖 □ 输出编码覆盖 □ SQL 参数化 □ 文件上传检查
 配置检查：□ HTTPS 强制 □ 安全 Headers □ CORS 配置 □ 调试模式关闭
 运行监控：□ 异常登录告警 □ 接口异常监控 □ 依赖漏洞扫描
+R16错误暴漏：□ Hook裸except=0 □ Agent失败不静默 □ 配置验证exit(1)+修复建议
 
 ## 11. OS Sandbox 三层防御
 
 > **source**: [trailofbits/claude-code-config](https://github.com/trailofbits/claude-code-config)
 
 ```
+
 Layer 1: permissions.deny — 阻断凭证路径 Read/Edit
 Layer 2: hooks（pre-bash-guard）— 阻断危险 Bash
 Layer 3: /sandbox — OS 隔离，Bash 无法绕过 Layer 1
+
 ```
 
 每会话 `/sandbox`；无 sandbox 时 deny 不约束 Bash。devcontainer → `templates/devcontainer/README.md`
@@ -124,8 +127,36 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 > **source**: [marc-shade/claude-code-security](https://github.com/marc-shade/claude-code-security)
 
 ```
+
 □ settings deny + acceptEdits □ pre-bash-guard + post-secret-detector □ /sandbox
 □ strict: lasso 注入扫描（可选） □ npm audit + 技能来源审查
+
 ```
 
 延伸阅读：[efij/awesome-claude-code-security](https://github.com/efij/awesome-claude-code-security)
+
+## 15. ML 注入防御（gstack v0.19）
+
+> **source**: [garrytan/gstack](https://github.com/garrytan/gstack) v0.19
+
+### 三层防护
+
+```
+Layer 1: 22MB ML 分类器 — 本地扫描每页和工具输出，检测注入载荷
+Layer 2: Canary Tokens — 注入诱饵 token，触发即告警
+Layer 3: Haiku 转录检查 — 低成本模型快速扫描转录本，异常即熔断
+```
+
+### 适用场景
+
+- 浏览器自动化（Playwright/Chrome DevTools）
+- Web scraping（Firecrawl）
+- 外部 URL 内容处理
+- 第三方 SKILL.md / MCP 服务器内容
+
+### 缓解措施（无 gstack Browser 时）
+
+- 外部内容沙箱化：先下载到 `_sandbox/` 再审查
+- 禁止直接执行外部脚本：所有 `curl|bash` 需用户确认
+- MIME 类型检查：禁止将 HTML 当 Markdown 解析
+```

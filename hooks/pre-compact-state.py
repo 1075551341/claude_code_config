@@ -15,8 +15,8 @@ from datetime import datetime
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 
 def main():
@@ -47,8 +47,8 @@ def main():
                             "has_tasks": os.path.exists(tasks_file),
                             "files": os.listdir(change_path)[:10],
                         }
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
         state = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -63,8 +63,8 @@ def main():
 
     except SystemExit:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

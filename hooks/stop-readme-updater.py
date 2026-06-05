@@ -22,8 +22,8 @@ from datetime import datetime
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 GLOBAL_CLAUDE_DIR = os.path.normpath(os.path.join(os.path.expanduser("~"), ".claude"))
 
@@ -53,8 +53,8 @@ def find_project_root(start: str = None) -> str | None:
             if parent == directory:
                 break
             directory = parent
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return None
 
 
@@ -118,8 +118,8 @@ def read_project_info(project_root: str) -> dict:
             info["type"]        = "nodejs"
             info["scripts"]     = pkg.get("scripts", {})
             info["dependencies"] = list(pkg.get("dependencies", {}).keys())[:12]
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
     pyproject_path = os.path.join(project_root, "pyproject.toml")
     if info["type"] == "unknown" and os.path.exists(pyproject_path):
@@ -133,8 +133,8 @@ def read_project_info(project_root: str) -> dict:
             m = re.search(r'description\s*=\s*"([^"]+)"', content)
             if m:
                 info["description"] = m.group(1)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
     try:
         entries = []
@@ -145,8 +145,8 @@ def read_project_info(project_root: str) -> dict:
                 prefix = "📁 " if entry.is_dir() else "📄 "
                 entries.append(prefix + entry.name)
         info["structure"] = entries[:15]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     return info
 
@@ -160,8 +160,8 @@ def read_latest_plan(project_root: str) -> str:
             match = re.search(r"## 📋 任务分析\n\n(.+?)(?=\n---|\n##)", content, re.DOTALL)
             if match:
                 return match.group(1).strip()
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return ""
 
 
@@ -271,8 +271,8 @@ def write_readme(project_root: str, content: str) -> str:
                 old_content = f.read()
             with open(os.path.join(backup_dir, f"README_{ts}.md"), "w", encoding="utf-8") as f:
                 f.write(old_content)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
     with open(readme_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -286,8 +286,8 @@ def session_had_plan(session_id: str, project_root: str) -> bool:
             with open(cf, encoding="utf-8") as f:
                 cache = json.load(f)
             return cache.get(session_id) is True
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return False
 
 
@@ -340,8 +340,8 @@ def main():
 
     except SystemExit:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

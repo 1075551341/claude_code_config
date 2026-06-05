@@ -1,22 +1,16 @@
 ---
 name: bestpractice
-description: 综合最佳实践（15类别覆盖全部开发场景）
-alwaysApply: true
-layer: skeleton
+description: 综合最佳实践 — 详细参考（骨架内容已迁至 CORE.md）
+alwaysApply: false
+layer: supplement
+paths: ["**/*"]
 source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code
 ---
 
 # 综合最佳实践
 
 > 来源：shanraisshan/claude-code-best-practice + x1xhlol/system-prompts + Chalarangelo/30-seconds-of-code
-
-## 错误处理
-
-- 每层显式处理，永不静默吞错
-- 错误信息包含上下文（操作名、输入摘要、原始错误）
-- 自定义错误类携带机器可读 code
-- 已知错误 → 业务码 + 友好提示；未知错误 → 完整日志 + 通用错误码
-- 异步操作必须 try/catch，禁止裸 await
+> **骨架内容已迁至 `rules/CORE.md`**：错误处理规范、铁律 R14–R16。
 
 ## 提示词设计
 

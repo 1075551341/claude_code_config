@@ -1,15 +1,23 @@
-# ECC harness manifest — 全局启用组件清单 v4.0
-# 权威: .mcp.json | 详情: SPEC.md | 五阶段×三层矩阵
+# ECC harness manifest — 全局启用组件清单 v5.1
+# 权威: MANIFEST.yaml v7.2 | 五柱×五阶段×三横切 | 27仓库全量重新调研
 
-version: "4.0"
+version: "5.1"
 harness: claude-code-primary
 
 phases:
-  plan:    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
-  spec:    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
+  plan:
+    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
+  spec:
+    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
   execute: { stage: ③执行, command: /execute, pillar: gsd, gate: build-pass }
-  verify:  { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
-  learn:   { stage: ⑤学习, command: /compact, pillar: claude_mem, gate: pattern-extracted }
+  verify: { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
+  learn:
+    {
+      stage: ⑤学习,
+      command: /compact,
+      pillar: claude_mem,
+      gate: pattern-extracted,
+    }
 
 skills:
   p0:
@@ -74,6 +82,7 @@ agents:
       - security-reviewer
   gstack_supplement:
     source: garrytan/gstack
+    version: "0.19"
     enabled:
       - cso
       - sre
@@ -82,6 +91,13 @@ agents:
       - design-engineer
       - performance-engineer
       - doc-writer
+  gstack_v019:
+    source: garrytan/gstack
+    version: "0.19"
+    enabled:
+      - codex-reviewer
+      - ios-specialist
+    note: cross-model review + iOS specialist pipeline
 
 hooks:
   profile_env: ECC_HOOK_PROFILE
@@ -94,6 +110,7 @@ hooks:
     - pre-config-protection
     - pre-context-injector
     - pre-manifest-validator
+    - pre-loop-guard
     - post-secret-detector
     - post-edit-format
     - post-operation-log

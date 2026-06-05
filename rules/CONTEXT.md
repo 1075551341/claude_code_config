@@ -1,66 +1,57 @@
 ---
 name: context-engineering
-description: 上下文工程规则，管理上下文窗口质量与子agent调度
+description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE.md）
 alwaysApply: false
 layer: supplement
-source: open-gsd/get-shit-done-redux + zilliztech/claude-context + colbymchenry/codegraph + thedotmack/claude-mem
-triggers:
-  - 上下文管理
-  - 子agent调度
-  - 上下文腐烂
+paths: ["**/*"]
+source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph + thedotmack/claude-mem
 ---
 
 # 上下文工程规则
 
+> **骨架内容已迁至 `rules/CORE.md`**：三级阈值、三态制品、DAG依赖图。此处保留详细策略。
+
 ## 核心约束
 
-1. **主窗口精简**：主会话仅做编排，重活在子agent fresh context中完成
+1. **主窗口精简**：主会话仅做编排，重活在子 agent fresh context 中完成
 2. **制品存活**：PROJECT.md / REQUIREMENTS.md / ROADMAP.md / STATE.md / CONTEXT.md 跨会话存活
 3. **制品优先加载**：新会话首先加载所有结构化制品
 
-## 上下文腐烂三级阈值
-
-| 使用率 | 行动 |
-|--------|------|
-| <40% | 正常工作（主会话编排 + 子agent实现） |
-| 50% | 逻辑断点 `/compact`，释放已完成上下文 |
-| 70% | 强制压缩或启动新子Agent，保留决策丢弃细节 |
-
 ## 三态制品
 
-子Agent间通过三类结构化制品通信，禁止通过对话历史传递状态：
+子 Agent 间通过三类结构化制品通信，禁止通过对话历史传递状态：
 
-| 制品路径 | 用途 | 生命周期 |
-|----------|------|----------|
-| `openspec/changes/<id>/` | 功能规格变更 | proposal → spec → tasks → archive |
-| `.planning/phases/` | 大功能多阶段规划 | discuss → plan → execute → verify → ship |
-| `memory/` | 跨会话知识持久化 | claude-mem 渐进式披露，SSOT |
+| 制品路径                 | 用途             | 生命周期                                 |
+| ------------------------ | ---------------- | ---------------------------------------- |
+| `openspec/changes/<id>/` | 功能规格变更     | proposal → spec → tasks → archive        |
+| `.planning/phases/`      | 大功能多阶段规划 | discuss → plan → execute → verify → ship |
+| `memory/`                | 跨会话知识持久化 | claude-mem 渐进式披露，SSOT              |
 
-新会话启动：优先加载三态制品 → 其次 rules/CONTEXT.md → 最后对话历史。
+新会话启动：优先加载三态制品 → 其次 CONTEXT.md → 最后对话历史。
 
 ## Canonical Source Precedence（规范引用链）
 
-> **来源**: GSD-redux | 子Agent 须逐字引用规范文档，禁止凭记忆转述
+> **来源**: GSD-redux | 子 Agent 须逐字引用规范文档，禁止凭记忆转述
 
-| 优先级 | 文档类型 | 引用方式 |
-|--------|---------|---------|
-| 1 | CONTRIBUTING.md / CLAUDE.md | 逐字引用原文 |
-| 2 | ADR (docs/adr/*) | 逐字引用架构决策 |
-| 3 | CONTEXT.md (制品) | 逐字引用当前事实 |
-| 4 | Agent 记忆 | 仅参考，不可作为决策依据 |
+| 优先级 | 文档类型                    | 引用方式                 |
+| ------ | --------------------------- | ------------------------ |
+| 1      | CONTRIBUTING.md / CLAUDE.md | 逐字引用原文             |
+| 2      | ADR (docs/adr/\*)           | 逐字引用架构决策         |
+| 3      | CONTEXT.md (制品)           | 逐字引用当前事实         |
+| 4      | Agent 记忆                  | 仅参考，不可作为决策依据 |
 
-违反此链 = 子Agent 不可信。规范文档是唯一权威。
+违反此链 = 子 Agent 不可信。规范文档是唯一权威。
 
 ## Trust-But-Verify 纪律
 
 > **来源**: GSD-redux | Agent 自述不可信，一律通过 API 直接验证
 
-- 子Agent 声称"CI 通过"→ 通过 `gh api` 直接查询 check runs 状态
-- 子Agent 声称"测试覆盖完整"→ 检查实际测试文件和覆盖率报告
-- 子Agent 声称"无 lint 错误"→ 运行 lint 命令直接验证
+- 子 Agent 声称"CI 通过"→ 通过 `gh api` 直接查询 check runs 状态
+- 子 Agent 声称"测试覆盖完整"→ 检查实际测试文件和覆盖率报告
+- 子 Agent 声称"无 lint 错误"→ 运行 lint 命令直接验证
 - 违反验证纪律 = DONE_WITH_CONCERNS，需补充验证证据
 
-## 子Agent调度原则
+## 子 Agent 调度原则
 
 - 研究者/计划者/执行者各自 fresh context（200K token）
 - 通过三态制品通信（不通过对话历史）
@@ -84,7 +75,7 @@ triggers:
 
 ## 长任务治理
 
-- 超过30分钟 → 拆分为独立子Agent
+- 超过 30 分钟 → 拆分为独立子 Agent
 - 每完成一个子目标 → 输出状态摘要 + 释放上下文
 - 工作流切换 → 保存/恢复规划上下文
 
@@ -105,6 +96,7 @@ triggers:
 > **来源**: colbymchenry/codegraph | 预索引知识图谱，~35% token 节省，~70% 工具调用减少
 
 **何时用 codegraph（而非 explore agent）**：
+
 - 项目已有 `.codegraph/` 索引（`codegraph init -i`）
 - 问"X 如何调用 Y"、"这个函数的调用链"等结构性问题
 - 需要在改代码前评估影响范围
@@ -122,9 +114,30 @@ triggers:
 | 检查索引新鲜度 | `codegraph_status` |
 
 **规则**：
+
 - codegraph 返回的源码视为已读取，不重复 grep/Read
 - 无 `.codegraph/` 时回退到 explore agent
 - 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
+
+## Understand-Anything 使用策略
+
+> **来源**: Lum1104/Understand-Anything v2.7.5 | 交互知识图 + 引导导览
+
+**何时用 UA（而非 codegraph）**：
+
+- 新项目接手需理解架构概念 → `/understand --review`
+- 领域驱动分析/业务聚类 → `/understand-domain`
+- 新人 onboarding 导览 → `/understand-onboard`
+- 交互式问答（基于图谱） → `/understand-chat`
+- 修改前影响评估 → `/understand-diff`
+
+**双引擎协同**：
+| 场景 | 首选 | 补充 |
+|------|------|------|
+| 代码结构/调用链查询 | codegraph | — |
+| 概念理解/架构导览 | UA | — |
+| 探索未知代码 | codegraph 查结构 | UA 查概念 |
+| 新人 onboarding | UA 导览 | codegraph 补充细节 |
 
 ## claude-mem 三层搜索工作流
 
@@ -137,6 +150,7 @@ timeline（时间线上下文）
   ↓ 确认相关性
 get_observations（完整详情, ~500-1000 tokens/条）
 ```
+
 ~10x token 节省：先过滤再取详情，而非一次拉全量。
 
 ## 自改进要点

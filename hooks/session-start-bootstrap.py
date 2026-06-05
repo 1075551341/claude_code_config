@@ -15,8 +15,8 @@ import subprocess
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ {e}", file=sys.stderr)
 
 
 def detect_package_manager(cwd: str) -> str:
@@ -67,8 +67,8 @@ def load_previous_context(cwd: str) -> dict:
                     else:
                         context["project_notes"] = f.read()[:1000]
                 break
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️ {e}", file=sys.stderr)
     
     return context
 
@@ -112,8 +112,8 @@ def main():
 
     except SystemExit:
         raise
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     sys.exit(0)
 

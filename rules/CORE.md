@@ -1,9 +1,56 @@
 ---
-description: 代码开发时始终启用
+description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 + 三横切 + 阈值 + 阶段定义
 alwaysApply: true
 layer: skeleton
-source: obra/superpowers + forrestchang/andrej-karpathy-skills
+source: obra/superpowers + forrestchang/andrej-karpathy-skills + open-gsd/gsd-core + 2025Emma/vibe-coding-cn
 ---
+
+## 三横切基础设施
+
+```
+L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排)
+L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
+L3 洞察 — codegraph(静态索引,47%token减少) + Understand-Anything(交互知识图) + Firecrawl/Exa(外部搜索)
+
+所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
+```
+
+## 上下文腐烂三级阈值
+
+| 使用率 | 行动 |
+|--------|------|
+| <40%   | 正常工作（主会话编排 + 子 agent 实现） |
+| 50%    | 逻辑断点 `/compact`，释放已完成上下文 |
+| 70%    | 强制压缩或启动新子 Agent，保留决策丢弃细节 |
+
+子 Agent 调度: 无依赖并行派发 | 有依赖等待前置完成 | 同一制品路径禁止并行写入。
+
+## 五阶段流程
+
+```
+① 规划(brainstorming) → ② 规格(writing-plans) → ③ 执行(executing-plans/SDD+TDD)
+→ ④ 验证(verification-before-completion) → ⑤ 学习(pattern-extraction)
+
+状态机: DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
+门控:
+  ① 规划: HARD-GATE 用户批准设计 ✓
+  ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope
+  ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)
+  ④ 验证: 质量门全通过 + 交叉验证通过
+  ⑤ 学习: 模式提取完成
+```
+
+## vibe-coding-cn 道/法/术/器
+
+```
+道(原则): AI能做的不人工做 | 先结构后代码 | 上下文是第一性要素
+法(策略): 接口先行实现后补 | 能抄不写不重复造轮子 | 文档即上下文
+术(技巧): 明确能改什么不能改什么 | Debug给预期vs实际+最小复现
+器(工具): Claude Code/Cursor/Codex CLI — 选最合适的
+
+α-提示词(生成器): 唯一职责生成其他提示词或技能
+Ω-提示词(优化器): 唯一职责优化其他提示词或技能 → skill/instinct-learning
+```
 
 ## 优先级
 
@@ -95,13 +142,13 @@ source: obra/superpowers + forrestchang/andrej-karpathy-skills
 
 **各语言推荐时间库**：
 
-| 语言 | 推荐库 | 选型依据 |
-|------|--------|----------|
-| TypeScript/JS | dayjs（首选）/ date-fns（函数式） | 轻量、不可变、链式 API；避免 moment（已弃用、体积大） |
-| Python | pendulum（首选）/ arrow | 比 datetime 更好的 API 和时区支持；delorean 可选 |
-| Go | 标准库 time + Clock 接口 | Go 标准库已足够，通过接口注入即可 |
-| Rust | chrono / time crate | chrono 功能全面；time crate 更轻量 |
-| C# | NodaTime（首选）/ 标准库 + IDateTimeProvider | NodaTime 时区处理远优于 DateTime |
+| 语言          | 推荐库                                       | 选型依据                                              |
+| ------------- | -------------------------------------------- | ----------------------------------------------------- |
+| TypeScript/JS | dayjs（首选）/ date-fns（函数式）            | 轻量、不可变、链式 API；避免 moment（已弃用、体积大） |
+| Python        | pendulum（首选）/ arrow                      | 比 datetime 更好的 API 和时区支持；delorean 可选      |
+| Go            | 标准库 time + Clock 接口                     | Go 标准库已足够，通过接口注入即可                     |
+| Rust          | chrono / time crate                          | chrono 功能全面；time crate 更轻量                    |
+| C#            | NodaTime（首选）/ 标准库 + IDateTimeProvider | NodaTime 时区处理远优于 DateTime                      |
 
 ```typescript
 // ❌ 禁止
@@ -110,10 +157,10 @@ const ts = new Date().toISOString();
 const formatted = new Date().toLocaleDateString();
 
 // ✅ 使用 dayjs
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 const now = dayjs();
 const ts = dayjs().toISOString();
-const formatted = dayjs().format('YYYY-MM-DD');
+const formatted = dayjs().format("YYYY-MM-DD");
 
 // ✅ 依赖注入（业务逻辑）
 type Clock = () => dayjs.Dayjs;
@@ -153,16 +200,25 @@ func createService(clock Clock) { now := clock.Now() }
 **适用场景**：业务逻辑、数据模型、API 响应中的时间戳
 **例外**：纯 UI 展示（如页面显示当前时间）、CLI 工具的一次性脚本
 
-## 铁律 R12–R15
+## 铁律 R12–R16
 
 > R1–R11 → `CLAUDE.md`
 
-| # | 约束 | 核心 |
-|---|------|------|
-| R12 | 子Agent隔离 | fresh context + 结构化制品通信，禁止共享可变状态 |
-| R13 | 制品存活 | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化 |
-| R14 | 版本克制 | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认 |
-| R15 | 包管理器 | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm` |
+| #   | 约束          | 核心                                                           |
+| --- | ------------- | -------------------------------------------------------------- |
+| R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态               |
+| R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化        |
+| R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认 |
+| R15 | 包管理器      | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm`          |
+| R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告             |
+
+### R16 详细声明
+
+- **Hook**：所有 `hooks/*.py` 禁止 `except:pass` 或 `except Exception:pass`，异常必须向上传播或 `sys.exit(1)` + 错误详情
+- **Agent**：执行失败时报告错误详情 + 已尝试方案 + 建议下一步，不静默吞掉
+- **子 Agent**：主 Agent 接收子 Agent 异常，决定重试/报告/中止，不丢弃
+- **配置验证**：`validate_config.py` 失败时 `exit(1)` + 输出可操作修复建议
+- **扫描**：`validate_config.py V10` 扫描 `hooks/` 裸 except 数量，必须为 0
 
 ### R14 适用范围
 
@@ -183,10 +239,11 @@ func createService(clock Clock) { now := clock.Now() }
 - **Tool-First**：先查 MANIFEST → skill → catalog → agent → hook/MCP，不重复造轮子
 - **Clear Boundaries**：agent 间职责不重叠，MANIFEST.yaml 定义唯一归属
 - **Report Failures**：失败时报告原因 + 已尝试方案 + 建议下一步，不静默重试超过 2 次
-- **子Agent隔离(R12)**：每个子agent fresh context，通过 openspec/ + .planning/ + memory/ 三态制品通信
+- **子 Agent 隔离(R12)**：每个子 agent fresh context，通过 openspec/ + .planning/ + memory/ 三态制品通信
 - **制品存活(R13)**：新会话优先加载结构化制品，而非依赖对话历史
 - **版本克制(R14)**：维护/升级任务先列变更与风险，默认 minor/patch；major 单独说明理由
 - **包管理器(R15)**：Node 任务先判 lock/`packageManager`，能 pnpm 则 pnpm，否则 npm 并说明原因
+- **错误暴漏(R16)**：禁止裸 except:pass，异常传播或显式处理+报告；Hook/Agent/子 Agent/配置验证均不静默吞错误
 
 ## 项目约定
 
@@ -201,7 +258,7 @@ func createService(clock Clock) { now := clock.Now() }
 
 ## Git 规范
 
-> 详见 `rules/GIT.md`（分支策略、Commit规范、PR模板、危险操作防护等完整覆盖）
+> 详见 `rules/GIT.md`（分支策略、Commit 规范、PR 模板、危险操作防护等完整覆盖）
 
 ## Karpathy 四原则
 

@@ -79,8 +79,8 @@ def _win_editor_in_parent_chain():
             ppid, exe = row
             if any(x in exe for x in _EDITOR_EXE_NEEDLES): return True
             pid = ppid
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     return False
 
 
@@ -105,8 +105,8 @@ def should_skip_editor(raw):
     try:
         cwd = os.getcwd().replace("\\", "/").lower()
         if any(n in cwd for n in _EDITOR_PATH_NEEDLES): return True
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
 
     # [5] VS Code / Cursor family env markers
     for _k in ("VSCODE_PID","VSCODE_IPC_HOOK","VSCODE_NLS_CONFIG","VSCODE_CWD",
@@ -130,8 +130,8 @@ def should_skip_editor(raw):
                         _s = _v.replace("\\", "/").lower()
                         if any(_m in _s for _m in (".cursor/",".windsurf/","/.trae/")):
                             return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
 
     # [8] Explicit CLI whitelist
     if cep in ("cli", "terminal", "tui"): return False
@@ -150,14 +150,14 @@ def main():
     raw = b""
     try:
         raw = sys.stdin.buffer.read() if hasattr(sys.stdin, "buffer") else sys.stdin.read().encode("utf-8")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"⚠️ {e}", file=sys.stderr)
     if should_skip_editor(raw):
         try:
             sys.stdout.write('{"continue":true}\n')
             sys.stdout.flush()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"⚠️ {e}", file=sys.stderr)
         sys.exit(0)
     try:
         proc = subprocess.run([sys.executable, target] + sys.argv[2:], input=raw if raw else None, timeout=55)
