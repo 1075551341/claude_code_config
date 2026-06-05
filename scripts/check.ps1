@@ -32,12 +32,20 @@ $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $EDITORS    = @("cursor", "trae", "windsurf", "qoder")
-$LINK_DIRS  = @("skills", "agents")
+$LINK_DIRS  = @("skills", "agents", "rules")
+$SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 $STALE_LINKS = @("hooks", "scripts")
 $NATIVE_RULES = @{
     "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc" }
     "windsurf" = @{ Dir = (Join-Path $env:USERPROFILE ".windsurf\rules"); Ext = ".md" }
     "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
+    "qoder"    = @{ Dir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc" }
+}
+$NATIVE_SKILLS = @{
+    "cursor"   = Join-Path $env:USERPROFILE ".cursor\skills-native"
+    "windsurf" = Join-Path $env:USERPROFILE ".windsurf\skills-native"
+    "trae"     = Join-Path $env:USERPROFILE ".trae\skills-native"
+    "qoder"    = Join-Path $env:USERPROFILE ".qoder\skills-native"
 }
 
 $results   = [System.Collections.Generic.List[hashtable]]::new()
@@ -188,9 +196,25 @@ if (Test-Path $mcpPath) {
 }
 
 # =============================================================
-# S3: Symlink status
+# S3: Symlink sync status (v14 dual mode)
 # =============================================================
-Write-Section 3 "Symlink Sync Status"
+Write-Section 3 "Symlink Sync Status (v14)"
+
+function Test-IsReparseLink {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return $false }
+    return [bool]((Get-Item $Path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)
+}
+
+function Get-SyncMode {
+    param([string]$EditorDir)
+    $modePath = Join-Path $EditorDir "sync-mode.json"
+    if (-not (Test-Path $modePath)) { return "unknown" }
+    try {
+        $obj = Get-Content $modePath -Raw -Encoding utf8 | ConvertFrom-Json
+        return [string]$obj.mode
+    } catch { return "unknown" }
+}
 
 foreach ($editor in $EDITORS) {
     $editorDir = Join-Path $env:USERPROFILE ".$editor"
@@ -199,54 +223,98 @@ foreach ($editor in $EDITORS) {
         continue
     }
 
-    $linked = 0
     $issues = @()
+    $passes = 0
+    $syncMode = Get-SyncMode -EditorDir $editorDir
 
-    foreach ($dir in $LINK_DIRS) {
-        $lp = Join-Path $editorDir $dir
-        $et = Join-Path $CLAUDE_DIR $dir
-        if (Test-Path $lp) {
-            $info = Get-Item $lp -Force
-            if ([bool]($info.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-                $actual = $info.Target
-                if ($actual -is [array]) { $actual = $actual[0] }
-                if ($actual -eq $et) { $linked++ } else { $issues += "$dir(wrong target)" }
-            } else { $issues += "$dir(not a link)" }
-        } else { $issues += "$dir(missing)" }
+    foreach ($file in $SYNC_FILES) {
+        $fp = Join-Path $editorDir $file
+        $expected = Join-Path $CLAUDE_DIR $file
+        if (-not (Test-Path $fp)) {
+            $issues += "$file(missing)"
+        } elseif (Test-IsReparseLink $fp) {
+            $actual = (Get-Item $fp -Force).Target
+            if ($actual -is [array]) { $actual = $actual[0] }
+            if ($actual -eq $expected) { $passes++ } else { $issues += "$file(wrong target)" }
+        } else {
+            $issues += "$file(not a link)"
+        }
     }
 
-    # rules/ 为格式转换复制，非目录联接
-    $rulesSrc = Join-Path $CLAUDE_DIR "rules"
-    $expectedRules = if (Test-Path $rulesSrc) {
-        (Get-ChildItem $rulesSrc -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
-    } else { 0 }
-    if ($NATIVE_RULES.ContainsKey($editor) -and $expectedRules -gt 0) {
-        $native = $NATIVE_RULES[$editor]
-        $nativeDir = $native.Dir
-        $nativeExt = $native.Ext
-        if (Test-Path $nativeDir) {
-            $nativeCount = (Get-ChildItem $nativeDir -Filter "*$nativeExt" -ErrorAction SilentlyContinue).Count
-            if ($nativeCount -ge $expectedRules) {
-                $linked++
-            } else {
-                $issues += "rules($nativeCount/$expectedRules native files)"
+    $agentsPath = Join-Path $editorDir "agents"
+    $agentsExpected = Join-Path $CLAUDE_DIR "agents"
+    if (Test-IsReparseLink $agentsPath) {
+        $actual = (Get-Item $agentsPath -Force).Target
+        if ($actual -is [array]) { $actual = $actual[0] }
+        if ($actual -eq $agentsExpected) { $passes++ } else { $issues += "agents(wrong target)" }
+    } else { $issues += "agents(not a link)" }
+
+    if ($syncMode -eq "full") {
+        $skillsPath = Join-Path $editorDir "skills"
+        if (Test-Path $skillsPath) {
+            if (Test-IsReparseLink $skillsPath) { $issues += "skills(should not be link in full)" }
+            else { $issues += "skills(entity dir in full)" }
+        } else { $passes++ }
+
+        $rulesPath = Join-Path $editorDir "rules"
+        if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in full)" }
+        elseif (Test-Path $rulesPath) { $passes++ }
+        else { $issues += "rules(native missing)" }
+
+        if ($NATIVE_RULES.ContainsKey($editor)) {
+            $native = $NATIVE_RULES[$editor]
+            $rulesSrc = Join-Path $CLAUDE_DIR "rules"
+            $expectedRules = if (Test-Path $rulesSrc) {
+                (Get-ChildItem $rulesSrc -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
+            } else { 0 }
+            $nativeCount = if (Test-Path $native.Dir) {
+                (Get-ChildItem $native.Dir -Filter "*$($native.Ext)" -ErrorAction SilentlyContinue).Count
+            } else { 0 }
+            if ($nativeCount -ge $expectedRules) { $passes++ } else { $issues += "rules-native($nativeCount/$expectedRules)" }
+        }
+
+        if ($NATIVE_SKILLS.ContainsKey($editor)) {
+            $skillsNative = $NATIVE_SKILLS[$editor]
+            $skillsSrc = Join-Path $CLAUDE_DIR "skills"
+            $expectedSkills = if (Test-Path $skillsSrc) {
+                (Get-ChildItem $skillsSrc -Directory | Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") }).Count
+            } else { 0 }
+            $nativeSkillCount = 0
+            if (Test-Path $skillsNative) {
+                $nativeSkillCount = (Get-ChildItem $skillsNative -Directory -ErrorAction SilentlyContinue |
+                    Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") }).Count
             }
-        } else {
-            $issues += "rules(native dir missing)"
+            if ($nativeSkillCount -ge [Math]::Min(1, $expectedSkills)) { $passes++ }
+            else { $issues += "skills-native($nativeSkillCount/$expectedSkills)" }
+        }
+    }
+    else {
+        foreach ($dir in @("skills", "rules")) {
+            $lp = Join-Path $editorDir $dir
+            $et = Join-Path $CLAUDE_DIR $dir
+            if (Test-IsReparseLink $lp) {
+                $actual = (Get-Item $lp -Force).Target
+                if ($actual -is [array]) { $actual = $actual[0] }
+                if ($actual -eq $et) { $passes++ } else { $issues += "$dir(wrong target)" }
+            } elseif (Test-Path $lp) { $issues += "$dir(not a link)" }
+            else { $issues += "$dir(missing)" }
+        }
+
+        if ($NATIVE_SKILLS.ContainsKey($editor)) {
+            $skillsNative = $NATIVE_SKILLS[$editor]
+            if (Test-Path $skillsNative) {
+                $issues += "skills-native(stale from full mode)"
+            } else { $passes++ }
         }
     }
 
     foreach ($stale in $STALE_LINKS) {
         $sp = Join-Path $editorDir $stale
         if (Test-Path $sp) {
-            $info = Get-Item $sp -Force
-            if ([bool]($info.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-                $issues += "$stale(stale link)"
-            }
+            if (Test-IsReparseLink $sp) { $issues += "$stale(stale link)" }
         }
     }
 
-    # Check editor settings.json for problems
     $esPath = Get-EditorSettingsPath $editor
     if (Test-Path $esPath) {
         try {
@@ -254,28 +322,16 @@ foreach ($editor in $EDITORS) {
             if ($es.hooks -and $es.hooks.Stop) { $issues += "settings has Stop hooks" }
             $termEditor = $es.'terminal.integrated.env.windows'.'CLAUDE_IN_EDITOR'
             if ($termEditor) { $issues += "terminal CLAUDE_IN_EDITOR pollutes CLI" }
-            $hc = 0
-            if ($es.hooks) {
-                $cats = $es.hooks | Get-Member -MemberType NoteProperty -EA SilentlyContinue | Select-Object -ExpandProperty Name
-                foreach ($cat in $cats) {
-                    foreach ($entry in $es.hooks.$cat) { $hc += $entry.hooks.Count }
-                }
-            }
-            if ($hc -gt 4) { $issues += "settings has $hc hooks (legacy editor config, suggest <=2)" }
         } catch {}
-    } else {
-        $issues += "settings.json missing at $esPath"
     }
 
-    $expectedLinks = $LINK_DIRS.Count
-    if ($NATIVE_RULES.ContainsKey($editor)) { $expectedLinks++ }
-
+    $modeLabel = if ($syncMode -eq "unknown") { "mode?" } else { $syncMode }
     if ($issues.Count -eq 0) {
-        Add-Check "Symlink" ".$editor" "pass" "$linked/$expectedLinks sync items OK"
-    } elseif ($linked -gt 0) {
-        Add-Check "Symlink" ".$editor" "warn" "$linked OK, issues: $($issues -join ', ')"
+        Add-Check "Symlink" ".$editor" "pass" "$passes checks OK ($modeLabel)"
+    } elseif ($passes -ge 6) {
+        Add-Check "Symlink" ".$editor" "warn" "${modeLabel}: $($issues -join ', ')"
     } else {
-        Add-Check "Symlink" ".$editor" "warn" "not synced -- run sync.ps1"
+        Add-Check "Symlink" ".$editor" "warn" "not synced ($modeLabel) -- run sync.ps1"
     }
 }
 

@@ -196,7 +196,11 @@ infra/配置   → CEO可跳过
 
 ## 同步
 
-Claude Code 主环境；Cursor/Windsurf/Trae 软链接同步：CLAUDE.md + skills/ + agents/ + rules/
+Claude Code 主环境；跨编辑器 v14 双模式同步（详见 `docs/SYNC_GUIDE.md`）：
+
+- **索引（默认）**：6 总纲软链接 + `skills/` `agents/` `rules/` 目录联接
+- **全量（`-Full`）**：以上 + `rules/`/`skills-native/` 编辑器原生格式转换
+
 hooks/commands/MCP/plugins 不同步。
 
 @RTK.md

@@ -13,6 +13,11 @@ projects/
 cache/
 plugins/cache/
 context_cache.json
+plan_cache.json
+config.json
+.claude.json
+.last-cleanup
+.last-update-result.json
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,6 +27,12 @@ ide/
 sessions/
 tasks/
 session-env/
+daemon/
+temp/
+paste-cache/
+data/
+security/
+config/
 *.lock
 
 # History, Logs & Backups

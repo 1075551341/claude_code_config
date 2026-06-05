@@ -19,19 +19,25 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 | Windsurf | `%USERPROFILE%\.windsurf` | 若存在则参与同步 |
 | Qoder    | `%USERPROFILE%\.qoder`    | 若不存在则跳过   |
 
-### 同步的配置组件
+### 同步的配置组件（v14 双模式）
 
-- **技能库**（`skills/`）— 目录联接（Junction）指向 `~\.claude\skills`
-- **代理库**（`agents/`）— 同上
-- **规则库**（`rules/`）— **格式转换复制**到编辑器原生目录（Cursor `.mdc` / Windsurf `.md` / Trae `user_rules/`），**非**目录联接
-- **`hooks/`** — **不同步到各编辑器**（避免陈旧编辑器配置仍能通过链接调用阻塞型 Hook；编辑器会直接读取 `~\.claude\settings.json` 中的绝对路径）
-- **`scripts/`** — **不同步到各编辑器**（仅在 `~\.claude\scripts` 下维护）
+**索引模式（默认）**：
+
+- **总纲**（6 文件软链接）：`CLAUDE.md`、`SPEC.md`、`MANIFEST.yaml`、`*-INDEX.md`
+- **资产**（目录联接）：`skills/`、`agents/`、`rules/` → `~\.claude\`
+
+**全量模式（`-Full`）**：
+
+- 以上全部 + `agents/` 联接
+- **额外格式转换**：`rules/` → 编辑器原生 `.mdc`/`.md`；`skills/` → `skills-native/<name>/SKILL.md`
+
+**永不同步**：`hooks/`、`scripts/`、`commands/`、`plugins/`、`.mcp.json`
 
 **复制/链接同步的文件**：
 
-- `CLAUDE.md`、`AGENTS.md` — 文件符号链接/联接
-- `skills/`、`agents/` — 目录联接
-- `rules/` — 格式转换复制到 `.cursor/rules/*.mdc` 等（改源后需重跑 sync）
+- 6 总纲文件 → 文件软链接
+- 索引模式：`skills/`、`agents/`、`rules/` → 目录联接
+- 全量模式：`agents/` 联接 + rules/skills 原生格式副本
 
 **不同步的配置文件**：
 
@@ -58,38 +64,38 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 ## 脚本一览
 
-### `sync.ps1` — 将工具链同步到各编辑器（v11.0）
+### `sync.ps1` — 将工具链同步到各编辑器（v14.0）
 
-**作用**：同步到各编辑器目录：
+**索引模式（默认）**：
 
-- `CLAUDE.md`、`AGENTS.md` → **文件链接**
-- `skills/`、`agents/` → **目录联接**（Junction/符号链接）
-- `rules/` → **格式转换复制**（Cursor `.mdc` / Windsurf `.md` / Trae `user_rules/`）
-- Windsurf 额外更新 `~/.codeium/windsurf/memories/global_rules.md`（CLAUDE.md 或精简速查）
+- 6 总纲文件 → 软链接
+- `skills/`、`agents/`、`rules/` → 目录联接
+- 写入 `sync-mode.json`（`mode: index`）
 
-**同时写入（只合并 env，不整文件替换为空白）**：在 **`~\.<editor>\settings.json`** 与 **Roaming `User\settings.json`** 中合并 `env.CLAUDE_IN_EDITOR`，并清理 `terminal.integrated.env.windows.CLAUDE_IN_EDITOR`（编辑器目录不存在则跳过）。脚本头部注释与运行横幅为中文说明。
+**全量模式（`-Full`）**：
 
-**不再同步**：`hooks/`、`scripts/`（CLI 专用）、`.mcp.json`、Claude 侧的 `settings.json`（不把 `~\.claude\settings.json` 拷到编辑器）
+- 6 总纲 + `agents/` 联接
+- `rules/` → 原生 `.mdc`/`.md`（`Sync-NativeRulesFiles`）
+- `skills/` → `skills-native/` 原生 `SKILL.md`（`Sync-NativeSkillsFiles`）
+- 写入 `sync-mode.json`（`mode: full`）
 
-**自动清理**：检测并移除旧版遗留的 `hooks/`、`scripts/` 软链接
-
-**忽略文件**：若不存在则创建 `.<editor>ignore`，排除 `hooks/`、`plugins/` 等索引噪音
+**切回索引**：`sync.ps1 -Force`（不带 `-Full`）
 
 **用法**：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File sync.ps1
-powershell -ExecutionPolicy Bypass -File C:\Users\dell\.claude\scripts\sync.ps1
-powershell -ExecutionPolicy Bypass -File sync.ps1 -Force
+powershell -ExecutionPolicy Bypass -File sync.ps1 -Full -Force
 powershell -ExecutionPolicy Bypass -File sync.ps1 -DryRun
 ```
 
 **参数**：
 
-| 参数      | 说明             |
-| --------- | ---------------- |
-| `-Force`  | 强制重建所有链接 |
-| `-DryRun` | 仅预览，不写盘   |
+| 参数      | 说明                               |
+| --------- | ---------------------------------- |
+| `-Full`   | 全量模式（rules/skills 格式转换）  |
+| `-Force`  | 强制重建链接/原生副本              |
+| `-DryRun` | 仅预览，不写盘                     |
 
 ---
 

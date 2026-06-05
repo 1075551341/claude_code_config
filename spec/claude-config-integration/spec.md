@@ -219,20 +219,20 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 
 ### FR-12 多编辑器同步
 
-**来源**：caveman 单源模式, 本地 sync.ps1
+**来源**：caveman 单源模式, 本地 sync.ps1 v14
 
 | ID      | 要求                                       | 验收                  |
 | ------- | ------------------------------------------ | --------------------- |
-| FR-12.1 | sync.ps1 v11 软链接 CLAUDE.md              | DryRun 通过           |
-| FR-12.2 | AGENTS.md 镜像生成（Cursor autodiscovery） | Cursor 可加载         |
-| FR-12.3 | skills/ agents/ 目录联接                   | Junction 正确         |
-| FR-12.4 | rules/ 格式转换复制                        | .mdc/.md 各编辑器原生 |
-| FR-12.5 | Windsurf global_rules ≤6000 字符摘要       | sync 自动生成         |
-| FR-12.6 | hooks/commands/mcp 不同步                  | SYNC_GUIDE 明确       |
-| FR-12.7 | \_editor_hook_launcher v3 编辑器跳过       | 无 hook 循环          |
-
-| FR-12.8 | sync.sh v11 与 sync.ps1 行为对齐（macOS/Linux） | sync.sh DryRun |
-| FR-12.9 | Qoder/CodeArts 可选同步（沿用 sync.ps1 已有目标） | 文档说明 |
+| FR-12.1 | sync.ps1 v14 索引：6 总纲软链接            | DryRun 通过           |
+| FR-12.2 | 索引：skills/ agents/ rules/ 目录联接      | Junction 正确         |
+| FR-12.3 | 全量（-Full）：6 总纲 + agents/ 联接         | 同上                  |
+| FR-12.4 | 全量：rules/ 格式转换 → .mdc/.md 原生目录   | Cursor/Windsurf 可加载 |
+| FR-12.5 | 全量：skills/ → skills-native/ 格式转换      | SKILL.md 可读         |
+| FR-12.6 | sync-mode.json 记录 index/full             | check.ps1 S3 可检测   |
+| FR-12.7 | Windsurf global_rules ≤6000 字符摘要       | sync 自动生成         |
+| FR-12.8 | hooks/commands/mcp 不同步                  | SYNC_GUIDE 明确       |
+| FR-12.9 | sync.sh 与 sync.ps1 索引行为对齐           | 6 总纲 + 三目录联接   |
+| FR-12.10 | Full 格式转换 Windows 主实现；Linux 见文档 | SYNC_GUIDE 说明       |
 
 ### FR-13 CI 模板
 

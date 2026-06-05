@@ -228,7 +228,7 @@ concerns:
     stage: execute
 
   gstack_review:
-    owner: AGENTS.md
+    owner: rules/AGENTS.md
     catalog: [eng-reviewer, ceo-reviewer, designer, qa, security-reviewer]
     source: garrytan/gstack
     stage: verify
