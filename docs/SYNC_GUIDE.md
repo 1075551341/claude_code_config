@@ -4,20 +4,32 @@ description: 跨编辑器配置同步指南 v14
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v14.0 | **脚本**: `scripts/sync.ps1` | **模式**: 索引（默认） / 全量（`-Full`）
+> **版本**: v14.1 | **日期**: 2026-06-07 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
+
+## 边界原则（Claude Code ↔ 编辑器）
+
+| 范围 | 路径 | 说明 |
+|------|------|------|
+| **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用 |
+| **同步源（只读）** | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件 | `sync.ps1` 读取并链接/复制到编辑器 |
+| **同步目标（仅编辑器）** | `~/.cursor/`、`~/.windsurf/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
+
+**`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。  
+**`fix.ps1 -Fix`** 单独处理 Hook launcher 与编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
+
+---
 
 ## 双模式概览
 
 | 内容 | 索引模式（默认） | 全量模式（`-Full`） |
 |------|:----------------:|:-------------------:|
-| CLAUDE.md / SPEC.md / MANIFEST.yaml | ✅ 软链接 | ✅ 软链接 |
-| skills-INDEX / agents-INDEX / rules-INDEX | ✅ 软链接 | ✅ 软链接 |
-| `skills/` | ✅ 目录联接 | ❌ 移除联接 → `skills-native/` 格式转换 |
+| 7 总纲（含 `CLAUDE-ROUTER.mdc`） | ✅ 软链接 | ✅ 软链接 |
+| `skills/` | ✅ 目录联接 | ❌ → `skills-native/` 格式转换 |
 | `agents/` | ✅ 目录联接 | ✅ 目录联接 |
-| `rules/` | ✅ 目录联接 | ❌ 移除联接 → 原生 `.mdc`/`.md` 副本 |
+| `rules/` | ✅ 编辑器实体目录：单文件软链接 + 路由副本 | ❌ → 原生 `.mdc`/`.md` 副本 |
 | sync-mode.json | `index` | `full` |
 
-**不同步（两种模式均适用）**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
+**永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
 
 ---
 
@@ -25,69 +37,41 @@ description: 跨编辑器配置同步指南 v14
 
 ```
 ~/.cursor/  （Windsurf/Trae/Qoder 同理）
-├── CLAUDE.md, SPEC.md, MANIFEST.yaml     (软链接)
-├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md  (软链接)
+├── CLAUDE.md, CLAUDE-ROUTER.mdc, SPEC.md, MANIFEST.yaml  (软链接)
+├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md      (软链接)
 ├── skills/  → ~/.claude/skills/        (目录联接)
 ├── agents/  → ~/.claude/agents/        (目录联接)
-├── rules/   → ~/.claude/rules/         (目录联接)
+├── rules/   (实体目录，仅编辑器侧)
+│   ├── 00-CLAUDE-ROUTER.mdc              (必加载，从总纲部署)
+│   ├── CORE.md, GIT.md, …              (单文件软链接 → ~/.claude/rules/)
 └── sync-mode.json                        { "mode": "index" }
 ```
 
 **总纲执行链：**
 
 ```
-CLAUDE.md → MANIFEST.yaml(owner) → *-INDEX.md(发现) → SPEC.md(法典)
-→ Read skills/<name>/SKILL.md | agents/<name>.md | rules/<name>.md
+CLAUDE-ROUTER(必加载) → CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC.md
+→ 按需 Read skills/<name>/SKILL.md | agents/<name>.md | rules/<name>.md
 ```
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/sync.ps1
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force   # 强制重建
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -DryRun  # 预演
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force
 ```
 
 ---
 
 ## 模式 B：全量同步（`-Full`）
 
-在索引内容基础上，额外生成编辑器原生格式副本：
-
 | 资产 | 输出路径（Cursor 示例） |
 |------|-------------------------|
-| rules | `~/.cursor/rules/*.mdc` |
+| rules | `~/.cursor/rules/*.mdc` + `00-CLAUDE-ROUTER.mdc` |
 | skills | `~/.cursor/skills-native/<name>/SKILL.md` |
-| agents | `~/.cursor/agents/` 目录联接（不转换） |
+| agents | `~/.cursor/agents/` 目录联接 |
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Full -Force
 ```
-
-**切回索引模式：**
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force
-```
-
----
-
-## 路径互斥说明
-
-- `rules/`、`skills/` 在同一路径不能既是联接又是实体目录。
-- **Index → Full**：移除 `rules/`、`skills/` 联接，写入原生副本。
-- **Full → Index**：备份并删除原生 `rules/`、`skills-native/`，重建联接。
-- 备份目录：`~/.claude/backups/<timestamp>/`
-
----
-
-## 软链接目标
-
-| 编辑器 | 路径 |
-|--------|------|
-| Cursor | `~/.cursor/` |
-| Windsurf | `~/.windsurf/` |
-| Trae | `~/.trae/` |
-| Qoder | `~/.qoder/` |
-| CodeArts Agent | `%APPDATA%/codearts-agent/User/` |
 
 ---
 
@@ -95,22 +79,14 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
-python scripts/validate_config.py
 ```
 
-`check.ps1` S3 段读取 `sync-mode.json` 并按 index/full 分别验证。
+`check.ps1` S3 段读取 `sync-mode.json` 并按 index/full 分别验证；S4 确认 hooks 仅在 `~/.claude`。
 
 ---
 
 ## 从 v13 升级
 
-- v13 索引模式仅同步 6 个总纲文件
-- v14 索引模式额外联接 `skills/`、`agents/`、`rules/`
-- v14 全量模式：`agents/` 联接 + `rules/`/`skills-native/` 格式转换
-- Linux/macOS 见 `scripts/sync.sh`（索引联接；Full 转换请用 Windows `sync.ps1 -Full`）
-
----
-
-## 索引文件
-
-`*-INDEX.md` 由 `generate-indexes.py` 生成，含名称、描述、加载级别三列。
+- v14 索引：`skills/`、`agents/` 联接；`rules/` 改为编辑器侧单文件链接（不再联接整个目录）
+- v14 总纲 7 文件：新增 `CLAUDE-ROUTER.mdc`
+- v14 全量：`agents/` 联接 + `rules/`/`skills-native/` 格式转换

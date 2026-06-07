@@ -4,8 +4,8 @@
     Claude Code 多编辑器同步脚本 v14.0 — 索引 + 全量双模式
 
 .DESCRIPTION
-    索引模式(默认): 6 总纲软链接 + skills/agents/rules 目录联接
-    全量模式(-Full): 6 总纲 + agents/ 联接 + rules/skills 编辑器原生格式转换副本
+    索引模式(默认): 7 总纲软链接 + skills/agents 目录联接 + 编辑器 rules 单文件链接与路由部署
+    全量模式(-Full): 7 总纲 + agents/ 联接 + rules/skills 编辑器原生格式转换 + 路由规则部署
 
     不同步：commands/、hooks/、scripts/、MCP 配置。
 
@@ -37,10 +37,13 @@ $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $BACKUP_DIR = Join-Path $CLAUDE_DIR "backups\$(Get-Date -Format 'yyyyMMdd_HHmmss')"
 $EDITORS = @("cursor", "trae", "windsurf", "qoder")
 $CODEARTS_EDITORS = @("codearts-agent")
-$SYNC_DIRS = @("skills", "agents", "rules")
+$SYNC_DIRS = @("skills", "agents")
 $SYNC_DIRS_FULL_LINK = @("agents")
 $SYNC_DIRS_FULL_NATIVE = @("rules", "skills")
-$SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+$SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+$ROUTER_SOURCE_FILE = "CLAUDE-ROUTER.mdc"
+$ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
+$ROUTER_DEPLOY_WHITELIST = @("00-CLAUDE-ROUTER.mdc", "00-CLAUDE-ROUTER.md")
 $STALE_LINKS = @("hooks", "scripts", "commands", "AGENTS.md")
 
 # 编辑器原生规则目录映射（使用各编辑器真正识别的全局路径）
@@ -52,6 +55,7 @@ $NATIVE_RULES_DIR_MAP = @{
     "windsurf" = @{ TargetDir = (Join-Path $env:USERPROFILE ".windsurf\rules"); Ext = ".md"; Format = "windsurf" }
     "trae"     = @{ TargetDir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md"; Format = "trae" }
     "qoder"    = @{ TargetDir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc"; Format = "cursor" }
+    "codearts-agent" = @{ TargetDir = (Join-Path $env:APPDATA "codearts-agent\User\rules"); Ext = ".mdc"; Format = "cursor" }
 }
 
 # Full 模式：skills 原生副本目录（避免与 Index 模式 skills/ 联接冲突）
@@ -242,6 +246,121 @@ function Write-SyncModeJson {
     [System.IO.File]::WriteAllText($path, $payload, [System.Text.Encoding]::UTF8)
 }
 
+function Get-RouterSourceContent {
+    $src = Join-Path $CLAUDE_DIR $ROUTER_SOURCE_FILE
+    if (-not (Test-Path $src)) { return $null }
+    return [System.IO.File]::ReadAllText($src, [System.Text.Encoding]::UTF8)
+}
+
+function Write-RouterDeployFile {
+    param(
+        [string]$Path,
+        [string]$Content
+    )
+    if ($DryRun) { return $true }
+    $dir = Split-Path $Path -Parent
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+    if ((Test-Path $Path) -and -not $Force) {
+        $existing = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
+        if ($existing -eq $Content) { return $false }
+    }
+    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.Encoding]::UTF8)
+    return $true
+}
+
+function Cleanup-ClaudeRulesDeployArtifacts {
+    <#
+    .SYNOPSIS
+        清理历史上误写入 ~/.claude/rules/ 的路由部署产物（同步仅针对编辑器，不修改 Claude Code 源 rules）
+    #>
+    $rulesDir = Join-Path $CLAUDE_DIR "rules"
+    if (-not (Test-Path $rulesDir)) { return }
+    foreach ($name in $ROUTER_DEPLOY_WHITELIST) {
+        $p = Join-Path $rulesDir $name
+        if (Test-Path $p) {
+            if ($DryRun) { Write-Fix "[预演] 将删除 Claude Code 源目录中的部署产物: rules/$name" }
+            else { Remove-Item $p -Force; Write-Fix "已删除 Claude Code 源目录中的部署产物: rules/$name"; $script:stats.Removed++ }
+        }
+    }
+}
+
+function Deploy-RouterRule {
+    param(
+        [hashtable]$RulesConfig
+    )
+    $srcContent = Get-RouterSourceContent
+    if (-not $srcContent) { return $false }
+    $targetDir = $RulesConfig.TargetDir
+    $content = if ($RulesConfig.Format -eq "cursor" -or $RulesConfig.Format -eq "trae") {
+        $srcContent
+    }
+    else {
+        Convert-Frontmatter -Content $srcContent -Format $RulesConfig.Format
+    }
+    $routerPath = Join-Path $targetDir "$ROUTER_DEPLOY_BASENAME$($RulesConfig.Ext)"
+    if (Write-RouterDeployFile -Path $routerPath -Content $content) {
+        Write-Fix "路由规则已部署 → $routerPath"
+        $script:stats.Files++
+        return $true
+    }
+    return $false
+}
+
+function Sync-EditorRulesIndex {
+    param(
+        [string]$EditorName
+    )
+    if (-not $NATIVE_RULES_DIR_MAP.ContainsKey($EditorName)) { return }
+    $cfg = $NATIVE_RULES_DIR_MAP[$EditorName]
+    $targetRulesDir = $cfg.TargetDir
+    $rulesSrc = Join-Path $CLAUDE_DIR "rules"
+    if (-not (Test-Path $rulesSrc)) {
+        Write-Skip "源 rules 目录缺失，跳过编辑器 rules 同步"
+        return
+    }
+
+    if ((Test-Path $targetRulesDir) -and (IsLink $targetRulesDir)) {
+        if ($DryRun) { Write-Fix "[预演] 将移除 rules/ 联接（改为编辑器实体目录+单文件链接）" }
+        else { Remove-DirTarget -Path $targetRulesDir -Editor $EditorName -Label "rules/" }
+    }
+
+    if (-not (Test-Path $targetRulesDir) -and -not $DryRun) {
+        New-Item -ItemType Directory -Path $targetRulesDir -Force | Out-Null
+    }
+
+    $ruleFiles = Get-ChildItem $rulesSrc -Filter "*.md" |
+        Where-Object { $_.Name -ne "README.md" } |
+        Sort-Object Name
+    foreach ($rf in $ruleFiles) {
+        $dst = Join-Path $targetRulesDir $rf.Name
+        Sync-SingleFile -Source $rf.FullName -Target $dst -Label "rules/$($rf.Name)"
+    }
+
+    if (-not $DryRun) {
+        Deploy-RouterRule -RulesConfig $cfg | Out-Null
+    }
+    else {
+        Write-Ok "[预演] 将部署 rules/ 单文件链接 + 00-CLAUDE-ROUTER$($cfg.Ext)"
+    }
+}
+
+function Sync-DeployRouterArtifacts {
+    <#
+    .SYNOPSIS
+        全量模式：向各编辑器原生 rules 目录补部署路由规则（源 ~/.claude/CLAUDE-ROUTER.mdc，不写回 Claude Code rules/）
+    #>
+    if (-not $Full) { return }
+    foreach ($entry in $NATIVE_RULES_DIR_MAP.GetEnumerator()) {
+        $editor = $entry.Key
+        $cfg = $entry.Value
+        if ((Test-Path $cfg.TargetDir) -and (IsLink $cfg.TargetDir)) { continue }
+        if (-not (Test-Path (Split-Path $cfg.TargetDir -Parent))) { continue }
+        Deploy-RouterRule -RulesConfig $cfg | Out-Null
+    }
+}
+
 function Sync-EditorTarget {
     param(
         [string]$EditorName,
@@ -315,6 +434,8 @@ function Sync-EditorTarget {
             Sync-DirJunction -Source $src -Target $dst -Label "$dir/" -Editor $EditorName
         }
 
+        Sync-EditorRulesIndex -EditorName $EditorName
+
         Cleanup-FullNativeArtifacts -TargetDir $TargetDir -EditorName $EditorName
         Write-SyncModeJson -TargetDir $TargetDir -Mode "index"
     }
@@ -374,6 +495,7 @@ function Sync-NativeRulesFiles {
         foreach ($pat in $stalePatterns) {
             $existing = Get-ChildItem $targetRulesDir -Filter $pat -ErrorAction SilentlyContinue
             foreach ($ef in $existing) {
+                if ($ef.Name -in $ROUTER_DEPLOY_WHITELIST) { continue }
                 $base = $ef.BaseName -replace '^RULES_',''
                 $isValid = ($ef.Name -in $validNames) -or ($base -in $validBaseNames -and $ef.Extension -eq $ext)
                 if (-not $isValid) {
@@ -407,7 +529,10 @@ function Sync-NativeRulesFiles {
         if ($format -eq "cursor" -and $category -eq "CORE") {
             $convertedContent += @"
 
-<!-- sync v14 Full: 技能原生副本见 ~/.cursor/skills-native/<name>/SKILL.md；完整源 ~/.claude/skills/ -->
+## 全量模式 Skills 路径
+
+技能按 name Read：`~/.cursor/skills-native/<name>/SKILL.md`  
+完整源：`~/.claude/skills/<name>/SKILL.md`
 "@
         }
 
@@ -439,6 +564,9 @@ function Sync-NativeRulesFiles {
     if ($syncedCount -gt 0) {
         Write-Fix "rules 已生成 $syncedCount 个 $ext 文件（$format 格式）→ $targetRulesDir"
         $stats.Files += $syncedCount
+    }
+    if (-not $DryRun) {
+        Deploy-RouterRule -RulesConfig $RulesConfig | Out-Null
     }
     if ($skippedCount -gt 0) {
         Write-Ok "$skippedCount 个 $ext 规则文件已是最新"
@@ -767,7 +895,7 @@ Write-Host "======================================================" -ForegroundC
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray
 Write-Host "  目标编辑器: $($EDITORS -join ', '), $($CODEARTS_EDITORS -join ', ')" -ForegroundColor DarkGray
-$modeLabel = if ($Full) { "全量（agents联接 + rules/skills原生转换）" } else { "索引（6总纲软链 + skills/agents/rules联接）" }
+$modeLabel = if ($Full) { "全量（agents联接 + rules/skills原生转换）" } else { "索引（7总纲 + skills/agents联接 + rules单文件链接）" }
 Write-Host "  同步模式: $modeLabel" -ForegroundColor DarkGray
 $syncModeLabel = if ($isAdmin) { "管理员（符号链接）" } else { "非管理员（目录联接，Junction）" }
 Write-Host "  模式   : $syncModeLabel" -ForegroundColor DarkGray
@@ -780,6 +908,10 @@ if (-not $DryRun) {
 }
 
 $stats = @{ Links = 0; Files = 0; Removed = 0; Errors = 0; Skipped = 0 }
+
+if (-not $DryRun) {
+    Cleanup-ClaudeRulesDeployArtifacts
+}
 
 foreach ($editor in $EDITORS | Sort-Object) {
     $targetDir = Join-Path $env:USERPROFILE ".$editor"
@@ -799,6 +931,13 @@ foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
     Sync-EditorTarget -EditorName $editor -TargetDir $targetDir
 }
 
+if (-not $DryRun) {
+    Sync-DeployRouterArtifacts
+}
+else {
+    Write-Host "  [预演] 将部署 CLAUDE-ROUTER → 各编辑器必加载 rules" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "  =====================================================" -ForegroundColor DarkGray
 $syncDoneMsg = if ($DryRun) { "预演结束" } else { "同步完成" }
@@ -813,12 +952,12 @@ if ($stats.Errors -gt 0) {
 }
 Write-Host ""
 if ($Full) {
-    Write-Host "  已同步: 6总纲软链接 + agents/联接 + rules/skills 原生格式转换" -ForegroundColor DarkGray
+    Write-Host "  已同步: 7总纲软链接 + agents/联接 + rules/skills 原生格式转换" -ForegroundColor DarkGray
     Write-Host "  切回索引: powershell -File sync.ps1 -Force" -ForegroundColor DarkGray
 } else {
-    Write-Host "  已同步: 6总纲软链接 + skills/agents/rules 目录联接" -ForegroundColor DarkGray
-    Write-Host "  总纲执行: CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC.md" -ForegroundColor DarkGray
+    Write-Host "  已同步: 7总纲软链接 + skills/agents 联接 + 编辑器 rules 单文件链接" -ForegroundColor DarkGray
+    Write-Host "  总纲执行: CLAUDE-ROUTER → CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC.md" -ForegroundColor DarkGray
     Write-Host "  全量模式: powershell -File sync.ps1 -Full（+ rules/skills 原生转换）" -ForegroundColor DarkGray
 }
-Write-Host "  不同步: hooks/ scripts/ MCP配置 plugins/ commands/" -ForegroundColor DarkGray
+Write-Host "  不同步: hooks/ scripts/ MCP配置 plugins/ commands/ settings.json（Claude Code 专用，仅 ~/.claude）" -ForegroundColor DarkGray
 Write-Host ""

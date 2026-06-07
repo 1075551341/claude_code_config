@@ -32,10 +32,10 @@
 ## 同步到编辑器
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1              # 索引：6总纲 + 三目录联接
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1              # 索引：7总纲 + skills/agents联接 + rules单文件链接
 powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Full -Force # 全量：+ rules/skills 格式转换
 ```
 
-- 索引模式：6 总纲软链接 + `skills/` `agents/` `rules/` 目录联接
+- 索引模式：7 总纲软链接 + `skills/` `agents/` 联接 + 编辑器侧 `rules/` 单文件链接
 - 全量模式：+ `rules/*.mdc` + `skills-native/` 原生副本
 - 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md) v14

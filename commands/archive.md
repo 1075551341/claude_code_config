@@ -1,3 +1,7 @@
+---
+description: 归档已完成 OpenSpec 变更到 openspec/changes/archive/
+---
+
 # /archive — 归档已完成规格
 
 将已完成的规格提案归档到 `openspec/changes/archive/`。

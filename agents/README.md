@@ -1,10 +1,10 @@
 # Agents 智能体库
 
-> **全局 20 个**（8 核心 + 5 gstack 审查 + 7 gstack 补全）+ **catalog/agents/** 领域库（43）
+> **全局 24 个**（7 核心 + 5 gstack 审查 + 7 gstack 补全 + 3 gstack v0.19 + 2 扩展）+ **catalog/agents/** 领域库（43）
 
 ---
 
-## 核心 8（supplement 层）
+## 核心 7（supplement 层）
 
 | Agent | 预加载 skill | 职责 |
 |-------|-------------|------|
@@ -14,7 +14,6 @@
 | build-error-resolver | systematic-debugging | 构建错误 + 5-Why |
 | architect | brainstorming | 架构决策 |
 | spec-reviewer | spec-validation | spec 审查 |
-| context-manager | memory-compression, caveman-compress | 检索/压缩，不重复 mem 存储 |
 | agentic-orchestrator | subagent-driven-development | 多 Agent 并行编排 |
 
 ---
@@ -42,6 +41,25 @@
 | design-engineer | mockup→生产 HTML/CSS | /design-html |
 | performance-engineer | Core Web Vitals / 基准 | /benchmark |
 | doc-writer | 文档与 release notes | /document-release |
+
+---
+
+## gstack v0.19 新增 3（supplement 层）
+
+| Agent | 职责 | 触发 |
+|-------|------|------|
+| design-shotgun | 4-6 AI mockup 变体 + 品味记忆 | 设计方案 / 多方案对比 / mockup |
+| pair-agent | 多 AI Agent 浏览器共享协作 | 多 Agent 协作 / pair |
+| land-and-deploy | 一键部署 PR→production | 部署 / 上线 / land / deploy |
+
+---
+
+## 扩展 2（supplement 层）
+
+| Agent | 职责 | 触发 |
+|-------|------|------|
+| codex-reviewer | 跨模型独立审查（Codex 视角） | /codex / 跨模型验证 |
+| ios-specialist | iOS 专用审查 QA/设计/清理/同步 | iOS 变更（gstack v0.19） |
 
 ---
 

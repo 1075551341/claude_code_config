@@ -33,7 +33,8 @@ $ErrorActionPreference = "SilentlyContinue"
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $EDITORS    = @("cursor", "trae", "windsurf", "qoder")
 $LINK_DIRS  = @("skills", "agents", "rules")
-$SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+$SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+$ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
 $STALE_LINKS = @("hooks", "scripts")
 $NATIVE_RULES = @{
     "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc" }
@@ -241,6 +242,11 @@ foreach ($editor in $EDITORS) {
         }
     }
 
+    $routerExt = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Ext } else { ".mdc" }
+    $routerRulesDir = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Dir } else { Join-Path $editorDir "rules" }
+    $routerPath = Join-Path $routerRulesDir "${ROUTER_DEPLOY_BASENAME}$routerExt"
+    if (Test-Path $routerPath) { $passes++ } else { $issues += "router(missing)" }
+
     $agentsPath = Join-Path $editorDir "agents"
     $agentsExpected = Join-Path $CLAUDE_DIR "agents"
     if (Test-IsReparseLink $agentsPath) {
@@ -289,7 +295,7 @@ foreach ($editor in $EDITORS) {
         }
     }
     else {
-        foreach ($dir in @("skills", "rules")) {
+        foreach ($dir in @("skills")) {
             $lp = Join-Path $editorDir $dir
             $et = Join-Path $CLAUDE_DIR $dir
             if (Test-IsReparseLink $lp) {
@@ -298,6 +304,14 @@ foreach ($editor in $EDITORS) {
                 if ($actual -eq $et) { $passes++ } else { $issues += "$dir(wrong target)" }
             } elseif (Test-Path $lp) { $issues += "$dir(not a link)" }
             else { $issues += "$dir(missing)" }
+        }
+
+        if ($NATIVE_RULES.ContainsKey($editor)) {
+            $native = $NATIVE_RULES[$editor]
+            $rulesPath = $native.Dir
+            if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in index)" }
+            elseif (Test-Path $rulesPath) { $passes++ }
+            else { $issues += "rules(missing)" }
         }
 
         if ($NATIVE_SKILLS.ContainsKey($editor)) {

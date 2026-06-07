@@ -73,6 +73,29 @@ def load_previous_context(cwd: str) -> dict:
     return context
 
 
+def detect_codegraph(cwd: str) -> str | None:
+    """检测 codegraph 索引状态"""
+    is_git = os.path.exists(os.path.join(cwd, ".git"))
+    has_codegraph = os.path.exists(os.path.join(cwd, ".codegraph"))
+
+    if not is_git:
+        return None  # 非 git 项目，跳过
+
+    if has_codegraph:
+        return (
+            "✅ CodeGraph 已索引 — 优先使用 codegraph_search/explore/impact "
+            "代替 grep 探索代码（47% token 减少, 58% 调用减少）"
+        )
+    else:
+        # 有 .git 但没有 .codegraph → 提示初始化
+        file_count = sum(1 for _ in os.walk(cwd)) if os.path.isdir(cwd) else 0
+        return (
+            f"⚠️ 项目有 .git 但未初始化 CodeGraph 索引。\n"
+            f"   → 运行 codegraph init -i 可节省 ~47% token 和 ~58% 工具调用\n"
+            f"   → 索引后自动同步，无需手动维护"
+        )
+
+
 def main():
     try:
         # 读取 stdin
@@ -83,32 +106,35 @@ def main():
             sys.exit(0)
 
         cwd = data.get("cwd", os.getcwd())
-        
+
         # 检测包管理器
         package_manager = detect_package_manager(cwd)
-        
+
+        # 检测 codegraph 索引
+        codegraph_status = detect_codegraph(cwd)
+
         # 加载上下文
         context = load_previous_context(cwd)
-        
+
         # 输出启动信息
+        parts = [f"🚀 Session Bootstrap:", f"  • 项目路径: {cwd}"]
         if package_manager != "unknown":
-            bootstrap_info = (
-                f"🚀 Session Bootstrap:\n"
-                f"  • 检测到包管理器: {package_manager}\n"
-                f"  • 项目路径: {cwd}"
-            )
-            
-            if context:
-                bootstrap_info += f"\n  • 已加载上下文: {list(context.keys())}"
-            
-            result = {
-                "hookSpecificOutput": {
-                    "hookEventName": "SessionStart",
-                    "additionalContext": bootstrap_info,
-                }
+            parts.append(f"  • 包管理器: {package_manager}")
+        if codegraph_status:
+            parts.append(f"  • {codegraph_status}")
+        if context:
+            parts.append(f"  • 已加载上下文: {list(context.keys())}")
+
+        bootstrap_info = "\n".join(parts)
+
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": bootstrap_info,
             }
-            sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
-            sys.stdout.flush()
+        }
+        sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
 
     except SystemExit:
         raise

@@ -1,7 +1,7 @@
-# ECC harness manifest — 全局启用组件清单 v5.1
-# 权威: MANIFEST.yaml v7.2 | 五柱×五阶段×三横切 | 27仓库全量重新调研
+# ECC harness manifest — 全局启用组件清单 v6.0
+# 权威: MANIFEST.yaml v8.1 | 五柱×五阶段×三横切 | 29仓库全量重新调研
 
-version: "5.1"
+version: "6.0"
 harness: claude-code-primary
 
 phases:
@@ -70,8 +70,8 @@ agents:
       - build-error-resolver
       - architect
       - spec-reviewer
-      - context-manager
       - agentic-orchestrator
+    note: context-manager 已合并至 claude-mem plugin
   gstack_review:
     source: garrytan/gstack
     enabled:
@@ -97,7 +97,10 @@ agents:
     enabled:
       - codex-reviewer
       - ios-specialist
-    note: cross-model review + iOS specialist pipeline
+      - design-shotgun
+      - pair-agent
+      - land-and-deploy
+    note: cross-model review + iOS pipeline + design exploration + multi-agent browser + deploy
 
 hooks:
   profile_env: ECC_HOOK_PROFILE

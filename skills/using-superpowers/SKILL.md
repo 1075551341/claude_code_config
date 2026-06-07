@@ -14,17 +14,18 @@ source: obra/superpowers
 ## 调用链（顺序固定）
 
 ```
-MANIFEST.yaml → P0 skill(4) → 全局 skill(25) → catalog/skills → agent → MCP/hook
+MANIFEST.yaml → P0 skill(5) → 全局 skill(29) → catalog/skills → agent → MCP/hook
 ```
 
-## P0（强制 4）
+## P0（强制 5）
 
 | 信号 | Skill |
 |------|-------|
+| 会话开始/不确定 | using-superpowers（本 skill） |
 | 方案/架构/选型 | brainstorming |
+| 任何修改/变更 | change-impact-analysis |
 | 完成/验收 | verification-before-completion |
 | 调试/报错 | systematic-debugging |
-| 不确定 | using-superpowers（本 skill） |
 
 ## 工作流扩展
 

@@ -1,3 +1,7 @@
+---
+description: 设计方案与原子任务分解（②规格阶段，触发 writing-plans）
+---
+
 # /plan — 设计方案与任务分解
 
 > **正文在 skill/writing-plans**。本命令仅触发该 skill；复杂计划可委派 agent/planner。

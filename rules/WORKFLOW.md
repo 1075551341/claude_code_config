@@ -1,14 +1,6 @@
----
-name: workflow
+﻿---
+trigger: model_decision
 description: 阶段式工作流规则，定义从讨论到发布的完整开发生命周期
-alwaysApply: false
-layer: supplement
-source: open-gsd/get-shit-done-redux + bytedance/deer-flow + obra/superpowers + garrytan/gstack
-triggers:
-  - 工作流
-  - 阶段式开发
-  - GSD
-  - phase workflow
 ---
 
 # 工作流规则
@@ -70,7 +62,7 @@ triggers:
 - 每阶段可独立合并，降低大PR的review难度
 - 优先交付最高价值切片
 
-## 命令规范（来自 get-shit-done）
+## 命令规范（来自 open-gsd/gsd-core，原 get-shit-done）
 
 | 命令 | 阶段 | 作用 |
 |------|------|------|
@@ -81,8 +73,9 @@ triggers:
 | `/ship` | Ship | 合并、部署、监控 |
 | `/compact` | 全局 | 战略压缩：在逻辑断点主动压缩上下文 |
 | `/status` | 全局 | 查看当前工作流状态和进度 |
+| `/deer-flow` | 执行 | 委托 deer-flow 外部编排引擎（flash/standard/pro/ultra 四模式） |
 
-## Phase 工作流（来自 get-shit-done）
+## Phase 工作流（来自 open-gsd/gsd-core）
 
 ```
 Phase 1: Minimum Viable — 最小可工作切片
@@ -95,17 +88,25 @@ Phase 4: Optimization — 性能、监控
 
 - 长任务（>30分钟）拆分为独立子Agent
 - 每完成一个子目标输出状态摘要
-- 遵循三级阈值：<40% 正常 / 50% compact / 70% 强制压缩
+- 遵循三级阈值：<70% 正常 / 70% 择机压缩 / 90% 强制压缩
 - 工作流切换时保存/恢复规划上下文
 
-## 子Agent编排（deer-flow 2.0 + ruflo）
+## 子Agent编排（deer-flow 2.0 + DAG 四阶段）
 
 > **deer-flow 2.0**: bytedance/deer-flow | LangGraph-based ground-up rewrite | Python 73.5%
 > **执行模式**: flash（快速）/ standard（标准）/ pro（planning）/ ultra（sub-agents 并行 fan-out）
 > **桥接**: claude-to-deerflow skill (`npx skills add`) | 环境变量 `DEERFLOW_URL` 自定义端点
 > **状态机** (→ `rules/CORE.md`): DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
 
-### 编排四阶段 (DAG)
+### DAG 依赖图规则
+
+```
+无依赖子目标 → 并行派发（同一批次内共享三态制品快照）
+有依赖子目标 → 等待前置完成 + 制品写入后派发
+冲突检测：同一制品路径禁止并行写入
+```
+
+### 编排四阶段
 
 ```
 Phase 1: 拆解 → 识别独立子目标 + 依赖关系 → DAG 任务图
@@ -114,11 +115,15 @@ Phase 3: 整合 → 收集结果 → 冲突检测 → 合并
 Phase 4: 验证 → 子目标独立验证 + 整体集成验证
 ```
 
-### ruflo 蜂群概念（不落地）
+### 变更影响分析三阶段（强制执行）
 
-> **source**: ruvnet/ruflo v3.10.34 — 参考排除
-> HNSW向量记忆(~1.9x快) + 3共识(Raft/Byzantine/Gossip) + 100+ agents 蜂群拓扑
-> 适用于多机多团队协作。单用户场景由 agentic-orchestrator 覆盖。
+> 详见 `rules/CORE.md` 变更彻底性保障章节
+
+```
+变更前: codegraph_impact + Grep全项目 + MANIFEST depends_on → 受影响文件清单
+变更中: 按依赖拓扑序修改 → 每文件 Read→Edit→Read → 清单逐项勾销
+变更后: Grep残留引用 → 构建/类型/Lint → MANIFEST一致性 → 门控通过
+```
 
 ### 无冲突原则 + 跨会话制品
 

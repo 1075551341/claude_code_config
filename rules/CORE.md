@@ -1,29 +1,32 @@
----
+﻿---
+trigger: always_on
 description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 + 三横切 + 阈值 + 阶段定义
-alwaysApply: true
-layer: skeleton
-source: obra/superpowers + forrestchang/andrej-karpathy-skills + open-gsd/gsd-core + 2025Emma/vibe-coding-cn
 ---
 
 ## 三横切基础设施
 
 ```
-L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排)
+L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra四模式)
 L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
 L3 洞察 — codegraph(静态索引,47%token减少) + Understand-Anything(交互知识图) + Firecrawl/Exa(外部搜索)
+可选外部 — task-master MCP(任务管理,core/standard/all三级,~70%token减少,按需启用) + deer-flow bridge(claude-to-deerflow skill)
 
 所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
 ```
 
 ## 上下文腐烂三级阈值
 
+⛔ **铁律: 绝不允许上下文达到 100%。违者任务无效。**
+
 | 使用率 | 行动 |
 |--------|------|
-| <40%   | 正常工作（主会话编排 + 子 agent 实现） |
-| 50%    | 逻辑断点 `/compact`，释放已完成上下文 |
-| 70%    | 强制压缩或启动新子 Agent，保留决策丢弃细节 |
+| <70%   | 正常工作（主会话编排 + 子 agent 实现） |
+| 70%    | ⚠️ 择机压缩: 当前操作完成后 `/compact`，输出精简 |
+| 90%    | 🔴 强制压缩: 立即 `/compact` 或启动新子 Agent，保留决策丢弃细节 |
 
 子 Agent 调度: 无依赖并行派发 | 有依赖等待前置完成 | 同一制品路径禁止并行写入。
+
+**每完成原子任务 → 评估上下文% → 达 70% 择机压缩 / 90% 强制 compact**
 
 ## 五阶段流程
 
@@ -233,6 +236,54 @@ func createService(clock Clock) { now := clock.Now() }
 - **尊重项目**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 `pnpm` → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm
 - **npm 兜底**：本机无 pnpm、pnpm 执行失败且用户未要求换工具链、或脚本/文档明确写 `npm` 时
 - **禁止**：在 pnpm 项目中混用 `npm install` 生成/改写 lock（避免双 lock 漂移）
+
+## 变更彻底性保障（R3/R4 强制执行）
+
+> 改任何文件/函数/类型/配置 → 必须先分析影响范围 → 全关联文件修改 → 残留引用检测
+
+### 三阶段流程
+
+**阶段 1: 变更前 — 影响分析（阻断式）**
+```
+① codegraph_impact(target_symbol)  — 代码级影响范围（哪些调用者/被调用者受影响）
+② Grep 全项目(reference_pattern)   — 引用级影响（文件名/函数名/类型名/配置key）
+③ MANIFEST.yaml concern→depends_on — 配置级关联（改此文件必须同步更新哪些文件）
+
+输出: 受影响文件完整清单
+门控: 清单为空？→ 拒绝执行，先明确范围（不可在范围不明时盲目修改）
+```
+
+**阶段 2: 变更中 — 逐文件修改**
+```
+按依赖拓扑序修改 → 每文件 Read→Edit→Read
+清单逐项勾销，中途发现新关联 → 追加到清单
+```
+
+**阶段 3: 变更后 — 完整性验证**
+```
+① Grep 残留引用(old_pattern)  — 不应有未更新引用 → 残留 > 0 则回到阶段 2
+② 构建/类型/Lint 通过          — 编译级验证
+③ MANIFEST concern 一致性       — 归属级验证
+```
+
+### 强制触发条件
+
+| 变更类型 | 必须执行 |
+|----------|----------|
+| 改函数签名/接口/类型定义 | `codegraph_impact` + Grep 全项目引用 |
+| 改配置文件/规则/Skill | MANIFEST `depends_on` 遍历 |
+| 重命名/删除/移动文件 | Grep 全项目残留引用 |
+| 改 agent/hook/MCP 定义 | 同步更新 INDEX.md + MANIFEST.yaml |
+| 调研/分析任务 | 先 `codegraph_impact` 确定范围，再逐文件深读 |
+
+### 反模式（禁止）
+
+| 禁止 | 原因 |
+|------|------|
+| 只改指定文件不改关联文件 | 造成不一致/死代码 |
+| "看起来差不多" 跳过 Grep | 遗漏隐藏引用 |
+| 手动估计影响范围 | codegraph 比人准 |
+| 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 
 ## 工作原则（来自五柱整合）
 

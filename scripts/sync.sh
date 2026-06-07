@@ -5,8 +5,8 @@
 set -e
 
 CLAUDE_DIR="$HOME/.claude"
-SYNC_DIRS=("skills" "agents" "rules")
-SYNC_FILES=("CLAUDE.md" "SPEC.md" "MANIFEST.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
+SYNC_DIRS=("skills" "agents")
+SYNC_FILES=("CLAUDE.md" "CLAUDE-ROUTER.mdc" "SPEC.md" "MANIFEST.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
 EDITORS=("cursor" "windsurf" "trae" "qoder")
 FULL_MODE=false
 
@@ -21,7 +21,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 usage() {
     echo "用法: $0 {sync|verify|cleanup|full} [days]"
-    echo "  sync    - 索引模式：6总纲软链接 + skills/agents/rules 目录联接"
+    echo "  sync    - 索引模式：7总纲软链接 + skills/agents/rules 目录联接 + 路由规则部署"
     echo "  full    - 提示：Full 格式转换请用 sync.ps1 -Full（Windows）"
     echo "  verify  - 验证同步状态"
     echo "  cleanup - 清理旧备份（默认30天）"
@@ -66,6 +66,10 @@ write_sync_mode() {
 {"mode":"$mode","version":"14.0","updated":"$(date -Iseconds)","source":"$CLAUDE_DIR"}
 EOF
     log_info "  已写入 sync-mode.json ($mode)"
+}
+
+deploy_router_rules() {
+    log_warn "索引模式 rules/ 单文件链接 + 路由部署请用 Windows sync.ps1（不写回 ~/.claude/rules/）"
 }
 
 sync_to_editor() {
@@ -166,6 +170,7 @@ main() {
             for editor in "${EDITORS[@]}"; do
                 sync_to_editor "$editor"
             done
+            deploy_router_rules
             verify_sync
             log_info "✅ 索引同步完成"
             ;;

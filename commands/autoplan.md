@@ -1,3 +1,7 @@
+---
+description: 自动 CEO→Design→Eng 审查流水线，仅暴露品味决策
+---
+
 # /autoplan
 
 一条命令，完全审查的计划。自动运行 CEO → Design → Eng 审查，仅暴露品味决策。

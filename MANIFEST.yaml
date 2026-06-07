@@ -1,8 +1,8 @@
-# 组件唯一归属源 — 防左右手互博 — v7.2
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 27仓库全量重新调研
+# 组件唯一归属源 — 防左右手互博 — v8.1
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 29仓库全量重新调研
 
-version: "7.2"
-updated: "2026-06-05"
+version: "8.1"
+updated: "2026-06-07"
 
 pillars:
   superpowers:
@@ -15,6 +15,7 @@ pillars:
     {
       source: open-gsd/gsd-core,
       version: "1.42.3",
+      note: "原 gsd-build/get-shit-done 已归档，迁移至 open-gsd/gsd-core",
       capabilities:
         [context-engineering, continuous-execution, read-before-edit],
     }
@@ -39,6 +40,9 @@ pillars:
           codex-review,
           ml-defense,
           taste-learning,
+          pair-agent,
+          land-and-deploy,
+          design-shotgun,
         ],
     }
   claude_mem:
@@ -68,7 +72,7 @@ horizontal_layers:
         version: "1.8.2"
         concerns: [output-compression, lite-full-ultra-wenyan]
       - source: internal
-        concerns: [context-threshold-40-50-70]
+        concerns: [context-threshold-70-90]
   L3_insight:
     description: 洞察横切层 — 代码图谱 + 知识图 + 外部搜索
     owners:
@@ -110,6 +114,7 @@ concerns:
     source: obra/superpowers
     stage: spec
     excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
+    depends_on: [skill/brainstorming]
 
   project_context:
     owner: hook/pre-context-injector
@@ -127,6 +132,7 @@ concerns:
     owner: skill/executing-plans
     source: obra/superpowers
     stage: execute
+    depends_on: [skill/writing-plans, skill/subagent-driven-development]
 
   verification:
     owner: skill/verification-before-completion
@@ -138,6 +144,14 @@ concerns:
     owner: skill/systematic-debugging
     source: obra/superpowers
     stage: execute
+    depends_on: [rules/CORE.md]
+
+  change_impact:
+    owner: skill/change-impact-analysis
+    source: local
+    stage: execute
+    note: 改前 codegraph_impact + Grep 全项目；改后残留引用检测
+    depends_on: [rules/CORE.md]
 
   tdd:
     owner: skill/test-driven-development
@@ -162,14 +176,15 @@ concerns:
     stage: spec
 
   memory:
-    owner: plugin/claude-mem
+    owner: plugin/thedotmack
     skill: skill/memory-compression
     source: thedotmack/claude-mem
     stage: learn
     excludes: [agent/context-manager]
+    depends_on: [skill/memory-compression]
 
   context_retrieval:
-    owner: plugin/claude-mem
+    owner: plugin/thedotmack
     skill: skill/memory-compression
     source: thedotmack/claude-mem
     note: 检索/持久化由 claude-mem 统一负责，原 agent/context-manager 已合并
@@ -179,6 +194,7 @@ concerns:
     hook: pre-compact-state
     source: open-gsd/gsd-core
     stage: learn
+    depends_on: [rules/CONTEXT.md, rules/CORE.md]
 
   shell_token:
     owner: hook/pre-rtk-rewrite
@@ -197,10 +213,11 @@ concerns:
     source: Fission-AI/OpenSpec
     stage: spec
     excludes: [planning/phases]
+    depends_on: [skill/spec-validation]
 
   phase_planning:
     owner: planning/phases/
-    source: open-gsd/get-shit-done-redux
+    source: open-gsd/gsd-core
     stage: spec
     excludes: [openspec/changes]
 
@@ -210,7 +227,7 @@ concerns:
     stage: spec
 
   ui_token:
-    owner: DESIGN.md
+    owner: rules/DESIGN.md
     skill: catalog/skills/ui-ux-pro-max
     source: VoltAgent/awesome-design-md
     stage: spec
@@ -226,6 +243,7 @@ concerns:
     rules_ref: rules/WORKFLOW.md
     source: open-gsd/gsd-core
     stage: execute
+    depends_on: [rules/CONTEXT.md, rules/WORKFLOW.md]
 
   gstack_review:
     owner: rules/AGENTS.md
@@ -233,6 +251,7 @@ concerns:
     source: garrytan/gstack
     stage: verify
     delegates: [agent/code-reviewer, agent/spec-reviewer]
+    depends_on: [agents/eng-reviewer, agents/ceo-reviewer, agents/designer, rules/AGENTS.md]
 
   gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
   gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
@@ -247,7 +266,7 @@ concerns:
     source: shanraisshan/best-practice
 
   memory_ssot:
-    owner: plugin/claude-mem
+    owner: plugin/thedotmack
     source: thedotmack/claude-mem
     stage: learn
     excludes: [memory/index.md]
@@ -278,7 +297,8 @@ concerns:
   context_engineering:
     owner: rules/CONTEXT.md
     skill: skill/context-engineering
-    source: open-gsd/get-shit-done-redux
+    source: open-gsd/gsd-core
+    depends_on: [rules/CORE.md, rules/WORKFLOW.md]
 
   manifest_validation:
     owner: hook/pre-manifest-validator
@@ -305,10 +325,18 @@ concerns:
   task_management:
     owner: skill/writing-plans
     source: eyaltoledano/claude-task-master
+    note: MCP 任务管理系统，core(7tools,~5K tokens)/standard(15,~10K)/all(36,~21K) 三级加载，按需启用
     template: templates/taskmaster/
 
+  task_master_mcp:
+    owner: config/.mcp.json
+    source: eyaltoledano/claude-task-master
+    stage: execute
+    note: "可选MCP，安装: claude mcp add task-master-ai --env TASK_MASTER_TOOLS=\"core\" -- npx -y task-master-ai"
+    excludes: [skill/writing-plans]
+
   plugin_attribution:
-    owner: MANIFEST.yaml
+    owner: config/MANIFEST.yaml
     note: 所有 plugin 必须在此注册 concern→owner，禁止 plugin 间功能重叠
     stage: skeleton
 
@@ -317,8 +345,14 @@ concerns:
     source: bytedance/deer-flow
     version: "2.0"
     stage: execute
-    note: LangGraph-based 2.0 ground-up rewrite，flash/standard/pro/ultra 四模式 + claude-to-deerflow 桥接
+    note: LangGraph编排 + 9层Middleware + Sandbox隔离 + 子Agent(3并发/15min超时) + claude-to-deerflow bridge + flash/standard/pro/ultra四模式
     excludes: [agent/planner]
+
+  ruflo:
+    owner: rules/WORKFLOW.md
+    source: ruvnet/ruflo
+    stage: execute
+    note: 蜂群拓扑(hierarchical/mesh/adaptive) + HNSW向量记忆 + SONA自学习 — 仅概念参考，不深度集成
 
   gstack_ios:
     owner: agent/ios-specialist
@@ -348,7 +382,7 @@ concerns:
     note: CI模板引用，4后端 + 结构化JSON输出
 
   claude_context_mcp:
-    owner: .mcp.json
+    owner: config/.mcp.json
     source: zilliztech/claude-context
     stage: execute
     note: optional 分组，启用条件见 rules/CONTEXT.md
@@ -385,7 +419,7 @@ concerns:
     note: search→timeline→get_observations 三层渐进式检索，~10x token 节省
 
   codegraph_mcp:
-    owner: .mcp.json
+    owner: config/.mcp.json
     source: colbymchenry/codegraph
     stage: execute
     note: 预索引代码知识图谱 MCP，~35% token 节省，20+ 语言，按需启用
@@ -421,6 +455,7 @@ concerns:
 p0_skills:
   - using-superpowers
   - brainstorming
+  - change-impact-analysis
   - verification-before-completion
   - systematic-debugging
 

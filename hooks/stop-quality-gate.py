@@ -26,10 +26,15 @@ def check_bare_except():
     """R16: 扫描hooks/目录裸except:pass，必须为0"""
     issues = []
     hooks_dir = os.path.expanduser("~/.claude/hooks")
-    pattern = re.compile(r'except\s*(\([^)]+\))?\s*:\s*pass', re.MULTILINE)
+    # 匹配 except:pass 或 except Exception:pass（pass后面跟换行/注释/行尾）
+    pattern = re.compile(r'except(?:\s+[A-Za-z]\w*(?:\s*,\s*[A-Za-z]\w*)*)?\s*:\s*pass\s*(?:#.*)?$', re.MULTILINE)
 
     for pyfile in globmod.glob(os.path.join(hooks_dir, "*.py")):
+        basename_check = os.path.basename(pyfile)
         if pyfile.endswith("__init__.py") or "_optional" in pyfile or "_deprecated" in pyfile:
+            continue
+        # 跳过扫描器自身（避免匹配自己的 docstring）
+        if basename_check == "stop-quality-gate.py":
             continue
         try:
             with open(pyfile, 'r', encoding='utf-8', errors='replace') as f:

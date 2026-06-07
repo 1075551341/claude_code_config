@@ -38,7 +38,7 @@
 | structured-artifacts | 输出结构化制品 | ②规格 |
 | instinct-learning | 置信度学习系统 | ⑤学习 |
 
-## Meta (4)
+## Meta (5)
 
 | Skill | 触发条件 | 阶段 |
 |-------|---------|------|
@@ -46,6 +46,7 @@
 | spec-validation | spec 审查/格式校验 | ②规格 |
 | karpathy-guidelines | Karpathy 四原则行为约束 | 横切 |
 | caveman-compress | 输出>500字/上下文>50% | 横切 |
+| change-impact-analysis | 任何修改/变更前影响分析 | ③执行 |
 
 ## Mattpocock (2)
 
@@ -62,7 +63,8 @@
 
 ---
 
-**总计 28 skills**（P0 4 + Workflow 9 + 扩展 8 + Meta 4 + Mattpocock 2 + 洞察 1）
+**总计 30 skills**（P0 4 + Workflow 9 + 扩展 8 + Meta 5 + Mattpocock 2 + 洞察 1 + 外部桥接 1）
 
 **加载策略**：P0 4个自动触发 → 其余按阶段和触发条件匹配 → catalog 按需
 **互斥声明**：同一功能不允许多个 skill 同时激活（见 MANIFEST.yaml excludes）
+**外部桥接**：deer-flow(claude-to-deerflow skill) | task-master(MCP 任务管理)

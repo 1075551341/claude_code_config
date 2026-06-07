@@ -1,26 +1,39 @@
 # Skills 技能库
 
-> **全局 25 个**（运行时加载）+ **catalog/**（97 领域库，按需复制）。格式标准：anthropics/skills
+> **全局 31 个**（运行时加载）+ **catalog/**（97 领域库，按需复制）。格式标准：anthropics/skills
+> 本地 13 个覆盖 superpowers 插件同名 skill（token 节省 45-74%，中文适配，五阶段集成）
 
 ---
 
-## 全局（25）
+## 全局（31）
 
-### P0 强制（4，skeleton）
+### P0 强制（5，skeleton）
 
-using-superpowers | brainstorming | verification-before-completion | systematic-debugging
+using-superpowers | brainstorming | change-impact-analysis | verification-before-completion | systematic-debugging
 
 ### Superpowers Workflow（9，supplement）
 
 writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | writing-skills
 
-### Meta（4，supplement）
+### Meta（5，supplement）
 
-memory-compression | spec-validation | karpathy-guidelines | caveman-compress
+memory-compression | spec-validation | karpathy-guidelines | caveman-compress | change-impact-analysis
 
 ### 扩展（8，supplement — gstack/GSD/ECC）
 
 autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineering | structured-artifacts | instinct-learning
+
+### Mattpocock（2）
+
+triage | improve-codebase-architecture
+
+### 项目洞察（1）
+
+understand-anything
+
+### 外部桥接（1）
+
+deer-flow(claude-to-deerflow skill，可选)
 
 ---
 

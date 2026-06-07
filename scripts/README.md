@@ -23,7 +23,7 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 **索引模式（默认）**：
 
-- **总纲**（6 文件软链接）：`CLAUDE.md`、`SPEC.md`、`MANIFEST.yaml`、`*-INDEX.md`
+- **总纲**（7 文件软链接）：`CLAUDE.md`、`CLAUDE-ROUTER.mdc`、`SPEC.md`、`MANIFEST.yaml`、`*-INDEX.md`
 - **资产**（目录联接）：`skills/`、`agents/`、`rules/` → `~\.claude\`
 
 **全量模式（`-Full`）**：
@@ -31,26 +31,30 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 - 以上全部 + `agents/` 联接
 - **额外格式转换**：`rules/` → 编辑器原生 `.mdc`/`.md`；`skills/` → `skills-native/<name>/SKILL.md`
 
-**永不同步**：`hooks/`、`scripts/`、`commands/`、`plugins/`、`.mcp.json`
+**永不同步（Claude Code 专用，仅保留在 `~/.claude`）**：`hooks/`、`scripts/`、`commands/`、`plugins/`、`.mcp.json`、`settings.json`
+
+**索引模式资产**：
+- `skills/`、`agents/` → 目录联接
+- `rules/` → 编辑器实体目录：各 `.md` 单文件软链接 + `00-CLAUDE-ROUTER` 必加载副本（**不写回** `~/.claude/rules/`）
 
 **复制/链接同步的文件**：
+- 7 总纲文件 → 文件软链接（含 `CLAUDE-ROUTER.mdc`）
 
-- 6 总纲文件 → 文件软链接
-- 索引模式：`skills/`、`agents/`、`rules/` → 目录联接
-- 全量模式：`agents/` 联接 + rules/skills 原生格式副本
+**不同步的配置（Claude Code 与编辑器隔离）**：
 
-**不同步的配置文件**：
+| 文件/目录 | 位置 | 说明 |
+|-----------|------|------|
+| `settings.json` | 仅 `~/.claude` | CLI hooks/permissions/model |
+| `.mcp.json` | 仅 `~/.claude` | MCP 权威源 |
+| `hooks/` | 仅 `~/.claude` | 生命周期钩子 |
 
-- `.mcp.json`
-- `settings.json`（CLI 完整配置仅保留在 `~/.claude`）
+> **`sync.ps1` 不改** 上述 Claude Code 配置。编辑器 `settings.json` 的 `env.CLAUDE_IN_EDITOR` 由 **`fix.ps1 -Fix`** 单独写入（Hook 环境哨兵，与内容同步无关）。
 
 ### 同步特点
 
-- 管理员：符号链接；非管理员：Junction（目录联接）
-- 源在 `~\.claude` 更新后，链接目标自动一致；复制类文件需再跑同步
-- 强制重建链接：`sync.ps1 -Force`；仅预览：`sync.ps1 -DryRun`
-- **环境哨兵**：`sync.ps1` 会向各编辑器用户目录与 **`%APPDATA%\<Editor>\User\settings.json`（Roaming）** 仅**合并** `env.CLAUDE_IN_EDITOR`，并移除 `terminal.integrated.env.windows.CLAUDE_IN_EDITOR`，避免污染集成终端里的 Claude Code CLI（与 `fix.ps1` 的 FIX C 一致）
-- **不破坏界面配置**：若目标 `settings.json` 无法按**严格 JSON** 解析（如 JSONC、`//` 注释），脚本**跳过写回**并告警，不会用空对象覆盖字体、字号、主题、`workbench` 等；写回时使用 `ConvertTo-Json -Depth 100`，降低深层嵌套被截断的风险（仍可能改变键顺序与空白，属 PowerShell 限制）
+- 单向：只读 `~/.claude`，写入各 `~/.<editor>/`
+- 管理员用符号链接；非管理员目录用 Junction
+- 强制重建：`sync.ps1 -Force`；预览：`sync.ps1 -DryRun`
 
 ### 同步后建议自测
 
@@ -68,13 +72,14 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 **索引模式（默认）**：
 
-- 6 总纲文件 → 软链接
-- `skills/`、`agents/`、`rules/` → 目录联接
+- 7 总纲文件 → 软链接
+- `skills/`、`agents/` → 目录联接
+- `rules/` → 编辑器实体目录（单文件链接 + 路由部署）
 - 写入 `sync-mode.json`（`mode: index`）
 
 **全量模式（`-Full`）**：
 
-- 6 总纲 + `agents/` 联接
+- 7 总纲 + `agents/` 联接
 - `rules/` → 原生 `.mdc`/`.md`（`Sync-NativeRulesFiles`）
 - `skills/` → `skills-native/` 原生 `SKILL.md`（`Sync-NativeSkillsFiles`）
 - 写入 `sync-mode.json`（`mode: full`）
@@ -144,7 +149,7 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore
 | `-Fix`     | 应用修复                              |
 | `-Restore` | 从 settings.json 中移除 launcher 包装 |
 
-> **注意**：`-Fix` 后请**完全退出并重启**各编辑器。若 Hook 日志仍偶现秒级耗时，可再执行 `sync.ps1` 确认 Roaming `User\settings.json` 的 `env.CLAUDE_IN_EDITOR`，并确认集成终端的 `terminal.integrated.env.windows` 中无同名变量。
+> **注意**：`-Fix` 后请**完全退出并重启**各编辑器。Hook 环境变量请用 `fix.ps1 -Fix` 维护，与 `sync.ps1` 内容同步无关。
 
 ---
 

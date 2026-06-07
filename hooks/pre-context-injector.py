@@ -14,7 +14,7 @@ PreToolUse Hook: 项目上下文感知
 - FIX: Edit/Write 工具提前快速退出（非首次注入会话）
 - FIX: Write 工具直接放行，避免写入配置文件时触发 hook error
 """
-# source: open-gsd/get-shit-done-redux
+# source: open-gsd/gsd-core (原 gsd-build/get-shit-done 已归档)
 import json
 import sys
 import io

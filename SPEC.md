@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
-> CLAUDE.md 为路由层（≤280行）；本文件为法典索引。
-> 版本：7.0 | 五柱×五阶段×三层（骨架/执行/护栏） | 28仓库全量整合
+> CLAUDE.md 为路由层（≤250行）；本文件为法典索引。
+> 版本：8.1 | 五柱×五阶段×三层（骨架/执行/护栏） | 29仓库全量整合
 
 ---
 
@@ -13,6 +13,7 @@ FORMAT   = ECC(路由) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 5审查 + 7补全
 OPTIMIZE = RTK(shell token) + caveman(输出token)
 INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
+EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
 ## 三层架构
@@ -41,7 +42,7 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 | 柱 | 来源 | 职责 | 骨架 | 执行 | 护栏 |
 |----|------|------|------|------|------|
 | Superpowers | obra/superpowers | 方法论 + P0 + HARD-GATE | P0×4 | brainstorming→writing-plans(原子)→TDD→verify | def-in-depth + 反合理化 |
-| GSD Redux | open-gsd/get-shit-done-redux | 上下文工程 + 阈值 | 三级阈值 + 制品优先 | subagent(两阶段审查) + context-engineering | read-before-edit + canonical-source + trust-but-verify |
+| GSD Redux | open-gsd/gsd-core | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先 | subagent(两阶段审查) + context-engineering | read-before-edit + canonical-source + trust-but-verify |
 | OpenSpec | Fission-AI/OpenSpec | 规格格式 | 三轨互斥 | spec-validation + /propose→/apply→/archive | spec-reviewer门控 |
 | gstack | garrytan/gstack | 审查角色 | 审查路由5+7 + autoplan/ship | eng/ceo/design/qa/security review | browser-qa + quality-gate |
 | claude-mem | thedotmack/claude-mem | 跨会话记忆 | SSOT 渐进式披露 | mem-search/timeline/knowledge-agent | MEMORY.md↔claude-mem统一 + Chroma |
@@ -50,24 +51,26 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 
 ## 规模约束
 
-| 类型 | v7.0 | 说明 |
+| 类型 | v8.1 | 说明 |
 |------|------|------|
-| 全局 skills | 28 | superpowers 13 + 扩展 7 + meta 4 + mattpocock 2 + instinct-learning 1 + understand-anything 1 |
-| 全局 agents | 19 | core 7 + gstack审查 5 + gstack补全 7 |
-| 全局 rules | 10 | CONTEXT 扩展 codegraph+claude-mem 搜索策略 |
-| CLAUDE.md | ≤290 | 精简路由层 + codegraph/understand-anything/plugins 指针 |
-| 全局 hooks | 14 | 核心14（SessionStart 由插件负责）+ _optional 37 |
-| 全局 MCP | 19 | 基础 18 + codegraph (optional) |
-| 全局 plugins | 18 | 安装18 / 启用15 / 禁用3（ralph-loop/claude-code-setup/claude-md-management） |
+| 全局 skills | 31 | P0 5 + superpowers 9 + meta 5 + 扩展 8 + mattpocock 2 + 项目洞察 1 + 外部桥接 1 |
+| 全局 agents | 24 | core 7 + gstack审查 5 + gstack补全 9 + gstack v0.19=3 |
+| 全局 rules | 10 | alwaysApply 1 + lazy 9（触发条件精确匹配） |
+| CLAUDE.md | ≤250 | 精简路由层 + 五柱指针 + deer-flow/task-master 可选引用 |
+| 全局 hooks | 15 | 核心15（SessionStart 由插件负责）+ _optional 37 |
+| 全局 MCP | 11 | 基础 11（去重后）+ codegraph (dev) |
+| 全局 plugins | 18 | 安装18 / 启用15 / 禁用3 |
+| 可选外部 | 2 | deer-flow 2.0 + task-master MCP
 
 ---
 
-## P0 强制 Skill (4)
+## P0 强制 Skill (5)
 
 | Skill | 触发 | 阶段 | 层 |
 |-------|------|------|-----|
 | using-superpowers | 会话开始 | 骨架 | 骨架 |
 | brainstorming | 方案/架构/非简单任务 | ①规划 | 骨架 |
+| change-impact-analysis | 任何修改/变更 | ③执行 | 骨架 |
 | verification-before-completion | 完成/验收 | ④验证 | 骨架 |
 | systematic-debugging | 调试/bug | ③执行 | 骨架 |
 
@@ -77,7 +80,7 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 
 **扩展 7**：office-hours, autoplan, browser-qa, design-pipeline, ship, context-engineering, structured-artifacts
 
-**Meta 4**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress
+**Meta 5**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress, change-impact-analysis
 
 **Mattpocock 2**：triage, improve-codebase-architecture
 
@@ -110,7 +113,19 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 ## gstack 审查 5+7
 
 **审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, qa, security-reviewer
-**补全 (supplement)**：cso, sre, release-engineer, product-manager, design-engineer, performance-engineer, doc-writer
+**补全 (supplement)**：cso, sre, release-engineer, product-manager, design-engineer, performance-engineer, doc-writer, design-shotgun, pair-agent, land-and-deploy
+
+---
+
+## 变更彻底性保障
+
+> 详见 `rules/CORE.md` 变更彻底性保障章节
+
+```
+变更前: codegraph_impact(target) + Grep 全项目 + MANIFEST depends_on → 清单
+变更中: 按依赖图顺序 → Read→Edit→Read
+变更后: Grep 残留引用 → 构建/类型/Lint → MANIFEST 一致性
+```
 
 ---
 
@@ -153,11 +168,11 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 | 分组 | 服务器 |
 |------|--------|
 | always | memory, thinking, fs, fetch, time |
-| dev | gh(新版80+工具), git, ctx7, pw, crawl, chrome-devtools |
+| dev | gh(新版80+工具), git, ctx7, pw, crawl, chrome-devtools, **codegraph** |
 | ops | redis, sqlite, docker, postgres |
 | search | brave, exa |
 | design | figma |
-| optional | postgres, codegraph |
+| optional | postgres |
 
 权威 → `.mcp.json` | 分组 → `mcp/servers.json`
 
@@ -178,13 +193,13 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 
 ---
 
-## 28 仓库完整映射
+## 29 仓库完整映射
 
 ### 五柱 (5)
 | # | 仓库 | 吸收 | 落地 |
 |---|------|------|------|
 | 1 | obra/superpowers | 14技能+HARD-GATE+Red Flags+原子任务+两阶段审查 | skills/×13, hooks/ |
-| 2 | open-gsd/get-shit-done-redux | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 | rules/CONTEXT, rules/WORKFLOW |
+| 2 | open-gsd/gsd-core | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 (原 gsd-build/get-shit-done 已归档) | rules/CONTEXT, rules/WORKFLOW |
 | 3 | Fission-AI/OpenSpec | proposal→spec→tasks+brownfield+archive | templates/openspec/, spec-validation, commands/propose+apply+archive |
 | 4 | garrytan/gstack | 5审查+7补全+浏览器QA+autoplan/ship | agents/×12 |
 | 5 | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT+15技能 | plugin/claude-mem |
@@ -210,10 +225,11 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 ### 编排增强 (4)
 | # | 仓库 | 吸收 | 落地 |
 |---|------|------|------|
-| 16 | eyaltoledano/task-master | PRD→结构任务+3级工具裁剪 | templates/taskmaster/ |
-| 17 | nextlevelbuilder/ui-ux-pro-max | 67风格+161色板+99UX (5 CSV已落) | catalog/skills/ui-ux-pro-max/ |
-| 18 | zilliztech/claude-context | Milvus+BM25+40% token节省 | .mcp.json optional |
-| 19 | bytedance/deer-flow | 渐进式加载+DAG编排 | WORKFLOW.md |
+| 16 | eyaltoledano/task-master | PRD→结构任务+3级工具裁剪(core/standard/all)+~70% token减少 | 按需MCP |
+| 17 | nextlevelbuilder/ui-ux-pro-max | 67风格+161色板+99UX | catalog/skills/ui-ux-pro-max/ |
+| 18 | zilliztech/claude-context | Milvus+BM25+按需启用 | .mcp.json optional |
+| 19 | bytedance/deer-flow | LangGraph编排+9层Middleware+Sandbox+claude-to-deerflow bridge | WORKFLOW.md + skill 指针 |
+| 19b | ruvnet/ruflo | 蜂群拓扑+HNSW向量记忆+SONA自学习（仅概念参考） | WORKFLOW.md 概念 |
 
 ### 参考索引 (5)
 | # | 仓库 | 吸收 | 落地 |
@@ -247,4 +263,4 @@ INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
 
 ---
 
-_版本：7.0 | 日期：2026-05-28 | 五柱×五阶段×三层(骨架/执行/护栏) | 28仓库全量整合_
+_版本：8.0 | 日期：2026-06-07 | 五柱×五阶段×三层(骨架/执行/护栏) | 29仓库全量整合_

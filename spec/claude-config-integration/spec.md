@@ -223,15 +223,15 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 
 | ID      | 要求                                       | 验收                  |
 | ------- | ------------------------------------------ | --------------------- |
-| FR-12.1 | sync.ps1 v14 索引：6 总纲软链接            | DryRun 通过           |
-| FR-12.2 | 索引：skills/ agents/ rules/ 目录联接      | Junction 正确         |
-| FR-12.3 | 全量（-Full）：6 总纲 + agents/ 联接         | 同上                  |
+| FR-12.1 | sync.ps1 v14 索引：7 总纲软链接（含 CLAUDE-ROUTER.mdc） | DryRun 通过           |
+| FR-12.2 | 索引：skills/ agents/ 联接；rules/ 编辑器单文件链接      | 不写回 ~/.claude/rules |
+| FR-12.3 | 全量（-Full）：7 总纲 + agents/ 联接                     | 同上                  |
 | FR-12.4 | 全量：rules/ 格式转换 → .mdc/.md 原生目录   | Cursor/Windsurf 可加载 |
 | FR-12.5 | 全量：skills/ → skills-native/ 格式转换      | SKILL.md 可读         |
 | FR-12.6 | sync-mode.json 记录 index/full             | check.ps1 S3 可检测   |
 | FR-12.7 | Windsurf global_rules ≤6000 字符摘要       | sync 自动生成         |
-| FR-12.8 | hooks/commands/mcp 不同步                  | SYNC_GUIDE 明确       |
-| FR-12.9 | sync.sh 与 sync.ps1 索引行为对齐           | 6 总纲 + 三目录联接   |
+| FR-12.8 | hooks/commands/mcp/settings 不同步；sync 不改 ~/.claude 主配置 | SYNC_GUIDE 明确       |
+| FR-12.9 | sync.sh 与 sync.ps1 索引行为对齐           | 7 总纲 + skills/agents 联接 |
 | FR-12.10 | Full 格式转换 Windows 主实现；Linux 见文档 | SYNC_GUIDE 说明       |
 
 ### FR-13 CI 模板

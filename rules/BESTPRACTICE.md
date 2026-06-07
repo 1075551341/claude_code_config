@@ -1,15 +1,11 @@
----
-name: bestpractice
+﻿---
+trigger: model_decision
 description: 综合最佳实践 — 详细参考（骨架内容已迁至 CORE.md）
-alwaysApply: false
-layer: supplement
-paths: ["**/*"]
-source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-models-of-ai-tools + Chalarangelo/30-seconds-of-code
 ---
 
 # 综合最佳实践
 
-> 来源：shanraisshan/claude-code-best-practice + x1xhlol/system-prompts + Chalarangelo/30-seconds-of-code
+> 来源：shanraisshan/claude-code-best-practice + x1xhlol/system-prompts + Chalarangelo/30-seconds-of-code + garrytan/gstack v0.19
 > **骨架内容已迁至 `rules/CORE.md`**：错误处理规范、铁律 R14–R16。
 
 ## 提示词设计
@@ -19,6 +15,12 @@ source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-mode
 - Few-shot 示例优于长描述
 - 约束条件用否定式（禁止X 优于 建议不X）
 - 分步推理优于一次性输出
+
+**gstack v0.19 实证**：
+- **810× 生产力提升**：Garry Tan 实测 2026 vs 2013 逻辑代码行（非原始 LOC），11,417 vs 14 行/天
+- **ML 注入防御三层**：22MB 本地 ML 分类器 + Canary Tokens + Haiku 转录检查 — 零信任外部内容
+- **品味记忆跨会话**：`/design-shotgun` 学习用户 UI 偏好，每次迭代更贴近用户审美
+- **多 Agent 浏览器共享**：`/pair-agent` — 每个 AI Agent 独立 tab，ngrok tunnel，作用域隔离
 
 **系统提示词实证**（来源：x1xhlol/system-prompts 横向对比）：
 - 工具描述密度宜低不宜高 — Cursor/Windsurf/Devin 的对比表明简洁工具描述比详尽描述减少 30% 误用
@@ -52,7 +54,7 @@ source: shanraisshan/claude-code-best-practice + x1xhlol/system-prompts-and-mode
 
 - 新任务 = 新会话，不累积跨任务上下文
 - 对话偏离时 rewind 优于 correct — 回退到分叉点比重定向更省 token
-- 上下文 >50% 立即 compact，>70% 强制新子Agent
+- 上下文 >70% 择机 compact，>90% 强制新子Agent
 - 长任务（>30分钟）拆分为独立子Agent，每个有明确完成标准
 
 ## 上下文管理

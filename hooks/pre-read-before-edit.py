@@ -7,7 +7,7 @@ PreToolUse Hook: read-before-edit 安全检查（源自 GSD）
 exit 0 = 允许
 exit 2 = 阻止（stderr 发送给 Claude）
 """
-# source: open-gsd/get-shit-done-redux
+# source: open-gsd/gsd-core (原 gsd-build/get-shit-done 已归档)
 import json
 import sys
 import io

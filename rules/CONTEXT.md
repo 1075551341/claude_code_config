@@ -1,10 +1,6 @@
----
-name: context-engineering
+﻿---
+trigger: model_decision
 description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE.md）
-alwaysApply: false
-layer: supplement
-paths: ["**/*"]
-source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph + thedotmack/claude-mem
 ---
 
 # 上下文工程规则
@@ -16,6 +12,14 @@ source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph +
 1. **主窗口精简**：主会话仅做编排，重活在子 agent fresh context 中完成
 2. **制品存活**：PROJECT.md / REQUIREMENTS.md / ROADMAP.md / STATE.md / CONTEXT.md 跨会话存活
 3. **制品优先加载**：新会话首先加载所有结构化制品
+
+## 三级阈值（与 CORE.md 一致）
+
+| 使用率 | 行动 |
+|--------|------|
+| <70% | 正常工作 |
+| 70% | 择机 `/compact`，释放已完成上下文 |
+| 90% | 强制 `/compact` 或新子 Agent，绝不允许达到 100% |
 
 ## 三态制品
 
@@ -58,13 +62,7 @@ source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph +
 - 每个子任务独立原子提交
 - 主窗口保持在 30-40% 上下文使用率
 
-### DAG 依赖图规则
-
-```
-无依赖子目标 → 并行派发（同一批次内共享三态制品快照）
-有依赖子目标 → 等待前置完成 + 制品写入后派发
-冲突检测：同一制品路径禁止并行写入
-```
+> **DAG 编排**详见 `rules/WORKFLOW.md`
 
 ## 压缩策略
 
@@ -79,6 +77,20 @@ source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph +
 - 每完成一个子目标 → 输出状态摘要 + 释放上下文
 - 工作流切换 → 保存/恢复规划上下文
 
+## deer-flow 外部编排引擎（optional）
+
+> **来源**: bytedance/deer-flow 2.0 | LangGraph-based SuperAgent harness | 70K+ stars
+
+**何时考虑启用**:
+- 长时任务（>30分钟）需要外部编排
+- 需要 Sandbox 隔离执行（Docker）
+- 需要子 Agent 并发（max 3, 15min timeout）
+
+**四执行模式**: flash(快速) / standard(标准) / pro(规划) / ultra(子Agent并行fan-out)
+**集成方式**: `claude-to-deerflow` skill → `npx skills add https://github.com/bytedance/deer-flow --skill claude-to-deerflow`
+
+**不启用时**: 使用本地 subagent-driven-development + agentic-orchestrator 实现类似效果。
+
 ## claude-context MCP（optional）
 
 来源：zilliztech/claude-context | 配置：`mcp-configs/dev.json` → `optional.claude-context`
@@ -87,9 +99,22 @@ source: open-gsd/gsd-core + zilliztech/claude-context + colbymchenry/codegraph +
 
 1. **Monorepo** — 多包/多模块，grep 不足以定位
 2. **已有向量索引** — 可部署 claude-context 服务
-3. **与 GSD 互补** — 不替代 <40/50/70% 阈值与 claude-mem SSOT
+3. **与 GSD 互补** — 不替代 <70/90% 阈值与 claude-mem SSOT
 
 **不启用时**：用 code-explorer agent + ctx7 MCP + 项目 `CONTEXT.md`。
+
+## 外部搜索策略（Firecrawl / Exa）
+
+> **来源**: L3 洞察横切 | 深度调研默认走 `/deep-research` 管线
+
+| 意图 | 工具 |
+|------|------|
+| 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
+| 语义搜索 / 学术与新闻 | Exa（Cursor 插件 MCP） |
+| 库/API 官方文档 | Context7 MCP |
+| 多角度交叉验证 | `catalog/skills/deep-research` 四阶段流程 |
+
+禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。
 
 ## codegraph MCP 使用策略
 

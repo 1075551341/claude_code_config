@@ -1,0 +1,16 @@
+{
+  "mode": "index",
+  "description": "index=软链接联接(默认) | full=原生格式副本",
+  "synced_editors": ["cursor", "windsurf", "trae"],
+  "synced_items": {
+    "CLAUDE.md": true,
+    "CLAUDE-ROUTER.mdc": true,
+    "SPEC.md": true,
+    "MANIFEST.yaml": true,
+    "skills": true,
+    "agents": true,
+    "rules": true,
+    "skills-native": false
+  },
+  "version": "14"
+}

@@ -1,0 +1,32 @@
+---
+description: Claude 配置总纲路由 — Tool-First 入口（全编辑器必加载）
+alwaysApply: true
+layer: router
+---
+
+## 总纲链（Tool-First Read，禁止凭记忆执行）
+
+1. **路由入口** — 编辑器目录 `CLAUDE.md`（软链 → `~/.claude/CLAUDE.md`）
+2. **归属矩阵** — 同目录 `MANIFEST.yaml`
+3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
+4. **法典** — 同目录 `SPEC.md`
+5. **按需加载**（任务触发后再 Read，禁止全量扫描）：
+   - 技能：索引 `skills/<name>/SKILL.md` | 全量 `skills-native/<name>/SKILL.md`
+   - Agent：`agents/<name>.md`
+   - 规则：索引 `rules/<name>.md` | 全量 `rules/<name>.mdc`
+
+## P0 强制 Skill（5）
+
+| Skill | 触发 |
+|-------|------|
+| using-superpowers | 会话开始 |
+| brainstorming | 方案/架构/非简单任务 |
+| change-impact-analysis | 任何修改/变更 |
+| verification-before-completion | 完成/验收 |
+| systematic-debugging | 调试/测试失败 |
+
+## 加载策略
+
+- **必加载**：本文件（`CLAUDE-ROUTER.mdc`）+ `CORE` 骨架
+- **按需**：其余 rules / skills / agents — 由 CLAUDE.md 五级路由决定
+- **模式**：读同目录 `sync-mode.json` → `index`（联接）| `full`（原生副本）

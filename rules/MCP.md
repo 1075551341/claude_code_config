@@ -1,7 +1,6 @@
----
-alwaysApply: false
-layer: supplement
-source: github/github-mcp-server + anthropics/claude-code-action
+﻿---
+trigger: model_decision
+description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删除 MCP 服务器、验证 MCP 配置一致性。
 ---
 
 # MCP 服务器配置规范
@@ -69,7 +68,13 @@ source: github/github-mcp-server + anthropics/claude-code-action
 - 禁止硬编码 API 密钥（使用 ${ENV_VAR} 引用）
 - 禁止删除 .mcp.json 中的服务器而不更新 servers.json 分组映射
 
-### 6. 代码智能工具（按需安装）
+### 6. 按需安装工具
+
+**task-master** — AI 驱动任务管理 MCP（eyaltoledano/claude-task-master，27K stars）
+- 安装：`claude mcp add task-master-ai --scope user --env TASK_MASTER_TOOLS="core" -- npx -y task-master-ai`
+- 三级加载：core(7tools,~5K) / standard(15,~10K) / all(36,~21K) — 推荐 core 模式（~70% token 减少）
+- Claude Code 模式无需额外 API Key（使用本地实例）
+- 功能：PRD解析 → 结构化任务 → 复杂度分析 → 进度追踪
 
 **codegraph** — 预索引代码知识图谱 MCP（colbymchenry/codegraph）
 - 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`

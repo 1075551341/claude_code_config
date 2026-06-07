@@ -1,28 +1,7 @@
 {
-  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 5.0",
-  "autoUpdaterStatus": "disabled",
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 100000,
   "cleanupPeriodDays": 30,
-  "effortLevel": "high",
-  "enabledPlugins": {
-    "chrome-devtools-mcp@claude-plugins-official": true,
-    "claude-code-setup@claude-plugins-official": false,
-    "claude-md-management@claude-plugins-official": false,
-    "claude-mem@thedotmack": true,
-    "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
-    "feature-dev@claude-plugins-official": true,
-    "firecrawl@claude-plugins-official": true,
-    "frontend-design@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "ralph-loop@claude-plugins-official": false,
-    "security-guidance@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "understand-anything@Lum1104": true
-  },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
     "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
@@ -47,145 +26,8 @@
     "CLAUDE_MEM_TIER_SUMMARY_MODEL": "deepseek-v4-pro",
     "ECC_HOOK_PROFILE": "standard",
     "ENABLE_TOOL_SEARCH": "true",
-    "cleanupPeriodDays": 9999
+    "cleanupPeriodDays": "9999"
   },
-  "extraKnownMarketplaces": {
-    "thedotmack": {
-      "autoUpdate": true,
-      "source": {
-        "repo": "thedotmack/claude-mem",
-        "source": "github"
-      }
-    }
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
-            "timeout": 30000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
-            "timeout": 10000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write|MultiEdit"
-      },
-      {
-        "hooks": [],
-        "matcher": ""
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-compact-state.py",
-            "timeout": 10000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ],
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
-            "timeout": 8000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Task|Bash|Write|Edit"
-      },
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-rtk-rewrite.py",
-            "timeout": 5000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
-            "timeout": 5000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-loop-guard.py",
-            "timeout": 5000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      },
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-read-before-edit.py",
-            "timeout": 5000,
-            "type": "command"
-          },
-          {
-            "command": "echo pre-config-protection-removed-v5",
-            "timeout": 1000,
-            "type": "command"
-          }
-        ],
-        "matcher": "Write|Edit|MultiEdit"
-      },
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-manifest-validator.py",
-            "timeout": 3000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/session-start-bootstrap.py",
-            "timeout": 10000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-quality-gate.py",
-            "timeout": 15000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-session-summary.py",
-            "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
-            "timeout": 30000,
-            "type": "command"
-          }
-        ],
-        "matcher": ""
-      }
-    ]
-  },
-  "language": "Chinese",
-  "model": "deepseek-v4-pro",
   "permissions": {
     "allow": [
       "Read",
@@ -202,10 +44,8 @@
       "TodoWrite",
       "NotebookRead",
       "NotebookEdit",
-      "mcp__*",
       "Bash(*)"
     ],
-    "defaultMode": "acceptEdits",
     "deny": [
       "Bash(rm -rf /)",
       "Bash(rm -rf /*)",
@@ -252,7 +92,165 @@
       "Read(~/.config/gcloud/**)",
       "Read(~/.gnupg/**)",
       "Read(~/.kube/config)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "model": "deepseek-v4-pro",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
+            "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-compact-state.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Task|Bash|Write|Edit|WebFetch|WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-suggest-compact.py",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
+            "timeout": 8000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-rtk-rewrite.py",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-loop-guard.py",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-read-before-edit.py",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-manifest-validator.py",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/session-start-bootstrap.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-quality-gate.py",
+            "timeout": 15000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-session-summary.py",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
+            "timeout": 30000
+          }
+        ]
+      }
     ]
   },
-  "skipDangerousModePermissionPrompt": true
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": false,
+    "claude-mem@thedotmack": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "understand-anything@Lum1104": true
+  },
+  "extraKnownMarketplaces": {
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      },
+      "autoUpdate": true
+    }
+  },
+  "language": "Chinese",
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
+  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 5.1",
+  "autoUpdaterStatus": "disabled",
+  "skipWorkflowUsageWarning": true
 }

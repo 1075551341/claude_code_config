@@ -1,8 +1,11 @@
 ---
+description: 
+alwaysApply: true
+---
+
+---
+trigger: model_decision
 description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理、任务编排。
-alwaysApply: false
-layer: supplement
-source: affaan-m/ECC + bytedance/deer-flow + ruvnet/ruflo
 ---
 
 # Agent 协作规则
@@ -35,15 +38,25 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | UI/UX 审查 | designer |
 | 测试审查 | qa |
 | 安全审计 | security |
+| 设计探索(多方案) | design-shotgun（gstack v0.19） |
+| 一键部署 | land-and-deploy（gstack v0.19） |
+| 多Agent浏览器 | pair-agent（gstack v0.19） |
+| 跨模型验证 | codex-reviewer（gstack /codex） |
+| iOS 变更 | ios-specialist（gstack v0.19） |
+| 外部编排 | deer-flow (flash/standard/pro/ultra) |
+| 任务追踪 | task-master MCP（按需） |
 
 ## 审查路由规则
 
 ```
 所有变更        → eng-reviewer (必须)
 产品/新功能     → + ceo-reviewer
-UI/UX 变更      → + designer
-安全敏感变更    → + security
+UI/UX 变更      → + designer + design-shotgun(多方案探索,gstack v0.19)
+安全敏感变更    → + security-reviewer + cso(OWASP+STRIDE)
+iOS 变更        → + ios-specialist (gstack v0.19)
 infra/配置      → CEO Review 可跳过
+跨模型验证      → + codex-reviewer (gstack /codex)
+部署/发布       → + land-and-deploy (gstack v0.19)
 ```
 
 ## 禁止（防互博）
@@ -59,7 +72,7 @@ infra/配置      → CEO Review 可跳过
 ## 上下文预算
 
 主 agent <40%（编排） | subagent 30%（实现） | 传递最小必要数据
-50% compact | 70% 强制压缩或新 subagent
+70% 择机压缩 | 90% 强制压缩或新 subagent
 
 ## 持续学习
 
