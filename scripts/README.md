@@ -68,7 +68,7 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 
 ## 脚本一览
 
-### `sync.ps1` — 将工具链同步到各编辑器（v14.0）
+### `sync.ps1` — 将工具链同步到各编辑器（v14.2）
 
 **索引模式（默认）**：
 

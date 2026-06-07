@@ -43,7 +43,8 @@ description: 跨编辑器配置同步指南 v14
 ├── agents/  → ~/.claude/agents/        (目录联接)
 ├── rules/   (实体目录，仅编辑器侧)
 │   ├── 00-CLAUDE-ROUTER.mdc              (必加载，从总纲部署)
-│   ├── CORE.md, GIT.md, …              (单文件软链接 → ~/.claude/rules/)
+│   ├── CLAUDE.mdc                        (总纲副本，源 ~/.claude/CLAUDE.md)
+│   ├── CORE.mdc, GIT.mdc, …            (原生 .mdc 副本，源更新时强制刷新)
 └── sync-mode.json                        { "mode": "index" }
 ```
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# sync.sh v2.0 - Linux/macOS 同步脚本（v14 索引模式）
+# sync.sh v2.1 - Linux/macOS 同步脚本（v14.1 索引模式）
 # 全量格式转换（rules/skills-native）请使用 Windows sync.ps1 -Full
 
 set -e
@@ -35,9 +35,21 @@ check_source() {
     log_info "源目录: $CLAUDE_DIR"
 }
 
+remove_same_type_target() {
+    # 仅删除与目标同路径、同扩展名的文件/链接（不跨目录、不删其他类型）
+    local target="$1"
+    local scope="${2:-sync}"
+    if [ ! -e "$target" ] && [ ! -L "$target" ]; then
+        return 0
+    fi
+    log_warn "  删除 ${scope}/$(basename "$target")（同类型同名）"
+    rm -f "$target" 2>/dev/null || true
+}
+
 create_symlink() {
     local src="$1"
     local target="$2"
+    local scope="${3:-$(basename "$(dirname "$target")")}"
 
     if [ -L "$target" ]; then
         local current_target
@@ -45,11 +57,11 @@ create_symlink() {
         if [ "$current_target" = "$src" ]; then
             log_info "  软连接已正确: $(basename "$target")"
             return 0
-        else
-            log_warn "  软连接目标不一致，重建: $(basename "$target")"
-            rm -f "$target"
         fi
-    elif [ -e "$target" ]; then
+    fi
+
+    remove_same_type_target "$target" "$scope"
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
         log_warn "  存在实体路径，备份: $(basename "$target")"
         mv "$target" "${target}.bak.$(date +%Y%m%d%H%M%S)"
     fi
@@ -63,7 +75,7 @@ write_sync_mode() {
     local mode="$2"
     local path="$target_dir/sync-mode.json"
     cat > "$path" <<EOF
-{"mode":"$mode","version":"14.0","updated":"$(date -Iseconds)","source":"$CLAUDE_DIR"}
+{"mode":"$mode","version":"14.1","updated":"$(date -Iseconds)","source":"$CLAUDE_DIR"}
 EOF
     log_info "  已写入 sync-mode.json ($mode)"
 }
@@ -87,7 +99,7 @@ sync_to_editor() {
         local src_path="$CLAUDE_DIR/$file"
         local target_path="$target_dir/$file"
         if [ -f "$src_path" ]; then
-            create_symlink "$src_path" "$target_path"
+            create_symlink "$src_path" "$target_path" "root"
         fi
     done
 
@@ -95,7 +107,7 @@ sync_to_editor() {
         local src_path="$CLAUDE_DIR/$dir"
         local target_path="$target_dir/$dir"
         if [ -d "$src_path" ]; then
-            create_symlink "$src_path" "$target_path"
+            create_symlink "$src_path" "$target_path" "$dir"
         fi
     done
 

@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 多编辑器同步脚本 v14.0 — 索引 + 全量双模式
+    Claude Code 多编辑器同步脚本 v14.3 — 索引 + 全量双模式
 
 .DESCRIPTION
     索引模式(默认): 7 总纲软链接 + skills/agents 目录联接 + 编辑器 rules 单文件链接与路由部署
@@ -44,6 +44,7 @@ $SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "s
 $ROUTER_SOURCE_FILE = "CLAUDE-ROUTER.mdc"
 $ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
 $ROUTER_DEPLOY_WHITELIST = @("00-CLAUDE-ROUTER.mdc", "00-CLAUDE-ROUTER.md")
+$CLAUDE_RULE_DEPLOY_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 $STALE_LINKS = @("hooks", "scripts", "commands", "AGENTS.md")
 
 # 编辑器原生规则目录映射（使用各编辑器真正识别的全局路径）
@@ -82,6 +83,46 @@ $CODEARTS_USER_DIRS = @{
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
+function Remove-ScopedSameTypeTarget {
+    param(
+        [string]$TargetPath,
+        [string]$ScopeLabel,
+        [string]$RequiredExt = "",
+        [switch]$IsDirectory
+    )
+    <#
+    .SYNOPSIS
+        在指定同步范围内删除同类型、同名目标（链接或实体），再写入/链接。
+        不跨目录（skills 只管 skills、rules 只管 rules），不删其他扩展名。
+    #>
+    if (-not $TargetPath) { return $false }
+    $leaf = Split-Path $TargetPath -Leaf
+    if ($RequiredExt -and -not $leaf.EndsWith($RequiredExt, [StringComparison]::OrdinalIgnoreCase)) {
+        return $false
+    }
+    if (-not (Test-Path $TargetPath)) { return $false }
+
+    if ($DryRun) {
+        Write-Fix "[预演] 将删除 $ScopeLabel/$leaf（同类型同名）"
+        $script:stats.Removed++
+        return $true
+    }
+
+    $item = Get-Item $TargetPath -Force
+    if ($IsDirectory -or $item.PSIsContainer) {
+        Remove-Item $TargetPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    elseif (IsLink $TargetPath) {
+        Remove-Item $TargetPath -Force -ErrorAction SilentlyContinue
+    }
+    else {
+        Remove-Item $TargetPath -Force -ErrorAction SilentlyContinue
+    }
+    Write-Fix "已删除 $ScopeLabel/$leaf（同类型同名）"
+    $script:stats.Removed++
+    return $true
+}
+
 function Sync-SingleFile {
     param(
         [string]$Source,
@@ -93,16 +134,10 @@ function Sync-SingleFile {
         return
     }
 
-    # 先删除同名目标（链接或实体文件），再创建新链接，杜绝重复
-    if (Test-Path $Target) {
-        if ($DryRun) { Write-Fix "[预演] 将删除旧目标: $Label"; $script:stats.Removed++ }
-        else {
-            # 文件链接直接用 Remove-Item；目录联接才需要 rmdir（此处只处理文件）
-            Remove-Item $Target -Force -ErrorAction SilentlyContinue
-            Write-Fix "已删除旧目标: $Label"
-            $script:stats.Removed++
-        }
-    }
+    # 先删除同路径同类型目标（链接或实体文件），再创建新链接
+    $ext = [System.IO.Path]::GetExtension($Target)
+    $scope = if ($Label -match '/') { ($Label -split '/')[0] } else { "root" }
+    Remove-ScopedSameTypeTarget -TargetPath $Target -ScopeLabel $scope -RequiredExt $ext | Out-Null
 
     if ($DryRun) { Write-Ok "[预演] 将创建 $Label 链接"; $script:stats.Links++; return }
     try {
@@ -238,7 +273,7 @@ function Write-SyncModeJson {
     if ($DryRun) { return }
     $payload = @{
         mode      = $Mode
-        version   = "14.0"
+        version   = "14.3"
         updated   = (Get-Date -Format "yyyy-MM-ddTHH:mm:ss")
         source    = $CLAUDE_DIR
     } | ConvertTo-Json -Compress
@@ -252,22 +287,211 @@ function Get-RouterSourceContent {
     return [System.IO.File]::ReadAllText($src, [System.Text.Encoding]::UTF8)
 }
 
+function Get-FrontmatterBlockScore {
+    param([string]$FmText)
+    $score = 0
+    if ($FmText -match '(?m)^trigger:\s*\S+') { $score += 10 }
+    if ($FmText -match '(?m)^description:\s*\S+') { $score += 5 }
+    if ($FmText -match '(?m)^globs:\s*\S+') { $score += 3 }
+    if ($FmText -match '(?m)^alwaysApply:\s*true' -and $FmText -notmatch '(?m)^trigger:') { $score += 1 }
+    return $score
+}
+
+function Strip-OrphanFrontmatterFromBody {
+    param([string]$Body)
+    $result = $Body
+    while ($true) {
+        $trimmed = $result.TrimStart()
+        if (-not $trimmed.StartsWith("---")) { break }
+        $secondDash = $trimmed.IndexOf("---", 3)
+        if ($secondDash -eq -1) { break }
+        $result = $trimmed.Substring($secondDash + 3).TrimStart("`n")
+    }
+    return $result
+}
+
+function Split-RuleFrontmatterBlocks {
+    param([string]$Content)
+    $blocks = [System.Collections.Generic.List[hashtable]]::new()
+    $pos = 0
+    while ($pos -lt $Content.Length) {
+        $remaining = $Content.Substring($pos)
+        $leading = $remaining.Length - $remaining.TrimStart().Length
+        if ($leading -gt 0) { $pos += $leading; continue }
+        if (-not $remaining.StartsWith("---")) { break }
+        $secondDash = $remaining.IndexOf("---", 3)
+        if ($secondDash -eq -1) { break }
+        $fmText = $remaining.Substring(3, $secondDash - 3).Trim()
+        $blocks.Add(@{ Text = $fmText; Score = (Get-FrontmatterBlockScore -FmText $fmText) })
+        $pos += $secondDash + 3
+    }
+    $body = if ($pos -lt $Content.Length) { $Content.Substring($pos).TrimStart("`n") } else { "" }
+    return @{ Blocks = $blocks; Body = $body }
+}
+
+function Normalize-RuleSourceContent {
+    param([string]$Content)
+    <#
+    .SYNOPSIS
+        合并多重 frontmatter（如 AGENTS.md 残留双块），避免编辑器解析为多条同名规则
+    #>
+    $parsed = Split-RuleFrontmatterBlocks -Content $Content
+    if ($parsed.Blocks.Count -eq 0) { return $Content }
+    if ($parsed.Blocks.Count -eq 1) {
+        $body = Strip-OrphanFrontmatterFromBody -Body $parsed.Body
+        return "---`n$($parsed.Blocks[0].Text)`n---`n`n$body"
+    }
+    $best = ($parsed.Blocks | Sort-Object { $_.Score } -Descending | Select-Object -First 1).Text
+    $body = Strip-OrphanFrontmatterFromBody -Body $parsed.Body
+    return "---`n$best`n---`n`n$body"
+}
+
+function Remove-AllRuleVariantsByBaseName {
+    param(
+        [string]$TargetRulesDir,
+        [string]$BaseName,
+        [string]$ScopeLabel = "rules"
+    )
+    <#
+    .SYNOPSIS
+        删除 rules/ 内同 basename 的全部变体（.md/.mdc/大小写），先删后写，防重复
+    #>
+    if (-not $BaseName -or -not (Test-Path $TargetRulesDir)) { return }
+    foreach ($f in Get-ChildItem $TargetRulesDir -File -Force -ErrorAction SilentlyContinue) {
+        if ($f.BaseName -ieq $BaseName) {
+            Remove-ScopedSameTypeTarget -TargetPath $f.FullName -ScopeLabel $ScopeLabel -RequiredExt $f.Extension | Out-Null
+        }
+    }
+}
+
+function Test-SourceNewerThanTarget {
+    param(
+        [string]$SourcePath,
+        [string]$TargetPath
+    )
+    if (-not $SourcePath -or -not (Test-Path $SourcePath)) { return $false }
+    if (-not (Test-Path $TargetPath)) { return $true }
+    if (IsLink $TargetPath) { return $true }
+    $srcTime = (Get-Item $SourcePath -Force).LastWriteTimeUtc
+    $tgtItem = Get-Item $TargetPath -Force
+    if ($tgtItem.PSIsContainer) { return $true }
+    return $srcTime -gt $tgtItem.LastWriteTimeUtc
+}
+
+function Convert-ToCursorRuleContent {
+    param([string]$Content)
+    <#
+    .SYNOPSIS
+        将 rules/*.md 规范为单一 frontmatter + Cursor .mdc 原生格式
+    #>
+    $normalized = Normalize-RuleSourceContent -Content $Content
+    if (-not $normalized.StartsWith("---")) {
+        return "---`ndescription: Claude rule`nalwaysApply: true`n---`n`n$normalized"
+    }
+
+    $secondDash = $normalized.IndexOf("---", 3)
+    if ($secondDash -eq -1) { return $normalized }
+
+    $frontmatter = $normalized.Substring(3, $secondDash - 3).Trim()
+    $body = Strip-OrphanFrontmatterFromBody -Body $normalized.Substring($secondDash + 3)
+
+    $description = ""
+    $alwaysApply = $null
+    $globs = ""
+    $triggerMode = ""
+
+    foreach ($line in $frontmatter -split "`n") {
+        $line = $line.Trim()
+        if ($line -match "^description:\s*(.+)") {
+            $description = $Matches[1].Trim().Trim("'").Trim('"')
+        }
+        elseif ($line -match "^alwaysApply:\s*(true|false)") {
+            $alwaysApply = ($Matches[1] -eq "true")
+        }
+        elseif ($line -match "^trigger:\s*(\S+)") {
+            $triggerMode = $Matches[1]
+            if ($triggerMode -eq "always_on") { $alwaysApply = $true }
+        }
+        elseif ($line -match "^globs:\s*(.+)") {
+            $globs = $Matches[1].Trim().Trim("'").Trim('"')
+        }
+    }
+
+    $newFm = [System.Text.StringBuilder]::new()
+    [void]$newFm.AppendLine("---")
+    if ($description -ne "") { [void]$newFm.AppendLine("description: $description") }
+    if ($triggerMode -eq "model_decision" -or $triggerMode -eq "manual") {
+        # Cursor：按需规则仅 description，不设 alwaysApply
+    }
+    elseif ($null -ne $alwaysApply) {
+        [void]$newFm.AppendLine("alwaysApply: $(if ($alwaysApply) { 'true' } else { 'false' })")
+    }
+    elseif ($triggerMode -eq "always_on") {
+        [void]$newFm.AppendLine("alwaysApply: true")
+    }
+    if ($globs -ne "") { [void]$newFm.AppendLine("globs: $globs") }
+    [void]$newFm.AppendLine("---")
+    return $newFm.ToString().TrimEnd() + "`n" + $body.TrimStart("`n")
+}
+
+function Convert-ToNativeRuleContent {
+    param(
+        [string]$Content,
+        [string]$Format
+    )
+    $normalized = Normalize-RuleSourceContent -Content $Content
+    switch ($Format) {
+        "cursor" { return Convert-ToCursorRuleContent -Content $normalized }
+        "trae"   { return $normalized }
+        default  { return Convert-Frontmatter -Content $normalized -Format $Format }
+    }
+}
+
+function Write-RuleDeployFile {
+    param(
+        [string]$SourcePath,
+        [string]$TargetPath,
+        [string]$Content,
+        [string]$ScopeLabel = "rules"
+    )
+    if ($DryRun) { return $true }
+    $dir = Split-Path $TargetPath -Parent
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+
+    $shouldWrite = $Force -or -not (Test-Path $TargetPath)
+    if (-not $shouldWrite) {
+        $existing = [System.IO.File]::ReadAllText($TargetPath, [System.Text.Encoding]::UTF8)
+        if ($existing -ne $Content) {
+            $shouldWrite = $true
+        }
+        elseif (Test-SourceNewerThanTarget -SourcePath $SourcePath -TargetPath $TargetPath) {
+            $shouldWrite = $true
+        }
+    }
+    if (-not $shouldWrite) { return $false }
+
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
+    $rulesDir = Split-Path $TargetPath -Parent
+    if ($ScopeLabel -eq "rules") {
+        Remove-AllRuleVariantsByBaseName -TargetRulesDir $rulesDir -BaseName $baseName -ScopeLabel $ScopeLabel
+    }
+    else {
+        $ext = [System.IO.Path]::GetExtension($TargetPath)
+        Remove-ScopedSameTypeTarget -TargetPath $TargetPath -ScopeLabel $ScopeLabel -RequiredExt $ext | Out-Null
+    }
+    [System.IO.File]::WriteAllText($TargetPath, $Content, [System.Text.Encoding]::UTF8)
+    return $true
+}
+
 function Write-RouterDeployFile {
     param(
         [string]$Path,
         [string]$Content
     )
-    if ($DryRun) { return $true }
-    $dir = Split-Path $Path -Parent
-    if (-not (Test-Path $dir)) {
-        New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    }
-    if ((Test-Path $Path) -and -not $Force) {
-        $existing = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-        if ($existing -eq $Content) { return $false }
-    }
-    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.Encoding]::UTF8)
-    return $true
+    $routerSource = Join-Path $CLAUDE_DIR $ROUTER_SOURCE_FILE
+    return Write-RuleDeployFile -SourcePath $routerSource -TargetPath $Path -Content $Content -ScopeLabel "rules"
 }
 
 function Cleanup-ClaudeRulesDeployArtifacts {
@@ -308,6 +532,66 @@ function Deploy-RouterRule {
     return $false
 }
 
+function Deploy-ClaudeMdRule {
+    param(
+        [hashtable]$RulesConfig
+    )
+    <#
+    .SYNOPSIS
+        将 ~/.claude/CLAUDE.md 部署到编辑器 rules/（Cursor: CLAUDE.mdc）
+    #>
+    $src = Join-Path $CLAUDE_DIR "CLAUDE.md"
+    if (-not (Test-Path $src)) {
+        Write-Skip "源 CLAUDE.md 缺失，跳过 rules 部署"
+        return $false
+    }
+    $srcContent = [System.IO.File]::ReadAllText($src, [System.Text.Encoding]::UTF8)
+    $content = Convert-ToNativeRuleContent -Content $srcContent -Format $RulesConfig.Format
+    $targetPath = Join-Path $RulesConfig.TargetDir "CLAUDE$($RulesConfig.Ext)"
+    if ($DryRun) {
+        Write-Ok "[预演] 将部署 CLAUDE.md → rules/CLAUDE$($RulesConfig.Ext)"
+        return $true
+    }
+    if (Write-RuleDeployFile -SourcePath $src -TargetPath $targetPath -Content $content -ScopeLabel "rules") {
+        Write-Fix "CLAUDE.md 已部署 → $targetPath"
+        $script:stats.Files++
+        return $true
+    }
+    Write-Ok "CLAUDE$($RulesConfig.Ext) 已是最新"
+    return $false
+}
+
+function Cleanup-StaleRulesAlternateFormat {
+    param(
+        [hashtable]$RulesConfig,
+        [string[]]$ValidBaseNames,
+        [string]$TargetRulesDir
+    )
+    <#
+    .SYNOPSIS
+        Cursor 等 .mdc 编辑器：移除同 basename 的旧 .md 软链，避免 Cursor 继续加载过期副本
+        仅在 rules/ 范围内操作，不跨 skills/agents
+    #>
+    if ($RulesConfig.Ext -ne ".mdc") { return }
+    if (-not (Test-Path $TargetRulesDir) -or (IsLink $TargetRulesDir)) { return }
+
+    $protected = @($ROUTER_DEPLOY_WHITELIST + $CLAUDE_RULE_DEPLOY_NAMES)
+    foreach ($base in $ValidBaseNames) {
+        $staleMd = Join-Path $TargetRulesDir "$base.md"
+        if ((Test-Path $staleMd) -and ("$base.md" -notin $protected)) {
+            Remove-ScopedSameTypeTarget -TargetPath $staleMd -ScopeLabel "rules" -RequiredExt ".md" | Out-Null
+        }
+    }
+    foreach ($name in $CLAUDE_RULE_DEPLOY_NAMES) {
+        if ($name.EndsWith(".md", [StringComparison]::OrdinalIgnoreCase)) {
+            $stale = Join-Path $TargetRulesDir $name
+            if (Test-Path $stale) {
+                Remove-ScopedSameTypeTarget -TargetPath $stale -ScopeLabel "rules" -RequiredExt ".md" | Out-Null
+            }
+        }
+    }
+}
+
 function Sync-EditorRulesIndex {
     param(
         [string]$EditorName
@@ -315,6 +599,8 @@ function Sync-EditorRulesIndex {
     if (-not $NATIVE_RULES_DIR_MAP.ContainsKey($EditorName)) { return }
     $cfg = $NATIVE_RULES_DIR_MAP[$EditorName]
     $targetRulesDir = $cfg.TargetDir
+    $ext = $cfg.Ext
+    $format = $cfg.Format
     $rulesSrc = Join-Path $CLAUDE_DIR "rules"
     if (-not (Test-Path $rulesSrc)) {
         Write-Skip "源 rules 目录缺失，跳过编辑器 rules 同步"
@@ -322,7 +608,7 @@ function Sync-EditorRulesIndex {
     }
 
     if ((Test-Path $targetRulesDir) -and (IsLink $targetRulesDir)) {
-        if ($DryRun) { Write-Fix "[预演] 将移除 rules/ 联接（改为编辑器实体目录+单文件链接）" }
+        if ($DryRun) { Write-Fix "[预演] 将移除 rules/ 联接（改为编辑器实体目录+原生规则）" }
         else { Remove-DirTarget -Path $targetRulesDir -Editor $EditorName -Label "rules/" }
     }
 
@@ -333,16 +619,53 @@ function Sync-EditorRulesIndex {
     $ruleFiles = Get-ChildItem $rulesSrc -Filter "*.md" |
         Where-Object { $_.Name -ne "README.md" } |
         Sort-Object Name
+    $validBaseNames = @($ruleFiles | ForEach-Object { $_.BaseName })
+
+    # 清理同目标扩展名的过期规则（仅 rules/ 范围）
+    if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
+        $validTargetNames = @($validBaseNames | ForEach-Object { "$_$ext" }) + $ROUTER_DEPLOY_WHITELIST + $CLAUDE_RULE_DEPLOY_NAMES
+        $existing = Get-ChildItem $targetRulesDir -Filter "*$ext" -ErrorAction SilentlyContinue
+        foreach ($ef in $existing) {
+            if ($ef.Name -in $validTargetNames) { continue }
+            Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "rules" -RequiredExt $ext | Out-Null
+        }
+    }
+
     foreach ($rf in $ruleFiles) {
-        $dst = Join-Path $targetRulesDir $rf.Name
-        Sync-SingleFile -Source $rf.FullName -Target $dst -Label "rules/$($rf.Name)"
+        $targetName = "$($rf.BaseName)$ext"
+        $dst = Join-Path $targetRulesDir $targetName
+
+        if ($ext -eq ".md" -and $format -in @("windsurf", "trae")) {
+            if (-not $DryRun) {
+                Remove-AllRuleVariantsByBaseName -TargetRulesDir $targetRulesDir -BaseName $rf.BaseName -ScopeLabel "rules"
+            }
+            else {
+                Write-Fix "[预演] 将删除 rules/$($rf.BaseName).* 后链接 $targetName"
+            }
+            Sync-SingleFile -Source $rf.FullName -Target $dst -Label "rules/$targetName"
+            continue
+        }
+
+        # Cursor/Qoder：部署原生 .mdc 副本（先删同名全部变体，再写入）
+        $raw = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $raw -Format $format
+        if ($DryRun) {
+            Write-Ok "[预演] 将删除 rules/$($rf.BaseName).* 后部署 $targetName（$format）"
+            continue
+        }
+        if (Write-RuleDeployFile -SourcePath $rf.FullName -TargetPath $dst -Content $converted -ScopeLabel "rules") {
+            Write-Fix "rules/$targetName 已同步"
+            $script:stats.Files++
+        }
     }
 
     if (-not $DryRun) {
+        Cleanup-StaleRulesAlternateFormat -RulesConfig $cfg -ValidBaseNames $validBaseNames -TargetRulesDir $targetRulesDir
+        Deploy-ClaudeMdRule -RulesConfig $cfg | Out-Null
         Deploy-RouterRule -RulesConfig $cfg | Out-Null
     }
     else {
-        Write-Ok "[预演] 将部署 rules/ 单文件链接 + 00-CLAUDE-ROUTER$($cfg.Ext)"
+        Write-Ok "[预演] 将部署 rules/ 原生 $ext + CLAUDE$ext + 00-CLAUDE-ROUTER$ext"
     }
 }
 
@@ -487,21 +810,15 @@ function Sync-NativeRulesFiles {
         }
     }
 
-    # 清理旧规则文件（删除不在源中的 stale 文件，含旧 RULES_*.md/.mdc）
+    # 仅清理 rules 目录内同目标扩展名的过期文件（不删 .md/.mdc 等其他类型）
     if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
-        $validNames = $ruleFiles | ForEach-Object { "$($_.BaseName -replace '^RULES_','')$ext" }
-        $validBaseNames = $ruleFiles | ForEach-Object { $_.BaseName -replace '^RULES_','' }
-        $stalePatterns = @("*.mdc", "*.md")
-        foreach ($pat in $stalePatterns) {
-            $existing = Get-ChildItem $targetRulesDir -Filter $pat -ErrorAction SilentlyContinue
-            foreach ($ef in $existing) {
-                if ($ef.Name -in $ROUTER_DEPLOY_WHITELIST) { continue }
-                $base = $ef.BaseName -replace '^RULES_',''
-                $isValid = ($ef.Name -in $validNames) -or ($base -in $validBaseNames -and $ef.Extension -eq $ext)
-                if (-not $isValid) {
-                    if ($DryRun) { Write-Fix "[预演] 将删除旧规则: $($ef.Name)" }
-                    else { Remove-Item $ef.FullName -Force; Write-Fix "已删除旧规则: $($ef.Name)"; $stats.Removed++ }
-                }
+        $validBaseNames = @($ruleFiles | ForEach-Object { $_.BaseName -replace '^RULES_','' })
+        $existing = Get-ChildItem $targetRulesDir -Filter "*$ext" -ErrorAction SilentlyContinue
+        foreach ($ef in $existing) {
+            if ($ef.Name -in $ROUTER_DEPLOY_WHITELIST) { continue }
+            $base = $ef.BaseName -replace '^RULES_',''
+            if ($base -notin $validBaseNames) {
+                Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "rules" -RequiredExt $ext | Out-Null
             }
         }
     }
@@ -518,13 +835,7 @@ function Sync-NativeRulesFiles {
         $targetFileName = "$category$ext"
         $targetPath = Join-Path $targetRulesDir $targetFileName
 
-        # 转换内容
-        $convertedContent = if ($format -eq "cursor") {
-            $srcContent
-        }
-        else {
-            Convert-Frontmatter -Content $srcContent -Format $format
-        }
+        $convertedContent = Convert-ToNativeRuleContent -Content $srcContent -Format $format
 
         if ($format -eq "cursor" -and $category -eq "CORE") {
             $convertedContent += @"
@@ -548,17 +859,12 @@ function Sync-NativeRulesFiles {
 
         if ($DryRun) { $syncedCount++; continue }
 
-        # 比较并写入
-        if ((Test-Path $targetPath) -and -not $Force) {
-            $existingContent = [System.IO.File]::ReadAllText($targetPath, [System.Text.Encoding]::UTF8)
-            if ($existingContent -eq $convertedContent) {
-                $skippedCount++
-                continue
-            }
+        if (Write-RuleDeployFile -SourcePath $rf.FullName -TargetPath $targetPath -Content $convertedContent -ScopeLabel "rules") {
+            $syncedCount++
         }
-
-        [System.IO.File]::WriteAllText($targetPath, $convertedContent, [System.Text.Encoding]::UTF8)
-        $syncedCount++
+        else {
+            $skippedCount++
+        }
     }
 
     if ($syncedCount -gt 0) {
@@ -566,6 +872,7 @@ function Sync-NativeRulesFiles {
         $stats.Files += $syncedCount
     }
     if (-not $DryRun) {
+        Deploy-ClaudeMdRule -RulesConfig $RulesConfig | Out-Null
         Deploy-RouterRule -RulesConfig $RulesConfig | Out-Null
     }
     if ($skippedCount -gt 0) {
@@ -619,8 +926,7 @@ function Sync-NativeSkillsFiles {
         $existing = Get-ChildItem $targetRoot -Directory -ErrorAction SilentlyContinue
         foreach ($ed in $existing) {
             if ($ed.Name -notin $validNames) {
-                if ($DryRun) { Write-Fix "[预演] 将删除旧技能: $($ed.Name)" }
-                else { Remove-Item $ed.FullName -Recurse -Force; Write-Fix "已删除旧技能: $($ed.Name)"; $stats.Removed++ }
+                Remove-ScopedSameTypeTarget -TargetPath $ed.FullName -ScopeLabel "skills-native" -IsDirectory | Out-Null
             }
         }
     }
@@ -650,11 +956,7 @@ function Sync-NativeSkillsFiles {
 
         if ($DryRun) { $syncedCount++; continue }
 
-        if (-not (Test-Path $targetDir)) {
-            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-        }
-
-        if ((Test-Path $targetPath) -and -not $Force) {
+        if (-not $Force -and (Test-Path $targetPath)) {
             $existingContent = [System.IO.File]::ReadAllText($targetPath, [System.Text.Encoding]::UTF8)
             if ($existingContent -eq $convertedContent) {
                 $skippedCount++
@@ -662,6 +964,10 @@ function Sync-NativeSkillsFiles {
             }
         }
 
+        # skills-native/<name>/：先删同名目录再写入，不触碰 rules/ 等其他范围
+        Remove-ScopedSameTypeTarget -TargetPath $targetDir -ScopeLabel "skills-native/$skillName" -IsDirectory | Out-Null
+        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+        Remove-ScopedSameTypeTarget -TargetPath $targetPath -ScopeLabel "skills-native/$skillName" -RequiredExt ".md" | Out-Null
         [System.IO.File]::WriteAllText($targetPath, $convertedContent, [System.Text.Encoding]::UTF8)
         $syncedCount++
     }
@@ -791,8 +1097,7 @@ function Sync-WindsurfGlobalRules {
         return
     }
 
-    # 比较并写入
-    if ((Test-Path $targetPath) -and -not $Force) {
+    if (-not $Force -and (Test-Path $targetPath)) {
         $existingContent = [System.IO.File]::ReadAllText($targetPath, [System.Text.Encoding]::UTF8)
         if ($existingContent -eq $newContent) {
             Write-Ok "global_rules.md 已是最新"
@@ -805,6 +1110,7 @@ function Sync-WindsurfGlobalRules {
         Copy-Item $targetPath ($targetPath + ".bak_$(Get-Date -Format 'yyyyMMdd_HHmmss')") -Force
     }
 
+    Remove-ScopedSameTypeTarget -TargetPath $targetPath -ScopeLabel "windsurf/global_rules" -RequiredExt ".md" | Out-Null
     [System.IO.File]::WriteAllText($targetPath, $newContent, [System.Text.Encoding]::UTF8)
     Write-Fix "global_rules.md 已更新 ($($newContent.Length) 字符) → $targetPath"
     $stats.Files++
@@ -890,7 +1196,7 @@ function Convert-RulesFrontmatter {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code 多编辑器同步脚本 v14.0" -ForegroundColor Cyan
+Write-Host "  Claude Code 多编辑器同步脚本 v14.3" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray

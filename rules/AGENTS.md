@@ -1,9 +1,4 @@
 ---
-description: 
-alwaysApply: true
----
-
----
 trigger: model_decision
 description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理、任务编排。
 ---

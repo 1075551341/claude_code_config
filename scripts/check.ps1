@@ -35,6 +35,7 @@ $EDITORS    = @("cursor", "trae", "windsurf", "qoder")
 $LINK_DIRS  = @("skills", "agents", "rules")
 $SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 $ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
+$CLAUDE_RULE_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 $STALE_LINKS = @("hooks", "scripts")
 $NATIVE_RULES = @{
     "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc" }
@@ -310,7 +311,35 @@ foreach ($editor in $EDITORS) {
             $native = $NATIVE_RULES[$editor]
             $rulesPath = $native.Dir
             if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in index)" }
-            elseif (Test-Path $rulesPath) { $passes++ }
+            elseif (Test-Path $rulesPath) {
+                $passes++
+                $claudeRule = Join-Path $rulesPath "CLAUDE$($native.Ext)"
+                if (Test-Path $claudeRule) { $passes++ } else { $issues += "rules/CLAUDE$($native.Ext)(missing)" }
+                $coreRule = Join-Path $rulesPath "CORE$($native.Ext)"
+                if (Test-Path $coreRule) {
+                    $passes++
+                    try {
+                        $coreText = Get-Content $coreRule -Raw -Encoding utf8
+                        if ($coreText -match '<40%' -or $coreText -match '\|\s*50%\s*\|') {
+                            $issues += "CORE(stale thresholds, run sync.ps1 -Force)"
+                        }
+                    } catch {}
+                } else { $issues += "rules/CORE$($native.Ext)(missing)" }
+                $agentsRule = Join-Path $rulesPath "AGENTS$($native.Ext)"
+                if (Test-Path $agentsRule) {
+                    try {
+                        $agentsText = Get-Content $agentsRule -Raw -Encoding utf8
+                        $fmCount = ([regex]::Matches($agentsText, '(?m)^---\s*$')).Count
+                        if ($fmCount -gt 2) {
+                            $issues += "AGENTS(double frontmatter, run sync.ps1 -Force)"
+                        }
+                    } catch {}
+                }
+                $staleMd = Join-Path $rulesPath "CORE.md"
+                if ((Test-Path $staleMd) -and $native.Ext -eq ".mdc") {
+                    $issues += "rules/CORE.md(stale .md symlink)"
+                }
+            }
             else { $issues += "rules(missing)" }
         }
 
