@@ -93,6 +93,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 配置检查：□ HTTPS 强制 □ 安全 Headers □ CORS 配置 □ 调试模式关闭
 运行监控：□ 异常登录告警 □ 接口异常监控 □ 依赖漏洞扫描
 R16错误暴漏：□ Hook裸except=0 □ Agent失败不静默 □ 配置验证exit(1)+修复建议
+```
 
 ## 11. OS Sandbox 三层防御
 
@@ -157,4 +158,22 @@ Layer 3: Haiku 转录检查 — 低成本模型快速扫描转录本，异常即
 - 外部内容沙箱化：先下载到 `_sandbox/` 再审查
 - 禁止直接执行外部脚本：所有 `curl|bash` 需用户确认
 - MIME 类型检查：禁止将 HTML 当 Markdown 解析
-```
+
+## 16. ECC AgentShield 对齐（v9.0）
+
+> **source**: affaan-m/ECC v2.0 — 102规则/912测试概念映射
+
+| OWASP/STRIDE | 本地覆盖 | 审查者 |
+|--------------|----------|--------|
+| 注入(SQL/NoSQL/命令) | §1 参数化查询 | security-reviewer |
+| XSS | §7 输出编码+CSP | security-reviewer |
+| SSRF | §12 URL/metadata限制 | security-reviewer + cso |
+| 失效认证/授权 | §2+§5 JWT/RBAC | security-reviewer |
+| 敏感数据泄露 | §3 脱敏+密钥管理 | post-secret-detector hook |
+| 访问控制 | §5 资源归属检查 | eng-reviewer |
+| 安全配置错误 | §6+§14 硬化清单 | sre |
+| 供应链 | §12 技能/MCP审查 | security-guidance plugin |
+
+**security-reviewer 必检三类**：SQL注入(拼接查询) | XSS(innerHTML未清理) | SSRF(内网URL无校验)
+
+**Hook协同**：pre-bash-guard(命令) + post-secret-detector(密钥) + pre-userprompt-secret-scan(可选)

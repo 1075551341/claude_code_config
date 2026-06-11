@@ -56,6 +56,19 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 - 管理员用符号链接；非管理员目录用 Junction
 - 强制重建：`sync.ps1 -Force`；预览：`sync.ps1 -DryRun`
 
+### Cursor Guard（编辑器独立）
+
+Claude Code hooks 在 Cursor 内不执行；编辑器侧由 **Cursor Guard** 负责影响驱动同步与上下文 70%/90% 监控。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+```
+
+- 模板：`templates/cursor-guard/`
+- 运行时：`~/.cursor/hooks.json`、`guard-config.json`
+- 分段同步：`sync.ps1 -Scope rules|indexes|all`（由 hook 自动选择）
+- 显式同步：聊天输入「同步配置」或 `/sync`
+
 ### 同步后建议自测
 
 1. 在各编辑器中确认配置可读、无报错

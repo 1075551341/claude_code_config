@@ -31,10 +31,11 @@
 
 ```
 spec/
-├── claude-config-integration/     # 全局配置整合（示例）
-│   ├── design.md                  # 架构设计
-│   ├── spec.md                    # 需求规格
-│   └── tasks.md                   # 任务分解
+├── claude-config-integration/     # 全局配置整合（v9 当前）
+│   ├── spec.md                    # → v9 指针
+│   ├── design-v9.md               # v9 架构设计
+│   ├── tasks-v9.md                # v9 任务（已完成）
+│   └── archive/                   # v6 归档
 └── <project>/
     ├── spec.md                    # 需求 + 验收标准
     ├── design.md                  # 技术设计（可选）

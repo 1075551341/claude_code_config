@@ -1,8 +1,8 @@
-# 组件唯一归属源 — 防左右手互博 — v8.1
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 29仓库全量重新调研
+# 组件唯一归属源 — 防左右手互博 — v9.2
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 28仓库全量整合
 
-version: "8.1"
-updated: "2026-06-07"
+version: "9.2"
+updated: "2026-06-11"
 
 pillars:
   superpowers:
@@ -85,6 +85,26 @@ horizontal_layers:
       - source: Firecrawl/Exa
         concerns: [web-scraping, external-search]
 
+loading_tiers:
+  L0: [CLAUDE-ROUTER, CLAUDE.md, rules/CORE.md]
+  L1: [skill/using-superpowers, skill/change-impact-analysis]
+  L2_gate:
+    plan: [skill/brainstorming]
+    spec: [skill/writing-plans, skill/spec-validation]
+    execute: [skill/executing-plans, skill/subagent-driven-development]
+    verify: [skill/verification-before-completion]
+    debug: [skill/systematic-debugging]
+  L3_signal:
+    - skill/deep-research
+    - skill/adr-management
+    - skill/workstream-management
+    - skill/claude-to-deerflow
+    - skill/git-workflow
+    - skill/pr-workflow
+    - skill/claude-mem-maintenance
+  L4_delegate: [agents/*, mcp/*, rules/* lazy globs]
+  note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
+
 phases:
   plan:
     { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
@@ -132,6 +152,7 @@ concerns:
     owner: skill/executing-plans
     source: obra/superpowers
     stage: execute
+    note: 仅 NON_SIMPLE 路径；简单任务(≤3文件)旁路 executing-plans/subagent-driven
     depends_on: [skill/writing-plans, skill/subagent-driven-development]
 
   verification:
@@ -247,11 +268,121 @@ concerns:
 
   gstack_review:
     owner: rules/AGENTS.md
-    catalog: [eng-reviewer, ceo-reviewer, designer, qa, security-reviewer]
+    catalog: [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer]
     source: garrytan/gstack
     stage: verify
     delegates: [agent/code-reviewer, agent/spec-reviewer]
-    depends_on: [agents/eng-reviewer, agents/ceo-reviewer, agents/designer, rules/AGENTS.md]
+    depends_on: [agents/eng-reviewer, agents/ceo-reviewer, agents/designer, agents/dx-reviewer, rules/AGENTS.md]
+
+  workstreams:
+    owner: skill/workstream-management
+    source: open-gsd/gsd-core
+    stage: execute
+    depends_on: [skill/using-git-worktrees, plugin/thedotmack, rules/WORKFLOW.md]
+
+  adr:
+    owner: skill/adr-management
+    source: open-gsd/gsd-core
+    stage: plan
+    path: docs/ADR/
+    depends_on: [skill/brainstorming]
+
+  onboarding:
+    owner: skill/onboarding-guide
+    source: Fission-AI/OpenSpec
+    stage: plan
+    depends_on: [skill/understand-anything, mcp/codegraph]
+
+  openspec_rules:
+    owner: rules/OPENSPEC.md
+    source: Fission-AI/OpenSpec
+    stage: spec
+    depends_on: [skill/spec-validation]
+
+  gstack_dx:
+    owner: agent/dx-reviewer
+    source: garrytan/gstack
+    layer: skeleton
+    stage: verify
+    triggered_by: [ui-changes, ux-changes, new-features, api-design]
+
+  codegraph_explore:
+    owner: mcp/codegraph
+    source: colbymchenry/codegraph
+    stage: execute
+    note: R17 — 代码探索首选，先于 Grep
+    hooks: [post-codegraph-sync]
+
+  context_monitor:
+    owner: hook/stop-context-monitor
+    source: affaan-m/ECC
+    depends_on: [hook/pre-suggest-compact, rules/CORE.md]
+
+  cursor_guard:
+    owner: templates/cursor-guard
+    source: local
+    stage: execute
+    note: "Cursor Guard v1.1 — sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
+    depends_on: [scripts/sync.ps1]
+
+  tmux_reminder:
+    owner: hook/pre-tmux-reminder
+    source: affaan-m/ECC
+    note: ECC pre:bash:tmux-reminder — 长运行命令非tmux环境警告
+
+  taste_memory:
+    owner: skill/taste-memory
+    source: garrytan/gstack
+    stage: learn
+    depends_on: [plugin/thedotmack]
+    note: 通过 claude-mem observation 存设计偏好，不修改插件
+
+  deer_flow_bridge:
+    owner: skill/claude-to-deerflow
+    source: bytedance/deer-flow
+    stage: execute
+    loading_tier: L3
+    depends_on: [rules/WORKFLOW.md]
+    excludes: [agent/planner, skill/workstream-management]
+
+  deep_research:
+    owner: skill/deep-research
+    source: catalog/skills/deep-research
+    stage: plan
+    loading_tier: L3
+    note: L3 调研；brainstorming 内嵌升级或 /deep-research
+
+  git_workflow:
+    owner: skill/git-workflow
+    source: user-rules-migration
+    stage: ship
+    loading_tier: L3
+    note: User Rules 迁出；显式 commit 时 Read
+
+  pr_workflow:
+    owner: skill/pr-workflow
+    source: user-rules-migration
+    stage: ship
+    loading_tier: L3
+    note: User Rules 迁出；显式开 PR 时 Read
+
+  claude_mem_maintenance:
+    owner: skill/claude-mem-maintenance
+    source: user-rules-migration
+    stage: learn
+    loading_tier: L3
+    depends_on: [plugin/thedotmack]
+
+  cursor_plugin_boundary:
+    owner: config/MANIFEST.yaml
+    note: Cursor 禁用 compound-engineering 插件；审查仅 ~/.claude/agents/ gstack 路由
+    excludes: [plugin/compound-engineering/*]
+
+  mcp_tiering:
+    owner: config/.mcp.json
+    note: Claude Code 常驻 5（codegraph+crawl+git+fs+time）；ops/optional-dev 见 mcp-configs/
+    depends_on: [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
 
   gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
   gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
@@ -346,7 +477,7 @@ concerns:
     version: "2.0"
     stage: execute
     note: LangGraph编排 + 9层Middleware + Sandbox隔离 + 子Agent(3并发/15min超时) + claude-to-deerflow bridge + flash/standard/pro/ultra四模式
-    excludes: [agent/planner]
+    excludes: [agent/planner, skill/workstream-management]
 
   ruflo:
     owner: rules/WORKFLOW.md
@@ -459,8 +590,8 @@ p0_skills:
   - verification-before-completion
   - systematic-debugging
 
-global_skills_max: 28
-global_agents_max: 22
+global_skills_max: 38
+global_agents_max: 25
 
 # ═══════════════════════════════════════════════════════════════
 # SuperAgent Forge — 动态知识库智能体锻造系统 (v1.0)

@@ -4,6 +4,8 @@ description: 开发分支完成时检查、清理、创建PR、合并策略
 triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
 layer: supplement
 source: obra/superpowers
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # 分支完成
@@ -62,38 +64,12 @@ Claude: /finishing-a-development-branch → 运行检查 → 确认可合并 →
 ```
 
 ---
-
-## 合并策略选择
-
-### 根据场景选择策略
-
-| 场景 | 推荐策略 | 原因 |
-|------|----------|------|
-| 功能分支 → develop | Squash Merge | 保持历史整洁 |
-| Release 分支 → main | Merge Commit | 保留发布记录 |
-| Hotfix 分支 → main | Merge Commit | 追踪紧急修复 |
-| 小改进 | Squash Merge | 减少噪音 |
-| 大功能（多人协作） | Rebase + Merge | 保留细节历史 |
-
-### 合并命令参考
-
-```bash
-# Squash Merge
-git checkout develop
-git merge --squash feature/xxx
-git commit -m "feat(xxx): add feature description"
-
-# Merge Commit（保留历史）
-git checkout main
-git merge --no-ff release/1.2.0
-
-# Rebase 后合并
-git checkout feature/xxx
-git rebase develop
-git checkout develop
-git merge feature/xxx
-```
-
+name: finishing-a-development-branch
+description: 开发分支完成时检查、清理、创建PR、合并策略
+triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
+layer: supplement
+source: obra/superpowers
+disable-model-invocation: true
 ---
 
 ## 完成流程
@@ -176,38 +152,12 @@ git fetch -p && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r gi
 ```
 
 ---
-
-## PR 准备模板
-
-```markdown
-## [类型] 简短描述
-
-### 变更内容
-- 具体变更1
-- 具体变更2
-
-### 变更类型
-- [ ] 新功能 (feat)
-- [ ] Bug 修复 (fix)
-- [ ] 重构 (refactor)
-- [ ] 文档 (docs)
-- [ ] 其他
-
-### 测试验证
-- [ ] 单元测试已添加/更新
-- [ ] 集成测试已通过
-- [ ] 手动测试完成
-
-### 影响范围
-<!-- 列出可能受影响的模块 -->
-
-### 截图（如有UI变更）
-<!-- 添加截图 -->
-
-### 相关问题
-Closes #xxx
-```
-
+name: finishing-a-development-branch
+description: 开发分支完成时检查、清理、创建PR、合并策略
+triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
+layer: supplement
+source: obra/superpowers
+disable-model-invocation: true
 ---
 
 ## 决策树

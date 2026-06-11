@@ -44,7 +44,8 @@ tools:
 
 ### 工程化
 - Vite / Webpack
-- ESLint + Prettier
+- ESLint（质量/逻辑/框架）+ Prettier（JS/Vue 风格与属性排序）+ Stylelint（CSS 格式化）
+- 分工详见 `catalog/rules/RULES_FRONTEND.md`
 - Vitest / Jest
 
 ## 开发原则

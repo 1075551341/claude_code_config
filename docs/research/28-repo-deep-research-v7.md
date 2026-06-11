@@ -535,5 +535,5 @@ description: A clear description of what this skill does and when to use it
 
 - 本报告: `docs/research/28-repo-deep-research-v7.md`
 - 五柱详解: `docs/research/five-pillars-v7.md`
-- 设计文档: `spec/claude-config-integration/design-v7.md`
+- 设计文档: `spec/claude-config-integration/design-v9.md`（v7 未单独成稿，v9 为当前）
 - 实施计划: 下一步 `/plan` 产出

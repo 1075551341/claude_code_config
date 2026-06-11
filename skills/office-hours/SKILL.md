@@ -3,6 +3,8 @@ name: office-hours
 description: 六问产品框架，重新定义问题，挑战前提，生成实现方案。触发：/office-hours、产品讨论。
 layer: supplement
 source: garrytan/gstack
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Office Hours

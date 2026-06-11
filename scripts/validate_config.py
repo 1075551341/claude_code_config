@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Validate ~/.claude configuration against v2 PRIMARY design (8 checks V1-V8)."""
+"""Validate ~/.claude configuration against v9 design (12 checks V1-V12)."""
 import json
 import os
 import re
 import shutil
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (OSError, ValueError):
+        pass
 
 try:
     import yaml
@@ -21,18 +27,18 @@ CORE_AGENTS = {
     "architect", "spec-reviewer", "agentic-orchestrator",
 }
 GSTACK_REVIEW_AGENTS = {
-    "eng-reviewer", "ceo-reviewer", "designer", "qa", "security-reviewer",
+    "eng-reviewer", "ceo-reviewer", "designer", "dx-reviewer", "qa", "security-reviewer",
 }
 GSTACK_SUPPLEMENT_AGENTS = {
     "cso", "sre", "release-engineer", "product-manager",
     "design-engineer", "performance-engineer", "doc-writer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 22
+GLOBAL_AGENTS_MAX = 25
 
 P0_SKILLS = {
-    "using-superpowers", "brainstorming", "verification-before-completion",
-    "systematic-debugging",
+    "using-superpowers", "brainstorming", "change-impact-analysis",
+    "verification-before-completion", "systematic-debugging",
 }
 WORKFLOW_SKILLS = {
     "writing-plans", "executing-plans", "test-driven-development",
@@ -47,12 +53,20 @@ EXTENSION_SKILLS = {
     "context-engineering", "structured-artifacts", "instinct-learning",
 }
 MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
-REQUIRED_SKILLS = P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS | MATTPOCOCK_SKILLS
-GLOBAL_SKILLS_MAX = 28
+V9_SKILLS = {
+    "understand-anything", "workstream-management", "adr-management",
+    "onboarding-guide", "claude-to-deerflow", "taste-memory",
+}
+REQUIRED_SKILLS = (
+    P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
+    | MATTPOCOCK_SKILLS | V9_SKILLS
+)
+GLOBAL_SKILLS_MAX = 38
 
 GLOBAL_RULES = {
     "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
-    "AGENTS.md", "MCP.md", "DESIGN.md", "CONTEXT.md",
+    "AGENTS.md", "MCP.md", "DESIGN.md", "CONTEXT.md", "OPENSPEC.md",
+    "FRONTEND.md",
 }
 
 
@@ -141,9 +155,15 @@ def v4_iron_laws_consistency():
         core = fh.read()
     with open(claude_path, "r", encoding="utf-8") as fh:
         claude = fh.read()
-    for i in range(1, 12):
-        if f"R{i}" not in claude:
-            ERRORS.append(f"V4: R{i} missing from CLAUDE.md")
+    for i in range(1, 19):
+        if i == 0:
+            continue
+        tag = f"R{i}"
+        if tag not in claude and tag not in core:
+            ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
+    for tag in ("R17", "R18"):
+        if tag not in claude or tag not in core:
+            ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
     if "Karpathy" not in core or "Karpathy" not in claude:
         ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
 
@@ -298,7 +318,7 @@ def main():
         required_commands = {
             "discuss", "plan", "execute", "verify", "ship", "review",
             "compact", "clear", "status", "propose", "apply", "archive",
-            "autoplan", "office-hours",
+            "autoplan", "office-hours", "workstream", "adr", "deep-research",
         }
         cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
         missing_cmds = required_commands - cmd_files
@@ -317,6 +337,9 @@ def main():
     check_v10_bare_except()
     check_v11_hook_exception_propagation()
     check_v12_r16_in_core()
+    check_v13_cursor_guard()
+    check_v14_cursor_guard_v11()
+    check_v15_loading_tiers()
 
     report(
         agents=len(agent_names),
@@ -328,11 +351,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v2 VALIDATION (12 checks) ===")
+    print("=== .claude v9 VALIDATION (15 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
-    for check_name in ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9", "V10", "V11", "V12"]:
+    for check_name in [
+        "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
+        "V10", "V11", "V12", "V13", "V14", "V15",
+    ]:
         related = [e for e in ERRORS if e.startswith(check_name)]
         related_w = [w for w in WARNINGS if w.startswith(check_name)]
         status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"
@@ -382,11 +408,13 @@ def check_v11_hook_exception_propagation():
     """V11: Hook异常传播率100%（核心hooks无静默吞异常）"""
     core_hooks = [
         "session-start-bootstrap.py", "pre-bash-guard.py", "pre-rtk-rewrite.py",
-        "pre-read-before-edit.py", "pre-config-protection.py", "pre-context-injector.py",
-        "pre-manifest-validator.py", "pre-compact-state.py",
-        "post-secret-detector.py", "post-edit-format.py", "post-operation-log.py",
-        "stop-quality-gate.py", "stop-pattern-extraction.py", "stop-session-summary.py",
-        "stop-readme-updater.py",
+        "pre-tmux-reminder.py", "pre-read-before-edit.py", "pre-config-protection.py",
+        "pre-context-injector.py", "pre-manifest-validator.py", "pre-loop-guard.py",
+        "pre-suggest-compact.py", "pre-compact-state.py",
+        "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",
+        "post-operation-log.py",
+        "stop-quality-gate.py", "stop-context-monitor.py", "stop-pattern-extraction.py",
+        "stop-session-summary.py", "stop-readme-updater.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")
     missing = []
@@ -413,6 +441,140 @@ def check_v12_r16_in_core():
         except OSError as e:
             ERRORS.append(f"V12: 读取{label}失败: {e}")
     print("  V12: R16铁律检查完成")
+
+
+def check_v13_cursor_guard():
+    """V13: Cursor Guard 模板与部署脚本存在"""
+    template = os.path.join(BASE, "templates", "cursor-guard", "hooks.json")
+    deploy_script = os.path.join(BASE, "scripts", "deploy-cursor-guard.ps1")
+    required_hooks = (
+        "sync_on_edit.py",
+        "sync_on_prompt.py",
+        "context_pre_tool.py",
+        "context_post_tool.py",
+        "context_stop.py",
+        "session_bootstrap.py",
+        "pre_compact_snapshot.py",
+    )
+    if not os.path.isfile(template):
+        ERRORS.append("V13: templates/cursor-guard/hooks.json missing")
+        return
+    if not os.path.isfile(deploy_script):
+        ERRORS.append("V13: scripts/deploy-cursor-guard.ps1 missing")
+        return
+    hooks_tpl = os.path.join(BASE, "templates", "cursor-guard", "hooks")
+    missing = [h for h in required_hooks if not os.path.isfile(os.path.join(hooks_tpl, h))]
+    if missing:
+        ERRORS.append(f"V13: missing cursor-guard hooks: {', '.join(missing)}")
+    else:
+        print(f"  V13: Cursor Guard 模板 {len(required_hooks)} hooks ✓")
+
+
+SKILL_TIER_L1 = {"using-superpowers", "change-impact-analysis"}
+SKILL_TIER_L2 = {
+    "brainstorming", "writing-plans", "spec-validation", "executing-plans",
+    "subagent-driven-development", "verification-before-completion", "systematic-debugging",
+}
+
+
+def _parse_skill_frontmatter(skill_path):
+    """Return frontmatter dict from SKILL.md or None."""
+    try:
+        with open(skill_path, "r", encoding="utf-8") as fh:
+            content = fh.read()
+    except OSError:
+        return None
+    if not content.startswith("---"):
+        return None
+    end = content.find("\n---", 3)
+    if end == -1:
+        return None
+    block = content[3:end]
+    fm = {}
+    for line in block.splitlines():
+        if ":" not in line:
+            continue
+        key, _, val = line.partition(":")
+        fm[key.strip()] = val.strip()
+    return fm
+
+
+def check_v15_loading_tiers():
+    """V15: L0-L4 skill frontmatter — loading_tier + disable-model-invocation 与 skills-INDEX 一致."""
+    skills_dir = os.path.join(BASE, "skills")
+    if not os.path.isdir(skills_dir):
+        ERRORS.append("V15: skills/ directory missing")
+        return
+    checked = 0
+    for name in sorted(os.listdir(skills_dir)):
+        skill_path = os.path.join(skills_dir, name, "SKILL.md")
+        if not os.path.isfile(skill_path):
+            continue
+        fm = _parse_skill_frontmatter(skill_path)
+        if fm is None:
+            continue
+        checked += 1
+        expected = (
+            "L1" if name in SKILL_TIER_L1
+            else ("L2" if name in SKILL_TIER_L2 else "L3")
+        )
+        actual = fm.get("loading_tier", "")
+        if actual != expected:
+            ERRORS.append(
+                f"V15: skills/{name}/SKILL.md loading_tier={actual!r} expected {expected}"
+            )
+        has_disable = fm.get("disable-model-invocation") == "true"
+        if expected == "L1" and has_disable:
+            ERRORS.append(f"V15: L1 skill {name} must not have disable-model-invocation")
+        if expected in ("L2", "L3") and not has_disable:
+            ERRORS.append(f"V15: {expected} skill {name} missing disable-model-invocation: true")
+
+    manifest_path = os.path.join(BASE, "MANIFEST.yaml")
+    if yaml and os.path.isfile(manifest_path):
+        with open(manifest_path, "r", encoding="utf-8") as fh:
+            manifest = yaml.safe_load(fh)
+        tiers = manifest.get("loading_tiers", {})
+        for group, entries in tiers.items():
+            if group == "note":
+                continue
+            if not isinstance(entries, list):
+                for sub_entries in entries.values():
+                    if not isinstance(sub_entries, list):
+                        continue
+                    for entry in sub_entries:
+                        if not entry.startswith("skill/"):
+                            continue
+                        skill_name = entry.replace("skill/", "")
+                        path = os.path.join(skills_dir, skill_name, "SKILL.md")
+                        if not os.path.isfile(path):
+                            ERRORS.append(f"V15: MANIFEST loading_tiers missing {path}")
+
+    if checked and not any(e.startswith("V15:") for e in ERRORS):
+        print(f"  V15: {checked} skills loading_tier + disable ✓")
+
+
+def check_v14_cursor_guard_v11():
+    """V14: Cursor Guard v1.1 扩展 hook 与文档"""
+    v11_hooks = (
+        "explore_router.py",
+        "maintenance_hints.py",
+        "shell_guard.py",
+        "prompt_secret_scan.py",
+    )
+    hooks_tpl = os.path.join(BASE, "templates", "cursor-guard", "hooks")
+    missing = [h for h in v11_hooks if not os.path.isfile(os.path.join(hooks_tpl, h))]
+    if missing:
+        ERRORS.append(f"V14: missing v1.1 hooks: {', '.join(missing)}")
+        return
+    doc = os.path.join(BASE, "docs", "CURSOR_EDITOR_SETUP.md")
+    rule = os.path.join(BASE, "templates", "cursor-guard", "rules", "CURSOR-EDITOR.mdc")
+    if not os.path.isfile(doc):
+        ERRORS.append("V14: docs/CURSOR_EDITOR_SETUP.md missing")
+    if not os.path.isfile(rule):
+        ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
+    if not missing and os.path.isfile(doc) and os.path.isfile(rule):
+        print(f"  V14: Cursor Guard v1.1 ({len(v11_hooks)} hooks + docs) ✓")
+
 
 if __name__ == "__main__":
     sys.exit(main())

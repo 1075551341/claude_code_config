@@ -3,6 +3,8 @@ name: ship
 description: 发布管线，整合测试→覆盖审计→推送→开PR→可选部署验证。
 layer: supplement
 source: garrytan/gstack + obra/superpowers
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Ship

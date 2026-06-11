@@ -1,67 +1,34 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP 服务器配置 v2.0 | 权威源 | 去重后 11/19 服务器 — 移除与内置工具重复的 memory/thinking/fetch/gh/ctx7/pw/brave/exa",
+  "_comment": "MCP v9.2 常驻 5 服务器 | 权威源 | ops/optional-dev 见 mcp-configs/*.json 按需 merge | Cursor 侧见 docs/CURSOR_MCP_PROFILE.md",
   "mcpServers": {
-    "fs": {
-      "_description": "文件系统操作。场景：读写项目文件、管理配置、批量重命名",
+    "codegraph": {
+      "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms", "C:\\Users\\DELL\\.claude"]
-    },
-    "time": {
-      "_description": "时间与时区工具。场景：获取当前时间、时区转换、计算时间差",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-time"]
-    },
-    "git": {
-      "_description": "Git 版本库直接操作。场景：查看提交历史、diff、blame、本地分支操作",
-      "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
+      "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"]
     },
     "crawl": {
-      "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索",
+      "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索（L2/L3 调研）。",
       "command": "npx",
       "args": ["-y", "firecrawl-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
-    "redis": {
-      "_description": "Redis 缓存/队列/键值存储。场景：缓存热点数据、会话存储、消息队列、分布式锁",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-redis", "redis://localhost:6379"]
+    "git": {
+      "_description": "Git 版本库直接操作。场景：提交历史、diff、blame、本地分支。",
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
     },
-    "sqlite": {
-      "_description": "SQLite 軽量数据库。场景：本地原型开发、小型数据存储、测试数据库",
+    "fs": {
+      "_description": "文件系统操作。场景：跨路径读写、配置仓库维护。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "D:\\apdms\\database.db"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms", "C:\\Users\\DELL\\.claude"]
     },
-    "docker": {
-      "_description": "Docker 容器管理。场景：查看容器状态、启停服务、查看日志、镜像管理",
+    "time": {
+      "_description": "时间与时区工具。场景：获取当前时间、时区转换（配合禁 new Date() 规范）。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-docker"]
-    },
-    "postgres": {
-      "_description": "PostgreSQL 数据库。场景：生产环境复杂查询、事务处理、JSON 数据存储",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:password@localhost:5432/dbname"]
-    },
-    "chrome-devtools": {
-      "_description": "Chrome DevTools 官方 MCP。场景：调试网页、控制台与性能面板、接管 Chrome 排障优化",
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
-    },
-    "figma": {
-      "_description": "Figma 设计稿集成。场景：读取设计稿、获取组件信息、设计转代码",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-figma"],
-      "env": {
-        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
-      }
-    },
-    "codegraph": {
-      "_description": "代码知识图谱 MCP。预索引符号关系/调用图/代码结构。场景：项目结构探索、符号追踪、影响分析。",
-      "command": "npx",
-      "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"]
+      "args": ["-y", "@modelcontextprotocol/server-time"]
     }
   }
 }

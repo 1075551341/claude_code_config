@@ -4,7 +4,7 @@ description: 跨编辑器配置同步指南 v14
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v14.1 | **日期**: 2026-06-07 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
+> **版本**: v14.2 | **日期**: 2026-06-11 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
 
 ## 边界原则（Claude Code ↔ 编辑器）
 
@@ -82,7 +82,68 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Full -Force
 powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 ```
 
-`check.ps1` S3 段读取 `sync-mode.json` 并按 index/full 分别验证；S4 确认 hooks 仅在 `~/.claude`。
+`check.ps1` S3 段读取 `sync-mode.json` 并按 index/full 分别验证；S4 确认 hooks 仅在 `~/.claude`；**S4b** 检查 Cursor Guard 部署。
+
+---
+
+## Cursor Guard（编辑器独立守护层）
+
+> Claude Code 的 `settings.json` hooks 在 Cursor 内由 `_editor_hook_launcher` 跳过。Cursor 侧能力由 **Cursor Guard** 单独提供。
+
+| 层 | 路径 | 职责 |
+|----|------|------|
+| 模板（版本化） | `~/.claude/templates/cursor-guard/` | hooks 源码 SSOT |
+| 运行时 | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | Cursor 原生 hook |
+| 状态 | `~/.cursor/.state/` | 计数/压缩快照（与 `~/.claude` 隔离） |
+| 配置 | `~/.cursor/guard-config.json` | 70%/90% 阈值、同步开关 |
+
+**部署**：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+```
+
+**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -Scope all -Force`。
+
+**自动同步**：编辑 `~/.claude` 下 `rules/`、总纲、INDEX 等可同步路径后，按 MANIFEST 影响图调用 `sync.ps1 -Scope rules|indexes|all`（`skills/`/`agents/` 联接不重复 sync）。
+
+**上下文**：70% `agent_message` 提醒；90% `stop` 注入 `followup_message` 强制摘要 + 建议开新对话。
+
+**与 Claude Code 对照**：
+
+| 能力 | Claude Code | Cursor Guard |
+|------|-------------|--------------|
+| Hook 注册 | `~/.claude/settings.json` | `~/.cursor/hooks.json` |
+| 编辑器内执行 | 跳过（launcher） | 全量执行 |
+| 压缩命令 | `/compact` | Cursor 原生 compact + `preCompact` 快照 |
+| 计数文件 | `tool-call-counter.json` | `.cursor/.state/tool-counter.json` |
+| codegraph | MCP + post-codegraph-sync(CLI) | MCP 优先路由；无 post-codegraph-sync |
+
+完整编辑器独有配置见 [`CURSOR_EDITOR_SETUP.md`](CURSOR_EDITOR_SETUP.md)。
+
+---
+
+## Rules 来源与 token（v9.2）
+
+| 来源 | 平台 | 控制方式 |
+|------|------|----------|
+| CLAUDE / CORE / ROUTER | 双平台 sync | 源文件去重；CORE 保留 R12–R18 + 编码规范 |
+| plugin-* rules | 仅 Cursor | 禁插件即消失 |
+| User Rules | 仅 Cursor Settings | 4 行指针（[snippet](../templates/cursor-user-rules-snippet.txt)） |
+| lazy rules (GIT/FRONTEND/OPENSPEC) | Cursor glob | 匹配文件前零成本 |
+
+## v9.2 加载策略（Token 减负）
+
+| 等级 | 同步内容 | Cursor 机制 |
+|------|----------|-------------|
+| L0 | CLAUDE-ROUTER + CLAUDE + CORE | alwaysApply rules |
+| L1 | using-superpowers, change-impact-analysis | 会话常驻（无 disable） |
+| L2/L3 | 其余 `skills/` | `disable-model-invocation: true` + 阶段 Read |
+| L4 | agents, MCP, plugins | 显式调用 |
+
+- **插件/MCP**：见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)；Claude Code `.mcp.json` 常驻 5
+- **运行时**：见 [RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
+- **详图**：`spec/claude-config-integration/plan-v9.1-token-loading.md`（v9.2 补全见 MANIFEST v9.2）
 
 ---
 

@@ -4,6 +4,8 @@ description: 编写原子级实施计划（2-5分钟/任务），含精确路径
 triggers: [写计划, 实施计划, 任务分解, 项目规划, 原子任务]
 layer: supplement
 source: obra/superpowers
+disable-model-invocation: true
+loading_tier: L2
 ---
 
 # 编写实施计划

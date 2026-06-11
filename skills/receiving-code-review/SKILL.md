@@ -4,6 +4,8 @@ description: 接收代码审查反馈，验证后再实施修改
 triggers: [接收代码审查反馈, 验证后再实施修改, 代码审查]
 layer: supplement
 source: obra/superpowers
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # 接收代码审查反馈

@@ -1,11 +1,14 @@
 ---
 name: change-impact-analysis
 description: 变更影响分析 — 改任何文件/函数/类型/配置前必须先执行。触发词：修改、改、重构、更新、删除、变更、rename、move。
+layer: skeleton
+loading_tier: L1
+source: internal
 ---
 
 # 变更影响分析
 
-> 属 P0 强制 Skill | 阶段: ③执行（所有变更前自动触发）
+> **L1 常驻**（P0 路由集）：任何阶段有修改意图时 Read 全文。同会话已 Read 且范围未变可不重复 Read。
 
 ## 核心原则
 

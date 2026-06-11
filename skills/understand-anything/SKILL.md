@@ -10,6 +10,8 @@ triggers:
   - understand-anything
   - 交互知识图
   - 引导导览
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Understand-Anything — 交互式知识图谱

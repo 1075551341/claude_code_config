@@ -3,6 +3,8 @@ name: design-pipeline
 description: 设计管线，从探索到生产。shotgun 多方案→对比板→选定→HTML 转化。吸收 gstack /design-shotgun + /design-html 全流程。
 layer: supplement
 source: garrytan/gstack + VoltAgent/awesome-design-md
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Design Pipeline

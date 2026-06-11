@@ -3,6 +3,8 @@ name: instinct-learning
 description: Instinct v2 置信度学习系统，从会话提取可复用模式，带置信度评分。
 layer: supplement
 source: affaan-m/ECC
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Instinct Learning v2

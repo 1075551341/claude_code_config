@@ -5,15 +5,17 @@ description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理
 
 # Agent 协作规则
 
-> 归属矩阵 → `MANIFEST.yaml` | 核心 8 个 → `agents/README.md`
+> 归属矩阵 → `MANIFEST.yaml` | 核心 7 个 → `agents/README.md`
 
-## 核心 8
+## 核心 7
 
-planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | context-manager | agentic-orchestrator
+planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
 
-## gstack 审查 5 + 补全 7
+> 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
 
-审查（skeleton）：eng-reviewer | ceo-reviewer | designer | qa | security-reviewer
+## gstack 审查 6 + 补全 7
+
+审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
 
 补全（supplement）：cso | sre | release-engineer | product-manager | design-engineer | performance-engineer | doc-writer
 
@@ -30,7 +32,8 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | spec 审查 | spec-reviewer |
 | 代码审查 | code-reviewer + eng-reviewer |
 | 产品决策 | ceo-reviewer |
-| UI/UX 审查 | designer |
+| UI/UX 审查 | designer + dx-reviewer |
+| DX 体验审查 | dx-reviewer |
 | 测试审查 | qa |
 | 安全审计 | security |
 | 设计探索(多方案) | design-shotgun（gstack v0.19） |
@@ -46,7 +49,8 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 ```
 所有变更        → eng-reviewer (必须)
 产品/新功能     → + ceo-reviewer
-UI/UX 变更      → + designer + design-shotgun(多方案探索,gstack v0.19)
+UI/UX 变更      → + designer + dx-reviewer + design-shotgun(多方案探索,gstack v0.19)
+DX体验变更      → + dx-reviewer
 安全敏感变更    → + security-reviewer + cso(OWASP+STRIDE)
 iOS 变更        → + ios-specialist (gstack v0.19)
 infra/配置      → CEO Review 可跳过
@@ -59,7 +63,7 @@ infra/配置      → CEO Review 可跳过
 - agent 间共享可变状态（包括全局变量/文件锁/环境变量隐式共享）
 - planner 与 agentic-orchestrator 同时编排同一任务
 - hook/pre-task-planner 替代 skill/writing-plans
-- context-manager 重复 claude-mem 存储逻辑
+- 勿恢复 agent/context-manager（已合并 claude-mem）
 - 同一制品路径并行写入（DAG冲突检测阻断）
 - 子agent 回写主会话上下文（仅通过三态制品通信）
 - 按 agent 名称堆叠委派（应按 MANIFEST concern→owner 路由）

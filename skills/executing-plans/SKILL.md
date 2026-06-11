@@ -9,6 +9,8 @@ triggers:
 priority: P1
 layer: supplement
 source: obra/superpowers
+disable-model-invocation: true
+loading_tier: L2
 ---
 # 计划执行
 

@@ -1,0 +1,51 @@
+{
+  "version": "1.1.5",
+  "profile": "standard",
+  "compression": {
+    "window_tokens": 200000,
+    "warn_pct": 70,
+    "force_pct": 90,
+    "reset_on_warn": false,
+    "stop_nudge_at_warn": true,
+    "auto_followup_at_force": true,
+    "compress_prompt_keywords": [
+      "压缩上下文",
+      "压缩 上下文",
+      "compact context",
+      "compact 上下文"
+    ],
+    "extract_prompt_keywords": [
+      "提取上下文",
+      "提取 上下文",
+      "extract context",
+      "extract 上下文"
+    ]
+  },
+  "explore": {
+    "codegraph_first": true,
+    "nudge_on_grep_read": true
+  },
+  "sync": {
+    "auto_on_edit": true,
+    "debounce_seconds": 60,
+    "claude_home": "%USERPROFILE%/.claude",
+    "prompt_keywords": [
+      "/sync",
+      "同步配置",
+      "sync config",
+      "刷新规则",
+      "更新索引",
+      "更新文档",
+      "同步文档"
+    ]
+  },
+  "shell": {
+    "enabled": true,
+    "ask_network": true,
+    "profile": "standard"
+  },
+  "secrets": {
+    "scan_prompts": true,
+    "block_on_match": false
+  }
+}

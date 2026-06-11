@@ -1,75 +1,44 @@
 # Skills 技能库
 
-> **全局 31 个**（运行时加载）+ **catalog/**（97 领域库，按需复制）。格式标准：anthropics/skills
-> 本地 13 个覆盖 superpowers 插件同名 skill（token 节省 45-74%，中文适配，五阶段集成）
+> **全局 38 个**（L1×2 + L2 门控×7 + L3×29）+ **catalog/** 领域库（按需复制）
+
+完整索引 → [skills-INDEX.md](../skills-INDEX.md)
 
 ---
 
-## 全局（31）
+## P0 路由集（5）
 
-### P0 强制（5，skeleton）
+L1: using-superpowers, change-impact-analysis  
+L2 门控: brainstorming, verification-before-completion, systematic-debugging
 
-using-superpowers | brainstorming | change-impact-analysis | verification-before-completion | systematic-debugging
+## v9.1 新增（4）
 
-### Superpowers Workflow（9，supplement）
+deep-research | git-workflow | pr-workflow | claude-mem-maintenance
+
+## Superpowers Workflow（9）
 
 writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | writing-skills
 
-### Meta（5，supplement）
+## Meta（4）
 
-memory-compression | spec-validation | karpathy-guidelines | caveman-compress | change-impact-analysis
+memory-compression | spec-validation | karpathy-guidelines | caveman-compress
 
-### 扩展（8，supplement — gstack/GSD/ECC）
+## 扩展（8）
 
 autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineering | structured-artifacts | instinct-learning
 
-### Mattpocock（2）
+## Mattpocock（2）
 
 triage | improve-codebase-architecture
 
-### 项目洞察（1）
+## 项目洞察（1）
 
 understand-anything
 
-### 外部桥接（1）
+## v9 新增（5）
 
-deer-flow(claude-to-deerflow skill，可选)
-
----
-
-## Catalog（按需）
-
-路径：`~/.claude/catalog/skills/`（97）
-
-```powershell
-python ~/.claude/scripts/migrate-from-legacy.py --project <path> --skill python-backend
-```
-
-领域示例：frontend-design, api-development, ui-ux-pro-max …
+workstream-management | adr-management | onboarding-guide | claude-to-deerflow | taste-memory
 
 ---
 
-## 格式
-
-```yaml
----
-name: skill-name
-description: 一句话 + 触发场景
-layer: skeleton | supplement
----
-```
-
----
-
-## 互斥（见 MANIFEST.yaml）
-
-- 计划 → writing-plans（非 hook/pre-task-planner）
-- 审查 → requesting/receiving-code-review
-- 记忆 SSOT → claude-mem plugin + memory-compression skill
-- 模式提取 Stop → stop-pattern-extraction hook（v1）；instinct-learning 负责 v2 置信度/evolve，不替代 hook
-
----
-
-## 来源
-
-superpowers（13 链）| gstack/GSD/ECC（扩展 8）| anthropics/skills（格式）| catalog（领域）
+Catalog 复制：`python ~/.claude/scripts/migrate-from-legacy.py --project <path> --skill <name>`

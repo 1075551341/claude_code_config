@@ -1,36 +1,22 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "_comment": "MCP 分组视图 v4.0 | 权威源: .mcp.json | 仅定义toolset分组映射",
+  "_comment": "MCP 分组视图 v9.2 | 权威源: .mcp.json（常驻5）| 按需: mcp-configs/ops.json + optional-dev.json",
   "toolsets": {
-    "always": [
-      "fs",
-      "time"
-    ],
-    "dev": [
-      "git",
-      "crawl",
-      "chrome-devtools",
-      "codegraph"
-    ],
-    "ops": [
-      "redis",
-      "sqlite",
-      "docker",
-      "postgres"
-    ],
-    "design": [
-      "figma"
-    ],
-    "optional": []
+    "always": ["codegraph", "crawl", "git", "fs", "time"],
+    "ops": ["redis", "sqlite", "docker", "postgres"],
+    "optional-dev": ["chrome-devtools", "figma"]
+  },
+  "on_demand_profiles": {
+    "ops": "mcp-configs/ops.json",
+    "optional-dev": "mcp-configs/optional-dev.json"
   },
   "loading": {
     "default": "always",
     "env": "CLAUDE_MCP_PROFILE",
     "profiles": {
-      "dev": "always + dev",
-      "ops": "always + ops",
-      "design": "always + design",
-      "full": "always + dev + ops + design"
+      "ops": "always + merge ops profile",
+      "optional-dev": "always + merge optional-dev profile",
+      "full": "always + ops + optional-dev"
     }
   }
 }

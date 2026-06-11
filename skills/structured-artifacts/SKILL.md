@@ -3,6 +3,8 @@ name: structured-artifacts
 description: GSD 结构化制品管理，确保跨会话状态存活。
 layer: supplement
 source: GSD-redux
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Structured Artifacts

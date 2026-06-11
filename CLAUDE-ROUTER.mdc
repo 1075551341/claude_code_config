@@ -15,15 +15,19 @@ layer: router
    - Agent：`agents/<name>.md`
    - 规则：索引 `rules/<name>.md` | 全量 `rules/<name>.mdc`
 
-## P0 强制 Skill（5）
+## P0 路由集（5）= L1×2 + L2 门控×3
 
-| Skill | 触发 |
-|-------|------|
-| using-superpowers | 会话开始 |
-| brainstorming | 方案/架构/非简单任务 |
-| change-impact-analysis | 任何修改/变更 |
-| verification-before-completion | 完成/验收 |
-| systematic-debugging | 调试/测试失败 |
+| Skill | 等级 | 触发 |
+|-------|------|------|
+| using-superpowers | L1 | 会话开始、分类路由 |
+| change-impact-analysis | L1 | 任何修改意图 |
+| brainstorming | L2 | 非简单 ①规划 |
+| verification-before-completion | L2 | ④验收 |
+| systematic-debugging | L2 | Bug/调试 |
+
+## 探索优先级（R17）
+
+代码探索：`codegraph_explore` / `codegraph_impact` **先于** Grep / Read（详见 `CORE` R17-R18）。
 
 ## 加载策略
 

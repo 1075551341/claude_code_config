@@ -3,6 +3,8 @@ name: browser-qa
 description: 浏览器QA测试，真实浏览器点击验证，发现bug并原子提交修复。
 layer: supplement
 source: garrytan/gstack
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Browser QA

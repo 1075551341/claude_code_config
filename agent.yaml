@@ -1,7 +1,7 @@
-# ECC harness manifest — 全局启用组件清单 v6.0
-# 权威: MANIFEST.yaml v8.1 | 五柱×五阶段×三横切 | 29仓库全量重新调研
+# ECC harness manifest — 全局启用组件清单 v9.0
+# 权威: MANIFEST.yaml v9.0 | 五柱×五阶段×三横切
 
-version: "6.0"
+version: "9.0"
 harness: claude-code-primary
 
 phases:
@@ -23,6 +23,7 @@ skills:
   p0:
     - using-superpowers
     - brainstorming
+    - change-impact-analysis
     - verification-before-completion
     - systematic-debugging
   workflow:
@@ -48,6 +49,9 @@ skills:
       - context-engineering
       - structured-artifacts
       - instinct-learning
+      - workstream-management
+      - adr-management
+      - onboarding-guide
   meta:
     enabled:
       - memory-compression
@@ -59,6 +63,13 @@ skills:
     enabled:
       - triage
       - improve-codebase-architecture
+  insight:
+    enabled:
+      - understand-anything
+  bridge:
+    enabled:
+      - claude-to-deerflow
+      - taste-memory
 
 agents:
   core:
@@ -78,6 +89,7 @@ agents:
       - eng-reviewer
       - ceo-reviewer
       - designer
+      - dx-reviewer
       - qa
       - security-reviewer
   gstack_supplement:
@@ -100,7 +112,6 @@ agents:
       - design-shotgun
       - pair-agent
       - land-and-deploy
-    note: cross-model review + iOS pipeline + design exploration + multi-agent browser + deploy
 
 hooks:
   profile_env: ECC_HOOK_PROFILE
@@ -109,16 +120,20 @@ hooks:
     - session-start-bootstrap
     - pre-bash-guard
     - pre-rtk-rewrite
+    - pre-tmux-reminder
     - pre-read-before-edit
     - pre-config-protection
     - pre-context-injector
     - pre-manifest-validator
     - pre-loop-guard
+    - pre-suggest-compact
     - post-secret-detector
     - post-edit-format
+    - post-codegraph-sync
     - post-operation-log
     - pre-compact-state
     - stop-quality-gate
+    - stop-context-monitor
     - stop-pattern-extraction
     - stop-session-summary
     - stop-readme-updater
@@ -145,6 +160,9 @@ commands:
     - status
     - office-hours
     - autoplan
+    - workstream
+    - adr
+    - deep-research
   openspec:
     - propose
     - apply
@@ -161,9 +179,14 @@ disabled_hooks:
 
 mcp_loading:
   always: [memory, thinking, fs, fetch, time]
-  dev: [gh, git, ctx7, pw, crawl, chrome-devtools]
+  dev: [gh, git, ctx7, pw, crawl, chrome-devtools, codegraph]
   ops: [redis, sqlite, docker, postgres]
   search: [brave, exa]
   design: [figma]
   optional: [puppeteer, glif]
   profile_env: CLAUDE_MCP_PROFILE
+
+limits:
+  global_agents_max: 25
+  global_skills_max: 34
+  global_rules_max: 10

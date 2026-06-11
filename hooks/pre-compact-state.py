@@ -50,15 +50,35 @@ def main():
         except Exception as e:
             print(f"⚠️ {e}", file=sys.stderr)
 
+        planning_state = {}
+        planning_dir = os.path.join(os.getcwd(), ".planning", "phases")
+        try:
+            if os.path.isdir(planning_dir):
+                for phase in os.listdir(planning_dir)[:20]:
+                    phase_path = os.path.join(planning_dir, phase)
+                    if os.path.isdir(phase_path):
+                        state_md = os.path.join(phase_path, "STATE.md")
+                        planning_state[phase] = os.path.exists(state_md)
+        except Exception as e:
+            print(f"⚠️ planning snapshot: {e}", file=sys.stderr)
+
         state = {
             "timestamp": datetime.utcnow().isoformat(),
             "cwd": os.getcwd(),
             "event": "pre_compact",
-            "note": "State saved before context compaction",
+            "current_task_summary": data.get("summary") or data.get("current_task") or "见 openspec/planning 快照",
+            "in_progress_files": data.get("in_progress_files", []),
+            "pending_decisions": data.get("pending_decisions", []),
+            "last_verified_checkpoint": data.get("last_checkpoint") or "pre-compact auto-save",
             "openspec_snapshot": openspec_state,
+            "planning_snapshot": planning_state,
         }
-        
+
         with open(state_file, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+
+        root_state = os.path.expanduser("~/.claude/state.json")
+        with open(root_state, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
 
     except SystemExit:

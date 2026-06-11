@@ -3,6 +3,8 @@ name: autoplan
 description: 自动审查流水线，一条命令完成 CEO→Design→Eng 审查，仅暴露品味决策。
 layer: supplement
 source: garrytan/gstack
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Autoplan

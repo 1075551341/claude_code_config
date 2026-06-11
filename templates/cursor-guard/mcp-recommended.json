@@ -1,0 +1,20 @@
+{
+  "_comment": "参考清单 — deploy 不写入用户 MCP。在 Cursor Settings -> MCP 手工启用。",
+  "priority_p0": [
+    {
+      "name": "codegraph",
+      "intent": "代码结构/调用链/影响面探索",
+      "setup": "npx @colbymchenry/codegraph && codegraph init -i"
+    }
+  ],
+  "priority_p1": [
+    { "name": "gh", "intent": "GitHub PR/Issue" },
+    { "name": "context7", "intent": "库/API 文档" },
+    { "name": "exa", "intent": "语义搜索/调研" },
+    { "name": "playwright", "intent": "浏览器 E2E" }
+  ],
+  "do_not_mirror": [
+    "claude-mem plugin hooks",
+    "~/.claude/.mcp.json 全量复制"
+  ]
+}

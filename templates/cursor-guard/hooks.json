@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "guard_version": "1.1.5",
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "python hooks/session_bootstrap.py",
+        "timeout": 8
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "python hooks/session_end.py",
+        "timeout": 5
+      }
+    ],
+    "preCompact": [
+      {
+        "command": "python hooks/pre_compact_snapshot.py",
+        "timeout": 5
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "python hooks/sync_on_prompt.py",
+        "matcher": "UserPromptSubmit",
+        "timeout": 130
+      },
+      {
+        "command": "python hooks/prompt_secret_scan.py",
+        "matcher": "UserPromptSubmit",
+        "timeout": 5
+      },
+      {
+        "command": "python hooks/compress_on_prompt.py",
+        "matcher": "UserPromptSubmit",
+        "timeout": 5
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "python hooks/shell_guard.py",
+        "timeout": 5
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "python hooks/context_pre_tool.py",
+        "matcher": "Task|Shell|Write|StrReplace|Read|Grep|Glob",
+        "timeout": 5
+      },
+      {
+        "command": "python hooks/explore_router.py",
+        "matcher": "Grep|Read|Glob",
+        "timeout": 5
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "python hooks/context_post_tool.py",
+        "matcher": "Task|Shell|Write|StrReplace|Read|Grep|Glob",
+        "timeout": 5
+      },
+      {
+        "command": "python hooks/maintenance_hints.py",
+        "matcher": "Write|StrReplace",
+        "timeout": 5
+      },
+      {
+        "command": "python hooks/sync_on_edit.py",
+        "matcher": "Write|StrReplace",
+        "timeout": 130
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python hooks/sync_on_edit.py",
+        "timeout": 130
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "python hooks/capture_compress_digest.py",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": "python hooks/context_stop.py",
+        "timeout": 8,
+        "loop_limit": 1
+      }
+    ]
+  }
+}

@@ -45,6 +45,8 @@ shell-snapshots/
 daily_summary/
 history.jsonl
 *.log
+plugins/cache/
+plugins/marketplaces/
 
 # Other
 *.txt

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.git/
+**/.claude/backups/
+**/.claude/plugins/
+**/.claude/logs/
+**/__pycache__/
+*.min.js
+**/.codegraph/
+**/agent-transcripts/

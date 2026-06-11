@@ -9,6 +9,8 @@ triggers:
 priority: P2
 layer: supplement
 source: obra/superpowers
+disable-model-invocation: true
+loading_tier: L3
 ---
 # 技能编写
 

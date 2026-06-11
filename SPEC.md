@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤250行）；本文件为法典索引。
-> 版本：8.1 | 五柱×五阶段×三层（骨架/执行/护栏） | 29仓库全量整合
+> 版本：9.2 | 五柱×五阶段×三横切 | L0–L4 分级加载 + MCP 分层
 
 ---
 
@@ -19,7 +19,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 ## 三层架构
 
 ```
-骨架层 (methodology)  → P0 skills ×4 + CORE铁律 R1-R15 + 审查路由 + MCP basic
+骨架层 (methodology)  → P0 路由集(5) L1×2+L2门控×3 + CORE铁律 + 审查路由 + MCP basic
 执行层 (capability)   → 阶段 skill + agent + domain rules（按需 reactive）
 护栏层 (guardrails)   → 安全/治理/效率 hook（骨架级4 + 按需级4）
                         + 学习 loop（Stop/PreCompact 触发）
@@ -51,28 +51,41 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## 规模约束
 
-| 类型 | v8.1 | 说明 |
+| 类型 | v9.1 | 说明 |
 |------|------|------|
-| 全局 skills | 31 | P0 5 + superpowers 9 + meta 5 + 扩展 8 + mattpocock 2 + 项目洞察 1 + 外部桥接 1 |
-| 全局 agents | 24 | core 7 + gstack审查 5 + gstack补全 9 + gstack v0.19=3 |
-| 全局 rules | 10 | alwaysApply 1 + lazy 9（触发条件精确匹配） |
-| CLAUDE.md | ≤250 | 精简路由层 + 五柱指针 + deer-flow/task-master 可选引用 |
+| 全局 skills | 38 | P0 路由集 5 + supplement 33（含 deep-research/git/pr/mem workflow） |
+| 全局 agents | 25 | core 7 + gstack审查 6(+dx) + gstack补全 9 + gstack v0.19=3 |
+| 全局 rules | 10 | alwaysApply 1(CORE) + lazy 9（含 OPENSPEC） |
+| CLAUDE.md | ≤250 | 精简路由层 + R17-R18 + 五轨搜索策略 |
 | 全局 hooks | 15 | 核心15（SessionStart 由插件负责）+ _optional 37 |
-| 全局 MCP | 11 | 基础 11（去重后）+ codegraph (dev) |
+| 全局 MCP | 5 常驻 | codegraph+crawl+git+fs+time；ops 见 mcp-configs/ |
 | 全局 plugins | 18 | 安装18 / 启用15 / 禁用3 |
 | 可选外部 | 2 | deer-flow 2.0 + task-master MCP
 
 ---
 
-## P0 强制 Skill (5)
+## P0 路由集（5）= L1×2 + L2 门控×3
 
-| Skill | 触发 | 阶段 | 层 |
-|-------|------|------|-----|
-| using-superpowers | 会话开始 | 骨架 | 骨架 |
-| brainstorming | 方案/架构/非简单任务 | ①规划 | 骨架 |
-| change-impact-analysis | 任何修改/变更 | ③执行 | 骨架 |
-| verification-before-completion | 完成/验收 | ④验证 | 骨架 |
-| systematic-debugging | 调试/bug | ③执行 | 骨架 |
+| Skill | 等级 | 触发 | 阶段 |
+|-------|------|------|------|
+| using-superpowers | L1 常驻 | 会话开始、分类路由 | 全阶段 |
+| change-impact-analysis | L1 按需全文 | 任何修改意图 | 全阶段 |
+| brainstorming | L2 门控 | 非简单 ①规划 | ① |
+| verification-before-completion | L2 门控 | ④验收 | ④ |
+| systematic-debugging | L2 门控 | Bug/测试失败 | ③调试 |
+
+**Cursor**：L2/L3 supplement 用 `disable-model-invocation: true` + 显式 Read。  
+**Claude Code**：`layer: skeleton/supplement` + using-superpowers 路由 Read。
+
+### 加载等级 L0–L4（MANIFEST SSOT）
+
+| 等级 | 内容 |
+|------|------|
+| L0 | CLAUDE-ROUTER + CLAUDE + CORE |
+| L1 | using-superpowers, change-impact-analysis |
+| L2 | 阶段门控：brainstorming, writing-plans, spec-validation, executing-plans, subagent-driven, verification, debugging |
+| L3 | deep-research, adr, workstream, deer-flow, git/pr/mem workflow, … |
+| L4 | agents(Task), MCP, claude-mem, lazy rules |
 
 ## Workflow Skills
 
@@ -112,7 +125,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## gstack 审查 5+7
 
-**审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, qa, security-reviewer
+**审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer
 **补全 (supplement)**：cso, sre, release-engineer, product-manager, design-engineer, performance-engineer, doc-writer, design-shotgun, pair-agent, land-and-deploy
 
 ---
@@ -145,9 +158,11 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 └─ stop-quality-gate → /verify或/ship时
 
 学习loop (Stop/PreCompact)
-├─ pre-compact-state → 压缩前快照
+├─ pre-compact-state → 压缩前快照 → ~/.claude/state.json
+├─ stop-context-monitor → GateGuard（loop/scope/cost）
 ├─ stop-session-summary → 会话摘要
 ├─ stop-readme-updater → README更新
+├─ post-codegraph-sync → 编辑后增量 codegraph sync
 └─ instinct-learning v2 [skill，非hook] → pattern提取（PreCompact/Stop触发调用）
 ```
 
@@ -163,16 +178,15 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## MCP 分组
+## MCP 分组（v9.2）
 
-| 分组 | 服务器 |
-|------|--------|
-| always | memory, thinking, fs, fetch, time |
-| dev | gh(新版80+工具), git, ctx7, pw, crawl, chrome-devtools, **codegraph** |
-| ops | redis, sqlite, docker, postgres |
-| search | brave, exa |
-| design | figma |
-| optional | postgres |
+| 分组 | 服务器 | 加载 |
+|------|--------|------|
+| always | codegraph, crawl, git, fs, time | `.mcp.json` 常驻 |
+| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` 按需 merge |
+| optional-dev | chrome-devtools, figma | `mcp-configs/optional-dev.json` 按需 |
+
+Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行时 → [docs/RUNTIME_PLAYBOOK.md](docs/RUNTIME_PLAYBOOK.md)
 
 权威 → `.mcp.json` | 分组 → `mcp/servers.json`
 
@@ -254,13 +268,70 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
+## Plugins（18 安装 / 15 启用 / 3 禁用）
+
+| Plugin | 状态 | 提供 | 禁用原因 |
+|--------|------|------|----------|
+| superpowers 5.1.0 | ✅ | SessionStart + 14技能 | — |
+| claude-mem 13.4.0 | ✅ | 6hooks + 15技能 | — |
+| understand-anything 2.7.5 | ✅ | SessionStart + PostToolUse + 8技能 | — |
+| chrome-devtools-mcp 1.1.1 | ✅ | Chrome DevTools | — |
+| frontend-design | ✅ | 前端设计 | — |
+| code-review | ✅ | 审查技能(与eng-reviewer互补) | — |
+| commit-commands | ✅ | Git快捷 | — |
+| context7 | ✅ | 技术文档 | — |
+| feature-dev | ✅ | 功能开发 | — |
+| firecrawl 1.0.9 | ✅ | 网页抓取 | — |
+| github | ✅ | GitHub集成 | — |
+| playwright | ✅ | 浏览器自动化 | — |
+| security-guidance 2.0.3 | ✅ | 安全规则 | — |
+| skill-creator | ✅ | 技能创建 | — |
+| typescript-lsp 1.0.0 | ✅ | TS LSP | — |
+| ralph-loop | ❌ | 自动循环 | 与五阶段冲突 |
+| claude-code-setup | ❌ | 安装向导 | 已配置 |
+| claude-md-management | ❌ | 自动改CLAUDE.md | 防覆盖 |
+
+> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。15启用中仅2含hooks(superpowers/claude-mem)，零冲突。
+> 同名skill：本地精简版覆盖插件版(token省45-74%，中文适配)。
+
+---
+
 ## 同步
 
 | 同步 | 方式 |
 |------|------|
-| CLAUDE.md, skills/, agents/, rules/ | 软链接 (sync.ps1) |
+| CLAUDE.md, skills/, agents/, rules/ | 软链接 (sync.ps1 / sync.sh) |
 | hooks/, commands/, MCP, plugins | 不同步 |
 
 ---
 
-_版本：8.0 | 日期：2026-06-07 | 五柱×五阶段×三层(骨架/执行/护栏) | 29仓库全量整合_
+## v9.2 变更摘要
+
+- **MCP 分层**：Claude Code `.mcp.json` 常驻 5；ops/optional-dev 迁入 `mcp-configs/`
+- **Cursor 文档化**：CURSOR_MCP_PROFILE 反映用户精简后的插件/MCP 清单
+- **CORE 去重**：缩短时间 API 示例；工作原则改指针
+- **V15 校验**：`validate_config.py` loading_tier + disable-model-invocation
+- **RUNTIME_PLAYBOOK**：五阶段 + 调研三档 + 上下文 + R16 单页 SSOT
+
+## v9.1 变更摘要
+
+- **L0–L4 分级加载**：P0 改称「路由集」；L1 混合（using-superpowers + change-impact 常驻）
+- **slash-only**：除 L1 外全部 skills 加 `disable-model-invocation`（Cursor token 减负）
+- **调研三档**：L1 Context7/Exa → L2 Exa+Firecrawl → L3 deep-research
+- **User Rules 迁出**：git-workflow / pr-workflow / claude-mem-maintenance（L3）
+- **spec-validation**：仅②门控；④ exclusively verification-before-completion
+- **插件边界**：禁用 compound-engineering；审查走 `~/.claude/agents/` gstack
+- 详图：`spec/claude-config-integration/plan-v9.1-token-loading.md`
+
+## v9.0 变更摘要
+
+- R17-R18：codegraph 探索优先 + claude-mem 记忆优先
+- 新增：workstream-management / adr-management / onboarding-guide skills
+- 新增：dx-reviewer agent + rules/OPENSPEC.md
+- Hook 增强：GateGuard(stop-context-monitor) + codegraph 增量同步 + PreCompact 状态持久化
+- P3：taste-memory / claude-to-deerflow skills + workstreams ADR-002
+- 文档：`docs/REPO_ANALYSIS.md` | `spec/claude-config-integration/design-v9.md`
+
+---
+
+_版本：9.2 | 日期：2026-06-11 | 五柱×五阶段×三横切 | MCP 分层 + L0–L4_

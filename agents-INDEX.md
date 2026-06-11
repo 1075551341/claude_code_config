@@ -26,5 +26,6 @@
 | 22 | security-reviewer | 安全审查（安全敏感变更时启用）。触发词：安全审查、漏洞检测、OWASP、安全审计、代码安全。 | 🟡审查 |
 | 23 | spec-reviewer | 规格/计划文档审查。触发词：审查 spec、审查计划、doc review。 | 🔴必须 |
 | 24 | sre | 站点可靠性工程师，负责 canary 监控、部署后验证、性能回归检测 | 🟢补充 |
+| 25 | dx-reviewer | 开发体验审查（TTHW/摩擦点/魔法时刻）。触发：DX审查、UI/UX、新功能 | 🟡审查 |
 
-> 24 agents | 🔴必须=7 | 🟡审查=5 | 🟢补充=12 (含 gstack v0.19=5) | 完整: agents/<name>.md
+> 25 agents | 🔴必须=7 | 🟡审查=6 | 🟢补充=12 (含 gstack v0.19=5) | 完整: agents/<name>.md

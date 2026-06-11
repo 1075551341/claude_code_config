@@ -1,5 +1,28 @@
 {
   "toolset": "ops",
-  "description": "缓存/DB/容器/BaaS",
-  "servers": ["redis", "sqlite", "docker", "postgres", "supabase"]
+  "description": "缓存/DB/容器 — 按需 merge 到 .mcp.json（默认不加载，省 token）",
+  "servers": ["redis", "sqlite", "docker", "postgres"],
+  "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
+  "mcpServers": {
+    "redis": {
+      "_description": "Redis 缓存/队列/键值存储",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-redis", "redis://localhost:6379"]
+    },
+    "sqlite": {
+      "_description": "SQLite 轻量数据库",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "D:\\apdms\\database.db"]
+    },
+    "docker": {
+      "_description": "Docker 容器管理",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-docker"]
+    },
+    "postgres": {
+      "_description": "PostgreSQL 数据库",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:password@localhost:5432/dbname"]
+    }
+  }
 }

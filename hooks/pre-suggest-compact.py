@@ -34,6 +34,8 @@ TOOL_COST = {
 DEFAULT_COST = 3000
 
 COUNTER_FILE = os.path.expanduser("~/.claude/tool-call-counter.json")
+MONITOR_FILE = os.path.expanduser("~/.claude/.state/context_monitor.json")
+LOOP_THRESHOLD = int(os.environ.get("ECC_TOOL_LOOP_THRESHOLD", "3"))
 
 
 def load():
@@ -56,6 +58,26 @@ def save(count, est_tokens):
         print(f"pre-suggest-compact: counter save failed: {e}", file=sys.stderr)
 
 
+def update_tool_history(tool_name: str):
+    try:
+        os.makedirs(os.path.dirname(MONITOR_FILE), exist_ok=True)
+        monitor = {"tool_history": [], "repeat_tool_warns": 0}
+        if os.path.exists(MONITOR_FILE):
+            with open(MONITOR_FILE, "r", encoding="utf-8") as f:
+                monitor = json.load(f)
+        history = monitor.get("tool_history", [])
+        history.append(tool_name)
+        monitor["tool_history"] = history[-20:]
+        if len(history) >= LOOP_THRESHOLD and len(set(history[-LOOP_THRESHOLD:])) == 1:
+            monitor["repeat_tool_warns"] = monitor.get("repeat_tool_warns", 0) + 1
+        with open(MONITOR_FILE, "w", encoding="utf-8") as f:
+            json.dump(monitor, f, indent=2)
+        return monitor.get("repeat_tool_warns", 0)
+    except (OSError, IOError, json.JSONDecodeError) as e:
+        print(f"pre-suggest-compact: monitor update failed: {e}", file=sys.stderr)
+        return 0
+
+
 def main():
     try:
         raw = sys.stdin.read()
@@ -68,6 +90,7 @@ def main():
         count += 1
         est_tokens += TOOL_COST.get(tool_name, DEFAULT_COST)
         est_pct = min(100, (est_tokens / CTX_WINDOW_TOKENS) * 100)
+        loop_warns = update_tool_history(tool_name)
 
         result = None
 
@@ -103,6 +126,16 @@ def main():
                     "hookEventName": "PreToolUse",
                     "additionalContext": (
                         f"📊 上下文提醒: {count}次调用 预估{est_pct:.0f}%"
+                    )
+                }
+            }
+
+        if loop_warns >= 1 and result is None:
+            result = {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "additionalContext": (
+                        f"⚠️ Tool loop: {tool_name} 连续调用≥{LOOP_THRESHOLD}次 — 换策略或委派子 Agent"
                     )
                 }
             }

@@ -3,6 +3,8 @@ name: karpathy-guidelines
 description: Karpathy 编码四原则及实施规则。触发词：简洁代码、过度设计、surgical changes、think before coding。
 layer: supplement
 source: forrestchang/andrej-karpathy-skills
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Karpathy Guidelines

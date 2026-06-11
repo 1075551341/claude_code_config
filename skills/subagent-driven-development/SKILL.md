@@ -3,8 +3,12 @@ name: subagent-driven-development
 description: 将原子任务计划分派给子Agent，两阶段审查（spec合规→代码质量），连续执行不问"继续"。与writing-plans配对。
 triggers: [子代理执行, 任务分派, 两阶段审查, 连续执行, 子agent]
 layer: supplement
+disable-model-invocation: true
+loading_tier: L2
 source: obra/superpowers
 ---
+
+> **L2 门控**：非简单任务在 spec-validation 通过后，与 `executing-plans` 一并 Read。简单任务（≤3 文件）不加载。
 
 # 子Agent驱动开发
 

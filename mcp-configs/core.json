@@ -1,5 +1,6 @@
 {
   "toolset": "core",
-  "description": "记忆/推理/文件/HTTP/时间",
-  "servers": ["memory", "thinking", "fs", "fetch", "time"]
+  "description": "常驻基础：文件系统 + 时间（与 .mcp.json 同步）",
+  "servers": ["fs", "time"],
+  "note": "完整常驻集 = core + dev（见 dev.json）；均在 .mcp.json 中启用"
 }

@@ -463,6 +463,86 @@ if (Test-Path $hooksDir) {
 }
 
 # =============================================================
+# S4b: Cursor Guard (editor-native hooks)
+# =============================================================
+Write-Section "4b" "Cursor Guard"
+
+$guardTemplate = Join-Path $CLAUDE_DIR "templates\cursor-guard\hooks.json"
+$guardDeployed = Join-Path $env:USERPROFILE ".cursor\hooks.json"
+$guardHooksDir = Join-Path $env:USERPROFILE ".cursor\hooks"
+$requiredGuardScripts = @(
+    "sync_on_edit.py",
+    "sync_on_prompt.py",
+    "context_pre_tool.py",
+    "context_post_tool.py",
+    "context_stop.py",
+    "session_bootstrap.py",
+    "pre_compact_snapshot.py",
+    "explore_router.py",
+    "maintenance_hints.py",
+    "shell_guard.py",
+    "prompt_secret_scan.py"
+)
+$guardEditorRule = Join-Path $env:USERPROFILE ".cursor\rules\CURSOR-EDITOR.mdc"
+$guardEditorRuleTpl = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+
+if (-not (Test-Path $guardTemplate)) {
+    Add-Check "CursorGuard" "template" "fail" "templates/cursor-guard/hooks.json missing"
+} else {
+    Add-Check "CursorGuard" "template" "pass" "templates/cursor-guard present"
+}
+
+if (-not (Test-Path $guardDeployed)) {
+    Add-Check "CursorGuard" "deployed hooks.json" "fail" "Run deploy-cursor-guard.ps1"
+} else {
+    try {
+        $tpl = Get-Content $guardTemplate -Raw -Encoding utf8 | ConvertFrom-Json
+        $dep = Get-Content $guardDeployed -Raw -Encoding utf8 | ConvertFrom-Json
+        $tplVer = [string]$tpl.guard_version
+        $depVer = [string]$dep.guard_version
+        if ($tplVer -and $depVer -eq $tplVer) {
+            Add-Check "CursorGuard" "version" "pass" "guard_version=$depVer"
+        } elseif ($tplVer) {
+            Add-Check "CursorGuard" "version" "warn" "deployed=$depVer template=$tplVer -- redeploy"
+        } else {
+            Add-Check "CursorGuard" "deployed hooks.json" "pass" "present"
+        }
+    } catch {
+        Add-Check "CursorGuard" "hooks.json parse" "fail" $_.Exception.Message
+    }
+}
+
+$missingGuard = @()
+foreach ($s in $requiredGuardScripts) {
+    if (-not (Test-Path (Join-Path $guardHooksDir $s))) { $missingGuard += $s }
+}
+if ($missingGuard.Count -gt 0) {
+    Add-Check "CursorGuard" "hook scripts" "fail" "Missing: $($missingGuard -join ', ')"
+} elseif (Test-Path $guardHooksDir) {
+    Add-Check "CursorGuard" "hook scripts" "pass" "$($requiredGuardScripts.Count) scripts"
+} else {
+    Add-Check "CursorGuard" "hook scripts" "fail" "~/.cursor/hooks/ not found"
+}
+
+$guardCfg = Join-Path $env:USERPROFILE ".cursor\guard-config.json"
+if (Test-Path $guardCfg) {
+    Add-Check "CursorGuard" "guard-config.json" "pass" "user config present"
+} else {
+    Add-Check "CursorGuard" "guard-config.json" "warn" "Run deploy-cursor-guard.ps1"
+}
+
+if (-not (Test-Path $guardEditorRuleTpl)) {
+    Add-Check "CursorGuard" "CURSOR-EDITOR.mdc tpl" "fail" "template missing"
+} else {
+    Add-Check "CursorGuard" "CURSOR-EDITOR.mdc tpl" "pass" "present"
+}
+if (Test-Path $guardEditorRule) {
+    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "pass" "~/.cursor/rules/"
+} else {
+    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "warn" "Run deploy-cursor-guard.ps1"
+}
+
+# =============================================================
 # S5: Runtime environment
 # =============================================================
 Write-Section 5 "Runtime Environment"

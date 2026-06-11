@@ -3,6 +3,8 @@ name: context-engineering
 description: 上下文工程方法，管理上下文窗口质量，防止上下文腐烂。
 layer: supplement
 source: GSD-redux
+disable-model-invocation: true
+loading_tier: L3
 ---
 
 # Context Engineering

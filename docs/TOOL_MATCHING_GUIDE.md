@@ -12,28 +12,41 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 2. **Tool-First** — MANIFEST → skill → agent → MCP
 3. **memory MCP ≠ claude-mem** — 短期节点 vs 跨会话持久化
 
-## 分组速查
+## 分组速查（v9.2）
 
-| 分组 | 服务器 | 典型场景 |
-|------|--------|----------|
-| core | memory, thinking, fs, fetch, time | 记忆、推理、读写文件、HTTP、时间 |
-| dev | gh, git, ctx7, pw, crawl, chrome-devtools | GitHub、Git、文档、浏览器 |
-| ops | redis, sqlite, docker, postgres, supabase | 缓存、DB、容器 |
-| search | brave, exa | 网页/语义搜索 |
-| collab | figma, linear, notion, slack | 设计、项目、知识库 |
+| 分组 | 服务器 | 加载 | 典型场景 |
+|------|--------|------|----------|
+| always | codegraph, crawl, git, fs, time | `.mcp.json` 常驻 | 探索(R17)、调研、Git、文件、时间 |
+| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` 按需 | 缓存、DB、容器 |
+| optional-dev | chrome-devtools, figma | `mcp-configs/optional-dev.json` 按需 | 浏览器调试、设计稿 |
+| Cursor 搜索/文档 | Exa, Context7, Firecrawl | plugin + user-crawl | L1–L3 调研 |
+| 跨会话记忆 | claude-mem | plugin（非 memory MCP） | R18 |
 
 ## 场景 → 工具
 
 | 场景 | 首选 | 备选 |
 |------|------|------|
-| 查库文档/API | ctx7 | fetch |
-| GitHub PR/Issue | gh | — |
-| 本地 Git 历史 | git | — |
-| 网页抓取/搜索 | crawl / exa / brave | fetch |
+| 代码结构/调用链 (R17) | codegraph_explore | Grep → Read |
+| 项目全貌/领域 | understand-anything | codegraph |
+| 查库文档/API (调研 L1) | ctx7 | exa 单次 |
+| GitHub PR/Issue | gh | pr-workflow skill |
+| 本地 Git 历史 | git | git-workflow skill |
+| 网页抓取/搜索 (L2/L3) | crawl + exa | brave |
+| 深度调研 (L3) | skills/deep-research | /deep-research |
 | E2E/浏览器 | pw | — |
-| 跨会话记忆 | claude-mem plugin | memory MCP（临时节点） |
+| 跨会话记忆 (R18) | claude-mem plugin | memory MCP（临时节点） |
 | 文件读写 | 内置 Read/Write/Grep | fs MCP |
 | Shell 命令 | 内置 Bash | — |
+
+## 调研三档（v9.1）
+
+| 档位 | 场景 | 工具链 |
+|------|------|--------|
+| L1 | 单点事实、API 签名 | Context7 或 Exa 单次 |
+| L2 | 方案对比、最佳实践 | Exa + Firecrawl 单页 |
+| L3 | 技术选型、/deep-research | Read `skills/deep-research` + Firecrawl + Exa + Context7 |
+
+**前置**：claude-mem search → 项目内代码用 codegraph（禁止先用 Firecrawl 探本地代码）。
 
 ## 决策树
 
@@ -46,24 +59,37 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 └─ 跨会话回忆 → claude-mem（非 memory MCP 重复存储）
 ```
 
-## 跨编辑器 MCP 映射
+## 跨编辑器 MCP 映射（v9.2）
 
 MCP 配置格式不同，无法合并。通过语义匹配桥接：
 
-| 能力 | Claude Code (.mcp.json) | Cursor (plugin/user) |
-|------|------------------------|----------------------|
-| 搜索 | brave, exa, perplexity | user-brave, plugin-exa |
-| 文档 | ctx7 | plugin-context7 |
-| GitHub | gh | user-gh |
-| 浏览器 | pw, puppeteer, crawl | user-pw, user-puppeteer, user-crawl |
-| 文件 | fs, fetch | user-fs, user-fetch |
-| 记忆 | memory | user-memory |
-| 推理 | thinking | user-thinking |
-| 数据库 | postgres, redis, sqlite | user-postgres |
-| Cursor 专有 | — | cursor-app-control, cursor-ide-browser |
-| Claude 专有 | docker, chrome-devtools, figma, glif | — |
+### Claude Code 常驻（`.mcp.json`）
 
-**规则**：在各编辑器中按意图描述需求，模型自动匹配对应工具。
+codegraph | crawl | git | fs | time
+
+### Claude Code 按需（`mcp-configs/`）
+
+| Profile | 服务器 |
+|---------|--------|
+| ops | redis, sqlite, docker, postgres |
+| optional-dev | chrome-devtools, figma |
+
+### Cursor 常驻（用户已精简）
+
+| 能力 | MCP / Plugin |
+|------|----------------|
+| 代码探索 | user-codegraph |
+| 网页调研 | user-crawl + plugin Firecrawl |
+| 搜索 | plugin Exa |
+| 文档 | plugin Context7 |
+| GitHub | user-gh |
+| E2E | user-pw（按需） |
+
+### 已禁用（重叠/低频）
+
+postgres, puppeteer, GitKraken, thinking, brave, memory, fetch — 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+
+**规则**：在各编辑器中按意图描述需求，模型自动匹配对应工具。运行时 SSOT → [RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
 
 ## Shell 输出 Token
 

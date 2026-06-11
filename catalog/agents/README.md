@@ -56,4 +56,4 @@ python ~/.claude/scripts/migrate-from-legacy.py --project . --agent <name>
 
 - **去重原则**: catalog 中的 agent 若与全局 agents/ 同名 → 优先使用全局版本
 - **特殊化原则**: catalog 提供语言/领域特定版本（如 `go-reviewer`, `rust-reviewer`）
-- **按需加载**: 全局 24 agents 已覆盖通用场景，catalog 仅在特定领域需求时启用
+- **按需加载**: 全局 25 agents 已覆盖通用场景，catalog 仅在特定领域需求时启用

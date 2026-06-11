@@ -1,0 +1,21 @@
+{
+  "toolset": "optional-dev",
+  "description": "浏览器调试 / 设计稿 — 按需 merge 到 .mcp.json",
+  "servers": ["chrome-devtools", "figma"],
+  "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
+  "mcpServers": {
+    "chrome-devtools": {
+      "_description": "Chrome DevTools MCP。场景：网页调试、性能面板。",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    },
+    "figma": {
+      "_description": "Figma 设计稿集成",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-figma"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      }
+    }
+  }
+}

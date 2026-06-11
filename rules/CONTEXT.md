@@ -15,11 +15,13 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ## 三级阈值（与 CORE.md 一致）
 
-| 使用率 | 行动 |
-|--------|------|
-| <70% | 正常工作 |
-| 70% | 择机 `/compact`，释放已完成上下文 |
-| 90% | 强制 `/compact` 或新子 Agent，绝不允许达到 100% |
+| 使用率 | Cursor | Claude Code |
+|--------|--------|-------------|
+| <70% | 正常工作 | 正常工作 |
+| 70% | 择机 `/summarize` 或「压缩上下文」 | 择机 `/compact` |
+| 90% | 强制 `/summarize` 或新子 Agent | 强制 `/compact` 或新子 Agent |
+
+⛔ 绝不允许达到 100%。Cursor Guard 在 70%/90% 自动注入提醒；实际降低上下文环由 Cursor 原生 `/summarize`（或窗口满时自动 summarize）完成。
 
 ## 三态制品
 
@@ -66,10 +68,14 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ## 压缩策略
 
-1. 压缩前快照 → `pre-compact-state` hook
-2. 保留：决策、状态、制品
-3. 丢弃：中间推理、已验证的细节
-4. 输出压缩 → `caveman-compress` skill
+| 编辑器 | 显式压缩 | 压缩前快照 | 结构化摘要（不压缩） |
+|--------|----------|------------|----------------------|
+| **Cursor** | `/summarize` 或「压缩上下文」 | `preCompact` → `~/.cursor/.state/pre-compact-state.json` | 「提取上下文」→ `session-digest.md` |
+| **Claude Code** | `/compact` | `pre-compact-state` hook | Guard 摘要制品 + claude-mem |
+
+1. 保留：决策、状态、制品
+2. 丢弃：中间推理、已验证的细节
+3. 输出精简 → `caveman-compress` skill（回复侧）
 
 ## 长任务治理
 
@@ -112,7 +118,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
 | 语义搜索 / 学术与新闻 | Exa（Cursor 插件 MCP） |
 | 库/API 官方文档 | Context7 MCP |
-| 多角度交叉验证 | `catalog/skills/deep-research` 四阶段流程 |
+| 多角度交叉验证 | `skills/deep-research` 四阶段流程（L3） |
 
 禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。
 
@@ -183,5 +189,5 @@ get_observations（完整详情, ~500-1000 tokens/条）
 > **source**: [kumaran-is/claude-code-guide](https://github.com/kumaran-is/claude-code-guide)
 
 - 错误恢复：失败模式写入 `experiences/rejected/`，成功模式写入 `experiences/patterns/`
-- 会话切换：优先 `/clear` 加载制品，避免 `/compact` 丢失决策上下文
+- 会话切换：优先加载制品（Cursor：`@session-digest.md` + handoff）；先「提取上下文」再压缩，避免丢失决策
 - 长任务：每子目标完成后输出状态摘要，便于 stop-pattern-extraction 提取

@@ -80,8 +80,8 @@ try:
         STATE_FILE.write_text(json.dumps(state))
 
 except Exception as e:
-    # L5: 状态恢复 — 异常不影响主流程
-    pass
+    # L5: 状态恢复 — 记录后放行，不阻断主流程
+    print(f"pre-loop-guard: non-fatal error: {e}", file=sys.stderr)
 
 # ── 总是放行 ──────────────────────────────────────────────────
 print(json.dumps({"continue": True, "suppressOutput": True}))

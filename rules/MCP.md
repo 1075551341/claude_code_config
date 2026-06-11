@@ -21,52 +21,43 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 - 修改参数 → 只修改 `.mcp.json`
 - settings.json 不再重复定义 MCP 服务器（v3.0 起删除冗余）
 
-### 2. 分组视图
+### 2. 分组视图（v9.2）
 
-`mcp/servers.json` 是 `.mcp.json` 的派生分组视图，仅包含 toolset 分组映射。
+`mcp/servers.json` 是 `.mcp.json` 的派生分组视图。
 
-```json
-{
-  "toolsets": {
-    "always": ["memory", "thinking", "fs", "fetch", "time"],
-    "dev": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],
-    "ops": ["redis", "sqlite", "docker"],
-    "search": ["brave", "exa", "perplexity"],
-    "design": ["figma"],
-    "optional": ["postgres", "puppeteer", "glif"]
-  }
-}
-```
+| 分组 | 服务器 | 位置 |
+|------|--------|------|
+| always | codegraph, crawl, git, fs, time | `.mcp.json` |
+| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` |
+| optional-dev | chrome-devtools, figma | `mcp-configs/optional-dev.json` |
 
-- servers.json 中的服务器名必须在 .mcp.json 中存在
-- servers.json 不重复服务器参数定义
+按需 profile 中的 `mcpServers` 块 **手动 merge** 到 `.mcp.json` 后重启 Claude Code。
 
-### 3. 按需加载策略
+### 3. 按需启用 ops / optional-dev
 
-通过环境变量 `CLAUDE_MCP_PROFILE` 控制加载分组：
+1. 打开 `mcp-configs/ops.json` 或 `optional-dev.json`
+2. 将 `mcpServers` 对象合并进 `~/.claude/.mcp.json` 的 `mcpServers`
+3. 重启 Claude Code
+4. 任务完成后可移除并重启（恢复常驻 5）
 
-```bash
-# 默认: always (5个基础服务器)
-# 开发: CLAUDE_MCP_PROFILE=dev → + dev (6个) = 11个
-# 完整: CLAUDE_MCP_PROFILE=all → 全量 (18个)
-```
+Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 
 ### 4. 配置变更流程
 
 ```
-修改 MCP 配置
-  → 编辑 .mcp.json
-  → 更新 mcp/servers.json 分组映射（如需）
-  → 验证一致性（servers.json 中服务器均在 .mcp.json 中）
+修改常驻 MCP
+  → 编辑 .mcp.json（仅 always 5）
+  → 同步 mcp/servers.json toolsets.always
+  → 验证 always ⊆ .mcp.json；ops 仅在 mcp-configs/ 按需 merge
   → 重启 Claude Code
 ```
 
 ### 5. 禁止项
 
-- 禁止在 .mcp.json 外重复定义 MCP 服务器
 - 禁止在 settings.json 中定义 mcpServers（v3.0+）
 - 禁止硬编码 API 密钥（使用 ${ENV_VAR} 引用）
-- 禁止删除 .mcp.json 中的服务器而不更新 servers.json 分组映射
+- 禁止在 `.mcp.json` 与 `mcp-configs/` 两处维护不同参数定义（SSOT：profile 文件为按需源，merge 后 `.mcp.json` 为准）
+- 禁止将 ops 服务器默认写入常驻 `.mcp.json`（v9.2 分层）
 
 ### 6. 按需安装工具
 

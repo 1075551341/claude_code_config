@@ -1,13 +1,6 @@
 {
   "toolset": "dev",
-  "description": "GitHub/Git/文档/浏览器/爬取",
-  "servers": ["gh", "git", "ctx7", "pw", "crawl", "chrome-devtools"],
-  "optional": {
-    "claude-context": {
-      "enabled": false,
-      "source": "zilliztech/claude-context",
-      "note": "大 monorepo 语义代码索引；启用条件见 rules/CONTEXT.md §claude-context",
-      "when": ["monorepo 多包", "已有向量索引基础设施", "与 GSD 阈值互补非替代"]
-    }
-  }
+  "description": "开发常驻：codegraph + crawl + git（与 .mcp.json 同步）",
+  "servers": ["codegraph", "crawl", "git"],
+  "note": "chrome-devtools 已移至 optional-dev.json 按需启用"
 }

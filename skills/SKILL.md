@@ -1,15 +1,16 @@
 # Skills 索引 — 名称 → 触发条件 → 路径 → 阶段
 
-> 使用本索引按需加载 skill，避免全量暴露。骨架层(P0) 4个始终自动触发。
+> 使用本索引按需加载 skill，避免全量暴露。骨架层(P0) 5个始终自动触发。
 
-## P0 骨架 (4)
+## P0 骨架 (5)
 
 | Skill | 触发条件 | 阶段 | 路径 |
 |-------|---------|------|------|
-| using-superpowers | 会话开始 | 骨架 | superpowers:using-superpowers |
-| brainstorming | 方案设计/架构决策/非简单任务 | ①规划 | superpowers:brainstorming |
-| verification-before-completion | 完成/验收/声称完成 | ④验证 | superpowers:verification-before-completion |
-| systematic-debugging | 调试/报错/bug | ③执行 | superpowers:systematic-debugging |
+| using-superpowers | 会话开始 | L1 | skills/using-superpowers |
+| change-impact-analysis | 任何修改/变更前 | L1 | skills/change-impact-analysis |
+| brainstorming | 方案设计/架构决策/非简单任务 | L2 ① | skills/brainstorming |
+| verification-before-completion | 完成/验收/声称完成 | L2 ④ | skills/verification-before-completion |
+| systematic-debugging | 调试/报错/bug | L2 ③ | skills/systematic-debugging |
 
 ## Workflow (9)
 
@@ -46,7 +47,7 @@
 | spec-validation | spec 审查/格式校验 | ②规格 |
 | karpathy-guidelines | Karpathy 四原则行为约束 | 横切 |
 | caveman-compress | 输出>500字/上下文>50% | 横切 |
-| change-impact-analysis | 任何修改/变更前影响分析 | ③执行 |
+| change-impact-analysis | 任何修改/变更前影响分析 | ③执行（P0） |
 
 ## Mattpocock (2)
 
@@ -63,8 +64,15 @@
 
 ---
 
-**总计 30 skills**（P0 4 + Workflow 9 + 扩展 8 + Meta 5 + Mattpocock 2 + 洞察 1 + 外部桥接 1）
+## v9 新增 (5)
 
-**加载策略**：P0 4个自动触发 → 其余按阶段和触发条件匹配 → catalog 按需
-**互斥声明**：同一功能不允许多个 skill 同时激活（见 MANIFEST.yaml excludes）
-**外部桥接**：deer-flow(claude-to-deerflow skill) | task-master(MCP 任务管理)
+workstream-management | adr-management | onboarding-guide | claude-to-deerflow | taste-memory
+
+---
+
+**总计 38 skills** — 详见 [skills-INDEX.md](../skills-INDEX.md)
+
+**加载策略**：L1 常驻(2) → L2 阶段门控 Read(7) → L3 信号触发 Read(29) → catalog 按需复制
+**显式调用**：`Read skills/<name>/SKILL.md`（首选）；slash/关键词为路由信号，非替代 Read
+**互斥声明**：见 MANIFEST.yaml excludes
+**外部桥接**：claude-to-deerflow(/deer-flow) | task-master(MCP)

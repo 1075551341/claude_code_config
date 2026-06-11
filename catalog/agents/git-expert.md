@@ -166,8 +166,10 @@ npx --no -- commitlint --edit $1  # 验证提交信息格式
 # package.json
 {
   "lint-staged": {
-    "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{css,scss}": ["prettier --write"]
+    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.vue": ["eslint --fix", "prettier --write", "stylelint --fix"],
+    "*.{css,less,scss}": ["stylelint --fix"],
+    "*.{json,html,md}": ["prettier --write"]
   }
 }
 ```
