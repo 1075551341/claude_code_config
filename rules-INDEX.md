@@ -14,9 +14,9 @@
 | 10 | GIT | 分支策略、Git Flow（commit 详规 → skill/git-workflow） | L4 按需 |
 | 11 | FRONTEND | ESLint/Prettier/Stylelint + Vue/React 规范 | **L4 glob** |
 
-> 11 rules | L0=1(CORE) | L4 按需=9 | L4 glob=1(FRONTEND) | 源: `rules/<name>.md` → sync → `~/.cursor/rules/<name>.mdc`
+> 11 rules | L0=1(CORE) | L4 按需=9 | L4 glob=1(FRONTEND) | 源: `rules/<name>.md` → sync → `~/.cursor/rules/<name>.mdc` + 当前工作区 `.cursor/rules/<name>.mdc`
 
-## Cursor 规则分层（`~/.cursor/rules/`）
+## Cursor 规则分层（`~/.cursor/rules/` + `.cursor/rules/`）
 
 | 类型 | 文件 | 说明 |
 |------|------|------|

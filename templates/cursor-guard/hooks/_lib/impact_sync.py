@@ -120,7 +120,7 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
 
     if rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
         plan.merge(SyncScope.RULES)
-        plan.messages.append(f"{rel}: 刷新 rules → ~/.cursor/rules/*.mdc")
+        plan.messages.append(f"{rel}: 刷新 rules → ~/.cursor/rules/*.mdc + .cursor/rules/*.mdc")
         return plan
 
     if rel in SYNC_FILES:

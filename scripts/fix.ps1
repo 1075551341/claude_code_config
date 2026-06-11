@@ -63,7 +63,7 @@ $ErrorActionPreference = "SilentlyContinue"
 $CLAUDE_DIR   = Join-Path $env:USERPROFILE ".claude"
 $HOOKS_DIR    = Join-Path $CLAUDE_DIR "hooks"
 $SETTINGS     = Join-Path $CLAUDE_DIR "settings.json"
-$ALL_EDITORS  = @("cursor", "trae", "windsurf", "qoder")
+$ALL_EDITORS  = @("cursor", "trae", "devin", "qoder")
 $LAUNCHER_NAME = "_editor_hook_launcher.py"
 $LAUNCHER_PATH = Join-Path $HOOKS_DIR $LAUNCHER_NAME
 
@@ -84,10 +84,10 @@ import json, os, subprocess, sys
 
 _EDITOR_PATH_NEEDLES = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", "/.trae/", "/qoder/", ".vscode/",
+    ".windsurf", ".devin", "/.trae/", "/qoder/", ".vscode/",
     "agent-transcripts", "workspacestorage", "cursor_version", "cursor\\projects",
 )
-_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "trae", "qoder", "code.exe")
+_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "devin", "trae", "qoder", "code.exe")
 
 
 def _eg_scan(obj, depth=0):
@@ -183,7 +183,7 @@ def should_skip_editor(raw):
     for _k in ("VSCODE_PID","VSCODE_IPC_HOOK","VSCODE_NLS_CONFIG","VSCODE_CWD",
                "VSCODE_CODE_CACHE_PATH","CURSOR_CHANNEL","ELECTRON_RUN_AS_NODE",
                "VSCODE_HANDLES_UNCAUGHT_ERRORS","VSCODE_ESM_ENTRYPOINT",
-               "CURSOR_APP_VERSION","WINDSURF_APP_VERSION"):
+                "CURSOR_APP_VERSION","WINDSURF_APP_VERSION","DEVIN_APP_VERSION"):
         if os.environ.get(_k): return True
 
     # [6] Windows parent process chain (fallback)
@@ -199,7 +199,7 @@ def should_skip_editor(raw):
                     _v = p.get(_k2)
                     if isinstance(_v, str):
                         _s = _v.replace("\\", "/").lower()
-                        if any(_m in _s for _m in (".cursor/",".windsurf/","/.trae/")):
+                        if any(_m in _s for _m in (".cursor/",".windsurf/",".devin/","/.trae/")):
                             return True
         except Exception:
             pass

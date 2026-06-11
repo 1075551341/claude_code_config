@@ -9,7 +9,7 @@ _editor_safe_guard.py v3.0
 3. 快速退出：检测到编辑器环境立即返回，不执行实际 hook 逻辑
 
 支持的编辑器：
-- VS Code / Cursor / Windsurf / Trae / Qoder / Zed / OpenCode / Codex CLI / Copilot CLI
+- VS Code / Cursor / Devin(原Windsurf) / Trae / Qoder / Zed / OpenCode / Codex CLI / Copilot CLI
 """
 from __future__ import annotations
 import os
@@ -22,16 +22,16 @@ import sys
 # 编辑器路径特征（用于 CWD 和路径检测）
 _EDITOR_PATH_PATTERNS = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", "/.windsurf", "/.trae/", "/qoder/", ".vscode/",
+    ".windsurf", "/.windsurf", ".devin", "/.devin", "/.trae/", "/qoder/", ".vscode/",
     ".codex/", "/.opencode/", ".zed/", ".cursor/rules",
-    ".windsurf/rules", ".trae/rules", ".cc-switch/",
+    ".windsurf/rules", ".devin/rules", ".trae/rules", ".cc-switch/",
     "agent-transcripts", "workspacestorage", "cursor_version",
-    "claude/global",  # Claude Code 全局目录（避免自我干扰）
+    "claude/global",
 )
 
 # 编辑器可执行文件名
 _EDITOR_EXE_PATTERNS = (
-    "cursor", "windsurf", "trae", "qoder", "code.exe",
+    "cursor", "windsurf", "devin", "trae", "qoder", "code.exe",
     "zed", "codex", "opencode", "github-copilot",
 )
 
@@ -40,7 +40,7 @@ _VSCODE_ENV_MARKERS = (
     "VSCODE_PID", "VSCODE_IPC_HOOK", "VSCODE_NLS_CONFIG",
     "VSCODE_CWD", "VSCODE_CODE_CACHE_PATH", "ELECTRON_RUN_AS_NODE",
     "VSCODE_HANDLES_UNCAUGHT_ERRORS", "VSCODE_ESM_ENTRYPOINT",
-    "CURSOR_CHANNEL", "CURSOR_APP_VERSION", "WINDSURF_APP_VERSION",
+    "CURSOR_CHANNEL", "CURSOR_APP_VERSION", "WINDSURF_APP_VERSION", "DEVIN_APP_VERSION",
     "TRAe_APP_VERSION", "QODER_VERSION",
 )
 

@@ -1,10 +1,10 @@
 ---
-description: 跨编辑器配置同步指南 v14
+description: 跨编辑器配置同步指南 v14.5
 ---
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v14.2 | **日期**: 2026-06-11 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
+> **版本**: v14.5 | **日期**: 2026-06-11 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
 
 ## 边界原则（Claude Code ↔ 编辑器）
 
@@ -12,10 +12,22 @@ description: 跨编辑器配置同步指南 v14
 |------|------|------|
 | **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用 |
 | **同步源（只读）** | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件 | `sync.ps1` 读取并链接/复制到编辑器 |
-| **同步目标（仅编辑器）** | `~/.cursor/`、`~/.windsurf/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
+| **同步目标（仅编辑器）** | `~/.cursor/`、`~/.devin/`、`~/.trae/`、`~/.qoder/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
 
-**`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。  
+**`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。
 **`fix.ps1 -Fix`** 单独处理 Hook launcher 与编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
+
+---
+
+## v14.5 核心变更：仅L0入口 + 个人级单落点
+
+| 变更 | v14.4 | v14.5 |
+|------|-------|-------|
+| **同步内容** | 全量12个rules | 仅L0关键入口（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
+| **Cursor落点** | 双落点（个人+项目） | 仅个人级 `~/.cursor/rules/` |
+| **CodeArts落点** | 双落点（个人+项目） | 仅个人级 `~/.config/codeartsdoer/rule/` |
+| **Windsurf** | 独立编辑器 | 已移除（已改名Devin） |
+| **详细rules** | 全量部署到编辑器 | 通过L0路由按需Read加载 |
 
 ---
 
@@ -26,7 +38,7 @@ description: 跨编辑器配置同步指南 v14
 | 7 总纲（含 `CLAUDE-ROUTER.mdc`） | ✅ 软链接 | ✅ 软链接 |
 | `skills/` | ✅ 目录联接 | ❌ → `skills-native/` 格式转换 |
 | `agents/` | ✅ 目录联接 | ✅ 目录联接 |
-| `rules/` | ✅ 编辑器实体目录：单文件软链接 + 路由副本 | ❌ → 原生 `.mdc`/`.md` 副本 |
+| `rules/` | ✅ 仅L0入口部署 | ❌ → 仅L0入口（原生格式） |
 | sync-mode.json | `index` | `full` |
 
 **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
@@ -36,17 +48,36 @@ description: 跨编辑器配置同步指南 v14
 ## 模式 A：索引同步（默认）
 
 ```
-~/.cursor/  （Windsurf/Trae/Qoder 同理）
+~/.cursor/  （Cursor 个人级；Devin/Trae/Qoder 同理）
 ├── CLAUDE.md, CLAUDE-ROUTER.mdc, SPEC.md, MANIFEST.yaml  (软链接)
 ├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md      (软链接)
 ├── skills/  → ~/.claude/skills/        (目录联接)
 ├── agents/  → ~/.claude/agents/        (目录联接)
-├── rules/   (实体目录，仅编辑器侧)
+├── rules/   (实体目录，仅L0入口)
 │   ├── 00-CLAUDE-ROUTER.mdc              (必加载，从总纲部署)
 │   ├── CLAUDE.mdc                        (总纲副本，源 ~/.claude/CLAUDE.md)
-│   ├── CORE.mdc, GIT.mdc, …            (原生 .mdc 副本，源更新时强制刷新)
+│   ├── CORE.mdc                          (L0骨架，源 ~/.claude/rules/CORE.md)
+│   └── CURSOR-EDITOR.mdc                 (Cursor专属守护层)
 └── sync-mode.json                        { "mode": "index" }
 ```
+
+> **v14.5+**：不再部署到项目级目录（`~/.claude/.cursor/rules/`），避免双份显示。详细rules通过L0路由按需Read加载。
+
+**Devin**：
+
+```
+~/.claude/.devin/rules/*.md          L0入口（trigger格式）
+~/.codeium/windsurf/memories/global_rules.md   全局 always-on（跨工作区）
+~/.devin/                            7 总纲软链 + skills/agents 联接
+```
+
+**CodeArts 码道**：
+
+```
+~/.config/codeartsdoer/rule/*.mdc    个人级（仅L0入口：ROUTER/CLAUDE/CORE）
+```
+
+> 项目级 `~/.claude/.codeartsdoer/rule/` 已取消部署，避免双份显示。
 
 **总纲执行链：**
 
@@ -66,7 +97,7 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force
 
 | 资产 | 输出路径（Cursor 示例） |
 |------|-------------------------|
-| rules | `~/.cursor/rules/*.mdc` + `00-CLAUDE-ROUTER.mdc` |
+| rules（仅L0） | `~/.cursor/rules/*.mdc`（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
 | skills | `~/.cursor/skills-native/<name>/SKILL.md` |
 | agents | `~/.cursor/agents/` 目录联接 |
 
@@ -103,7 +134,7 @@ powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 ```
 
-**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -Scope all -Force`。
+**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -Scope all -Force`（L0 入口先删同名变体再部署）。
 
 **自动同步**：编辑 `~/.claude` 下 `rules/`、总纲、INDEX 等可同步路径后，按 MANIFEST 影响图调用 `sync.ps1 -Scope rules|indexes|all`（`skills/`/`agents/` 联接不重复 sync）。
 
@@ -130,13 +161,13 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 | CLAUDE / CORE / ROUTER | 双平台 sync | 源文件去重；CORE 保留 R12–R18 + 编码规范 |
 | plugin-* rules | 仅 Cursor | 禁插件即消失 |
 | User Rules | 仅 Cursor Settings | 4 行指针（[snippet](../templates/cursor-user-rules-snippet.txt)） |
-| lazy rules (GIT/FRONTEND/OPENSPEC) | Cursor glob | 匹配文件前零成本 |
+| lazy rules (GIT/FRONTEND/OPENSPEC) | L0路由按需Read | 匹配文件前零成本 |
 
 ## v9.2 加载策略（Token 减负）
 
 | 等级 | 同步内容 | Cursor 机制 |
 |------|----------|-------------|
-| L0 | CLAUDE-ROUTER + CLAUDE + CORE | alwaysApply rules |
+| L0 | CLAUDE-ROUTER + CLAUDE + CORE + CURSOR-EDITOR | alwaysApply rules（`~/.cursor/rules/` 个人级单落点） |
 | L1 | using-superpowers, change-impact-analysis | 会话常驻（无 disable） |
 | L2/L3 | 其余 `skills/` | `disable-model-invocation: true` + 阶段 Read |
 | L4 | agents, MCP, plugins | 显式调用 |
@@ -147,8 +178,9 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ---
 
-## 从 v13 升级
+## 从 v14 升级
 
+- v14.5：仅L0入口同步，取消项目级双落点，移除Windsurf（已改名Devin）
 - v14 索引：`skills/`、`agents/` 联接；`rules/` 改为编辑器侧单文件链接（不再联接整个目录）
 - v14 总纲 7 文件：新增 `CLAUDE-ROUTER.mdc`
 - v14 全量：`agents/` 联接 + `rules/`/`skills-native/` 格式转换

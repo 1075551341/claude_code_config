@@ -108,13 +108,18 @@ if (-not (Test-Path $cfgDst) -or $Force) {
     }
 }
 
-# CURSOR-EDITOR.mdc
+# CURSOR-EDITOR.mdc — 先删同类型同名变体，再写入（与 sync.ps1 L0 部署一致）
 $rulesDst = Join-Path $DST "rules"
 if (-not (Test-Path $rulesDst)) {
     New-Item -ItemType Directory -Path $rulesDst -Force | Out-Null
 }
-Copy-Item (Join-Path $SRC "rules\CURSOR-EDITOR.mdc") (Join-Path $rulesDst "CURSOR-EDITOR.mdc") -Force
-Write-Fix "rules/CURSOR-EDITOR.mdc"
+$ceSrc = Join-Path $SRC "rules\CURSOR-EDITOR.mdc"
+$ceDst = Join-Path $rulesDst "CURSOR-EDITOR.mdc"
+foreach ($f in Get-ChildItem $rulesDst -File -Force -ErrorAction SilentlyContinue) {
+    if ($f.BaseName -ieq "CURSOR-EDITOR") { Remove-Item $f.FullName -Force }
+}
+Copy-Item $ceSrc $ceDst -Force
+Write-Fix "rules/CURSOR-EDITOR.mdc (delete-then-write)"
 
 # .cursorignore merge
 $ignoreSrc = Join-Path $SRC "dot-cursorignore"

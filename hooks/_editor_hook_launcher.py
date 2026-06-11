@@ -13,10 +13,10 @@ import json, os, subprocess, sys
 
 _EDITOR_PATH_NEEDLES = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", "/.trae/", "/qoder/", ".vscode/",
+    ".windsurf", ".devin", "/.trae/", "/qoder/", ".vscode/",
     "agent-transcripts", "workspacestorage", "cursor_version", "cursor\\projects",
 )
-_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "trae", "qoder", "code.exe")
+_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "devin", "trae", "qoder", "code.exe")
 
 
 def _eg_scan(obj, depth=0):

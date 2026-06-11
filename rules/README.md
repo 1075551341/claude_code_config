@@ -1,6 +1,6 @@
 # Rules 规则索引
 
-全局 **11 规则文件** alwaysApply/lazy/glob。语言/领域模板在 `catalog/rules/`，项目级按需复制。
+全局 **11 规则文件** alwaysApply/lazy/glob。语言/领域模板在 `catalog/rules/`，按需通过L0路由Read加载。
 
 ---
 
@@ -25,10 +25,10 @@
 
 ## 目录规则（catalog/rules/）
 
-语言：PYTHON, TYPESCRIPT, GO, RUST, JAVA, RUBY, CSHARP, DART, MOBILE  
+语言：PYTHON, TYPESCRIPT, GO, RUST, JAVA, RUBY, CSHARP, DART, MOBILE
 领域：BACKEND, FRONTEND, DATABASE, TESTING, DEVOPS, AI
 
-### 项目级 lazy-load 示例
+### 按需 lazy-load 示例
 
 | 领域 | 模板 | 完整规则 |
 |------|------|----------|
@@ -39,12 +39,14 @@
 
 ## 同步
 
-`scripts/sync.ps1` **格式转换复制**（非软链接）到各编辑器原生规则目录：
+`scripts/sync.ps1` **仅L0入口部署**到各编辑器原生规则目录（v14.5+）：
 
-| 编辑器 | 目标 |
-|--------|------|
-| Cursor | `~/.cursor/rules/*.mdc` |
-| Windsurf | `~/.windsurf/rules/*.md` + `global_rules.md`（仅 CLAUDE.md 精简） |
-| Trae | `~/.trae/user_rules/*.md` |
+| 编辑器 | 目标 | L0入口 |
+|--------|------|--------|
+| Cursor | `~/.cursor/rules/*.mdc` | ROUTER/CLAUDE/CORE/CURSOR-EDITOR |
+| Devin | `~/.claude/.devin/rules/*.md` | ROUTER/CLAUDE/CORE |
+| Qoder | `~/.qoder/rules/*.mdc` | ROUTER/CLAUDE/CORE/CURSOR-EDITOR |
+| Trae | `~/.trae/user_rules/*.md` | ROUTER/CLAUDE/CORE |
+| CodeArts | `~/.config/codeartsdoer/rule/*.mdc` | ROUTER/CLAUDE/CORE |
 
-源文件变更后需重新执行 `sync.ps1`。
+详细rules通过L0路由按需Read加载。源文件变更后需重新执行 `sync.ps1`。

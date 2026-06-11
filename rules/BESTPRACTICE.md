@@ -23,7 +23,7 @@ description: 综合最佳实践 — 详细参考（骨架内容已迁至 CORE.md
 - **多 Agent 浏览器共享**：`/pair-agent` — 每个 AI Agent 独立 tab，ngrok tunnel，作用域隔离
 
 **系统提示词实证**（来源：x1xhlol/system-prompts 横向对比）：
-- 工具描述密度宜低不宜高 — Cursor/Windsurf/Devin 的对比表明简洁工具描述比详尽描述减少 30% 误用
+- 工具描述密度宜低不宜高 — Cursor/Devin 的对比表明简洁工具描述比详尽描述减少 30% 误用
 - 安全护栏放入系统提示词而非工具描述 — 各家均采用这种分层，工具描述聚焦语义
 - 角色定义粒度适度 — 过细的角色定义会导致 agent 在非角色场景拒绝处理
 

@@ -15,8 +15,8 @@ Get-Process | Where-Object { $_.Name -like "_node_" } | Stop-Process -Force
 | 编辑器   | 用户目录示例              | 说明             |
 | -------- | ------------------------- | ---------------- |
 | Cursor   | `%USERPROFILE%\.cursor`   | 若存在则参与同步 |
+| Devin    | `%USERPROFILE%\.devin`    | 若存在则参与同步 |
 | Trae     | `%USERPROFILE%\.trae`     | 若存在则参与同步 |
-| Windsurf | `%USERPROFILE%\.windsurf` | 若存在则参与同步 |
 | Qoder    | `%USERPROFILE%\.qoder`    | 若不存在则跳过   |
 
 ### 同步的配置组件（v14 双模式）

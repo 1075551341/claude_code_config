@@ -90,14 +90,14 @@ ECC_HOOK_PROFILE=strict    # 15核心 + _optional/ 安全扫描
 
 ## Cursor 编辑器
 
-Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。  
+Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
 Cursor Guard v1.1（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`）：同步、70%/90% 压缩、codegraph 路由、shell/密钥守卫、维护提示。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 设计原则
 
 1. **事件驱动**：PreToolUse(守卫) → Tool executes → PostToolUse(审计)
 2. **Profile 控制**：环境变量切换，无需改配置文件
-3. **平台自适应**：_editor_hook_launcher.py 检测 Claude Code/Cursor/Windsurf
+3. **平台自适应**：_editor_hook_launcher.py 检测 Claude Code/Cursor/Devin
 4. **Python 3**：跨平台 Windows/macOS/Linux
 
 ## 退出码

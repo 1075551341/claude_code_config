@@ -1,5 +1,5 @@
 #!/bin/bash
-# sync.sh v2.1 - Linux/macOS 同步脚本（v14.1 索引模式）
+# sync.sh v2.2 - Linux/macOS 同步脚本（v14.5 仅L0入口 + 个人级单落点）
 # 全量格式转换（rules/skills-native）请使用 Windows sync.ps1 -Full
 
 set -e
@@ -7,7 +7,7 @@ set -e
 CLAUDE_DIR="$HOME/.claude"
 SYNC_DIRS=("skills" "agents")
 SYNC_FILES=("CLAUDE.md" "CLAUDE-ROUTER.mdc" "SPEC.md" "MANIFEST.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
-EDITORS=("cursor" "windsurf" "trae" "qoder")
+EDITORS=("cursor" "devin" "trae" "qoder")
 FULL_MODE=false
 
 RED='\033[0;31m'

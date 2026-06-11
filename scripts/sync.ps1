@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 多编辑器同步脚本 v14.3 — 索引 + 全量双模式
+    Claude Code 多编辑器同步脚本 v14.5 — 仅L0入口 + 个人级单落点
 
 .DESCRIPTION
     索引模式(默认): 7 总纲软链接 + skills/agents 目录联接 + 编辑器 rules 单文件链接与路由部署
@@ -42,7 +42,7 @@ $ErrorActionPreference = "Stop"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $BACKUP_DIR = Join-Path $CLAUDE_DIR "backups\$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-$EDITORS = @("cursor", "trae", "windsurf", "qoder")
+$EDITORS = @("cursor", "devin", "trae", "qoder")
 $CODEARTS_EDITORS = @("codearts-agent")
 $SYNC_DIRS = @("skills", "agents")
 $SYNC_DIRS_FULL_LINK = @("agents")
@@ -55,40 +55,60 @@ $CLAUDE_RULE_DEPLOY_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 # Cursor Guard 部署产物 — sync 清理时保留（非 ~/.claude/rules 源）
 $CURSOR_GUARD_RULE_WHITELIST = @("CURSOR-EDITOR.mdc")
 $EDITOR_RULE_PROTECT = $ROUTER_DEPLOY_WHITELIST + $CLAUDE_RULE_DEPLOY_NAMES + $CURSOR_GUARD_RULE_WHITELIST
+# Cursor：同时部署到个人桥接目录与当前工作区项目规则目录
+$GLOBAL_CURSOR_RULES_DIR = Join-Path $env:USERPROFILE ".cursor\rules"
+$CLAUDE_CURSOR_PROJECT_DIR = Join-Path $CLAUDE_DIR ".cursor"
+$CLAUDE_CURSOR_PROJECT_RULES_DIR = Join-Path $CLAUDE_CURSOR_PROJECT_DIR "rules"
+# Devin Desktop 读 workspace .devin/rules/（非 ~/.devin/rules/ 编辑器配置目录）
+$CLAUDE_DEVIN_RULES_DIR = Join-Path $CLAUDE_DIR ".devin\rules"
+$DEVIN_MISPLACED_RULES_DIR = Join-Path $env:USERPROFILE ".devin\rules"
+# CodeArts 码道：个人级 ~/.config/codeartsdoer/rule/（内核 rule-discovery 实际读取路径）
+# UI 文案写 ~/.codeartsdoer/rule/ 为误导；skills 仍在 ~/.codeartsdoer/skills/
+$CODEARTS_DOER_PERSONAL_RULES_DIR = Join-Path $env:USERPROFILE ".config\codeartsdoer\rule"
+$CODEARTS_DOER_LEGACY_PERSONAL_RULES_DIR = Join-Path $env:USERPROFILE ".codeartsdoer\rule"
+$CODEARTS_DOER_PROJECT_RULES_DIR = Join-Path $CLAUDE_DIR ".codeartsdoer\rule"
+$CODEARTS_AGENT_LEGACY_RULES_DIR = Join-Path $env:APPDATA "codearts-agent\User\rules"
+$CODEARTS_L0_BASE_NAMES = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE")
+$CODEARTS_USER_DIRS = @{
+    "codearts-agent" = (Join-Path $env:APPDATA "codearts-agent\User")
+}
+$PROJECT_L0_BASE_NAMES = @(
+    "00-CLAUDE-ROUTER",
+    "CLAUDE",
+    "CORE",
+    "CURSOR-EDITOR"
+)
 $STALE_LINKS = @("hooks", "scripts", "commands", "AGENTS.md")
 
-# 编辑器原生规则目录映射（使用各编辑器真正识别的全局路径）
-# Cursor: ~/.cursor/rules/*.mdc (项目级格式，放在用户目录下作为同步中转)
-# Windsurf: ~/.windsurf/rules/*.md (项目级多文件) + ~/.codeium/windsurf/memories/global_rules.md (核心规则单文件)
+# 编辑器原生规则目录映射（使用各编辑器真正识别的全局/个人路径）
+# Cursor: ~/.cursor/rules/*.mdc 为个人桥接（v14.5+ 仅L0入口）
+# Devin Desktop: ~/.claude/.devin/rules/*.md（workspace，trigger 格式）+ global_rules.md（全局）
 # Trae: ~/.trae/user_rules/*.md (Trae特有的全局rules目录，支持alwaysApply frontmatter)
 $NATIVE_RULES_DIR_MAP = @{
-    "cursor"   = @{ TargetDir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc"; Format = "cursor" }
-    "windsurf" = @{ TargetDir = (Join-Path $env:USERPROFILE ".windsurf\rules"); Ext = ".md"; Format = "windsurf" }
+    "cursor"   = @{ TargetDir = $GLOBAL_CURSOR_RULES_DIR; Ext = ".mdc"; Format = "cursor" }
+    "devin"    = @{ TargetDir = $CLAUDE_DEVIN_RULES_DIR; Ext = ".md"; Format = "windsurf" }
     "trae"     = @{ TargetDir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md"; Format = "trae" }
     "qoder"    = @{ TargetDir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc"; Format = "cursor" }
-    "codearts-agent" = @{ TargetDir = (Join-Path $env:APPDATA "codearts-agent\User\rules"); Ext = ".mdc"; Format = "cursor" }
 }
+$CURSOR_PROJECT_RULES_CONFIG = @{ TargetDir = $CLAUDE_CURSOR_PROJECT_RULES_DIR; Ext = ".mdc"; Format = "cursor" }
 
 # Full 模式：skills 原生副本目录（避免与 Index 模式 skills/ 联接冲突）
 $NATIVE_SKILLS_DIR_MAP = @{
     "cursor"   = @{ TargetDir = (Join-Path $env:USERPROFILE ".cursor\skills-native"); Format = "cursor" }
-    "windsurf" = @{ TargetDir = (Join-Path $env:USERPROFILE ".windsurf\skills-native"); Format = "windsurf" }
+    "devin"    = @{ TargetDir = (Join-Path $env:USERPROFILE ".devin\skills-native"); Format = "windsurf" }
+
     "trae"     = @{ TargetDir = (Join-Path $env:USERPROFILE ".trae\skills-native"); Format = "trae" }
     "qoder"    = @{ TargetDir = (Join-Path $env:USERPROFILE ".qoder\skills-native"); Format = "cursor" }
 }
 
-# Windsurf 全局 rules 单文件路径（核心规则，受 6000 字符限制）
-$WINDSURF_GLOBAL_RULES_FILE = Join-Path $env:USERPROFILE ".codeium\windsurf\memories\global_rules.md"
+# Devin 全局 rules 单文件路径（核心规则，受 6000 字符限制）
+$DEVIN_GLOBAL_RULES_FILE = Join-Path $env:USERPROFILE ".codeium\windsurf\memories\global_rules.md"
 
-# Windsurf 字符限制
+# Devin 字符限制
 # 全局 global_rules.md: 6000 字符; 工作区 rules/*.md: 12000 字符/文件
-$WINDSURF_MAX_CHARS_GLOBAL = 6000
-$WINDSURF_MAX_CHARS_PER_FILE = 12000
+$DEVIN_MAX_CHARS_GLOBAL = 6000
+$DEVIN_MAX_CHARS_PER_FILE = 12000
 
-# CodeArts agent 编辑器：目标目录为 AppData Roaming 下的 User 目录
-$CODEARTS_USER_DIRS = @{
-    "codearts-agent" = (Join-Path $env:APPDATA "codearts-agent\User")
-}
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -490,6 +510,8 @@ function Write-RuleDeployFile {
     }
 
     $shouldWrite = $Force -or -not (Test-Path $TargetPath)
+    # L0 关键入口：-Force 或 Scope 为 L0 时始终重写（刷新 Cursor 索引/UI）
+    if ($ScopeLabel -eq "L0") { $shouldWrite = $true }
     if (-not $shouldWrite) {
         $existing = [System.IO.File]::ReadAllText($TargetPath, [System.Text.Encoding]::UTF8)
         if ($existing -ne $Content) {
@@ -503,7 +525,9 @@ function Write-RuleDeployFile {
 
     $baseName = [System.IO.Path]::GetFileNameWithoutExtension($TargetPath)
     $rulesDir = Split-Path $TargetPath -Parent
-    if ($ScopeLabel -eq "rules") {
+    $isRulesDirDeploy = ($ScopeLabel -match 'rules$') -or ($rulesDir -match '[\\/]rules$')
+    if ($isRulesDirDeploy) {
+        # 先删同 basename 全部变体（.md / .mdc / 大小写），再写入，防 Cursor UI 重复
         Remove-AllRuleVariantsByBaseName -TargetRulesDir $rulesDir -BaseName $baseName -ScopeLabel $ScopeLabel
     }
     else {
@@ -576,6 +600,21 @@ function Deploy-ClaudeMdRule {
     }
     $srcContent = [System.IO.File]::ReadAllText($src, [System.Text.Encoding]::UTF8)
     $content = Convert-ToNativeRuleContent -Content $srcContent -Format $RulesConfig.Format
+    $claudeDesc = "Claude 全局配置 — 五柱×五阶段×三横切"
+    if ($RulesConfig.Format -in @("cursor", "windsurf")) {
+        if ($content -match '(?ms)^---\r?\n(.*?)\r?\n---\r?\n(.*)$') {
+            $fm = $Matches[1]
+            $body = $Matches[2]
+            if ($fm -match '(?m)^description:\s*$') {
+                $fm = $fm -replace '(?m)^description:\s*$', "description: $claudeDesc"
+            }
+            elseif ($fm -notmatch '(?m)^description:\s+\S') {
+                $fm = "description: $claudeDesc`n" + $fm.TrimEnd()
+            }
+            $body = $body -replace '(?m)^description:\s*Claude 全局配置[^\r\n]*\r?\n', ''
+            $content = "---`n$($fm.TrimEnd())`n---`n$($body.TrimStart())"
+        }
+    }
     $targetPath = Join-Path $RulesConfig.TargetDir "CLAUDE$($RulesConfig.Ext)"
     if ($DryRun) {
         Write-Ok "[预演] 将部署 CLAUDE.md → rules/CLAUDE$($RulesConfig.Ext)"
@@ -588,6 +627,79 @@ function Deploy-ClaudeMdRule {
     }
     Write-Ok "CLAUDE$($RulesConfig.Ext) 已是最新"
     return $false
+}
+
+function Deploy-L0KeyEntries {
+    param(
+        [hashtable]$RulesConfig,
+        [string]$EditorName = "cursor"
+    )
+    <#
+    .SYNOPSIS
+        L0 关键入口（ROUTER → CLAUDE → CORE → CURSOR-EDITOR）：
+        ① 批量删除同 basename 全部变体（.md/.mdc/大小写）
+        ② 按序强制部署，防 Cursor Settings 重复/过期
+    #>
+    $targetRulesDir = $RulesConfig.TargetDir
+    $ext = $RulesConfig.Ext
+    $format = $RulesConfig.Format
+
+    if (-not (Test-Path $targetRulesDir) -and -not $DryRun) {
+        New-Item -ItemType Directory -Path $targetRulesDir -Force | Out-Null
+    }
+
+    Write-Info "L0 关键入口 [$EditorName]：先删同类型同名，再部署"
+
+    foreach ($baseName in $PROJECT_L0_BASE_NAMES) {
+        if ($DryRun) {
+            if (-not (Test-Path $targetRulesDir)) { continue }
+            $variants = @(Get-ChildItem $targetRulesDir -File -Force -ErrorAction SilentlyContinue |
+                Where-Object { $_.BaseName -ieq $baseName })
+            if ($variants.Count -gt 0) {
+                Write-Fix "[预演] 将删除 L0/$baseName.* ($($variants.Count) 个变体)"
+            }
+        }
+        else {
+            Remove-AllRuleVariantsByBaseName -TargetRulesDir $targetRulesDir -BaseName $baseName -ScopeLabel "L0"
+        }
+    }
+
+    if ($DryRun) {
+        Write-Ok "[预演] 将部署 L0: 00-CLAUDE-ROUTER$ext, CLAUDE$ext, CORE$ext$(if ($format -eq 'cursor') { ", CURSOR-EDITOR$ext" })"
+        return
+    }
+
+    Deploy-RouterRule -RulesConfig $RulesConfig | Out-Null
+    Deploy-ClaudeMdRule -RulesConfig $RulesConfig | Out-Null
+
+    $coreSrc = Join-Path $CLAUDE_DIR "rules\CORE.md"
+    if (Test-Path $coreSrc) {
+        $raw = [System.IO.File]::ReadAllText($coreSrc, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $raw -Format $format
+        $corePath = Join-Path $targetRulesDir "CORE$ext"
+        if (Write-RuleDeployFile -SourcePath $coreSrc -TargetPath $corePath -Content $converted -ScopeLabel "L0") {
+            Write-Fix "L0 CORE 已部署 → $corePath"
+            $script:stats.Files++
+        }
+    }
+    else {
+        Write-Skip "源 rules/CORE.md 缺失，跳过 L0 CORE"
+    }
+
+    if ($format -eq "cursor") {
+        $cursorEditorSrc = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+        if (Test-Path $cursorEditorSrc) {
+            $ceContent = [System.IO.File]::ReadAllText($cursorEditorSrc, [System.Text.Encoding]::UTF8)
+            $cePath = Join-Path $targetRulesDir "CURSOR-EDITOR$ext"
+            if (Write-RuleDeployFile -SourcePath $cursorEditorSrc -TargetPath $cePath -Content $ceContent -ScopeLabel "L0") {
+                Write-Fix "L0 CURSOR-EDITOR 已部署 → $cePath"
+                $script:stats.Files++
+            }
+        }
+        else {
+            Write-Skip "templates/cursor-guard/rules/CURSOR-EDITOR.mdc 缺失"
+        }
+    }
 }
 
 function Cleanup-StaleRulesAlternateFormat {
@@ -645,56 +757,345 @@ function Sync-EditorRulesIndex {
         New-Item -ItemType Directory -Path $targetRulesDir -Force | Out-Null
     }
 
+    # L0 关键入口优先：先删同名变体，再部署 ROUTER/CLAUDE/CORE/CURSOR-EDITOR
+    Deploy-L0KeyEntries -RulesConfig $cfg -EditorName $EditorName
+
+    # 清理非L0的过期规则文件（v14.5+：仅同步L0关键入口，详细rules通过L0路由按需Read加载）
+    if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
+        $existing = Get-ChildItem $targetRulesDir -File -Force -ErrorAction SilentlyContinue
+        foreach ($ef in $existing) {
+            if ($ef.BaseName -in $PROJECT_L0_BASE_NAMES) { continue }
+            if ($DryRun) {
+                Write-Fix "[预演] 将删除非L0规则 $ef.Name"
+            }
+            else {
+                Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "rules" -RequiredExt $ef.Extension | Out-Null
+                Write-Fix "已删除非L0规则 $ef.Name（L0路由按需加载）"
+                $script:stats.Removed++
+            }
+        }
+    }
+
     $ruleFiles = Get-ChildItem $rulesSrc -Filter "*.md" |
         Where-Object { $_.Name -ne "README.md" } |
         Sort-Object Name
     $validBaseNames = @($ruleFiles | ForEach-Object { $_.BaseName })
 
-    # 清理同目标扩展名的过期规则（仅 rules/ 范围）
-    if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
-        $validTargetNames = @($validBaseNames | ForEach-Object { "$_$ext" }) + $EDITOR_RULE_PROTECT
-        $existing = Get-ChildItem $targetRulesDir -Filter "*$ext" -ErrorAction SilentlyContinue
-        foreach ($ef in $existing) {
-            if ($ef.Name -in $validTargetNames) { continue }
-            Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "rules" -RequiredExt $ext | Out-Null
+    if (-not $DryRun) {
+        Cleanup-StaleRulesAlternateFormat -RulesConfig $cfg -ValidBaseNames $validBaseNames -TargetRulesDir $targetRulesDir
+        if ($EditorName -eq "devin") {
+            Sync-DevinGlobalRules -RuleFiles $ruleFiles
         }
     }
+}
 
-    foreach ($rf in $ruleFiles) {
-        $targetName = "$($rf.BaseName)$ext"
-        $dst = Join-Path $targetRulesDir $targetName
+function Sync-CursorProjectRules {
+    <#
+    .SYNOPSIS
+        v14.5+：取消项目级规则部署（~/.claude/.cursor/rules/），仅保留个人级（~/.cursor/rules/）。
+        清理项目级目录中的所有规则文件，避免 Cursor 双落点导致双份显示。
+        详细 rules 通过 L0 路由（ROUTER→CLAUDE→CORE）按需 Read 加载。
+    #>
+    $targetRulesDir = $CURSOR_PROJECT_RULES_CONFIG.TargetDir
 
-        if ($ext -eq ".md" -and $format -in @("windsurf", "trae")) {
-            if (-not $DryRun) {
-                Remove-AllRuleVariantsByBaseName -TargetRulesDir $targetRulesDir -BaseName $rf.BaseName -ScopeLabel "rules"
-            }
-            else {
-                Write-Fix "[预演] 将删除 rules/$($rf.BaseName).* 后链接 $targetName"
-            }
-            Sync-SingleFile -Source $rf.FullName -Target $dst -Label "rules/$targetName"
-            continue
+    if (-not (Test-Path $targetRulesDir)) { return }
+
+    Write-Info "Cursor 项目规则清理 → $targetRulesDir（仅保留个人级 ~/.cursor/rules/）"
+
+    if ((Test-Path $targetRulesDir) -and (IsLink $targetRulesDir)) {
+        if ($DryRun) { Write-Fix "[预演] 将删除 Cursor 项目 rules/ 联接" }
+        else {
+            Remove-DirTarget -Path $targetRulesDir -Editor "cursor-project" -Label "rules/"
+            Write-Fix "已删除 Cursor 项目 rules/ 联接（双份源）"
+            $script:stats.Removed++
         }
+        return
+    }
 
-        # Cursor/Qoder：部署原生 .mdc 副本（先删同名全部变体，再写入）
-        $raw = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
-        $converted = Convert-ToNativeRuleContent -Content $raw -Format $format
+    $existingFiles = Get-ChildItem $targetRulesDir -File -Force -ErrorAction SilentlyContinue
+    if ($existingFiles.Count -eq 0) {
+        if ($DryRun) { Write-Fix "[预演] 将删除空的项目级 rules/ 目录" }
+        else {
+            Remove-Item $targetRulesDir -Force -ErrorAction SilentlyContinue
+            Write-Fix "已删除空的项目级 rules/ 目录"
+        }
+        return
+    }
+
+    foreach ($ef in $existingFiles) {
         if ($DryRun) {
-            Write-Ok "[预演] 将删除 rules/$($rf.BaseName).* 后部署 $targetName（$format）"
-            continue
+            Write-Fix "[预演] 将删除项目级规则 $ef.Name（个人级 ~/.cursor/rules/ 已有L0入口）"
         }
-        if (Write-RuleDeployFile -SourcePath $rf.FullName -TargetPath $dst -Content $converted -ScopeLabel "rules") {
-            Write-Fix "rules/$targetName 已同步"
-            $script:stats.Files++
+        else {
+            Remove-Item $ef.FullName -Force -ErrorAction SilentlyContinue
+            Write-Fix "已删除项目级规则 $ef.Name（避免双份显示）"
+            $script:stats.Removed++
         }
     }
 
     if (-not $DryRun) {
-        Cleanup-StaleRulesAlternateFormat -RulesConfig $cfg -ValidBaseNames $validBaseNames -TargetRulesDir $targetRulesDir
-        Deploy-ClaudeMdRule -RulesConfig $cfg | Out-Null
-        Deploy-RouterRule -RulesConfig $cfg | Out-Null
+        $remaining = Get-ChildItem $targetRulesDir -File -Force -ErrorAction SilentlyContinue
+        if ($remaining.Count -eq 0) {
+            Remove-Item $targetRulesDir -Force -ErrorAction SilentlyContinue
+            Write-Fix "已清空项目级 rules/ 目录"
+        }
+        Write-SyncModeJson -TargetDir $CLAUDE_CURSOR_PROJECT_DIR -Mode $(if ($Full) { "full" } else { "index" })
     }
-    else {
-        Write-Ok "[预演] 将部署 rules/ 原生 $ext + CLAUDE$ext + 00-CLAUDE-ROUTER$ext"
+}
+
+
+function Cleanup-DevinMisplacedRulesDir {
+    <#
+    .SYNOPSIS
+        Devin 不读 ~/.devin/rules/（那是编辑器用户目录，类似 ~/.cursor/extensions）。
+        误部署在此处的 rules 会导致 Devin UI 显示为空。
+    #>
+    if (-not (Test-Path $DEVIN_MISPLACED_RULES_DIR)) { return }
+    Write-Host ""
+    Write-Host "  -- devin-cleanup (误路径 ~/.devin/rules/) ----------------" -ForegroundColor DarkGray
+    if ($DryRun) {
+        Write-Fix "[预演] 将删除误路径 ~/.devin/rules/"
+        return
+    }
+    Remove-Item $DEVIN_MISPLACED_RULES_DIR -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Fix "已删除误路径 ~/.devin/rules/（Devin 读 ~/.claude/.devin/rules/）"
+    $script:stats.Removed++
+}
+
+function Get-LinkTargetPath {
+    param([string]$Path)
+    if (-not (IsLink $Path)) { return $null }
+    $actual = (Get-Item $Path -Force).Target
+    if ($actual -is [array]) { $actual = $actual[0] }
+    return $actual
+}
+
+function Clear-CursorProjectLegacyArtifacts {
+    <#
+    .SYNOPSIS
+        v14.5+：清理 ~/.claude/.cursor/ 项目级目录中的遗留联接和规则文件。
+        项目级规则已迁移至个人级 ~/.cursor/rules/，避免双份显示。
+    #>
+    if (-not (Test-Path $CLAUDE_CURSOR_PROJECT_DIR)) { return }
+    foreach ($stale in @("skills", "agents", "hooks", "commands", "scripts")) {
+        $sp = Join-Path $CLAUDE_CURSOR_PROJECT_DIR $stale
+        if ((Test-Path $sp) -and (IsLink $sp)) {
+            if ($DryRun) { Write-Fix "[预演] 将删除 Cursor 项目遗留联接 .cursor/$stale" }
+            else {
+                Remove-DirTarget -Path $sp -Editor "cursor-project" -Label ".cursor/$stale"
+            }
+        }
+    }
+    # v14.5+：清理项目级 rules/ 目录（已迁移至个人级 ~/.cursor/rules/）
+    $projRulesDir = Join-Path $CLAUDE_CURSOR_PROJECT_DIR "rules"
+    if ((Test-Path $projRulesDir) -and -not (IsLink $projRulesDir)) {
+        $projRules = Get-ChildItem $projRulesDir -File -Force -ErrorAction SilentlyContinue
+        if ($projRules.Count -gt 0) {
+            foreach ($pf in $projRules) {
+                if ($DryRun) { Write-Fix "[预演] 将删除项目级规则 .cursor/rules/$($pf.Name)" }
+                else {
+                    Remove-Item $pf.FullName -Force -ErrorAction SilentlyContinue
+                    Write-Fix "已删除项目级规则 .cursor/rules/$($pf.Name)"
+                    $script:stats.Removed++
+                }
+            }
+        }
+        $remaining = Get-ChildItem $projRulesDir -File -Force -ErrorAction SilentlyContinue
+        if ($remaining.Count -eq 0 -and -not $DryRun) {
+            Remove-Item $projRulesDir -Force -ErrorAction SilentlyContinue
+            Write-Fix "已清空项目级 .cursor/rules/ 目录"
+        }
+    }
+    elseif ((Test-Path $projRulesDir) -and (IsLink $projRulesDir)) {
+        if ($DryRun) { Write-Fix "[预演] 将删除项目级 rules/ 联接" }
+        else {
+            Remove-DirTarget -Path $projRulesDir -Editor "cursor-project" -Label ".cursor/rules/"
+        }
+    }
+}
+
+function Update-CodeArtsDoerMetadata {
+    param([string]$RulesDir)
+    if (-not (Test-Path $RulesDir)) { return }
+    $entries = [System.Collections.Generic.List[hashtable]]::new()
+    foreach ($f in Get-ChildItem $RulesDir -Filter "*.mdc" -File -ErrorAction SilentlyContinue | Sort-Object Name) {
+        $content = [System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)
+        $body = $content
+        $triggerType = "manual"
+        $desc = $f.BaseName
+        if ($content -match '(?ms)^---\r?\n(.*?)\r?\n---\r?\n(.*)$') {
+            $fm = $Matches[1]
+            $body = $Matches[2].Trim()
+            if ($fm -match '(?m)alwaysApply:\s*true' -or $fm -match '(?m)trigger:\s*always_on') {
+                $triggerType = "always"
+            }
+            if ($fm -match '(?m)^description:\s*(.+)') {
+                $desc = $Matches[1].Trim().Trim("'").Trim('"')
+            }
+        }
+        if ($desc.Length -gt 200) { $desc = $desc.Substring(0, 200) }
+        $entries.Add(@{
+            filePath    = $f.Name
+            name        = $f.BaseName
+            description = $desc
+            content     = $body
+            triggerType = $triggerType
+            source      = "user"
+        })
+    }
+    if ($entries.Count -eq 0) { return }
+    $metaPath = Join-Path $RulesDir "metadata.properties"
+    if ($DryRun) {
+        Write-Ok "[预演] 将更新 metadata.properties ($($entries.Count) 条)"
+        return
+    }
+    $json = ConvertTo-Json -InputObject @($entries) -Compress -Depth 6
+    [System.IO.File]::WriteAllText($metaPath, "projectExpert=$json", [System.Text.Encoding]::UTF8)
+    Write-Fix "metadata.properties 已更新 ($($entries.Count) 条) → $RulesDir"
+    $script:stats.Files++
+}
+
+function Sync-CodeArtsDoerRules {
+    <#
+    .SYNOPSIS
+        v14.5+：华为云码道 CodeArts Doer 规则同步 — 仅L0入口。
+        个人级：~/.config/codeartsdoer/rule/*.mdc（内核 load user rules 路径）
+        项目级：仅清理（避免双份显示），不再部署。
+        详细 rules 通过 L0 路由（ROUTER→CLAUDE→CORE）按需 Read 加载。
+    #>
+    Write-Host ""
+    Write-Host "  -- codeartsdoer ----------------------------------------" -ForegroundColor DarkGray
+
+    $rulesSrc = Join-Path $CLAUDE_DIR "rules"
+    if (-not (Test-Path $rulesSrc)) {
+        Write-Skip "源 rules 缺失，跳过 CodeArts 码道"
+        return
+    }
+
+    # 个人级：仅部署 L0 入口
+    $targetDir = $CODEARTS_DOER_PERSONAL_RULES_DIR
+    if (-not (Test-Path $targetDir) -and -not $DryRun) {
+        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+    }
+
+    Write-Info "CodeArts [personal] → $targetDir"
+
+    foreach ($baseName in $CODEARTS_L0_BASE_NAMES) {
+        if ($DryRun) { continue }
+        Remove-AllRuleVariantsByBaseName -TargetRulesDir $targetDir -BaseName $baseName -ScopeLabel "codearts-personal"
+    }
+
+    $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SOURCE_FILE
+    if (Test-Path $routerSrc) {
+        $raw = [System.IO.File]::ReadAllText($routerSrc, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $raw -Format "cursor"
+        $dst = Join-Path $targetDir "00-CLAUDE-ROUTER.mdc"
+        if (-not $DryRun -and (Write-RuleDeployFile -SourcePath $routerSrc -TargetPath $dst -Content $converted -ScopeLabel "codearts-personal")) {
+            Write-Fix "codearts-personal/00-CLAUDE-ROUTER.mdc 已部署"
+            $script:stats.Files++
+        }
+    }
+
+    $claudeSrc = Join-Path $CLAUDE_DIR "CLAUDE.md"
+    if (Test-Path $claudeSrc) {
+        $raw = [System.IO.File]::ReadAllText($claudeSrc, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $raw -Format "cursor"
+        $dst = Join-Path $targetDir "CLAUDE.mdc"
+        if (-not $DryRun -and (Write-RuleDeployFile -SourcePath $claudeSrc -TargetPath $dst -Content $converted -ScopeLabel "codearts-personal")) {
+            Write-Fix "codearts-personal/CLAUDE.mdc 已部署"
+            $script:stats.Files++
+        }
+    }
+
+    $coreSrc = Join-Path $rulesSrc "CORE.md"
+    if (Test-Path $coreSrc) {
+        $raw = [System.IO.File]::ReadAllText($coreSrc, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $raw -Format "cursor"
+        $dst = Join-Path $targetDir "CORE.mdc"
+        if (-not $DryRun -and (Write-RuleDeployFile -SourcePath $coreSrc -TargetPath $dst -Content $converted -ScopeLabel "codearts-personal")) {
+            Write-Fix "codearts-personal/CORE.mdc 已部署"
+            $script:stats.Files++
+        }
+    }
+
+    # 清理个人级非L0规则
+    if ((Test-Path $targetDir) -and -not $DryRun) {
+        $existing = Get-ChildItem $targetDir -File -Force -ErrorAction SilentlyContinue
+        foreach ($ef in $existing) {
+            if ($ef.BaseName -in $CODEARTS_L0_BASE_NAMES -or $ef.Name -eq "metadata.properties") { continue }
+            Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "codearts-personal" -RequiredExt $ef.Extension | Out-Null
+            Write-Fix "已删除非L0规则 codearts-personal/$($ef.Name)"
+            $script:stats.Removed++
+        }
+    }
+
+    if (-not $DryRun) {
+        Update-CodeArtsDoerMetadata -RulesDir $targetDir
+    }
+
+    # 注：~/.codeartsdoer/cache/user/rule/ 是内核运行时缓存，启动时会被重置为空。
+    # 真正的配置源是 ~/.config/codeartsdoer/rule/（上方 $targetDir），内核从此读取。
+    # 因此不再同步到 cache 路径，避免写入后被覆盖。
+
+    # 项目级：仅清理（不再部署，避免双份显示）
+    $projDir = $CODEARTS_DOER_PROJECT_RULES_DIR
+    if (Test-Path $projDir) {
+        Write-Info "CodeArts [project] → $projDir（仅清理）"
+        $projFiles = Get-ChildItem $projDir -File -Force -ErrorAction SilentlyContinue
+        foreach ($pf in $projFiles) {
+            if ($DryRun) {
+                Write-Fix "[预演] 将删除项目级规则 codearts-project/$($pf.Name)"
+            }
+            else {
+                Remove-Item $pf.FullName -Force -ErrorAction SilentlyContinue
+                Write-Fix "已删除项目级规则 codearts-project/$($pf.Name)"
+                $script:stats.Removed++
+            }
+        }
+        $remaining = Get-ChildItem $projDir -File -Force -ErrorAction SilentlyContinue
+        if ($remaining.Count -eq 0 -and -not $DryRun) {
+            Remove-Item $projDir -Force -ErrorAction SilentlyContinue
+            Write-Fix "已清空项目级 .codeartsdoer/rule/ 目录"
+        }
+    }
+}
+
+function Cleanup-CodeArtsAgentLegacyRules {
+    <#
+    .SYNOPSIS
+        清理误同步到 AppData\codearts-agent\User\rules\ 的副本（码道不读此路径）
+    #>
+    if (-not (Test-Path $CODEARTS_AGENT_LEGACY_RULES_DIR)) { return }
+    Write-Host ""
+    Write-Host "  -- codearts-agent-legacy (误路径清理) ------------------" -ForegroundColor DarkGray
+    if ($DryRun) {
+        Write-Fix "[预演] 将删除误路径 $CODEARTS_AGENT_LEGACY_RULES_DIR"
+        return
+    }
+    Remove-Item $CODEARTS_AGENT_LEGACY_RULES_DIR -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Fix "已删除误路径 codearts-agent/User/rules/（码道读 ~/.config/codeartsdoer/rule/）"
+    $script:stats.Removed++
+}
+
+function Cleanup-CodeArtsLegacyPersonalRules {
+    <#
+    .SYNOPSIS
+        清理误同步到 ~/.codeartsdoer/rule/ 的副本（UI 文案误导；内核读 ~/.config/codeartsdoer/rule/）
+    #>
+    if (-not (Test-Path $CODEARTS_DOER_LEGACY_PERSONAL_RULES_DIR)) { return }
+    $legacyFiles = @(Get-ChildItem $CODEARTS_DOER_LEGACY_PERSONAL_RULES_DIR -File -Force -ErrorAction SilentlyContinue)
+    if ($legacyFiles.Count -eq 0) { return }
+
+    Write-Host ""
+    Write-Host "  -- codearts-legacy-personal (误路径 ~/.codeartsdoer/rule/) ---" -ForegroundColor DarkGray
+    foreach ($f in $legacyFiles) {
+        if ($DryRun) {
+            Write-Fix "[预演] 将删除误路径 ~/.codeartsdoer/rule/$($f.Name)"
+            continue
+        }
+        Remove-Item $f.FullName -Force -ErrorAction SilentlyContinue
+        Write-Fix "已删除误路径 ~/.codeartsdoer/rule/$($f.Name)"
+        $script:stats.Removed++
     }
 }
 
@@ -827,8 +1228,8 @@ function Sync-NativeRulesFiles {
     .SYNOPSIS
         将 ~/.claude/rules/RULES_*.md 转换为编辑器原生的规则格式
         使用各编辑器真正识别的路径：
-        - Cursor: ~/.cursor/rules/*.mdc (每个规则一个文件，作为同步中转)
-        - Windsurf: ~/.windsurf/rules/*.md (每个规则一个文件，遵守字符限制)
+        - Cursor/Qoder: ~/.cursor/rules/*.mdc（v14.5+ 仅L0入口）
+        - Devin: ~/.claude/.devin/rules/*.md (每个规则一个文件，遵守字符限制)
         - Trae: ~/.trae/user_rules/*.md (每个规则一个文件，alwaysApply格式)
     #>
     $rulesSrc = Join-Path $CLAUDE_DIR "rules"
@@ -882,8 +1283,14 @@ function Sync-NativeRulesFiles {
     $totalChars = 0
 
     foreach ($rf in $ruleFiles) {
+        $category = $rf.BaseName -replace "^RULES_", ""
+
+        # v14.5+：Cursor/Qoder 仅部署 L0 入口，非 L0 通过路由按需 Read
+        if ($format -eq "cursor" -and $category -notin $PROJECT_L0_BASE_NAMES) {
+            continue
+        }
+
         $srcContent = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
-        $category = $rf.BaseName -replace "^RULES_", ""  # 兼容新旧命名
 
         $targetFileName = "$category$ext"
         $targetPath = Join-Path $targetRulesDir $targetFileName
@@ -895,16 +1302,15 @@ function Sync-NativeRulesFiles {
 
 ## 全量模式 Skills 路径
 
-技能按 name Read：`~/.cursor/skills-native/<name>/SKILL.md`  
+技能按 name Read：`~/.cursor/skills-native/<name>/SKILL.md`
 完整源：`~/.claude/skills/<name>/SKILL.md`
 "@
         }
 
-        # Windsurf 字符限制检查
+        # Devin 字符限制检查
         if ($format -eq "windsurf") {
-            if ($convertedContent.Length -gt $WINDSURF_MAX_CHARS_PER_FILE) {
-                # 截断到限制内，保留 frontmatter + 尽可能多的内容
-                $convertedContent = Truncate-ToCharLimit -Content $convertedContent -Limit $WINDSURF_MAX_CHARS_PER_FILE
+            if ($convertedContent.Length -gt $DEVIN_MAX_CHARS_PER_FILE) {
+                $convertedContent = Truncate-ToCharLimit -Content $convertedContent -Limit $DEVIN_MAX_CHARS_PER_FILE
                 $truncatedCount++
             }
             $totalChars += $convertedContent.Length
@@ -932,12 +1338,12 @@ function Sync-NativeRulesFiles {
         Write-Ok "$skippedCount 个 $ext 规则文件已是最新"
     }
     if ($truncatedCount -gt 0) {
-        Write-Warn "$truncatedCount 个规则因超过 $($WINDSURF_MAX_CHARS_PER_FILE) 字符限制被截断"
+        Write-Warn "$truncatedCount 个规则因超过 $($DEVIN_MAX_CHARS_PER_FILE) 字符限制被截断"
     }
 
-    # Windsurf: 额外同步核心规则到全局 global_rules.md
-    if ($EditorName -eq "windsurf" -and -not $DryRun) {
-        Sync-WindsurfGlobalRules -RuleFiles $ruleFiles
+    # Devin: 额外同步核心规则到全局 global_rules.md
+    if ($EditorName -eq "devin" -and -not $DryRun) {
+        Sync-DevinGlobalRules -RuleFiles $ruleFiles
     }
 }
 
@@ -1002,8 +1408,8 @@ function Sync-NativeSkillsFiles {
             Convert-Frontmatter -Content $srcContent -Format $format
         }
 
-        if ($format -eq "windsurf" -and $convertedContent.Length -gt $WINDSURF_MAX_CHARS_PER_FILE) {
-            $convertedContent = Truncate-ToCharLimit -Content $convertedContent -Limit $WINDSURF_MAX_CHARS_PER_FILE
+        if ($format -eq "windsurf" -and $convertedContent.Length -gt $DEVIN_MAX_CHARS_PER_FILE) {
+            $convertedContent = Truncate-ToCharLimit -Content $convertedContent -Limit $DEVIN_MAX_CHARS_PER_FILE
             $truncatedCount++
         }
 
@@ -1033,7 +1439,7 @@ function Sync-NativeSkillsFiles {
         Write-Ok "$skippedCount 个 SKILL.md 已是最新"
     }
     if ($truncatedCount -gt 0) {
-        Write-Warn "$truncatedCount 个技能因超过 $($WINDSURF_MAX_CHARS_PER_FILE) 字符限制被截断"
+        Write-Warn "$truncatedCount 个技能因超过 $($DEVIN_MAX_CHARS_PER_FILE) 字符限制被截断"
     }
 }
 
@@ -1068,20 +1474,20 @@ function Truncate-ToCharLimit {
     return "$frontmatter$truncatedBody`n`n<!-- 内容因字符限制被截断，完整规则请查看 ~/.claude/rules/ -->"
 }
 
-function Sync-WindsurfGlobalRules {
+function Sync-DevinGlobalRules {
     param(
         [object[]]$RuleFiles
     )
     <#
     .SYNOPSIS
-        同步 Windsurf 的全局 global_rules.md 单文件（仅 CLAUDE.md）
+        同步 Devin 的全局 global_rules.md 单文件（仅 CLAUDE.md）
         路径：~/.codeium/windsurf/memories/global_rules.md
         限制：6000 字符/文件
         策略：
           - 优先写入完整 CLAUDE.md
           - 若超出字符限制：写入精简速查（不注入 rules/ 内容）
     #>
-    $targetPath = $WINDSURF_GLOBAL_RULES_FILE
+    $targetPath = $DEVIN_GLOBAL_RULES_FILE
     $targetDir = Split-Path $targetPath -Parent
     if (-not (Test-Path $targetDir)) {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
@@ -1095,24 +1501,21 @@ function Sync-WindsurfGlobalRules {
     [void]$sb.AppendLine("---")
     [void]$sb.AppendLine("")
 
-    # 优先写入完整 CLAUDE.md
     if ($editorClaudeMd -ne "") {
         [void]$sb.Append($editorClaudeMd)
     }
 
     $newContent = $sb.ToString()
 
-    # 检查字符限制（全局 global_rules.md 限制 6000 字符）
-    if ($newContent.Length -gt $WINDSURF_MAX_CHARS_GLOBAL) {
-        # 生成精简速查（不注入 rules/）
+    if ($newContent.Length -gt $DEVIN_MAX_CHARS_GLOBAL) {
         $sb2 = [System.Text.StringBuilder]::new()
         [void]$sb2.AppendLine("---")
         [void]$sb2.AppendLine("trigger: always_on")
         [void]$sb2.AppendLine("---")
         [void]$sb2.AppendLine("")
-        [void]$sb2.AppendLine("# Claude 全局配置（Windsurf 速查）")
+        [void]$sb2.AppendLine("# Claude 全局配置（Devin 速查）")
         [void]$sb2.AppendLine("")
-        [void]$sb2.AppendLine("Windsurf 的 global_rules.md 有 6000 字符限制，因此此处为精简速查。")
+        [void]$sb2.AppendLine("Devin 的 global_rules.md 有 6000 字符限制，因此此处为精简速查。")
         [void]$sb2.AppendLine("")
         [void]$sb2.AppendLine("完整内容请查看：`~/.claude/CLAUDE.md` 与 `~/.claude/SPEC.md`。")
         [void]$sb2.AppendLine("")
@@ -1139,10 +1542,10 @@ function Sync-WindsurfGlobalRules {
         [void]$sb2.AppendLine("优先顺序：Skills → Agents → MCP → Rules → 再自行实现。")
 
         $newContent = $sb2.ToString()
-        if ($newContent.Length -gt $WINDSURF_MAX_CHARS_GLOBAL) {
-            $newContent = $newContent.Substring(0, $WINDSURF_MAX_CHARS_GLOBAL - 50) + "`n`n<!-- 内容因字符限制被截断 -->"
+        if ($newContent.Length -gt $DEVIN_MAX_CHARS_GLOBAL) {
+            $newContent = $newContent.Substring(0, $DEVIN_MAX_CHARS_GLOBAL - 50) + "`n`n<!-- 内容因字符限制被截断 -->"
         }
-        Write-Warn "global_rules.md 超过 $($WINDSURF_MAX_CHARS_GLOBAL) 字符限制，已改为写入精简速查"
+        Write-Warn "global_rules.md 超过 $($DEVIN_MAX_CHARS_GLOBAL) 字符限制，已改为写入精简速查"
     }
 
     if ($DryRun) {
@@ -1158,12 +1561,11 @@ function Sync-WindsurfGlobalRules {
         }
     }
 
-    # 备份
     if (Test-Path $targetPath) {
         Copy-Item $targetPath ($targetPath + ".bak_$(Get-Date -Format 'yyyyMMdd_HHmmss')") -Force
     }
 
-    Remove-ScopedSameTypeTarget -TargetPath $targetPath -ScopeLabel "windsurf/global_rules" -RequiredExt ".md" | Out-Null
+    Remove-ScopedSameTypeTarget -TargetPath $targetPath -ScopeLabel "devin/global_rules" -RequiredExt ".md" | Out-Null
     [System.IO.File]::WriteAllText($targetPath, $newContent, [System.Text.Encoding]::UTF8)
     Write-Fix "global_rules.md 已更新 ($($newContent.Length) 字符) → $targetPath"
     $stats.Files++
@@ -1178,7 +1580,7 @@ function Convert-Frontmatter {
     .SYNOPSIS
         将 Claude Code/Cursor 格式的 YAML frontmatter 转换为目标编辑器格式
         cursor: 保留原格式（description, alwaysApply, globs）
-        windsurf: 转为 trigger 格式（trigger: always_on/model_decision/glob/manual, globs, description）
+        windsurf(Devin): 转为 trigger 格式（trigger: always_on/model_decision/glob/manual, globs, description）
         trae: 转为 alwaysApply 格式（description, alwaysApply, globs）— 与 Cursor 格式相同
     #>
     # Trae 格式与 Cursor 相同（alwaysApply 格式），直接返回原内容
@@ -1186,7 +1588,7 @@ function Convert-Frontmatter {
         return $Content
     }
 
-    # Windsurf 格式：转为 trigger 格式
+    # Windsurf(Devin) 格式：转为 trigger 格式
     if (-not $Content.StartsWith("---")) {
         # 无 frontmatter，添加默认 trigger: always_on
         return "---`ntrigger: always_on`n---`n`n$Content"
@@ -1220,7 +1622,7 @@ function Convert-Frontmatter {
         }
     }
 
-    # 构建 Windsurf 格式的 frontmatter
+    # 构建 Windsurf(Devin) 格式的 frontmatter
     $newFm = [System.Text.StringBuilder]::new()
 
     if ($alwaysApply) {
@@ -1278,17 +1680,51 @@ foreach ($editor in $EDITORS | Sort-Object) {
     Sync-EditorTarget -EditorName $editor -TargetDir $targetDir
 }
 
-# ── CodeArts agent 编辑器同步（目标目录为 AppData Roaming User 目录）──
+# ── CodeArts 码道：~/.codeartsdoer/rule/ + ~/.claude/.codeartsdoer/rule/ ──
+if ($Scope -in @("all", "rules")) {
+    Sync-CursorProjectRules
+    Sync-CodeArtsDoerRules
+    Cleanup-CodeArtsAgentLegacyRules
+    Cleanup-CodeArtsLegacyPersonalRules
+}
+
+# ── codearts-agent 旧 IDE：仅 7 总纲软链（不 sync rules 到误路径）──
 foreach ($editor in $CODEARTS_EDITORS | Sort-Object) {
     $targetDir = $CODEARTS_USER_DIRS[$editor]
-    if (-not $targetDir) {
-        Write-Host ""
-        Write-Host "  -- $editor (CodeArts) -----------------------------" -ForegroundColor DarkGray
-        Write-Skip "未配置 $editor 的用户目录，跳过"
+    if (-not $targetDir) { continue }
+    if ($Scope -eq "rules") { continue }
+    Write-Host ""
+    Write-Host "  -- $editor (indexes only) ---------------------------" -ForegroundColor DarkGray
+    if (-not (Test-Path $targetDir)) {
+        Write-Skip "未找到目标目录，跳过"
         $stats.Skipped++
         continue
     }
-    Sync-EditorTarget -EditorName $editor -TargetDir $targetDir
+    foreach ($stale in $STALE_LINKS) {
+        $sp = Join-Path $targetDir $stale
+        if ((Test-Path $sp) -and (IsLink $sp)) {
+            if ($DryRun) { Write-Fix "[预演] 将删除陈旧 $stale/ 链接" }
+            else { Remove-Item $sp -Force; Write-Fix "已删除陈旧 $stale/ 软链接"; $stats.Removed++ }
+        }
+    }
+    foreach ($file in $SYNC_FILES) {
+        $src = Join-Path $CLAUDE_DIR $file
+        $dst = Join-Path $targetDir $file
+        Sync-SingleFile -Source $src -Target $dst -Label $file
+    }
+    foreach ($dir in $SYNC_DIRS) {
+        $src = Join-Path $CLAUDE_DIR $dir
+        $dst = Join-Path $targetDir $dir
+        Sync-DirJunction -Source $src -Target $dst -Label "$dir/" -Editor $editor
+    }
+    if (-not $DryRun) {
+        Write-SyncModeJson -TargetDir $targetDir -Mode $(if ($Full) { "full" } else { "index" })
+    }
+}
+
+if ($Scope -in @("all", "rules")) {
+    Clear-CursorProjectLegacyArtifacts
+    Cleanup-DevinMisplacedRulesDir
 }
 
 if ($Scope -eq "all") {
@@ -1317,7 +1753,7 @@ if ($Full) {
     Write-Host "  已同步: 7总纲软链接 + agents/联接 + rules/skills 原生格式转换" -ForegroundColor DarkGray
     Write-Host "  切回索引: powershell -File sync.ps1 -Force" -ForegroundColor DarkGray
 } else {
-    Write-Host "  已同步: 7总纲软链接 + skills/agents 联接 + 编辑器 rules 单文件链接" -ForegroundColor DarkGray
+    Write-Host "  已同步: 7总纲软链接 + skills/agents 联接 + Cursor 个人/项目 rules" -ForegroundColor DarkGray
     Write-Host "  总纲执行: CLAUDE-ROUTER → CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC.md" -ForegroundColor DarkGray
     Write-Host "  全量模式: powershell -File sync.ps1 -Full（+ rules/skills 原生转换）" -ForegroundColor DarkGray
 }
