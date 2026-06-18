@@ -131,6 +131,17 @@ def load_guard_config() -> dict:
             and secrets.get("scan_prompts", True),
             "block_on_match": secrets.get("block_on_match", False),
         },
+        "git": _load_git_config(cfg.get("git", {})),
+    }
+
+
+def _load_git_config(git: dict) -> dict:
+    forbid_commit = os.environ.get("CURSOR_GUARD_FORBID_AUTO_COMMIT", "1") != "0"
+    forbid_stash = os.environ.get("CURSOR_GUARD_FORBID_STASH", "1") != "0"
+    return {
+        "forbid_auto_commit": forbid_commit and git.get("forbid_auto_commit", True),
+        "forbid_stash": forbid_stash and git.get("forbid_stash", True),
+        "commit_requires_ask": git.get("commit_requires_ask", True),
     }
 
 

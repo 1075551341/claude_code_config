@@ -12,7 +12,13 @@ ensure_lib_path()
 setup_stdio()
 
 from config import load_guard_config
-from shell_patterns import is_network_command, match_deny, match_warn
+from shell_patterns import (
+    is_network_command,
+    match_deny,
+    match_git_commit,
+    match_git_stash,
+    match_warn,
+)
 
 
 def extract_command(data: dict) -> str:
@@ -32,6 +38,36 @@ def main() -> None:
 
         command = extract_command(data)
         if not command:
+            return
+
+        git_cfg = cfg.get("git", {})
+        if git_cfg.get("forbid_stash") and match_git_stash(command):
+            write_json(
+                {
+                    "permission": "deny",
+                    "user_message": "已禁止 Agent 执行 git stash（请本地手动处理工作区）",
+                    "agent_message": "【Cursor Guard】禁止 git stash。勿自动 stash；请用户本地处理或换用 worktree。",
+                }
+            )
+            return
+
+        if git_cfg.get("forbid_auto_commit") and match_git_commit(command):
+            if git_cfg.get("commit_requires_ask"):
+                write_json(
+                    {
+                        "permission": "ask",
+                        "user_message": "Agent 拟执行 git commit — 仅在你本条消息已明确要求「提交」时批准",
+                        "agent_message": "【Cursor Guard】禁止自动提交。用户未显式要求 commit 时不得执行。",
+                    }
+                )
+                return
+            write_json(
+                {
+                    "permission": "deny",
+                    "user_message": "已禁止 Agent 执行 git commit（请本地手动提交）",
+                    "agent_message": "【Cursor Guard】禁止 git commit。请用户本地执行。",
+                }
+            )
             return
 
         deny = match_deny(command)

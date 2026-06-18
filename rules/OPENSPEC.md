@@ -21,9 +21,11 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 | `/opsx:continue` | 单步创建下一制品（依赖链自动判断） |
 | `/opsx:ff` | 快进创建全部制品 |
 | `/opsx:apply` | 按 `tasks.md` 实现 |
-| `/opsx:verify` | 验收 tasks 完成度 |
+| `/opsx:verify` | 验收实现与制品一致 |
+| `/opsx:sync` | 将 delta specs 同步到主 spec |
 | `/opsx:archive` | 归档到 `archive/` |
 | `/opsx:bulk-archive` | 批量归档（检测冲突） |
+| `/opsx:onboard` | CLI 引导（11 阶段）；Cursor 用 `skill/onboarding-guide` |
 
 ## 触发条件
 
@@ -33,6 +35,16 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 | 小修复 <3 文件 | 轻量 `spec/<project>/` |
 | 多阶段大功能 | GSD + workstreams |
 | 新人引导 | skill/onboarding-guide |
+
+## CLI 安装（v1.4.1 core profile，含 sync）
+
+```bash
+npm install -g @fission-ai/openspec@latest   # 需 Node >=20.19
+openspec init --tools cursor --force         # 项目内生成 .cursor/skills + openspec/
+openspec update                              # 刷新 agent skills
+```
+
+> v1.4.1 仅 `core` preset；`sync` 已默认包含。`verify`/`bulk-archive`/`onboard` 见本地 commands + onboarding-guide。
 
 ## 门控
 

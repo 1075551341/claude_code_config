@@ -7,13 +7,13 @@ layer: router
 ## 总纲链（Tool-First Read，禁止凭记忆执行）
 
 1. **路由入口** — 编辑器目录 `CLAUDE.md`（软链 → `~/.claude/CLAUDE.md`）
-2. **归属矩阵** — 同目录 `MANIFEST.yaml`
+2. **归属矩阵** — `MANIFEST.yaml`
 3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
-4. **法典** — 同目录 `SPEC.md`
+4. **法典** — `SPEC.md`
 5. **按需加载**（任务触发后再 Read，禁止全量扫描）：
-   - 技能：索引 `skills/<name>/SKILL.md` | 全量 `skills-native/<name>/SKILL.md`
+   - 技能：`skills/<name>/SKILL.md`
    - Agent：`agents/<name>.md`
-   - 规则：索引 `rules/<name>.md` | 全量 `rules/<name>.mdc`
+   - 规则：`rules/<name>.md`
 
 ## P0 路由集（5）= L1×2 + L2 门控×3
 
@@ -21,16 +21,19 @@ layer: router
 |-------|------|------|
 | using-superpowers | L1 | 会话开始、分类路由 |
 | change-impact-analysis | L1 | 任何修改意图 |
-| brainstorming | L2 | 非简单 ①规划 |
+| brainstorming | L2 | 非简单 ①规划（HARD-GATE） |
 | verification-before-completion | L2 | ④验收 |
 | systematic-debugging | L2 | Bug/调试 |
 
-## 探索优先级（R17）
+## 加载等级 L0–L3
 
-代码探索：`codegraph_explore` / `codegraph_impact` **先于** Grep / Read（详见 `CORE` R17-R18）。
+| 等级 | 内容 | 机制 |
+|------|------|------|
+| L0 | 本文件 + CLAUDE.md + rules/CORE.md | alwaysApply (~2K tokens) |
+| L1 | using-superpowers（会话常驻）, change-impact-analysis（改前必读） | L1 按需全文 Read |
+| L2 | brainstorming / writing-plans / executing-plans / verification / debugging | 阶段触发 Read 全文 |
+| L3 | 所有其他 skills/rules/agents/MCP/Firecrawl/Exa | description 触发词 + slash 路由，按需 Read |
 
-## 加载策略
+**探索优先级（R17）**：`codegraph_explore` 先于 Grep/Read — 详见 `CORE.md` R17-R18 章节。
 
-- **必加载**：本文件（`CLAUDE-ROUTER.mdc`）+ `CORE` 骨架
-- **按需**：其余 rules / skills / agents — 由 CLAUDE.md 五级路由决定
-- **模式**：读同目录 `sync-mode.json` → `index`（联接）| `full`（原生副本）
+**同步模式**：软连接 L0 入口到各编辑器（`scripts/sync.ps1`）；skills/agents/rules 通过本路由按需 Read，不复制。

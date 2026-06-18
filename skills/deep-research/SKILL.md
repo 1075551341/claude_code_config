@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: 系统化深度研究方法论（L3）。触发：/deep-research、深度调研、技术选型、竞品分析。
+description: 深度调研（L3）。触发词：深度调研 | 技术选型 | 方案对比 | 竞品分析 | 市场研究 | 论文调研 | 源码级分析 | 多源验证 | Firecrawl | Exa搜索 | /deep-research
 triggers: [深度研究, 技术选型调研, 竞品分析, 学术调查, 多角度分析, deep-research]
 layer: supplement
 disable-model-invocation: true
@@ -18,11 +18,19 @@ source: catalog/skills/deep-research
 | 步骤 | 工具 |
 |------|------|
 | 广度/抓取 | Firecrawl MCP（`user-crawl`） |
-| 语义搜索 | Exa MCP |
+| 语义搜索 | Exa MCP（`mcp-configs/optional-dev.json` 按需 merge） |
 | 库/API 验证 | Context7 MCP |
 | 项目代码 | codegraph_explore（非网页调研） |
 
-**升级规则**：L1 单点不足 → L2（Exa+单页）；L2 不足或用户要「全面」→ 本 L3 skill。
+### 升级决策（L1→L2→L3）
+
+| 档 | 场景 | 工具 | 触发条件 |
+|----|------|------|---------|
+| L1 | 单点事实/API | Context7 / Exa 单次 | 确认一个具体参数/签名/版本 |
+| L2 | 方案对比/最佳实践 | Exa + Firecrawl 单页 | 对比 >=2 个方案或需要最新最佳实践 |
+| L3 | 深度选型/完整调研 | Firecrawl + Exa + Context7 三源 + V1-V5 交叉验证 | 影响架构决策、技术选型、或需多角度验证 |
+
+**升级信号**：L1 不足（答案矛盾/过时/不完整）→L2→仍不足→L3。
 
 ## 4 阶段流程
 
@@ -49,6 +57,23 @@ source: catalog/skills/deep-research
 - 按重要性排序结论
 - 标注置信度（高/中/低）和证据等级
 - 给出可执行建议和下一步
+
+## 交叉验证清单（L3 强制，每轮逐项通过）
+
+| # | 检查 | 未通过行动 |
+|---|------|-----------|
+| V1 | ≥2 独立来源确认同一事实 | 追加搜索轮次，标注置信度 |
+| V2 | 矛盾来源已显式列出 | 三栏对比表：来源A \| 来源B \| 裁决 |
+| V3 | 时效性断言有日期+版本标注 | 标注"截至 YYYY-MM-DD" |
+| V4 | 训练记忆 vs 实时搜索明确区分 | 来源标注 [web]/[memory]/[inferred] |
+| V5 | 结论标注置信度（高/中/低） | 低于"中"触发追加轮次 |
+
+## 三源兜底
+
+```
+Firecrawl 主 → Exa 兜底 → Context7 补文档
+任一源失败自动切换下一源，禁止静默降级为单一源。
+```
 
 ## 质量标准
 
@@ -83,3 +108,11 @@ source: catalog/skills/deep-research
 ## 信息源
 - [来源列表，标注日期和可信度]
 ```
+
+## 对抗验证（关键结论时触发，可选）
+
+对标注"关键"且置信度"高"的结论，启独立 agent 扮演反方：
+1. Agent 角色：尝试找反例、反论点、或方法论缺陷推翻结论
+2. 推翻 → 降置信度为"中" + 追加搜索轮次
+3. 未推翻 → 标注"对抗验证通过" + 置信度保持"高"
+4. 成本：每次 ~5K tokens，仅关键结论触发，不强制每次

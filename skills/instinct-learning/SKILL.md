@@ -1,6 +1,6 @@
 ---
 name: instinct-learning
-description: Instinct v2 置信度学习系统，从会话提取可复用模式，带置信度评分。
+description: 模式学习（L3）。触发词：模式提取 | instinct | 经验学习 | 失败模式 | 成功模式 | pattern
 layer: supplement
 source: affaan-m/ECC
 disable-model-invocation: true

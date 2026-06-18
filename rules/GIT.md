@@ -73,6 +73,18 @@ main (生产)
 测试：    □ 覆盖充分 □ 边界条件 □ 错误处理
 ```
 
+## Agent Git 禁令（v10）
+
+| 操作 | Agent | 用户本地 |
+|------|-------|----------|
+| `git stash` | **禁止**（shell deny） | 允许 |
+| `git commit` | **禁止自动**；仅显式要求 + Guard 确认 | 允许 |
+| `git push` | 按既有危险操作规则 | 允许 |
+
+**配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash`；Claude Code → `hooks/pre-bash-guard.py`。
+
+> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 仅用户显式指令 + Guard 确认后执行。Pre-bash-guard hook 拦截自动 stash/commit 命令。
+
 ## 危险操作防护
 
 ### 禁止操作（需确认）

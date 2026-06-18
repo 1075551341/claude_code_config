@@ -1,6 +1,6 @@
 ---
 name: caveman-compress
-description: 压缩 agent 长输出与冗余解释。触发词：压缩输出、精简回复、caveman、token 浪费。
+description: 输出压缩（L2）。触发词：压缩输出 | 言简意赅 | 别废话 | caveman | 精简回复 | 压缩
 layer: supplement
 source: JuliusBrussee/caveman
 disable-model-invocation: true

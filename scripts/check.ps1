@@ -1,13 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 环境检查脚本 v3.2（由原「环境健康检查 v2.0」与「工具箱更新 v2.4」合并；已移除对已废弃 settings.sync.json 的检查）
+    快速诊断（<5秒）— 检查关键文件和目录存在性
 
 .DESCRIPTION
-    全量环境体检：逐项检查、打分并生成报告。
-
-    检查段落：
-    S1  目录结构
+    轻量级健康检查，验证文件/目录存在、基本格式。
+    深度校验（冲突检测、R16扫描、完整验证）→ scripts/validate_config.py。
+    设计原则：check.ps1 = 快速诊断；validate_config.py = 深度校验。
     S2  配置文件（格式与安全）
     S3  软链接 / 同步状态
     S4  Hook 安全（死循环风险 / 超时 / Stop Hook）
@@ -553,9 +552,20 @@ $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
 $l0Bases = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE", "CURSOR-EDITOR")
 foreach ($entry in @(
-    @{ Name = "personal L0 rules"; Dir = $cursorRulesDir; Label = "~/.cursor/rules/" },
-    @{ Name = "project L0 rules"; Dir = $cursorProjectRulesDir; Label = "~/.claude/.cursor/rules/" }
+    @{ Name = "personal L0 rules"; Dir = $cursorRulesDir; Label = "~/.cursor/rules/"; Required = $true },
+    @{ Name = "project L0 rules"; Dir = $cursorProjectRulesDir; Label = "~/.claude/.cursor/rules/"; Required = $false }
 )) {
+    if (-not $entry.Required -and -not (Test-Path $entry.Dir)) {
+        Add-Check "CursorGuard" $entry.Name "pass" "absent by design (v14.5 personal-only)"
+        continue
+    }
+    if (-not $entry.Required) {
+        $projFiles = @(Get-ChildItem $entry.Dir -File -Force -ErrorAction SilentlyContinue)
+        if ($projFiles.Count -eq 0) {
+            Add-Check "CursorGuard" $entry.Name "pass" "empty/absent (v14.5 — avoid duplicate with ~/.cursor/rules/)"
+            continue
+        }
+    }
     $l0Missing = @()
     $l0Stale = @()
     foreach ($base in $l0Bases) {
@@ -620,10 +630,16 @@ if (Test-Path $codeartsLegacy) {
     Add-Check "CodeArts" "personal rules" "warn" "Missing: $($codeartsMissing -join ', ') -- run sync.ps1 -Force"
 }
 $codeartsProjMissing = @($codeartsL0 | Where-Object { -not (Test-Path (Join-Path $codeartsProject "$_.mdc")) })
-if ($codeartsProjMissing.Count -eq 0) {
+$codeartsProjFiles = @()
+if (Test-Path $codeartsProject) {
+    $codeartsProjFiles = @(Get-ChildItem $codeartsProject -File -Force -ErrorAction SilentlyContinue)
+}
+if ($codeartsProjFiles.Count -eq 0) {
+    Add-Check "CodeArts" "project rules" "pass" "empty/absent (personal-only, v14.5)"
+} elseif ($codeartsProjMissing.Count -eq 0) {
     Add-Check "CodeArts" "project rules" "pass" "L0 in ~/.claude/.codeartsdoer/rule/"
 } else {
-    Add-Check "CodeArts" "project rules" "warn" "Missing: $($codeartsProjMissing -join ', ') -- run sync.ps1 -Force"
+    Add-Check "CodeArts" "project rules" "warn" "Stale project files: $($codeartsProjMissing -join ', ') -- run sync.ps1 -Force"
 }
 
 # =============================================================

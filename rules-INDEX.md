@@ -1,34 +1,23 @@
-# Rules 功能速查
+# Rules 索引
 
-| # | Rule | 描述 | 加载 |
-|---|------|------|:--:|
-| 1 | CORE | 骨架：编码规范 + 铁律 + 三横切 + 阈值 + 五阶段 | **L0 必须** |
-| 2 | AGENTS | 多 Agent 协作与互斥。触发：并行 Agent、子代理、任务编排 | L4 按需 |
-| 3 | WORKFLOW | 阶段式工作流 discuss→plan→execute→verify→ship | L4 按需 |
-| 4 | SECURITY | 安全开发、审计、漏洞修复 | L4 按需 |
-| 5 | OPENSPEC | OpenSpec delta-spec。触发：openspec/、/opsx: | L4 按需 |
-| 6 | MCP | MCP 配置；codegraph R17 路由 | L4 按需 |
-| 7 | DESIGN | UI/设计规范。触发：DESIGN.md、design token | L4 按需 |
-| 8 | CONTEXT | 上下文工程详细策略（骨架在 CORE） | L4 按需 |
-| 9 | BESTPRACTICE | 最佳实践详细参考（骨架在 CORE） | L4 按需 |
-| 10 | GIT | 分支策略、Git Flow（commit 详规 → skill/git-workflow） | L4 按需 |
-| 11 | FRONTEND | ESLint/Prettier/Stylelint + Vue/React 规范 | **L4 glob** |
+> 自动生成 | 源：`rules/` | v10.2
 
-> 11 rules | L0=1(CORE) | L4 按需=9 | L4 glob=1(FRONTEND) | 源: `rules/<name>.md` → sync → `~/.cursor/rules/<name>.mdc` + 当前工作区 `.cursor/rules/<name>.mdc`
+## alwaysApply — 骨架层
 
-## Cursor 规则分层（`~/.cursor/rules/` + `.cursor/rules/`）
+- [CORE.md](rules/CORE.md) — 三横切 + 阈值 + 编码规范 + 铁律 R12-R19 + 变更彻底性
 
-| 类型 | 文件 | 说明 |
-|------|------|------|
-| L0 alwaysApply | 00-CLAUDE-ROUTER, CLAUDE, CORE, CURSOR-EDITOR | 每轮常驻 |
-| L4 intelligently | AGENTS, WORKFLOW, SECURITY, … | Applied intelligently，不占固定 token |
-| L4 glob | FRONTEND | 仅编辑 `*.{vue,tsx,jsx,css,…}` 时加载 |
+## trigger: model_decision — 按需补充
 
-## catalog 领域模板（项目级复制）
+- [AGENTS.md](rules/AGENTS.md) — 多 Agent 协作、委派路由、防互博
+- [BESTPRACTICE.md](rules/BESTPRACTICE.md) — 提示词设计 + API 设计 + 日志规范
+- [CONTEXT.md](rules/CONTEXT.md) — 上下文工程 + 三级阈值策略 + 三态制品
+- [DESIGN.md](rules/DESIGN.md) — DESIGN.md 设计 token 规范
+- [GIT.md](rules/GIT.md) — Git 分支策略 + Commit 规范 + PR 流程
+- [MCP.md](rules/MCP.md) — MCP 服务器配置 SSOT + 分组视图
+- [OPENSPEC.md](rules/OPENSPEC.md) — OpenSpec delta-spec 规范 + /opsx: 命令链
+- [SECURITY.md](rules/SECURITY.md) — OWASP Top 10 + 密钥管理 + ML 注入防御
+- [WORKFLOW.md](rules/WORKFLOW.md) — 五阶段工作流 + DAG 编排 + deer-flow
 
-| 规则 | 描述 | 全局已同步 |
-|------|------|-----------|
-| RULES_FRONTEND | 与 `rules/FRONTEND.md` 同源；项目覆盖用 | 是 → FRONTEND.mdc |
-| RULES_TYPESCRIPT | TS 类型与工程规范 | 否，复制到项目 |
+## trigger: glob — 文件匹配
 
-复制到项目 `.cursor/rules/` 后由 `globs` 触发。勿再手工放全局 `RULES_FRONTEND.md`。
+- [FRONTEND.md](rules/FRONTEND.md) — ESLint/Prettier/Stylelint + Vue/React 组件规范

@@ -1,0 +1,8 @@
+{
+  "name": "claude-config",
+  "private": true,
+  "version": "10.0.0",
+  "volta": {
+    "node": "20.20.2"
+  }
+}

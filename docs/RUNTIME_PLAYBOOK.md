@@ -2,9 +2,13 @@
 description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理、R16
 ---
 
-# Runtime Playbook（v9.2）
+# Runtime Playbook（v10.1）
 
 > 加载等级详图 → [CLAUDE.md](../CLAUDE.md) L0–L4 | 路由 → [using-superpowers/SKILL.md](../skills/using-superpowers/SKILL.md)
+
+## Git 禁令（v10）
+
+Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式「提交」+ Guard 确认）。见 `rules/GIT.md`。
 
 ## 任务入口
 
@@ -59,10 +63,24 @@ description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理
 ## 代码探索（R17）
 
 ```
-codegraph_explore / impact  →  Grep 精确定位  →  Read 补洞
+codegraph init（首次/新项目）→ codegraph_explore / impact  →  Grep 精确定位  →  Read 补洞
 ```
 
-禁止未探索就大范围 Read。UA 仅在 codegraph 不足时 L3 升级。
+未索引时 MCP 降级为 Grep；`validate_config.py` V16 检查 `~/.claude/.codegraph/` 就绪。
+
+禁止未探索就大范围 Read。UA v10 **disabled**；概念导览需求见 ADR-2026-06-16。
+
+### codegraph init（mandate — 全局 + 项目按需）
+
+```bash
+# 全局配置仓库（已 index）
+cd ~/.claude && codegraph init && codegraph index
+
+# 业务项目（按需，进入项目根后执行）
+codegraph init && codegraph index
+```
+
+**策略（访谈）**：mandate `~/.claude` 全局索引；各业务仓库按需 init，不强制 hook 提示。
 
 ## 上下文治理
 
@@ -72,7 +90,27 @@ codegraph_explore / impact  →  Grep 精确定位  →  Read 补洞
 | 70% | `/summarize` | `/compact` |
 | 90% | 强制摘要或新子 Agent | 同上 |
 
+**GSD 逻辑断点 70%**：完成原子任务 / 切换子 Agent / 写制品 — 不替代上表压缩。
+
 ⛔ 绝不允许 100%。
+
+**Claude Code auto-compact**（模型感知，不写死窗口）：
+
+| 键 | 说明 |
+|----|------|
+| `config/model-context-windows.json` | 模型/后缀 → token 映射 SSOT；可扩展新模型 |
+| `autoCompactWindow` | 由 `scripts/sync-compact-window.py` 或 SessionStart 按当前 `model` 同步 |
+| `env.CLAUDE_CODE_MAX_CONTEXT_TOKENS` | 可选：强制覆盖模型最大窗口（路由非标准模型时） |
+| `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | `"70"` — 70% 触发原生自动 `/compact`（提质；hook 仍 90% 强制提醒） |
+| `env.CLAUDE_COMPACT_WARN_PCT` / `FORCE_PCT` | hook 70% / 90% |
+
+⛔ 勿在 `env` 写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`；勿设 `autoCompactWindow` 超过模型支持值。
+
+Hook SSOT：`hooks/_lib/context_thresholds.py`。换模型后：`python scripts/sync-compact-window.py` 或重启会话。
+
+Cursor 侧独立：`templates/cursor-guard/guard-config.json`（`window_tokens` 默认 200K）。
+
+修改后需 **完全重启** Claude Code。HUD 与 `until auto-compact` 应基于同一解析窗口。
 
 **制品跨会话**：`session-digest.md`、`.planning/`、`openspec/changes/` — 新会话 `@` 引用。
 

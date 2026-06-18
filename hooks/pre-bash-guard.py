@@ -78,6 +78,8 @@ DANGER_PATTERNS = [
     # eval 执行下载内容
     (r"eval\s+[\"'`]\$\(curl",                      "禁止 eval 执行 curl 下载内容"),
     (r"eval\s+[\"'`]\$\(wget",                      "禁止 eval 执行 wget 下载内容"),
+    # Git — Agent 禁止 stash；commit 仅用户显式要求（见 rules/GIT.md）
+    (r"\bgit\s+stash\b",                            "禁止 Agent 执行 git stash（请本地手动处理）"),
 ]
 
 # ── 警告模式（不阻断，注入上下文提示）──────────────────────────────────────────
@@ -90,6 +92,7 @@ WARN_PATTERNS = [
     (r"\bdropdb\b",                                  "dropdb 将永久删除整个数据库，请确认"),
     (r"mongo.*--eval.*db\.dropDatabase",            "dropDatabase 将清除整个数据库"),
     (r"git\s+stash\s+(?:drop|clear)\b",            "stash drop/clear 将永久删除暂存内容"),
+    (r"\bgit\s+commit\b",                           "Agent 禁止自动 git commit；仅用户本条消息显式要求「提交」时执行"),
     (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 将删除未使用的资源，请确认"),
 ]
 

@@ -74,13 +74,17 @@
 
 ---
 
-## Profile 配置
+## Profile 配置（ECC cherry-pick → 本地映射）
+
+> **不安装 ECC 插件**。`LOCAL_HOOK_PROFILE` 映射本地 hook 子集（等同 ECC 概念）。
 
 ```bash
-ECC_HOOK_PROFILE=minimal   # 仅生命周期+安全 (5 hooks)
-ECC_HOOK_PROFILE=standard  # 默认：15 核心 (当前)
-ECC_HOOK_PROFILE=strict    # 15核心 + _optional/ 安全扫描
+LOCAL_HOOK_PROFILE=minimal   # 仅生命周期+安全 (5 hooks)
+LOCAL_HOOK_PROFILE=standard  # 默认：15 核心 (当前)
+LOCAL_HOOK_PROFILE=strict    # 15核心 + _optional/ 安全扫描
 ```
+
+兼容别名：`ECC_HOOK_PROFILE` 同义。
 
 **strict 额外注册**：
 - `_optional/pre-userprompt-secret-scan.py` (dwarvesf/claude-guardrails)
@@ -92,6 +96,20 @@ ECC_HOOK_PROFILE=strict    # 15核心 + _optional/ 安全扫描
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
 Cursor Guard v1.1（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`）：同步、70%/90% 压缩、codegraph 路由、shell/密钥守卫、维护提示。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+
+## 上下文压缩（Claude Code）
+
+| 层 | 配置 | 窗口 | 阈值 |
+|----|------|------|------|
+| **模型解析** | `config/model-context-windows.json` + `[1M]` 后缀 | 按模型动态 | — |
+| **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步） | ≤ 模型最大 | **70%** 自动 `/compact` |
+| **Hook 建议** | `hooks/_lib/context_thresholds.py` | 同上（封顶） | 70% 建议 / **90% 强制** |
+| **HUD 状态条** | claude-hud plugin | API 实测 | 与模型一致 |
+| **Cursor Guard** | `guard-config.json` | 200K（Cursor） | 70/90 |
+
+换模型：`python scripts/sync-compact-window.py` 或新开 Claude Code 会话。
+
+⛔ `autoCompactWindow` 不得超过 `resolve_model_context_tokens()`；勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。
 
 ## 设计原则
 

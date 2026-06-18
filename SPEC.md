@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
-> CLAUDE.md 为路由层（≤250行）；本文件为法典索引。
-> 版本：9.2 | 五柱×五阶段×三横切 | L0–L4 分级加载 + MCP 分层
+> CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
+> 版本：10.2 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需
 
 ---
 
@@ -9,10 +9,10 @@
 
 ```
 RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gstack(审查) + claude-mem(记忆)
-FORMAT   = ECC(路由) + anthropics/skills(格式) + best-practice(实证)
+FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 5审查 + 7补全
 OPTIMIZE = RTK(shell token) + caveman(输出token)
-INSIGHT  = codegraph(代码图谱MCP) + Understand-Anything(交互知识图)
+INSIGHT  = codegraph(代码图谱MCP) + Exa/Firecrawl(外部调研)  # UA v10 disabled
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -43,7 +43,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 |----|------|------|------|------|------|
 | Superpowers | obra/superpowers | 方法论 + P0 + HARD-GATE | P0×4 | brainstorming→writing-plans(原子)→TDD→verify | def-in-depth + 反合理化 |
 | GSD Redux | open-gsd/gsd-core | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先 | subagent(两阶段审查) + context-engineering | read-before-edit + canonical-source + trust-but-verify |
-| OpenSpec | Fission-AI/OpenSpec | 规格格式 | 三轨互斥 | spec-validation + /propose→/apply→/archive | spec-reviewer门控 |
+| OpenSpec | Fission-AI/OpenSpec | 规格格式 core OPSX | 三轨互斥 | spec-validation + opsx 全链 | spec-reviewer门控 |
 | gstack | garrytan/gstack | 审查角色 | 审查路由5+7 + autoplan/ship | eng/ceo/design/qa/security review | browser-qa + quality-gate |
 | claude-mem | thedotmack/claude-mem | 跨会话记忆 | SSOT 渐进式披露 | mem-search/timeline/knowledge-agent | MEMORY.md↔claude-mem统一 + Chroma |
 
@@ -56,7 +56,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 skills | 38 | P0 路由集 5 + supplement 33（含 deep-research/git/pr/mem workflow） |
 | 全局 agents | 25 | core 7 + gstack审查 6(+dx) + gstack补全 9 + gstack v0.19=3 |
 | 全局 rules | 10 | alwaysApply 1(CORE) + lazy 9（含 OPENSPEC） |
-| CLAUDE.md | ≤250 | 精简路由层 + R17-R18 + 五轨搜索策略 |
+| CLAUDE.md | ≤200 | 精简路由层 + R17-R19 引用 + 五轨搜索策略 + Exa 按需 |
 | 全局 hooks | 15 | 核心15（SessionStart 由插件负责）+ _optional 37 |
 | 全局 MCP | 5 常驻 | codegraph+crawl+git+fs+time；ops 见 mcp-configs/ |
 | 全局 plugins | 18 | 安装18 / 启用15 / 禁用3 |
@@ -172,13 +172,25 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 | 轨道 | 路径 | 场景 | 入口 |
 |------|------|------|------|
-| OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更/brownfield | /opsx:propose |
+| OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更/brownfield | /opsx:propose → verify → sync → archive |
 | GSD Redux | `.planning/phases/` | 大功能多阶段 | /plan |
 | 轻量 | `spec/<project>/` | ≤3文件小功能 | /plan |
 
 ---
 
-## MCP 分组（v9.2）
+## ECC cherry-pick（v10，无插件）
+
+| 吸收 | 位置 |
+|------|------|
+| module_resolver.conflicts | MANIFEST.yaml |
+| LOCAL_HOOK_PROFILE | hooks/README.md |
+| GateGuard 概念 | stop-context-monitor, pre-suggest-compact |
+
+**禁止**安装 everything-claude-code 插件（duplicate hooks）。
+
+---
+
+## MCP 分组（v10.0）
 
 | 分组 | 服务器 | 加载 |
 |------|--------|------|
@@ -305,6 +317,25 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
+## v10.1 变更摘要
+
+- **27 repo 卡片**：`docs/research/repos/{slug}.md`
+- **GSD 版本**：open-gsd/gsd-core **1.4.1**（MANIFEST 对齐）
+- **探索链**：codegraph → Grep → Read（UA disabled 明示）
+- **加载**：L0 四入口 + P0 五技能 L1；sync 索引模式
+- **调研 SSOT**：30-repo-deep-research-v10.md（v10.1 内容）+ repos/
+
+## v10.0 变更摘要
+
+- **MANIFEST v10**：ecc_integration cherry_pick、module_resolver、thresholds 双轨、ruflo reference_only
+- **OpenSpec CLI** 1.4.1 **core**（含 sync）；本地 commands 权威；`openspec init --tools cursor`
+- **codegraph mandate**：V16 校验 + `codegraph index`；UA **disabled**
+- **调研 SSOT**：仅 `docs/research/30-repo-deep-research-v10.md`（v7/v8 → archive/）
+- **Firecrawl**：`scripts/firecrawl-mcp.ps1` 包装启动
+- **Git 禁令**：禁止 Agent auto commit / stash（Guard v1.1.6）
+- **阈值**：Cursor/Claude 70/90 + GSD 70% 逻辑断点
+- **Claude Code auto-compact SSOT**：`config/model-context-windows.json` + `hooks/_lib/context_thresholds.py`；详 `docs/RUNTIME_PLAYBOOK.md` §上下文治理
+
 ## v9.2 变更摘要
 
 - **MCP 分层**：Claude Code `.mcp.json` 常驻 5；ops/optional-dev 迁入 `mcp-configs/`
@@ -334,4 +365,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-_版本：9.2 | 日期：2026-06-11 | 五柱×五阶段×三横切 | MCP 分层 + L0–L4_
+> 版本：10.0 | 日期：2026-06-16 | 五柱×五阶段×三横切 | MCP 分层 + L0–L4

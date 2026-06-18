@@ -215,8 +215,8 @@ def v6_mcp_security():
             if name in seen:
                 ERRORS.append(f"V6: Duplicate MCP server: {name}")
             seen.add(name)
-    except Exception:
-        pass
+    except (json.JSONDecodeError, FileNotFoundError, OSError):
+        pass  # noqa: R16 — validate_config self-check, skip unreadable config
 
 
 def v7_layer_isolation():
@@ -318,7 +318,7 @@ def main():
         required_commands = {
             "discuss", "plan", "execute", "verify", "ship", "review",
             "compact", "clear", "status", "propose", "apply", "archive",
-            "autoplan", "office-hours", "workstream", "adr", "deep-research",
+            "autoplan", "office-hours", "workstream", "adr", "deep-research", "sync",
         }
         cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
         missing_cmds = required_commands - cmd_files
@@ -340,6 +340,9 @@ def main():
     check_v13_cursor_guard()
     check_v14_cursor_guard_v11()
     check_v15_loading_tiers()
+    check_v16_codegraph_mandate()
+    check_v17_bare_except_extended()
+    check_v17_auto_compact_window()
 
     report(
         agents=len(agent_names),
@@ -351,13 +354,13 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v9 VALIDATION (15 checks) ===")
+    print("=== .claude v10 VALIDATION (17 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
-        "V10", "V11", "V12", "V13", "V14", "V15",
+        "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name)]
         related_w = [w for w in WARNINGS if w.startswith(check_name)]
@@ -574,6 +577,175 @@ def check_v14_cursor_guard_v11():
         ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v1.1 ({len(v11_hooks)} hooks + docs) ✓")
+
+
+def check_v17_auto_compact_window():
+    """V17: autoCompactWindow 须与当前模型解析窗口一致，且不得超过模型最大上下文."""
+    settings_path = os.path.join(BASE, "settings.json")
+    registry_path = os.path.join(BASE, "config", "model-context-windows.json")
+    if not os.path.isfile(settings_path):
+        return
+    if not os.path.isfile(registry_path):
+        WARNINGS.append("V17: config/model-context-windows.json missing")
+    try:
+        with open(settings_path, "r", encoding="utf-8") as fh:
+            settings = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V17: settings.json unreadable: {exc}")
+        return
+
+    hooks_lib = os.path.join(BASE, "hooks", "_lib")
+    if hooks_lib not in sys.path:
+        sys.path.insert(0, hooks_lib)
+    try:
+        from context_thresholds import (  # noqa: WPS433
+            active_model_name,
+            recommended_autocompact_window,
+            resolve_model_context_tokens,
+        )
+    except ImportError as exc:
+        ERRORS.append(f"V17: cannot import context_thresholds: {exc}")
+        return
+
+    env = settings.get("env") or {}
+    model = active_model_name() or str(settings.get("model") or env.get("ANTHROPIC_MODEL") or "")
+    window = settings.get("autoCompactWindow")
+    env_window = env.get("CLAUDE_CODE_AUTO_COMPACT_WINDOW")
+    pct_override = env.get("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE")
+    warn_pct = env.get("CLAUDE_COMPACT_WARN_PCT")
+    force_pct = env.get("CLAUDE_COMPACT_FORCE_PCT")
+
+    expected = recommended_autocompact_window(model)
+    model_max = resolve_model_context_tokens(model)
+
+    if env_window is not None:
+        WARNINGS.append(
+            "V17: remove env.CLAUDE_CODE_AUTO_COMPACT_WINDOW — "
+            "use autoCompactWindow + config/model-context-windows.json (动态解析)"
+        )
+        try:
+            if int(env_window) > model_max:
+                ERRORS.append(
+                    f"V17: CLAUDE_CODE_AUTO_COMPACT_WINDOW={env_window} exceeds "
+                    f"model max {model_max} for {model!r}"
+                )
+        except (TypeError, ValueError):
+            pass
+
+    if not isinstance(window, int) or window <= 0:
+        ERRORS.append(f"V17: autoCompactWindow={window!r} invalid — run scripts/sync-compact-window.py")
+    elif window > model_max:
+        ERRORS.append(
+            f"V17: autoCompactWindow={window} exceeds model max {model_max} for {model!r}"
+        )
+    elif window != expected:
+        WARNINGS.append(
+            f"V17: autoCompactWindow={window} != resolved {expected} for {model!r} "
+            "— run scripts/sync-compact-window.py"
+        )
+
+    if str(pct_override) != "70":
+        WARNINGS.append(
+            f"V17: CLAUDE_AUTOCOMPACT_PCT_OVERRIDE={pct_override!r} expected '70' "
+            "(native auto-compact at 70%; hooks force at 90%)"
+        )
+    if str(warn_pct) != "70":
+        WARNINGS.append(f"V17: CLAUDE_COMPACT_WARN_PCT={warn_pct!r} expected '70'")
+    if str(force_pct) != "90":
+        WARNINGS.append(f"V17: CLAUDE_COMPACT_FORCE_PCT={force_pct!r} expected '90'")
+
+    if not any(e.startswith("V17:") for e in ERRORS):
+        print(f"  V17: autoCompactWindow {window} / model {model!r} max {model_max} ✓")
+
+
+def check_v16_codegraph_mandate():
+    """V16: codegraph mandate — ~/.claude/.codegraph/ 索引目录就绪."""
+    cg_dir = os.path.join(BASE, ".codegraph")
+    if not os.path.isdir(cg_dir):
+        ERRORS.append("V16: ~/.claude/.codegraph/ missing — run: codegraph init")
+        return
+    markers = (
+        "index.sqlite",
+        "graph.db",
+        "codegraph.db",
+        "daemon.pid",
+        "config.json",
+    )
+    has_marker = any(os.path.isfile(os.path.join(cg_dir, m)) for m in markers)
+    if not has_marker:
+        # 目录存在但无索引文件
+        entries = [
+            f for f in os.listdir(cg_dir)
+            if f not in (".gitignore", "daemon.log")
+        ]
+        if not entries:
+            WARNINGS.append(
+                "V16: .codegraph/ exists but no index — run: codegraph init in ~/.claude"
+            )
+        else:
+            print(f"  V16: .codegraph/ present ({len(entries)} entries) ✓")
+    else:
+        print("  V16: codegraph index markers ✓")
+
+
+def check_v17_bare_except_extended():
+    """V17: R16 扩展 — 裸 except 扫描（hooks/ + scripts/，含 bare except: 和 except Exception:）"""
+    import re as re_mod
+    import glob as glob_mod
+
+    # Infrastructure files exempt from V17 (launchers, guards)
+    INFRA_EXEMPT = {
+        "_editor_hook_launcher.py", "_editor_safe_guard.py",
+        "pre-loop-guard.py",      # L4 isolation layer, by design
+    }
+    scan_dirs = [
+        os.path.expanduser("~/.claude/hooks"),
+        os.path.expanduser("~/.claude/scripts"),
+    ]
+    violations = []
+
+    for scan_dir in scan_dirs:
+        if not os.path.isdir(scan_dir):
+            continue
+        for pyfile in glob_mod.glob(os.path.join(scan_dir, "*.py")):
+            basename = os.path.basename(pyfile)
+            if basename in INFRA_EXEMPT:
+                continue
+            if basename.startswith("_"):
+                continue
+            try:
+                with open(pyfile, 'r', encoding='utf-8', errors='replace') as f:
+                    lines = f.readlines()
+                for i, line in enumerate(lines, 1):
+                    stripped = line.strip()
+                    in_hooks = "hooks" in pyfile.lower()
+                    # Only flag truly bare except: (no exception type) — always an error
+                    if re_mod.match(r'^\s*except\s*:', line):
+                        next_line = lines[i].strip() if i < len(lines) else ""
+                        if 'noqa: R16' not in next_line and 'noqa: R16' not in stripped:
+                            violations.append(f"{basename}:{i} bare 'except:'")
+                    # except Exception: pass — flag in scripts/, exempt in hooks/ (fail-safe design)
+                    elif re_mod.match(r'^\s*except\s+Exception\s*:', line) and not in_hooks:
+                        next_line = lines[i].strip() if i < len(lines) else ""
+                        if 'noqa: R16' not in next_line and 'noqa: R16' not in stripped:
+                            body_lines = []
+                            for j in range(i+1, min(i+3, len(lines))):
+                                bl = lines[j].strip()
+                                if bl and not bl.startswith('#'):
+                                    body_lines.append(bl)
+                                    break
+                            body_text = " ".join(body_lines)
+                            if body_text in ("pass", "") or stripped.endswith(": pass"):
+                                violations.append(f"{basename}:{i} bare 'except Exception: pass'")
+            except (OSError, UnicodeDecodeError) as e:
+                WARNINGS.append(f"V17: 扫描{basename}失败: {e}")
+
+    if violations:
+        for v in violations:
+            ERRORS.append(f"V17: {v}")
+        print(f"  V17 R16 扩展: FAIL ({len(violations)} violations)")
+    else:
+        print("  V17 R16 扩展: PASS (0 bare except) ✓")
 
 
 if __name__ == "__main__":

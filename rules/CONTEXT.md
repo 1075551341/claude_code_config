@@ -23,6 +23,8 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ⛔ 绝不允许达到 100%。Cursor Guard 在 70%/90% 自动注入提醒；实际降低上下文环由 Cursor 原生 `/summarize`（或窗口满时自动 summarize）完成。
 
+**GSD 逻辑断点（70%）**：任务边界 — 完成当前原子任务、切换子 Agent、写入制品；不替代上表压缩阈值。
+
 ## 三态制品
 
 子 Agent 间通过三类结构化制品通信，禁止通过对话历史传递状态：
@@ -59,7 +61,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ## 子 Agent 调度原则
 
-- 研究者/计划者/执行者各自 fresh context（200K token）
+- 研究者/计划者/执行者各自 fresh context（窗口随 `model` / `config/model-context-windows.json` 解析，勿写死）
 - 通过三态制品通信（不通过对话历史）
 - 每个子任务独立原子提交
 - 主窗口保持在 30-40% 上下文使用率
@@ -71,7 +73,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | 编辑器 | 显式压缩 | 压缩前快照 | 结构化摘要（不压缩） |
 |--------|----------|------------|----------------------|
 | **Cursor** | `/summarize` 或「压缩上下文」 | `preCompact` → `~/.cursor/.state/pre-compact-state.json` | 「提取上下文」→ `session-digest.md` |
-| **Claude Code** | `/compact` | `pre-compact-state` hook | Guard 摘要制品 + claude-mem |
+| **Claude Code** | `/compact`（**70% 原生自动**；hook 70% 建议 / 90% 强制） | `pre-compact-state` hook | Guard 摘要制品 + claude-mem |
 
 1. 保留：决策、状态、制品
 2. 丢弃：中间推理、已验证的细节

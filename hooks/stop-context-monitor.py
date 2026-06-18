@@ -13,6 +13,9 @@ import sys
 import io
 from pathlib import Path
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
+from context_thresholds import ctx_force_pct, ctx_warn_pct, estimate_usage_pct  # noqa: E402
+
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -69,14 +72,14 @@ def main():
     counter = load_json(COUNTER_FILE, {"count": 0, "est_tokens": 0})
 
     est_tokens = counter.get("est_tokens", 0)
-    est_pct = min(100, (est_tokens / 180000) * 100) if est_tokens else 0
+    est_pct = estimate_usage_pct(est_tokens)
 
     warnings = []
 
-    if est_pct >= 90:
-        warnings.append(f"🔴 上下文≥90%（预估{est_pct:.0f}%）— 下次会话前必须 /compact")
-    elif est_pct >= 70:
-        warnings.append(f"⚠️ 上下文≥70%（预估{est_pct:.0f}%）— 择机 /compact")
+    if est_pct >= ctx_force_pct():
+        warnings.append(f"🔴 上下文≥{ctx_force_pct():.0f}%（预估{est_pct:.0f}%）— 下次会话前必须 /compact")
+    elif est_pct >= ctx_warn_pct():
+        warnings.append(f"⚠️ 上下文≥{ctx_warn_pct():.0f}%（预估{est_pct:.0f}%）— 择机 /compact")
 
     tool_history = monitor.get("tool_history", [])
     if detect_tool_loop(tool_history):

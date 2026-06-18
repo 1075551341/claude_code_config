@@ -28,6 +28,17 @@ WARN_PATTERNS: list[tuple[str, str]] = [
     (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 请确认范围"),
 ]
 
+_GIT_STASH_RE = re.compile(r"\bgit\s+stash\b", re.IGNORECASE)
+_GIT_COMMIT_RE = re.compile(r"\bgit\s+commit\b", re.IGNORECASE)
+
+
+def match_git_stash(command: str) -> bool:
+    return bool(_GIT_STASH_RE.search(command))
+
+
+def match_git_commit(command: str) -> bool:
+    return bool(_GIT_COMMIT_RE.search(command))
+
 NETWORK_ASK_PATTERN = re.compile(r"\b(curl|wget|nc)\s", re.IGNORECASE)
 
 

@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "C:\\Users\\DELL\\.claude\\plugins\\marketplaces\\claude-plugins-official",
-    "lastUpdated": "2026-06-11T10:51:52.681Z"
+    "lastUpdated": "2026-06-12T08:02:57.924Z"
   },
   "thedotmack": {
     "source": {
@@ -13,7 +13,7 @@
       "repo": "thedotmack/claude-mem"
     },
     "installLocation": "C:\\Users\\DELL\\.claude\\plugins\\marketplaces\\thedotmack",
-    "lastUpdated": "2026-06-11T10:51:52.408Z",
+    "lastUpdated": "2026-06-13T12:26:24.196Z",
     "autoUpdate": true
   },
   "Lum1104": {
@@ -23,5 +23,11 @@
     },
     "installLocation": "C:\\Users\\DELL\\.understand-anything\\repo",
     "lastUpdated": "2026-05-29T03:51:01.419Z"
+  },
+  "jarrodwatts": {
+    "source": {
+      "source": "github",
+      "repo": "jarrodwatts/claude-hud"
+    }
   }
 }

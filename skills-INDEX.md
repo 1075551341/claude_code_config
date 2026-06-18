@@ -1,45 +1,69 @@
-# Skills 功能速查
+# Skills 索引
 
-| # | Skill | 描述 | 等级 |
-|---|-------|------|:--:|
-| 1 | using-superpowers | 技能发现与 Tool-First 路由。会话开始、任务分类。 | **L1** |
-| 2 | change-impact-analysis | 变更影响分析 — 改任何文件前 codegraph_impact+Grep。 | **L1** |
-| 3 | brainstorming | 设计头脑风暴，HARD-GATE：批准前禁止实现。 | **L2** |
-| 4 | writing-plans | 原子级实施计划（2-5min/任务）。 | L2 |
-| 5 | spec-validation | 规格可执行验证；**仅②门控**。 | L2 |
-| 6 | executing-plans | 计划执行，与 writing-plans 配对。 | L2 |
-| 7 | subagent-driven-development | 子 Agent 两阶段审查；非简单 L2 捆绑。 | L2 |
-| 8 | verification-before-completion | 完成前交叉验证；**仅④**。 | **L2** |
-| 9 | systematic-debugging | 系统化调试 + 5Why。 | **L2** |
-| 10 | deep-research | L3 深度调研方法论。 | L3 |
-| 11 | adr-management | 架构决策记录 ADR。 | L3 |
-| 12 | workstream-management | GSD 并行任务流（git worktree）。 | L3 |
-| 13 | claude-to-deerflow | deer-flow 外部编排；>30min L3 only。 | L3 |
-| 14 | git-workflow | Git 提交安全规范（User Rules 迁出）。 | L3 |
-| 15 | pr-workflow | GitHub PR 创建（User Rules 迁出）。 | L3 |
-| 16 | claude-mem-maintenance | claude-mem 查询与维护。 | L3 |
-| 17 | autoplan | CEO→Design→Eng 自动审查流水线。 | L3 |
-| 18 | browser-qa | 浏览器 QA 真实点击验证。 | L3 |
-| 19 | caveman-compress | 压缩 agent 长输出。 | L3 |
-| 20 | context-engineering | 上下文工程方法。 | L3 |
-| 21 | design-pipeline | 设计管线 shotgun→HTML。 | L3 |
-| 22 | finishing-a-development-branch | 分支完成检查、PR、合并。 | L3 |
-| 23 | improve-codebase-architecture | 领域驱动架构改进。 | L3 |
-| 24 | instinct-learning | Instinct v2 模式学习（显式信号）。 | L3 |
-| 25 | karpathy-guidelines | Karpathy 编码四原则。 | L3 |
-| 26 | memory-compression | 上下文压缩协调。 | L3 |
-| 27 | office-hours | 六问产品框架。 | L3 |
-| 28 | onboarding-guide | 新项目 5 阶段引导。 | L3 |
-| 29 | receiving-code-review | 接收审查反馈。 | L3 |
-| 30 | requesting-code-review | 请求代码审查。 | L3 |
-| 31 | ship | 发布管线测试→PR→部署。 | L3 |
-| 32 | structured-artifacts | GSD 结构化制品。 | L3 |
-| 33 | taste-memory | 跨会话设计品味记忆。 | L3 |
-| 34 | test-driven-development | TDD RED-GREEN-REFACTOR。 | L3 |
-| 35 | triage | Bug/Issue 分诊。 | L3 |
-| 36 | understand-anything | 交互式知识图（次于 codegraph）。 | L3 |
-| 37 | using-git-worktrees | Git Worktree 并行开发。 | L3 |
-| 38 | writing-skills | 技能编写元技能。 | L3 |
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.2
 
-> 38 skills | L1=2 | L2 门控=7 | L3 信号=29 | 完整定义: skills/<name>/SKILL.md  
-> **显式调用**：Agent `Read skills/<name>/SKILL.md`（首选）或 slash/关键词触发；L2/L3 设 `disable-model-invocation: true` 防自动注入。
+## L1 — 会话常驻 (2)
+
+- [using-superpowers](skills/using-superpowers/SKILL.md) — 技能发现与 Tool-First 路由
+- [change-impact-analysis](skills/change-impact-analysis/SKILL.md) — 变更影响分析，改前必执行
+
+## L2 — 阶段门控 (8)
+
+| 阶段 | Skill | 触发 |
+|------|-------|------|
+| 1规划 | [brainstorming](skills/brainstorming/SKILL.md) | HARD-GATE 方案设计 |
+| 2规格 | [writing-plans](skills/writing-plans/SKILL.md) | 原子级实施计划 |
+| 2规格 | [spec-validation](skills/spec-validation/SKILL.md) | spec可验证验收标准 |
+| 3执行 | [executing-plans](skills/executing-plans/SKILL.md) | 按计划逐步执行 |
+| 3执行 | [subagent-driven-development](skills/subagent-driven-development/SKILL.md) | 子Agent两阶段审查 |
+| 3调试 | [systematic-debugging](skills/systematic-debugging/SKILL.md) | 根因分析/5Why |
+| 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 完成前交叉验证 |
+| 3执行 | [test-driven-development](skills/test-driven-development/SKILL.md) | RED-GREEN-REFACTOR |
+
+## L3 — 信号触发 (28)
+
+### 调研与决策
+- [deep-research](skills/deep-research/SKILL.md) — L3 深度调研（Firecrawl+Exa+V1-V5验证）
+- [adr-management](skills/adr-management/SKILL.md) — 架构决策记录管理
+- [office-hours](skills/office-hours/SKILL.md) — 六问产品框架
+
+### 审查与质量
+- [requesting-code-review](skills/requesting-code-review/SKILL.md) — 请求代码审查
+- [receiving-code-review](skills/receiving-code-review/SKILL.md) — 接收审查反馈
+- [browser-qa](skills/browser-qa/SKILL.md) — 浏览器QA测试
+- [autoplan](skills/autoplan/SKILL.md) — 自动CEO-Design-Eng审查流水线
+
+### 设计与UI
+- [design-pipeline](skills/design-pipeline/SKILL.md) — 设计管线（shotgun-对比板-HTML）
+- [taste-memory](skills/taste-memory/SKILL.md) — 品味记忆学习（UI偏好跨会话）
+
+### 上下文与记忆
+- [context-engineering](skills/context-engineering/SKILL.md) — 上下文工程方法
+- [memory-compression](skills/memory-compression/SKILL.md) — 上下文压缩与跨会话记忆
+- [claude-mem-maintenance](skills/claude-mem-maintenance/SKILL.md) — claude-mem 记忆维护
+
+### 代码架构
+- [improve-codebase-architecture](skills/improve-codebase-architecture/SKILL.md) — 代码库架构改进
+- [karpathy-guidelines](skills/karpathy-guidelines/SKILL.md) — Karpathy 四原则
+- [structured-artifacts](skills/structured-artifacts/SKILL.md) — GSD 结构化制品管理
+
+### 执行与编排
+- [workstream-management](skills/workstream-management/SKILL.md) — 并行任务流管理（git worktree）
+- [using-git-worktrees](skills/using-git-worktrees/SKILL.md) — Git Worktree 并行开发
+- [claude-to-deerflow](skills/claude-to-deerflow/SKILL.md) — deer-flow 外部编排引擎桥接
+
+### Git与发布
+- [git-workflow](skills/git-workflow/SKILL.md) — Git 工作流
+- [pr-workflow](skills/pr-workflow/SKILL.md) — PR 工作流
+- [ship](skills/ship/SKILL.md) — 发布管线
+- [finishing-a-development-branch](skills/finishing-a-development-branch/SKILL.md) — 开发分支完成处理
+
+### 优化与学习
+- [caveman-compress](skills/caveman-compress/SKILL.md) — 输出压缩（caveman模式）
+- [instinct-learning](skills/instinct-learning/SKILL.md) — 本能学习（Omega提示词优化器）
+- [writing-skills](skills/writing-skills/SKILL.md) — 技能编写元技能
+
+### 导航与引导
+- [understand-anything](skills/understand-anything/SKILL.md) — 代码知识图谱分析（L3按需）
+- [onboarding-guide](skills/onboarding-guide/SKILL.md) — 新人onboarding引导
+- [triage](skills/triage/SKILL.md) — Bug分类（P0-P3）

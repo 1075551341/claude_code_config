@@ -138,13 +138,18 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 
 > **source**: [garrytan/gstack](https://github.com/garrytan/gstack) v0.19
 
-### 三层防护
+### 六层防护
 
-```
-Layer 1: 22MB ML 分类器 — 本地扫描每页和工具输出，检测注入载荷
-Layer 2: Canary Tokens — 注入诱饵 token，触发即告警
-Layer 3: Haiku 转录检查 — 低成本模型快速扫描转录本，异常即熔断
-```
+| 层 | 机制 | 详情 |
+|----|------|------|
+| L1 | 内容安全 | datamarking + 隐藏元素 stripping |
+| L2 | ARIA/URL blocklist | 已知恶意模式过滤 |
+| L3 | 结构性过滤 | DOM 树异常检测 |
+| L4 | TestSavantAI BERT-small ONNX | 22MB，本地运行，零网络调用 |
+| L4b | Claude Haiku 转录检查 | 低成本快速扫描，异常即熔断 |
+| L5 | Canary token | 注入诱饵 token，触发即确定性阻断 |
+| L6 | Ensemble 裁决 | L4 AND L4b 都 >= 0.75 才 BLOCK |
+| 可选 L4c | DeBERTa-v3 | 721MB，`GSTACK_SECURITY_ENSEMBLE=deberta` 启用 |
 
 ### 适用场景
 

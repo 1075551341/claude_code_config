@@ -1,6 +1,6 @@
 ---
 name: pr-workflow
-description: GitHub PR 创建流程。触发：开 PR、create PR、pull request、提交 PR。
+description: PR工作流（L3）。触发词：PR | pull request | 拉取请求 | 代码合并 | 创建PR | 提交审查
 triggers: [开 PR, create PR, pull request, 提交 PR, gh pr]
 layer: supplement
 disable-model-invocation: true

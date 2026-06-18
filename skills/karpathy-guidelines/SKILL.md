@@ -1,6 +1,6 @@
 ---
 name: karpathy-guidelines
-description: Karpathy 编码四原则及实施规则。触发词：简洁代码、过度设计、surgical changes、think before coding。
+description: Karpathy编程四原则（L3）。触发词：kk原则 | karpathy | 编程风格 | 代码哲学 | 四原则
 layer: supplement
 source: forrestchang/andrej-karpathy-skills
 disable-model-invocation: true

@@ -4,7 +4,16 @@
       "Skill(deep-research)",
       "mcp__exa__web_search_exa",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Bash(claude plugin *)",
+      "Bash(where.exe bash *)",
+      "Bash(CLAUDE_CODE_GIT_BASH_PATH=\"D:/Git/usr/bin/bash.exe\" claude plugin *)",
+      "Bash(D:/Git/usr/bin/bash.exe *)",
+      "Read(//d/Git/usr/bin/**)",
+      "Bash(powershell *)",
+      "Bash(mv .claude-plugin 0.1.1/)",
+      "Read(//c/c/Users/DELL/.claude/plugins/cache/jarrodwatts/claude-hud/0.1.1/.claude-plugin/**)",
+      "Skill(firecrawl:firecrawl-scrape)"
     ]
   }
 }

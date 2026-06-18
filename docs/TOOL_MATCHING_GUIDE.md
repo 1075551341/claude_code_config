@@ -12,7 +12,25 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 2. **Tool-First** — MANIFEST → skill → agent → MCP
 3. **memory MCP ≠ claude-mem** — 短期节点 vs 跨会话持久化
 
-## 分组速查（v9.2）
+## 前置条件（v10.1）
+
+| 能力 | 前置 | 验证 |
+|------|------|------|
+| codegraph 探索 (R17) | `codegraph init` + `codegraph index` | `validate_config.py` V16 |
+| OpenSpec CLI | `npm i -g @fission-ai/openspec`（Node>=20.19）+ `openspec init --tools cursor` | `openspec --version` |
+| 深度调研 L3 | Exa + Firecrawl（`FIRECRAWL_API_KEY` 用户环境变量 + `~/.cursor/mcp.json` `${...}`） | MCP 重启后 `firecrawl_search` |
+
+### Firecrawl 认证（Req 6）
+
+`user-crawl` / `.mcp.json` crawl 均依赖 `FIRECRAWL_API_KEY`：
+
+1. 在 [firecrawl.dev](https://firecrawl.dev) 获取 API Key
+2. 环境变量：`FIRECRAWL_API_KEY=fc-...`（Windows **用户或系统**环境变量均可）
+3. **Cursor/Claude Code**：`crawl` 经 `scripts/firecrawl-mcp.ps1` 启动（从 User/Machine 读 Key；**勿**在 `mcp.json` 写 `${...}` 或占位符）
+4. 验证：API 直连 OK → **重启 Cursor MCP** → `firecrawl_search` 成功
+5. **未配置时**：L3 降级为 Exa + Context7，报告中标注「Firecrawl 不可用」
+
+## 分组速查（v10.1）
 
 | 分组 | 服务器 | 加载 | 典型场景 |
 |------|--------|------|----------|
@@ -26,8 +44,9 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 | 场景 | 首选 | 备选 |
 |------|------|------|
-| 代码结构/调用链 (R17) | codegraph_explore | Grep → Read |
-| 项目全貌/领域 | understand-anything | codegraph |
+| 代码结构/调用链 (R17) | codegraph_explore（需 `codegraph index`） | Grep → Read |
+| OpenSpec 规格变更 | openspec CLI + `/opsx:*` | rules/OPENSPEC.md |
+| 项目全貌/领域 | codegraph_explore + Grep | UA（v10 disabled） |
 | 查库文档/API (调研 L1) | ctx7 | exa 单次 |
 | GitHub PR/Issue | gh | pr-workflow skill |
 | 本地 Git 历史 | git | git-workflow skill |
@@ -59,7 +78,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 └─ 跨会话回忆 → claude-mem（非 memory MCP 重复存储）
 ```
 
-## 跨编辑器 MCP 映射（v9.2）
+## 跨编辑器 MCP 映射（v10.0）
 
 MCP 配置格式不同，无法合并。通过语义匹配桥接：
 

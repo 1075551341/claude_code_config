@@ -10,6 +10,13 @@ import sys
 import io
 import os
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
+from context_thresholds import (  # noqa: E402
+    ctx_force_pct,
+    ctx_warn_pct,
+    estimate_usage_pct,
+)
+
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -20,9 +27,6 @@ except Exception as e:
 WARN_COUNT = int(os.environ.get("CLAUDE_COMPACT_WARN", 20))       # 轻度提醒
 CRITICAL_COUNT = int(os.environ.get("CLAUDE_COMPACT_CRITICAL", 35))  # 强烈建议
 FORCE_COUNT = int(os.environ.get("CLAUDE_COMPACT_FORCE", 50))       # 紧急警告
-
-# 上下文窗口估算 (基于 ~200K token 窗口)
-CTX_WINDOW_TOKENS = 180000
 
 # Token 消耗估算（每种工具大致的上下文消耗）
 TOOL_COST = {
@@ -89,12 +93,12 @@ def main():
         count, est_tokens = load()
         count += 1
         est_tokens += TOOL_COST.get(tool_name, DEFAULT_COST)
-        est_pct = min(100, (est_tokens / CTX_WINDOW_TOKENS) * 100)
+        est_pct = estimate_usage_pct(est_tokens)
         loop_warns = update_tool_history(tool_name)
 
         result = None
 
-        if count >= FORCE_COUNT or est_pct >= 70:
+        if count >= FORCE_COUNT or est_pct >= ctx_force_pct():
             result = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
@@ -108,7 +112,7 @@ def main():
             count = 0
             est_tokens = 0
 
-        elif count >= CRITICAL_COUNT or est_pct >= 50:
+        elif count >= CRITICAL_COUNT or est_pct >= ctx_warn_pct():
             result = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
@@ -120,7 +124,7 @@ def main():
                 }
             }
 
-        elif count >= WARN_COUNT or est_pct >= 40:
+        elif count >= WARN_COUNT or est_pct >= (ctx_warn_pct() - 10):
             result = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",

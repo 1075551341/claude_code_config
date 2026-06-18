@@ -1,5 +1,5 @@
 ---
-description: Cursor MCP 常驻/按需 + Plugins 边界 — v9.2
+description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.0
 ---
 
 # Cursor MCP Profile

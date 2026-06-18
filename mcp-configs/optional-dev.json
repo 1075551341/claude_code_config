@@ -1,7 +1,7 @@
 {
   "toolset": "optional-dev",
-  "description": "浏览器调试 / 设计稿 — 按需 merge 到 .mcp.json",
-  "servers": ["chrome-devtools", "figma"],
+  "description": "浏览器调试 / 设计稿 / 语义搜索 — 按需 merge 到 .mcp.json",
+  "servers": ["chrome-devtools", "figma", "exa"],
   "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
   "mcpServers": {
     "chrome-devtools": {
@@ -15,6 +15,14 @@
       "args": ["-y", "@modelcontextprotocol/server-figma"],
       "env": {
         "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      }
+    },
+    "exa": {
+      "_description": "Exa 语义搜索 — L3 深度调研时按需 merge。场景：学术/新闻语义搜索、多源交叉验证（与 Firecrawl 互补）。触发：/deep-research、多源验证需求",
+      "command": "npx",
+      "args": ["-y", "@anthropic/exa-mcp-server"],
+      "env": {
+        "EXA_API_KEY": "${EXA_API_KEY}"
       }
     }
   }

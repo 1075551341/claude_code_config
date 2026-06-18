@@ -154,27 +154,40 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ---
 
-## Rules 来源与 token（v9.2）
+## Rules 来源与 token（v10.0）
 
 | 来源 | 平台 | 控制方式 |
 |------|------|----------|
-| CLAUDE / CORE / ROUTER | 双平台 sync | 源文件去重；CORE 保留 R12–R18 + 编码规范 |
+| CLAUDE / CORE / ROUTER | 双平台 sync | 源文件去重 |
 | plugin-* rules | 仅 Cursor | 禁插件即消失 |
-| User Rules | 仅 Cursor Settings | 4 行指针（[snippet](../templates/cursor-user-rules-snippet.txt)） |
-| lazy rules (GIT/FRONTEND/OPENSPEC) | L0路由按需Read | 匹配文件前零成本 |
+| User Rules | 仅 Cursor Settings | 指针 + L3 skills |
+| lazy rules (GIT/FRONTEND/OPENSPEC) | L0 路由按需 Read | glob 触发 |
 
-## v9.2 加载策略（Token 减负）
+## v10.0 加载策略
 
 | 等级 | 同步内容 | Cursor 机制 |
 |------|----------|-------------|
-| L0 | CLAUDE-ROUTER + CLAUDE + CORE + CURSOR-EDITOR | alwaysApply rules（`~/.cursor/rules/` 个人级单落点） |
-| L1 | using-superpowers, change-impact-analysis | 会话常驻（无 disable） |
-| L2/L3 | 其余 `skills/` | `disable-model-invocation: true` + 阶段 Read |
+| L0 | CLAUDE-ROUTER + CLAUDE + CORE + CURSOR-EDITOR | alwaysApply |
+| L1 | using-superpowers, change-impact-analysis | 会话常驻 |
+| L2/L3 | 其余 skills | disable-model-invocation + 阶段 Read |
 | L4 | agents, MCP, plugins | 显式调用 |
 
-- **插件/MCP**：见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)；Claude Code `.mcp.json` 常驻 5
-- **运行时**：见 [RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
-- **详图**：`spec/claude-config-integration/plan-v9.1-token-loading.md`（v9.2 补全见 MANIFEST v9.2）
+- **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+- **运行时**：[RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
+- **v10 任务**：[tasks-v10.md](../spec/claude-config-integration/tasks-v10.md)
+- **历史详图**：`spec/claude-config-integration/plan-v9.1-token-loading.md`
+
+---
+
+## 去重策略（v14.5+）
+
+每次 `sync.ps1` 写入前：
+
+1. **L0 rules**：`Remove-AllRuleVariantsByBaseName` 删除同 basename 的 `.md`/`.mdc`/大小写变体
+2. **单文件链接**：`Remove-ScopedSameTypeTarget` 先删后 `mklink`
+3. **Cursor 项目 rules**：**不部署** `~/.claude/.cursor/rules/`（仅个人级 `~/.cursor/rules/`，防双份）
+
+回归：`powershell -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1`
 
 ---
 

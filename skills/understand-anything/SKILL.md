@@ -16,6 +16,8 @@ loading_tier: L3
 
 # Understand-Anything — 交互式知识图谱
 
+> **v10 状态：disabled** — 插件已关、探索走 codegraph（R17）。复启用见 `docs/ADR/2026-06-16-v10-ua-disabled-endless-mode.md`
+>
 > 来源：Lum1104/Understand-Anything v2.7.5 | 多 Agent 管线生成交互式知识图
 
 ## 功能

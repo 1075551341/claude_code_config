@@ -1,5 +1,5 @@
 {
-  "version": "1.1.5",
+  "version": "1.1.6",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -43,6 +43,11 @@
     "enabled": true,
     "ask_network": true,
     "profile": "standard"
+  },
+  "git": {
+    "forbid_auto_commit": true,
+    "forbid_stash": true,
+    "commit_requires_ask": true
   },
   "secrets": {
     "scan_prompts": true,

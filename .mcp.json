@@ -9,11 +9,14 @@
     },
     "crawl": {
       "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索（L2/L3 调研）。",
-      "command": "npx",
-      "args": ["-y", "firecrawl-mcp"],
-      "env": {
-        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
-      }
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\firecrawl-mcp.ps1"
+      ]
     },
     "git": {
       "_description": "Git 版本库直接操作。场景：提交历史、diff、blame、本地分支。",

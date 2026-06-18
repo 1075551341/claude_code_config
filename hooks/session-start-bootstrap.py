@@ -12,6 +12,9 @@ import io
 import os
 import subprocess
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
+from context_thresholds import sync_settings_compact_window  # noqa: E402
+
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -107,6 +110,13 @@ def main():
 
         cwd = data.get("cwd", os.getcwd())
 
+        # 按当前模型同步 autoCompactWindow（封顶，不超出模型最大上下文）
+        try:
+            sync_result = sync_settings_compact_window(write=True)
+        except Exception as sync_err:
+            sync_result = {"updated": False, "error": str(sync_err)}
+            print(f"session-start-bootstrap: compact window sync failed: {sync_err}", file=sys.stderr)
+
         # 检测包管理器
         package_manager = detect_package_manager(cwd)
 
@@ -118,6 +128,11 @@ def main():
 
         # 输出启动信息
         parts = [f"🚀 Session Bootstrap:", f"  • 项目路径: {cwd}"]
+        if sync_result.get("updated"):
+            parts.append(
+                f"  • 上下文窗口已同步: autoCompactWindow={sync_result.get('resolved_window')} "
+                f"({sync_result.get('model')})"
+            )
         if package_manager != "unknown":
             parts.append(f"  • 包管理器: {package_manager}")
         if codegraph_status:

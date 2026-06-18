@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: Git 提交与安全规范。触发：commit、提交、git commit、保存更改。
+description: Git 工作流（L3）。触发词：git commit | git分支 | 提交代码 | 创建分支 | merge | rebase | 版本管理 | 推送 | push
 triggers: [commit, 提交, git commit, 创建提交, 保存更改]
 layer: supplement
 disable-model-invocation: true
@@ -14,6 +14,9 @@ source: user-rules-migration
 
 ## 安全协议
 
+- **禁止** Agent **自动** `git commit` / `git stash`（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard`）
+- **禁止** `git stash`（任何形式）；换用 `git worktree` 或用户本地处理
+- **仅当**用户本条消息**显式**要求「提交/commit」时才可 `git commit`（Cursor 会弹窗确认）
 - **禁止**修改 git config
 - **禁止**破坏性命令（`push --force`、`hard reset` 等），除非用户明确要求
 - **禁止**跳过 hooks（`--no-verify`、`--no-gpg-sign` 等），除非用户明确要求
@@ -55,4 +58,5 @@ EOF
 
 - 无变更时 empty commit
 - 用户未要求时不主动 commit
+- **禁止** Agent 执行 `git stash`（任何子命令）
 - `git` 带 `-i` 交互标志

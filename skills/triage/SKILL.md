@@ -1,6 +1,6 @@
 ---
 name: triage
-description: 问题分诊，Bug报告/Issue的第一道分类关卡，判断类型、严重度、指派方向
+description: Bug分类分诊（L2）。触发词：bug报告 | issue分类 | 问题分诊 | 故障排查 | 什么错误 | 出错了 | 报错了 | triage
 triggers: [问题分诊, bug分类, issue分类, triage, 问题报告, 用户反馈]
 layer: supplement
 source: mattpocock/skills

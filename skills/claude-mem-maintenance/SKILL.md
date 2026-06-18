@@ -1,6 +1,6 @@
 ---
 name: claude-mem-maintenance
-description: claude-mem 跨会话记忆与日常维护。触发：claude-mem、记忆搜索、mem 维护。
+description: 记忆维护（L3）。触发词：记忆管理 | claude-mem | 记忆清理 | 记忆优化 | 记忆搜索
 triggers: [claude-mem, 记忆搜索, mem search, 跨会话记忆]
 layer: supplement
 disable-model-invocation: true
@@ -11,6 +11,14 @@ source: user-rules-migration
 # Claude-Mem 使用与维护
 
 > **L3**：记忆查询或维护任务时 Read。⑤学习默认 claude-mem pattern 提取；`instinct-learning` 仅显式「提取模式」信号。
+
+## Endless Mode（P1 评估，默认关闭）
+
+见 [ADR-2026-06-16](../../docs/ADR/2026-06-16-v10-ua-disabled-endless-mode.md) §决策 2。
+
+- **不**默认修改 `CLAUDE_MEM_*` 启用 Endless Mode
+- 长会话：GSD 70% 逻辑断点 + `/summarize` + claude-mem 检索
+- **结论**：维持默认关闭 — 详见 ADR §决策 2 评估表
 
 ## 架构速览
 

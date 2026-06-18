@@ -5,6 +5,16 @@
 
 ---
 
+## 五柱职责边界（v10）
+
+| 柱 | 文档/工具 | 禁止互博 |
+|----|-----------|----------|
+| Superpowers | P0 skills + 五阶段 | 不重复写计划逻辑 |
+| GSD | `.planning/` + workstream | 与 OpenSpec 三轨互斥 |
+| OpenSpec | `openspec/changes/` + CLI | 与 GSD 同功能不双写 |
+| gstack | `agents/` 审查路由 | 禁用 compound-engineering |
+| claude-mem | 插件 + R18 | taste-memory 走 observation |
+
 ## 何时创建项目 DESIGN.md
 
 - 新建 UI 项目 / 落地页 / Dashboard / 设计系统

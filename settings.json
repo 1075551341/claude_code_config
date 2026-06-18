@@ -1,11 +1,7 @@
 {
-  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 5.1",
-  "statusLine": {
-    "type": "command",
-    "command": "input=$(cat); m=$(echo \"$input\"|jq -r '.model.display_name//.model.id//\"?\"'); p=$(echo \"$input\"|jq -r '.context_window.used_percentage//empty'); ci=$(echo \"$input\"|jq -r '.context_window.total_input_tokens//0'); co=$(echo \"$input\"|jq -r '.context_window.total_output_tokens//0'); cw=$(echo \"$input\"|jq -r '.context_window.current_usage.cache_creation_input_tokens//0'); cr=$(echo \"$input\"|jq -r '.context_window.current_usage.cache_read_input_tokens//0'); ef=$(echo \"$input\"|jq -r '.effort.level//empty'); th=$(echo \"$input\"|jq -r '.thinking.enabled//false'); r5=$(echo \"$input\"|jq -r '.rate_limits.five_hour.used_percentage//empty'); r7=$(echo \"$input\"|jq -r '.rate_limits.seven_day.used_percentage//empty'); wd=$(echo \"$input\"|jq -r '.workspace.current_dir//\"\"'); gr=$(echo \"$input\"|jq -r '.workspace.repo|if . then \"\\(.host)/\\(.owner)/\\(.name)\" else empty end'); pr=$(echo \"$input\"|jq -r '.pr.number//empty'); ps=$(echo \"$input\"|jq -r '.pr.review_state//empty'); wt=$(echo \"$input\"|jq -r '.worktree.name//empty'); vm=$(echo \"$input\"|jq -r '.vim.mode//empty'); st=$(echo \"$input\"|jq -r '.output_style.name//\"default\"'); fn(){ n=${1:-0}; if [ \"$n\" -ge 1000000 ];then awk \"BEGIN{printf \\\"%.1fM\\\",$n/1000000}\";elif [ \"$n\" -ge 1000 ];then awk \"BEGIN{printf \\\"%.1fK\\\",$n/1000}\";else printf '%d' \"$n\";fi;}; bar(){ pt=${1:-0}; pi=$(awk \"BEGIN{printf \\\"%d\\\",$pt}\" 2>/dev/null||echo 0); fl=$((pi*8/100)); [ \"$fl\" -gt 8 ]&&fl=8; [ \"$fl\" -lt 0 ]&&fl=0; em=$((8-fl)); cc='\\033[38;5;71m'; [ \"$pi\" -ge 90 ]&&cc='\\033[38;5;167m'; [ \"$pi\" -ge 70 ]&&[ \"$pi\" -lt 90 ]&&cc='\\033[38;5;173m'; [ \"$pi\" -ge 50 ]&&[ \"$pi\" -lt 70 ]&&cc='\\033[38;5;143m'; echo -e \"$cc\"; i=0; while [ $i -lt $fl ];do printf '█'; i=$((i+1));done; echo -e '\\033[2m'; i=0; while [ $i -lt $em ];do printf '·'; i=$((i+1));done; echo -e '\\033[0m';}; rp(){ pt=${1:-0}; lb=${2:-\"\"}; pi=$(awk \"BEGIN{printf \\\"%d\\\",$pt}\" 2>/dev/null||echo 0); cc='\\033[38;5;71m'; [ \"$pi\" -ge 90 ]&&cc='\\033[38;5;167m'; [ \"$pi\" -ge 70 ]&&[ \"$pi\" -lt 90 ]&&cc='\\033[38;5;173m'; [ \"$pi\" -ge 50 ]&&[ \"$pi\" -lt 70 ]&&cc='\\033[38;5;143m'; echo -e \"$cc$lb:$pi%\\033[0m\";}; L1=\"\"; L1+=\"\\033[38;5;39m$m\\033[0m\"; if [ -n \"$p\" ];then L1+=\" \\033[38;5;238mctx\\033[0m\"; L1+=\"$(bar \"$p\")\"; L1+=\" $p%\";fi; if [ \"$ci\" -gt 0 ]||[ \"$co\" -gt 0 ];then L1+=\" \\033[38;5;238m│\\033[0m\"; L1+=\" \\033[38;5;247mi$(fn \"$ci\")\\033[0m\"; [ \"$co\" -gt 0 ]&&L1+=\" \\033[38;5;247mo$(fn \"$co\")\\033[0m\";fi; if [ \"$cw\" -gt 0 ]||[ \"$cr\" -gt 0 ];then L1+=\" \\033[38;5;238m│\\033[0m\"; [ \"$cw\" -gt 0 ]&&L1+=\" \\033[38;5;73m+$(fn \"$cw\")\\033[0m\"; [ \"$cr\" -gt 0 ]&&L1+=\" \\033[38;5;73m←$(fn \"$cr\")\\033[0m\";fi; if [ -n \"$ef\" ]&&[ \"$ef\" != \"medium\" ];then L1+=\" \\033[38;5;243meff:$ef\\033[0m\";fi; if [ \"$th\" = \"true\" ];then L1+=\" \\033[38;5;73mthink\\033[0m\";fi; if [ -n \"$vm\" ]&&[ \"$vm\"!=\"INSERT\" ];then L1+=\" \\033[38;5;131m$vm\\033[0m\";fi; rl=\"\"; [ -n \"$r5\" ]&&rl+=\"$(rp \"$r5\" \"5h\") \"; [ -n \"$r7\" ]&&rl+=\"$(rp \"$r7\" \"7d\")\"; if [ -n \"$rl\" ];then L1+=\" \\033[38;5;238m│\\033[0m $rl\";fi; L2=\"\"; if [ -n \"$wd\" ];then dd=\"$wd\"; grt=$(cd \"$wd\" 2>/dev/null&&git -c core.optionalLocks=true rev-parse --show-toplevel 2>/dev/null||true); if [ -n \"$grt\" ]&&[ \"$grt\"!=\"/\" ]&&[ \"$grt\"!=\"$wd\" ];then rl_path=\"${wd#$grt/}\"; dd=\"$(basename \"$grt\")/$rl_path\";else dd=\"${wd/#$HOME/\\~}\";fi; L2+=\"\\033[38;5;103m$dd\\033[0m\";fi; gb=$(cd \"$wd\" 2>/dev/null&&git -c core.optionalLocks=true branch --show-current 2>/dev/null||true); [ -n \"$gb\" ]&&L2+=\" \\033[38;5;108m$gb\\033[0m\"; [ -n \"$gr\" ]&&L2+=\" \\033[38;5;244m$gr\\033[0m\"; [ -n \"$wt\" ]&&L2+=\" \\033[38;5;243mwt:$wt\\033[0m\"; if [ -n \"$pr\" ];then pb=\"#$pr\"; [ -n \"$ps\" ]&&pb=\"#$pr:$ps\"; L2+=\" \\033[38;5;140m$pb\\033[0m\";fi; [ -n \"$st\" ]&&[ \"$st\"!=\"default\" ]&&L2+=\" \\033[38;5;243m$st\\033[0m\"; echo -e \"$L1\"; [ -n \"$L2\" ]&&echo -e \"$L2\""
-  },
+  "_comment": "Claude Code 主配置 | MCP权威源: .mcp.json | 版本: 5.3 | autoCompactWindow 由模型解析同步，见 config/model-context-windows.json",
   "autoCompactEnabled": true,
-  "autoCompactWindow": 100000,
+  "autoCompactWindow": 1000000,
   "autoUpdaterStatus": "disabled",
   "cleanupPeriodDays": 30,
   "effortLevel": "high",
@@ -15,7 +11,7 @@
     "claude-md-management@claude-plugins-official": false,
     "claude-mem@thedotmack": true,
     "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": false,
     "context7@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
     "firecrawl@claude-plugins-official": true,
@@ -27,7 +23,8 @@
     "skill-creator@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
-    "understand-anything@Lum1104": true
+    "understand-anything@Lum1104": false,
+    "claude-hud@jarrodwatts": true
   },
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "sk-1f8ae3b532bc46cfaabaea2d95ff6f60",
@@ -38,7 +35,11 @@
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro[1M]",
     "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "deepseek-v4-pro[1M]",
     "ANTHROPIC_MODEL": "deepseek-v4-pro[1M]",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70",
+    "CLAUDE_COMPACT_FORCE_PCT": "90",
+    "CLAUDE_COMPACT_WARN_PCT": "70",
     "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
     "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
     "CLAUDE_CODE_DISABLE_AUTOUPDATER": "true",
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
@@ -76,11 +77,6 @@
           {
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
             "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-codegraph-sync.py",
-            "timeout": 120000,
             "type": "command"
           }
         ],
@@ -136,11 +132,6 @@
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-loop-guard.py",
             "timeout": 5000,
             "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-tmux-reminder.py",
-            "timeout": 5000,
-            "type": "command"
           }
         ],
         "matcher": "Bash"
@@ -190,11 +181,6 @@
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
             "timeout": 30000,
             "type": "command"
-          },
-          {
-            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-context-monitor.py",
-            "timeout": 8000,
-            "type": "command"
           }
         ],
         "matcher": ""
@@ -202,7 +188,7 @@
     ]
   },
   "language": "Chinese",
-  "model": "deepseek-v4-pro",
+  "model": "deepseek-v4-pro[1M]",
   "permissions": {
     "allow": [
       "Read",
@@ -271,5 +257,9 @@
     ]
   },
   "skipDangerousModePermissionPrompt": true,
-  "skipWorkflowUsageWarning": true
+  "skipWorkflowUsageWarning": true,
+  "statusLine": {
+    "type": "command",
+    "command": "cols=${COLUMNS:-}; case \"$cols\" in \"\"|*[!0-9]*) cols=$(stty size </dev/tty 2>/dev/null | awk '{print $2}');; esac; case \"$cols\" in \"\"|*[!0-9]*) cols=120;; esac; export COLUMNS=$(( cols > 4 ? cols - 4 : 1 )); plugin_dir=$(ls -1d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/*/claude-hud/*/ 2>/dev/null | sort -V | tail -1); exec \"/d/config_sys/dev-cache/volta/tools/image/node/18.20.8/node\" \"${plugin_dir}dist/index.js\""
+  }
 }

@@ -1,16 +1,16 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code 多编辑器同步脚本 v14.5 — 仅L0入口 + 个人级单落点
+    Claude Code 多编辑器同步脚本 v15.0 — 全量 rules/skills/agents/CLAUDE.md 软链接 + 去重
 
 .DESCRIPTION
-    索引模式(默认): 7 总纲软链接 + skills/agents 目录联接 + 编辑器 rules 单文件链接与路由部署
-    全量模式(-Full): 7 总纲 + agents/ 联接 + rules/skills 编辑器原生格式转换 + 路由规则部署
+    索引模式(默认): 全量 rules + skills/agents 目录联接 + CLAUDE.md 部署
+    全量模式(-Full): rules/skills 编辑器原生格式转换（除联接外）
 
-    不同步：commands/、hooks/、scripts/、MCP 配置。
+    不同步：commands/、hooks/、scripts/、MCP 配置、plugins/
 
 .PARAMETER Full
-    全量同步（agents 联接 + rules/skills 原生格式转换）
+    全量同步（rules/skills 原生格式转换 + 联接）
 
 .PARAMETER Force
     强制重建所有链接
@@ -19,8 +19,8 @@
     仅预览，不写盘
 
 .PARAMETER Scope
-    同步范围（Cursor Guard 影响驱动同步用）:
-    all=默认全量 | indexes=仅7总纲+INDEX软链 | rules=仅 rules 部署
+    同步范围:
+    all=默认全量 | rules=仅 rules 部署 | skills=仅 skills 联接 | agents=仅 agents 联接
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File sync.ps1
@@ -33,7 +33,7 @@ param(
     [switch]$Full,
     [switch]$Force,
     [switch]$DryRun,
-    [ValidateSet("all", "rules", "indexes")]
+    [ValidateSet("all", "rules", "skills", "agents")]
     [string]$Scope = "all"
 )
 
@@ -760,26 +760,35 @@ function Sync-EditorRulesIndex {
     # L0 关键入口优先：先删同名变体，再部署 ROUTER/CLAUDE/CORE/CURSOR-EDITOR
     Deploy-L0KeyEntries -RulesConfig $cfg -EditorName $EditorName
 
-    # 清理非L0的过期规则文件（v14.5+：仅同步L0关键入口，详细rules通过L0路由按需Read加载）
-    if ((Test-Path $targetRulesDir) -and -not (IsLink $targetRulesDir)) {
-        $existing = Get-ChildItem $targetRulesDir -File -Force -ErrorAction SilentlyContinue
-        foreach ($ef in $existing) {
-            if ($ef.BaseName -in $PROJECT_L0_BASE_NAMES) { continue }
-            if ($DryRun) {
-                Write-Fix "[预演] 将删除非L0规则 $ef.Name"
-            }
-            else {
-                Remove-ScopedSameTypeTarget -TargetPath $ef.FullName -ScopeLabel "rules" -RequiredExt $ef.Extension | Out-Null
-                Write-Fix "已删除非L0规则 $ef.Name（L0路由按需加载）"
-                $script:stats.Removed++
-            }
-        }
-    }
+    # 清理非L0的过期规则文件（v15.0+：全量同步所有 rules，不再仅L0；去重由前一步骤处理）
+    # 注：所有规则通过 frontmatter trigger/alwaysApply 控制编辑器加载时机，
+    # 全量部署不意味着全量alwaysApply — 按需加载由 frontmatter 控制。
 
     $ruleFiles = Get-ChildItem $rulesSrc -Filter "*.md" |
         Where-Object { $_.Name -ne "README.md" } |
         Sort-Object Name
     $validBaseNames = @($ruleFiles | ForEach-Object { $_.BaseName })
+
+    # v15.0+：全量同步所有 rules（非仅L0），通过 frontmatter 控制加载时机
+    $syncedRules = 0
+    foreach ($rf in $ruleFiles) {
+        $srcContent = [System.IO.File]::ReadAllText($rf.FullName, [System.Text.Encoding]::UTF8)
+        $converted = Convert-ToNativeRuleContent -Content $srcContent -Format $format
+        $targetFile = "$($rf.BaseName)$ext"
+        $targetPath = Join-Path $targetRulesDir $targetFile
+        if ($DryRun) {
+            Write-Ok "[预演] 将部署规则 $($rf.BaseName)$ext"
+            $syncedRules++
+            continue
+        }
+        if (Write-RuleDeployFile -SourcePath $rf.FullName -TargetPath $targetPath -Content $converted -ScopeLabel "rules") {
+            $syncedRules++
+        }
+    }
+    if ($syncedRules -gt 0) {
+        Write-Fix "rules 已同步 $syncedRules 个文件 → $targetRulesDir"
+        $stats.Files += $syncedRules
+    }
 
     if (-not $DryRun) {
         Cleanup-StaleRulesAlternateFormat -RulesConfig $cfg -ValidBaseNames $validBaseNames -TargetRulesDir $targetRulesDir
@@ -1651,12 +1660,12 @@ function Convert-RulesFrontmatter {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code 多编辑器同步脚本 v14.3" -ForegroundColor Cyan
+Write-Host "  Claude Code 多编辑器同步脚本 v15.0" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  源目录 : $CLAUDE_DIR" -ForegroundColor DarkGray
 Write-Host "  目标编辑器: $($EDITORS -join ', '), $($CODEARTS_EDITORS -join ', ')" -ForegroundColor DarkGray
-$modeLabel = if ($Full) { "全量（agents联接 + rules/skills原生转换）" } else { "索引（7总纲 + skills/agents联接 + rules单文件链接）" }
+$modeLabel = if ($Full) { "全量（rules/skills 原生转换）" } else { "索引（全量 rules + skills/agents 联接）" }
 Write-Host "  同步模式: $modeLabel" -ForegroundColor DarkGray
 $syncModeLabel = if ($isAdmin) { "管理员（符号链接）" } else { "非管理员（目录联接，Junction）" }
 Write-Host "  模式   : $syncModeLabel" -ForegroundColor DarkGray
@@ -1753,9 +1762,8 @@ if ($Full) {
     Write-Host "  已同步: 7总纲软链接 + agents/联接 + rules/skills 原生格式转换" -ForegroundColor DarkGray
     Write-Host "  切回索引: powershell -File sync.ps1 -Force" -ForegroundColor DarkGray
 } else {
-    Write-Host "  已同步: 7总纲软链接 + skills/agents 联接 + Cursor 个人/项目 rules" -ForegroundColor DarkGray
-    Write-Host "  总纲执行: CLAUDE-ROUTER → CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC.md" -ForegroundColor DarkGray
-    Write-Host "  全量模式: powershell -File sync.ps1 -Full（+ rules/skills 原生转换）" -ForegroundColor DarkGray
+    Write-Host "  已同步: 全量 rules + skills/agents 目录联接 + CLAUDE.md" -ForegroundColor DarkGray
+    Write-Host "  全量模式: powershell -File sync.ps1 -Full（+ rules/skills 原生格式转换）" -ForegroundColor DarkGray
 }
-Write-Host "  不同步: hooks/ scripts/ MCP配置 plugins/ commands/ settings.json（Claude Code 专用，仅 ~/.claude）" -ForegroundColor DarkGray
+Write-Host "  不同步: hooks/ scripts/ MCP配置 plugins/ commands/ settings.json（编辑器不兼容，仅 ~/.claude）" -ForegroundColor DarkGray
 Write-Host ""

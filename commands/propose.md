@@ -4,6 +4,9 @@ description: 创建 OpenSpec 规格提案（②规格阶段）
 
 # /propose（别名: /spec）— 创建规格提案
 
+> **core CLI**：优先 `openspec` `/opsx:propose`；无 CLI 时按下列手动手册。
+> 安装：`npm i -g @fission-ai/openspec@latest` → `openspec init --tools cursor`（v1.4.1 无 expanded preset）
+
 基于 OpenSpec 模式，为新功能/变更创建规格提案。
 
 ## 输出
