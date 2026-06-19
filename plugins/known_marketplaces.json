@@ -13,7 +13,7 @@
       "repo": "thedotmack/claude-mem"
     },
     "installLocation": "C:\\Users\\DELL\\.claude\\plugins\\marketplaces\\thedotmack",
-    "lastUpdated": "2026-06-13T12:26:24.196Z",
+    "lastUpdated": "2026-06-19T08:13:38.472Z",
     "autoUpdate": true
   },
   "Lum1104": {
@@ -28,6 +28,8 @@
     "source": {
       "source": "github",
       "repo": "jarrodwatts/claude-hud"
-    }
+    },
+    "installLocation": "C:\\Users\\DELL\\.claude\\plugins\\marketplaces\\jarrodwatts",
+    "lastUpdated": "2026-06-19T08:18:29.400Z"
   }
 }

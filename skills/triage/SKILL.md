@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Bug分类分诊（L2）。触发词：bug报告 | issue分类 | 问题分诊 | 故障排查 | 什么错误 | 出错了 | 报错了 | triage
+description: Bug 分类（P0-P3 优先级）。触发词：triage | Bug分类 | 优先级分类 | 问题分类
 triggers: [问题分诊, bug分类, issue分类, triage, 问题报告, 用户反馈]
 layer: supplement
 source: mattpocock/skills

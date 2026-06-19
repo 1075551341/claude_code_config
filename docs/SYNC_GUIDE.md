@@ -1,10 +1,12 @@
 ---
-description: 跨编辑器配置同步指南 v14.5
+description: 跨编辑器配置同步指南 v16.0
 ---
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v14.5 | **日期**: 2026-06-11 | **配置**: `sync-mode.json` | **模式**: 索引（默认） / 全量（`-Full`）
+> **版本**: v16.0 | **日期**: 2026-06-19 | **脚本**: `scripts/sync.ps1` | **三模式**: 默认(L0入口) / `-Skills`(+skills/) / `-All`(全量) | 预览: `-DryRun`
+>
+> **v16 重要变更**：弃用 `sync-mode.json` / `-Full` / `-Force` / `-Scope`，改为开关参数 `-Skills` / `-All` / `-DryRun`。同步方式：符号链接优先，`Copy-Item` 兜底；写入前删同名目标（去重）。
 
 ## 边界原则（Claude Code ↔ 编辑器）
 
@@ -31,17 +33,19 @@ description: 跨编辑器配置同步指南 v14.5
 
 ---
 
-## 双模式概览
+## 三模式概览（v16.0）
 
-| 内容 | 索引模式（默认） | 全量模式（`-Full`） |
-|------|:----------------:|:-------------------:|
-| 7 总纲（含 `CLAUDE-ROUTER.mdc`） | ✅ 软链接 | ✅ 软链接 |
-| `skills/` | ✅ 目录联接 | ❌ → `skills-native/` 格式转换 |
-| `agents/` | ✅ 目录联接 | ✅ 目录联接 |
-| `rules/` | ✅ 仅L0入口部署 | ❌ → 仅L0入口（原生格式） |
-| sync-mode.json | `index` | `full` |
+| 内容 | 默认（L0入口） | `-Skills` | `-All` |
+|------|:--------------:|:---------:|:------:|
+| L0 入口（CLAUDE.md / CORE / CLAUDE-ROUTER） | ✅ | ✅ | ✅ |
+| `skills/` | ❌ | ✅ | ✅ |
+| `agents/` | ❌ | ❌ | ✅ |
+| `rules/`（全量） + CLAUDE.md | L0 only | L0 only | ✅ |
 
-**永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
+- **目标编辑器**：cursor / devin(`~/.claude/.devin`) / qoder / trae / codearts
+- **rules 扩展名**：cursor·qoder·codearts → `.mdc`；devin·trae → `.md`
+- **`-DryRun`**：仅预览，不写盘
+- **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
 
 ---
 
@@ -58,8 +62,8 @@ description: 跨编辑器配置同步指南 v14.5
 │   ├── CLAUDE.mdc                        (总纲副本，源 ~/.claude/CLAUDE.md)
 │   ├── CORE.mdc                          (L0骨架，源 ~/.claude/rules/CORE.md)
 │   └── CURSOR-EDITOR.mdc                 (Cursor专属守护层)
-└── sync-mode.json                        { "mode": "index" }
 ```
+> v16：不再写 `sync-mode.json`；模式由命令行开关（`-Skills`/`-All`）即时决定。
 
 > **v14.5+**：不再部署到项目级目录（`~/.claude/.cursor/rules/`），避免双份显示。详细rules通过L0路由按需Read加载。
 
@@ -87,22 +91,23 @@ CLAUDE-ROUTER(必加载) → CLAUDE.md → MANIFEST.yaml → *-INDEX.md → SPEC
 ```
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Force
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：仅 L0 入口
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -DryRun    # 预览
 ```
 
 ---
 
-## 模式 B：全量同步（`-Full`）
+## 模式 B / C：`-Skills` 与 `-All`
 
-| 资产 | 输出路径（Cursor 示例） |
-|------|-------------------------|
-| rules（仅L0） | `~/.cursor/rules/*.mdc`（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
-| skills | `~/.cursor/skills-native/<name>/SKILL.md` |
-| agents | `~/.cursor/agents/` 目录联接 |
+| 模式 | 同步内容 | 命令 |
+|------|----------|------|
+| `-Skills` | L0 入口 + `skills/` | `sync.ps1 -Skills` |
+| `-All` | rules（全量）+ skills + agents + CLAUDE.md | `sync.ps1 -All` |
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Full -Force
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 ```
 
 ---
@@ -113,7 +118,7 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Full -Force
 powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 ```
 
-`check.ps1` S3 段读取 `sync-mode.json` 并按 index/full 分别验证；S4 确认 hooks 仅在 `~/.claude`；**S4b** 检查 Cursor Guard 部署。
+`check.ps1` 验证同步目标存在；S4 确认 hooks 仅在 `~/.claude`；**S4b** 检查 Cursor Guard 部署。
 
 ---
 
@@ -134,9 +139,9 @@ powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 ```
 
-**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -Scope all -Force`（L0 入口先删同名变体再部署）。
+**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -All`（写入前先删同名变体再部署）。
 
-**自动同步**：编辑 `~/.claude` 下 `rules/`、总纲、INDEX 等可同步路径后，按 MANIFEST 影响图调用 `sync.ps1 -Scope rules|indexes|all`（`skills/`/`agents/` 联接不重复 sync）。
+**自动同步**：编辑 `~/.claude` 下 `rules/`、总纲、INDEX 等可同步路径后，调用 `sync.ps1`（默认 L0）或 `sync.ps1 -All`（含 rules/skills/agents）。
 
 **上下文**：70% `agent_message` 提醒；90% `stop` 注入 `followup_message` 强制摘要 + 建议开新对话。
 
@@ -193,6 +198,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 从 v14 升级
 
+- **v16.0**：模式参数化（`-Skills`/`-All`/`-DryRun`），弃用 `sync-mode.json`/`-Full`/`-Force`/`-Scope`；符号链接优先 + Copy-Item 兜底；devin 目标移至 `~/.claude/.devin`，rules 扩展名按编辑器区分（.mdc / .md）
 - v14.5：仅L0入口同步，取消项目级双落点，移除Windsurf（已改名Devin）
 - v14 索引：`skills/`、`agents/` 联接；`rules/` 改为编辑器侧单文件链接（不再联接整个目录）
 - v14 总纲 7 文件：新增 `CLAUDE-ROUTER.mdc`

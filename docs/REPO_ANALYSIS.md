@@ -1,7 +1,9 @@
-# 仓库全量分析报告 v2.1
+# 仓库全量分析报告 v2.2
 
-> 版本 v2.1 | 日期: 2026-06-16 | 分析范围: 27 仓库 | 运行配置: **v10.1**
+> 版本 v2.2 | 日期: 2026-06-19 | 分析范围: 28 张卡片 | 运行配置: **v10.2**（文档 v10.2.1 增量）
 > 调研 SSOT: [docs/research/30-repo-deep-research-v10.md](research/30-repo-deep-research-v10.md) | 卡片: [repos/](research/repos/)
+>
+> **v10.2.1 双源刷新（2026-06-19）**：superpowers 6.0.0 待升级（#1773 守卫）；gsd-core v1.5.0 走 ADR 评估；codegraph F1（impact 需 env）/F2（指标 ~16%成本/~58%工具调用）；+plugins-official 第 29 卡。
 
 ---
 
@@ -18,7 +20,7 @@
 | 文档 SSOT 链 v10.1 | ✅ |
 | Firecrawl L3 双源 | ✅ `firecrawl-mcp.ps1` |
 | Git 禁令（无 auto commit/stash） | ✅ Guard + pre-bash-guard |
-| UA | ✅ disabled（ADR） |
+| UA | ✅ l3_on_demand（ADR 修订 1，插件 disabled + catalog 保留） |
 | GSD forensics | ✅ 仅文档 [gsd-gaps-v10.md](research/gsd-gaps-v10.md) |
 | claude-mem Endless | ✅ 评估→默认关闭（ADR） |
 | Node OpenSpec | ✅ Volta 20.20.2 |
@@ -72,7 +74,7 @@
 | L1 | deer-flow 2.0 | claude-to-deerflow L3 | 可选 |
 | L2 | RTK + caveman | hooks + skills | ✅ |
 | L3 | codegraph | MCP + mandate | ✅ |
-| L3 | Understand-Anything | **disabled** | codegraph-only |
+| L3 | Understand-Anything | **l3_on_demand** | codegraph 主；插件 disabled + catalog 保留，/understand-* 触发 |
 | 参考 | ruflo | 文档 only | reference_only |
 
 ---
@@ -89,7 +91,7 @@
 
 ## 四、冗余/互博（已解决）
 
-1. codegraph vs UA — UA disabled
+1. codegraph vs UA — UA l3_on_demand（插件 disabled，catalog 保留）
 2. deer-flow vs workstream — MANIFEST excludes
 3. gstack vs compound-engineering — 插件禁用
 4. RTK vs caveman — 输入 vs 输出

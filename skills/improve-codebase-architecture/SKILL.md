@@ -1,6 +1,6 @@
 ---
 name: improve-codebase-architecture
-description: 领域驱动架构改进。对现有代码做结构化重构，跨文件、渐进式、有验证保障。
+description: 代码库架构改进。触发词：架构改进 | 重构架构 | 代码库优化 | 技术债务
 triggers: [架构改进, 重构, 代码结构, architecture, refactor, 模块拆分, 领域驱动]
 layer: supplement
 source: mattpocock/skills

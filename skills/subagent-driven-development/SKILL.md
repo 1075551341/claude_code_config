@@ -30,7 +30,9 @@ writing-plans 原子任务
         → 失败 → 打回修改 → 重新审查
 ```
 
-## 两阶段审查
+## 两阶段审查（v6：单 task-reviewer 一遍裁决）
+
+> **superpowers v6.0.0 对齐**：原「双裁决」（spec 审查者 + 代码审查者各一遍）合并为**单一 task-reviewer 一次性裁决**两阶段（~50% token / ~2x 速度）。两阶段仍是**审查标准**，不再是两个独立 subagent。Controller **禁止告诉审查者忽略什么**（防遗漏注入）。
 
 每个子Agent 完成任务后，审查者独立审查：
 

@@ -23,17 +23,22 @@ loading_tier: L1
 
 L2/L3 设 `disable-model-invocation: true` → 不会自动注入上下文；**进入阶段时必须显式 Read**。
 
-## 加载等级（L0–L4）
+## 加载等级（L0–L3，CLAUDE.md 细分 L4）
 
 | 等级 | 机制 |
 |------|------|
-| L0 | CLAUDE + CORE alwaysApply |
+| L0 | CLAUDE-ROUTER + CLAUDE + CORE alwaysApply |
 | L1 | 本 skill + change-impact-analysis 常驻 |
 | L2 | 进入阶段 Read 全文（见下表） |
-| L3 | slash/关键词后 Read supplement skill |
-| L4 | Task 子代理、MCP、claude-mem |
+| L3 | slash/关键词后 Read supplement skill / agent / MCP / claude-mem |
+
+> **统一口径**：ROUTER（L0 always）以 **L0–L3** 为准，L3 = 其余 skills/rules/agents/MCP/claude-mem。CLAUDE.md 出于细分把 agents(Task)/MCP/claude-mem 单列为 **L4**，等价于 ROUTER 的 L3 子集。本 skill 采用 ROUTER 口径。
 
 同会话同一 skill 已 Read → 不重复 Read（制品 hash 变更除外）。
+
+## Per-harness 工具映射（superpowers v6 references）
+
+v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射各 harness（Claude Code / Codex / Copilot / Gemini / Pi / Antigravity）。本地落地：Cursor 用 Read/Glob/Grep/Task；Claude Code 用对应原生工具。**禁止凭记忆套用某 harness 的专有工具名**（如在 Cursor 误调 Claude Code 专属命令）。
 
 ## 任务分类
 

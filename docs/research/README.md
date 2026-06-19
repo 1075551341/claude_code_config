@@ -1,15 +1,15 @@
 # 调研文档索引
 
-> 快照日期: 2026-06-18 | **当前运行配置: v10.2**
+> 快照日期: 2026-06-19 | **当前运行配置: v10.2（文档 v10.2.1 增量）**
 
 **SSOT**：`30-repo-deep-research-v10.md` — v10 全量仓库深度调研。
 **archive/**：v7-v9 历史调研版本，仅供参考。
 
 | 文档 | 说明 |
 |------|------|
-| [30-repo-deep-research-v10.md](30-repo-deep-research-v10.md) | **27 仓库深度调研 SSOT（v10.1）** |
+| [30-repo-deep-research-v10.md](30-repo-deep-research-v10.md) | **28 仓库深度调研 SSOT（v10.2.1）** |
 | [gsd-gaps-v10.md](gsd-gaps-v10.md) | GSD forensics/resume 缺口与本地替代 |
-| [repos/](repos/) | **27 张 per-repo 卡片** |
+| [repos/](repos/) | **28 张 per-repo 卡片** |
 
 ## Repo 卡片目录
 
@@ -29,7 +29,7 @@
 
 ### 技能 / 工具
 
-- [shanraisshan-claude-code-best-practice](repos/shanraisshan-claude-code-best-practice.md) · [mattpocock-skills](repos/mattpocock-skills.md) · [anthropics-skills](repos/anthropics-skills.md) · [forrestchang-andrej-karpathy-skills](repos/forrestchang-andrej-karpathy-skills.md) · [2025emma-vibe-coding-cn](repos/2025emma-vibe-coding-cn.md) · [composiohq-awesome-claude-skills](repos/composiohq-awesome-claude-skills.md) · [hesreallyhim-awesome-claude-code](repos/hesreallyhim-awesome-claude-code.md) · [x1xhlol-system-prompts-and-models](repos/x1xhlol-system-prompts-and-models.md) · [voltagent-awesome-design-md](repos/voltagent-awesome-design-md.md) · [nextlevelbuilder-ui-ux-pro-max-skill](repos/nextlevelbuilder-ui-ux-pro-max-skill.md) · [chalarangelo-30-seconds-of-code](repos/chalarangelo-30-seconds-of-code.md) · [anthropics-claude-code-action](repos/anthropics-claude-code-action.md) · [eyaltoledano-claude-task-master](repos/eyaltoledano-claude-task-master.md) · [github-github-mcp-server](repos/github-github-mcp-server.md) · [zilliztech-claude-context](repos/zilliztech-claude-context.md)
+- [anthropics-claude-plugins-official](repos/anthropics-claude-plugins-official.md) · [shanraisshan-claude-code-best-practice](repos/shanraisshan-claude-code-best-practice.md) · [mattpocock-skills](repos/mattpocock-skills.md) · [anthropics-skills](repos/anthropics-skills.md) · [forrestchang-andrej-karpathy-skills](repos/forrestchang-andrej-karpathy-skills.md) · [2025emma-vibe-coding-cn](repos/2025emma-vibe-coding-cn.md) · [composiohq-awesome-claude-skills](repos/composiohq-awesome-claude-skills.md) · [hesreallyhim-awesome-claude-code](repos/hesreallyhim-awesome-claude-code.md) · [x1xhlol-system-prompts-and-models](repos/x1xhlol-system-prompts-and-models.md) · [voltagent-awesome-design-md](repos/voltagent-awesome-design-md.md) · [nextlevelbuilder-ui-ux-pro-max-skill](repos/nextlevelbuilder-ui-ux-pro-max-skill.md) · [chalarangelo-30-seconds-of-code](repos/chalarangelo-30-seconds-of-code.md) · [anthropics-claude-code-action](repos/anthropics-claude-code-action.md) · [eyaltoledano-claude-task-master](repos/eyaltoledano-claude-task-master.md) · [github-github-mcp-server](repos/github-github-mcp-server.md) · [zilliztech-claude-context](repos/zilliztech-claude-context.md)
 
 **配置真相源链**：
 

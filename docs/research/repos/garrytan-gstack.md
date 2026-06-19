@@ -1,6 +1,8 @@
-# garrytan/gstack v0.19
+# garrytan/gstack（包 1.58.x / CLI 0.19）
 
-> 层: 五柱 | 置信度: 高 | 刷新: 2026-06-17 | 来源: GitHub + 官方文档 + 多源交叉验证
+> 层: 五柱(审查) | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub CHANGELOG + PR + repo 双源交叉
+>
+> **版本说明**：CLI 自述 `v0.19`（binary 标识），npm/package 实际为 **1.58.1.0**（2026-06-14）。两套编号并存，本地以 CLI 行为为准。
 
 ## 核心价值
 
@@ -109,3 +111,10 @@ iOS → +ios-specialist (QA/fix/design-review/clean/sync)
 - ML 注入防御 6 层全量文档化（原 3 层）
 - Taste-Memory 衰退机制明确化（5%/周）
 - 810× 方法论实证数据补充
+
+## v10.2.1 增量（双源刷新 2026-06-19）
+
+- **版本号体系修正**：CLI `v0.19` 与 package `1.58.1.0` 并存（本地以 CLI 行为为准）
+- **Codex 审查默认开启**（1.57.10.0）：`codex_reviews` 主开关，覆盖 `/review` `/ship` 四个 plan-review + `/document-release` + `/autoplan`；缺失/未登录时降级 Claude subagent（一行原因，不静默跳过）→ 对齐本地 `codex-reviewer` 路由「默认参与」
+- **重技能懒加载**（1.56.0.0）：5 个最重 skill（plan-ceo/eng/design/devex-review + office-hours）改为「常驻骨架 + 按需 sections/ STOP-Read」→ 本地重 skill 可借鉴此模式
+- **plain-text 兜底**：问题选择器中断时降级纯文本提问（与本地 brainstorming #1773 守卫策略一致：交互工具非强制）

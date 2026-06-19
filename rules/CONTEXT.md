@@ -6,6 +6,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 # 上下文工程规则
 
 > **骨架内容已迁至 `rules/CORE.md`**：三级阈值、三态制品、DAG依赖图。此处保留详细策略。
+> **v10.2**: 三级阈值、三态制品、DAG依赖图 → [rules/CORE.md](CORE.md)。本文保留 Canonical Source Precedence、Trust-But-Verify 等详细策略。
 
 ## 核心约束
 

@@ -1,6 +1,6 @@
 ---
 name: claude-mem-maintenance
-description: 记忆维护（L3）。触发词：记忆管理 | claude-mem | 记忆清理 | 记忆优化 | 记忆搜索
+description: claude-mem 记忆维护。触发词：记忆维护 | mem维护 | 清理记忆 | 记忆去重
 triggers: [claude-mem, 记忆搜索, mem search, 跨会话记忆]
 layer: supplement
 disable-model-invocation: true
@@ -27,13 +27,22 @@ source: user-rules-migration
 - **Search**：`plugin/skills/mem-search/SKILL.md` 或 HTTP API
 - **多配置**：`CLAUDE_MEM_DATA_DIR` + 可选 `CLAUDE_MEM_WORKER_PORT`
 
-## 三层查询（R18）
+## 三层查询（R18 检索侧）
 
 ```
 1. search 索引 → 识别关键 IDs
 2. get_observations 详情
 3. 避免重复 Read 已分析文件
 ```
+
+## /learn ↔ mem 写入管道（供给侧）
+
+R18 的另一半：学习产物**写入** observation 由 [`instinct-learning`](../instinct-learning/SKILL.md) §⑤ 持久化 定义。
+
+- 写入规范：title ≤60 字 / tags 领域+类型 / body ≤200 字 / 高置信度才入库
+- **写入前先 search 去重**：命中则更新 evidence，不新建（防记忆库膨胀）
+- 来源：brainstorming 决策 · design-shotgun 品味 · bug 修复模式 · /learn 项目模式
+- 闭环：写入（instinct-learning）→ 检索（本 skill R18）→ 复用 → 跳过重复分析
 
 ## 隐私
 

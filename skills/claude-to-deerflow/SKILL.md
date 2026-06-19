@@ -1,6 +1,6 @@
 ---
 name: claude-to-deerflow
-description: deer-flow 外部编排桥接。触发：长时间调研、多角度验证、>30min自主任务、/deer-flow。
+description: deer-flow 外部编排引擎桥接。触发词：deer-flow | 外部编排 | LangGraph | 长时任务 | /deer-flow
 triggers: [deer-flow, 外部编排, LangGraph, 深度调研, 长时间任务]
 layer: supplement
 disable-model-invocation: true

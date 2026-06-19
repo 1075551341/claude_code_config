@@ -1,6 +1,6 @@
 ---
 name: karpathy-guidelines
-description: Karpathy编程四原则（L3）。触发词：kk原则 | karpathy | 编程风格 | 代码哲学 | 四原则
+description: Karpathy 四原则指导。触发词：Karpathy | 四原则 | 代码精炼 | 删除代码 | 简单至上
 layer: supplement
 source: forrestchang/andrej-karpathy-skills
 disable-model-invocation: true

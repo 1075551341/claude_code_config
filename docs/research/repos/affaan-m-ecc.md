@@ -1,6 +1,6 @@
-# affaan-m/ECC v2.0.0-rc.1
+# affaan-m/ECC v2.0.0
 
-> 层: L1 治理 | 置信度: 高 | 刷新: 2026-06-16
+> 层: L1 治理 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub Releases + Discussion #2213 双源
 
 ## 核心价值
 
@@ -37,3 +37,9 @@
 
 - v2.0 仍为 rc；跟踪正式版但不阻塞 v10.1
 - cherry-pick 策略访谈二次确认
+
+## v10.2.1 增量（双源刷新 2026-06-19）
+
+- **v2.0.0 stable 已发布**（2026-06-10，Discussion #2213）：跨 harness OS（CC/Codex/OpenCode/Cursor/Gemini/Zed）
+- ⚠️ **Node 21+ plugin hook 静默失效**（rc.1 缺陷，stable 已修）→ 本地 cherry-pick 不装插件，不受影响
+- cherry-pick 策略保持；`hook_profile` 三档为 MANIFEST 声明（落地在 v10.3 backlog）

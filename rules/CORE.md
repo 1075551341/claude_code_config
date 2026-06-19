@@ -15,7 +15,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 ```
 L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra四模式)
 L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
-L3 洞察 — codegraph(静态索引,47%token减少) + Understand-Anything(L3按需) + Firecrawl/Exa(外部搜索)
+L3 洞察 — codegraph(静态索引,官方均值~16%成本/~47%token/~58%工具调用/~22%更快) + Understand-Anything(L3按需) + Firecrawl/Exa(外部搜索)
 可选外部 — task-master MCP(任务管理,core/standard/all三级,~70%token减少,按需启用) + deer-flow bridge(claude-to-deerflow skill)
 
 所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
@@ -190,9 +190,9 @@ Claude Code 可用 `time` MCP 获取当前时间。
 | 需求 | 首选 | 次选 | 禁止 |
 |------|------|------|------|
 | 函数/类/调用链 | codegraph_explore/trace | Grep精确定位 | 全库Grep盲扫 |
-| 变更影响 | codegraph_impact | change-impact-analysis | 手动猜 |
+| 变更影响 | codegraph_explore blast-radius（impact 需 env） | change-impact-analysis | 手动猜 |
 | 项目全貌/领域 | codegraph_explore | Grep 精扫 | 逐文件Read |
-| 变更可视化 | codegraph_impact | Grep | 忽略影响面 |
+| 变更可视化 | codegraph_explore blast-radius | Grep | 忽略影响面 |
 | 跨会话历史 | claude-mem search→get_observations | — | 重复分析已读文件 |
 
 **claude-mem 三层**：search索引 → 识别关键IDs → fetch详情（token高效）
@@ -203,12 +203,14 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 | 行为 | 判定 | 后果 |
 |------|------|------|
-| 改文件前未 codegraph_impact | 违反 R17 | 变更范围不可信 |
-| 跳过 codegraph 直接 Grep 搜函数 | 违反 R17 | ~47% token 浪费 |
+| 改文件前未查 blast-radius（`codegraph_explore`，或启用 env 后 `codegraph_impact`） | 违反 R17 | 变更范围不可信 |
+| 跳过 codegraph 直接 Grep 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费 |
 | codegraph 已返回结果仍 Read 同文件 | 违反 R17 | 重复 token 消耗 |
 | 探索前未确认 codegraph init | 违反 mandate | 索引缺失，回退全量 Grep |
 
 **codegraph_explore 返回的源码视为已读取，禁止重复 Read/Grep。**
+
+> **F1 默认工具集**：codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。需精确 impact 时设 `CODEGRAPH_MCP_TOOLS=explore,node,search,callers,impact`（同步 `.mcp.json`），或用 CLI `codegraph impact`。
 
 ### R16 详细声明
 
@@ -235,7 +237,7 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 ## 变更彻底性保障（R3/R4 强制执行）
 
-**⛔ 改任何文件前必须先 `codegraph_impact` + Grep 全项目引用 — 违反者变更视为不可信。**
+**⛔ 改任何文件前必须先查 blast-radius（`codegraph_explore`，默认工具）+ Grep 全项目引用 — 违反者变更视为不可信。** 需精确 impact 时按 F1 启用 `codegraph_impact`（env）或 CLI。
 
 > 改任何文件/函数/类型/配置 → 必须先分析影响范围 → 全关联文件修改 → 残留引用检测
 
@@ -243,7 +245,8 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 **阶段 1: 变更前 — 影响分析（阻断式）**
 ```
-① codegraph_impact(target_symbol)  — 代码级影响范围（哪些调用者/被调用者受影响）
+① codegraph_explore(target_symbol) blast-radius — 代码级影响范围（默认工具；含调用者/被调用者）
+   └ 需精确 impact 时 `CODEGRAPH_MCP_TOOLS=...,impact` 启用 codegraph_impact 或 CLI `codegraph impact`（F1）
 ② Grep 全项目(reference_pattern)   — 引用级影响（文件名/函数名/类型名/配置key）
 ③ MANIFEST.yaml concern→depends_on — 配置级关联（改此文件必须同步更新哪些文件）
 
@@ -268,11 +271,11 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 | 变更类型 | 必须执行 |
 |----------|----------|
-| 改函数签名/接口/类型定义 | `codegraph_impact` + Grep 全项目引用 |
+| 改函数签名/接口/类型定义 | `codegraph_explore` blast-radius（或 env 启用 `codegraph_impact`）+ Grep 全项目引用 |
 | 改配置文件/规则/Skill | MANIFEST `depends_on` 遍历 |
 | 重命名/删除/移动文件 | Grep 全项目残留引用 |
 | 改 agent/hook/MCP 定义 | 同步更新 INDEX.md + MANIFEST.yaml |
-| 调研/分析任务 | 先 `codegraph_impact` 确定范围，再逐文件深读 |
+| 调研/分析任务 | 先 `codegraph_explore` blast-radius 确定范围，再逐文件深读 |
 
 ### 反模式（禁止）
 

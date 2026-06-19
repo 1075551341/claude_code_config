@@ -88,13 +88,19 @@ GSD 设计了但未提供稳定实现的命令：
 
 > 本地决策：不实现，用制品恢复 + 压缩 + claude-mem 替代
 
-## v1.5.0-rc（仅跟踪，不部署）
+## v1.5.0 stable（已发布 2026-06-05，Phase E 评估中）
 
-- ADR-857 Capability Architecture (Phases 3a-6)
-- 16 runtime descriptors
-- 联邦配置合并
-- 安全硬化
-- 多 harness 安装面
+> 双源核验（2026-06-19）：v1.5.0 **stable 已发布**（非 rc），本地仍锁 1.4.5，走 [`docs/ADR/2026-06-19-gsd-1.5.0-evaluation.md`](../../ADR/2026-06-19-gsd-1.5.0-evaluation.md) 评估。
+
+| 1.5.0 新能力 | 说明 | 与本地冲突风险 |
+|--------------|------|----------------|
+| Capability Registry | ADR-857 namespace meta-skill + 生成器 + UI pilot | 与 MANIFEST concerns 模型重叠 |
+| async resume/pause | external_job_waiting 半状态 + resume/pause 契约 | hooks/pre-compact-state 重叠（forensics 此前 P2 不实现） |
+| Research module | 内容寻址缓存 + provider seam + `RESEARCH.md` | 与 deep-research(Firecrawl+Exa) 互博 |
+| 联邦配置合并 | config-loader federated merge | 评估 |
+| Loop Host Contract | 从 workflow markers 生成 | 评估 |
+
+**ADR 签署前 `MANIFEST.gsd.version` 保持 1.4.5。**
 
 ## 本地映射
 
@@ -130,7 +136,7 @@ GSD 设计了但未提供稳定实现的命令：
 get-shit-done (v1.0-v1.42.x, gsd-build 组织)
   → get-shit-done-redux (过渡)
   → @opengsd/gsd-core (v1.0.0 → v1.4.5, open-gsd 组织)
-  → v1.5.0-rc (预发布，仅跟踪)
+  → v1.5.0 stable (2026-06-05，Phase E 评估，本地暂锁 1.4.5)
 ```
 
 ## v10.2 增量（vs v10.1）
@@ -139,3 +145,9 @@ get-shit-done (v1.0-v1.42.x, gsd-build 组织)
 - 11 质量门完整列表（原仅 3 门）
 - DAG 波浪调度机制明确
 - 版本演进链路完整记录
+
+## v10.2.1 增量（双源刷新 2026-06-19）
+
+- **v1.5.0 stable 已发布**（修正「仅 rc」认知）：Capability Registry / async resume-pause / Research module
+- 走独立 ADR 评估，三选一：Stay 1.4.5（推荐）/ Cherry-pick Research / Upgrade
+- Research module 与本地 deep-research 双源调研存在互博风险，评估重点

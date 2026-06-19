@@ -1,7 +1,7 @@
 # ADR: v10 UA 暂禁 + claude-mem Endless Mode 评估
 
 **日期**: 2026-06-16  
-**状态**: Accepted  
+**状态**: Accepted (revised 2026-06-17 — UA l3_on_demand)  
 **决策人**: 用户访谈（第 4 轮）
 
 ---
@@ -67,3 +67,16 @@ v10 要求：降 token、避免互博、探索优先 codegraph。UA 与 codegrap
 - `MANIFEST.yaml` → `understand_anything`, `concept_navigation`
 - `CLAUDE.md` L3 五轨
 - `docs/TOOL_MATCHING_GUIDE.md`
+
+---
+
+## 修订 1 — UA L3 按需启用
+
+**日期**: 2026-06-17
+**决策**: v10.2 访谈（8 轮第 3 项）— 将 UA 从 disabled 调整为 L3 按需启用（catalog 保留）
+**理由**: 
+- codegraph 覆盖代码结构查询，但 onboarding/领域分析场景需 UA 概念层能力
+- 不常驻（避免 5-agent pipeline token 开销），显式 /understand-* 触发
+- MANIFEST: `understand_anything.status: l3_on_demand`
+- settings.json 不变（UA 不常驻 MCP）
+**关联**: `MANIFEST.yaml` → `understand_anything`, `concept_navigation`

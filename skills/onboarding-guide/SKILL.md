@@ -1,6 +1,6 @@
 ---
 name: onboarding-guide
-description: 新项目/新成员引导（对标 OpenSpec onboard）。触发词：onboard、新人引导、项目入门、熟悉代码库。
+description: 新人 onboarding 引导。触发词：onboarding | 新人引导 | 项目入门 | 快速上手
 triggers: [onboard, 新人引导, 项目入门, 熟悉代码库]
 layer: supplement
 source: Fission-AI/OpenSpec

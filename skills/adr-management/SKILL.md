@@ -1,6 +1,6 @@
 ---
 name: adr-management
-description: ADR架构决策记录（L3）。触发词：ADR | 架构决策 | 技术决策 | 选型记录 | 设计决策 | adr管理
+description: 架构决策记录（ADR）管理。触发词：ADR | 架构决策 | 技术决策 | /adr
 triggers: [架构决策, 技术选型, ADR, 为什么用]
 layer: supplement
 source: open-gsd/gsd-core

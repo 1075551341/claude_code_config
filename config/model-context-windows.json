@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "description": "模型上下文窗口 SSOT。换模型后运行 scripts/sync-compact-window.py 或重启会话（SessionStart 自动同步）。",
+  "suffix_tokens": {
+    "1M": 1000000,
+    "200K": 200000,
+    "128K": 128000,
+    "64K": 64000
+  },
+  "model_tokens": {
+    "deepseek-v4-pro": 200000,
+    "deepseek-v4-flash": 128000,
+    "claude-opus-4-6": 200000,
+    "claude-sonnet-4-6": 200000,
+    "claude-haiku-4-5": 200000
+  },
+  "default_tokens": 200000
+}

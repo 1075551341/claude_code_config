@@ -3,6 +3,9 @@ trigger: model_decision
 description: 综合最佳实践 — 详细参考（骨架内容已迁至 CORE.md）
 ---
 
+> **status: supplement_only** — v10.2: CORE.md = SSOT（编码规范、铁律、错误处理、变更彻底性）。
+> 本文保留：提示词设计、代码精炼、API 设计、日志规范、会话管理等详细策略。
+
 # 综合最佳实践
 
 > 来源：shanraisshan/claude-code-best-practice + x1xhlol/system-prompts + Chalarangelo/30-seconds-of-code + garrytan/gstack v0.19

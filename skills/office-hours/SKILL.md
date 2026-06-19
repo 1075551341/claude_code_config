@@ -1,6 +1,6 @@
 ---
 name: office-hours
-description: 六问产品框架，重新定义问题，挑战前提，生成实现方案。触发：/office-hours、产品讨论。
+description: 六问产品框架。触发词：office hours | 六问框架 | 产品分析 | 需求深挖 | /office-hours
 layer: supplement
 source: garrytan/gstack
 disable-model-invocation: true

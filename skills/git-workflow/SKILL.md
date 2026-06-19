@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: Git 工作流（L3）。触发词：git commit | git分支 | 提交代码 | 创建分支 | merge | rebase | 版本管理 | 推送 | push
+description: Git 工作流。触发词：git commit | git分支 | 提交代码 | 创建分支 | merge | rebase | 版本管理
 triggers: [commit, 提交, git commit, 创建提交, 保存更改]
 layer: supplement
 disable-model-invocation: true

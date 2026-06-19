@@ -1,6 +1,6 @@
 ---
 name: workstream-management
-description: GSD 并行任务流管理。触发词：并行任务、workstream、多任务同时、工作流。
+description: 并行任务流管理（git worktree 隔离，GSD workstreams）。触发词：workstream | 并行任务 | worktree | 多任务 | /workstream
 triggers: [并行任务, workstream, 多任务, 工作流, git worktree]
 layer: supplement
 source: open-gsd/gsd-core

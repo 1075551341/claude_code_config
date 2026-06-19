@@ -219,7 +219,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-## 29 仓库完整映射
+## 29 仓库完整映射（+plugins-official = 29 编号项，含 19b 子项）
 
 ### 五柱 (5)
 | # | 仓库 | 吸收 | 落地 |
@@ -275,8 +275,13 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 ### 项目洞察 (2)
 | # | 仓库 | 吸收 | 落地 |
 |---|------|------|------|
-| 27 | colbymchenry/codegraph | 预索引知识图谱MCP，~35% token节省，20+语言+14框架+跨语言桥接 | .mcp.json (optional), rules/CONTEXT.md |
-| 28 | Lum1104/Understand-Anything | 交互式知识图+引导导览+多Agent管线 | skill/understand-anything, plugin/understand-anything |
+| 27 | colbymchenry/codegraph | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json (optional), rules/CONTEXT.md |
+| 28 | Lum1104/Understand-Anything | 交互式知识图+引导导览+多Agent管线（l3_on_demand：插件 disabled + catalog 保留） | skill/understand-anything |
+
+### 插件分发 (1)
+| # | 仓库 | 吸收 | 落地 |
+|---|------|------|------|
+| 29 | anthropics/claude-plugins-official | 官方市场分发 SSOT；gitCommitSha pinning；LSP 族按需 | plugins/installed_plugins.json, settings.json |
 
 ---
 
@@ -284,9 +289,9 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 | Plugin | 状态 | 提供 | 禁用原因 |
 |--------|------|------|----------|
-| superpowers 5.1.0 | ✅ | SessionStart + 14技能 | — |
-| claude-mem 13.4.0 | ✅ | 6hooks + 15技能 | — |
-| understand-anything 2.7.5 | ✅ | SessionStart + PostToolUse + 8技能 | — |
+| superpowers 6.0.0（目标） | 🟡 | SessionStart + 技能（单 task-reviewer；brainstorming #1773 本地守卫已落地） | 插件当前装 5.1.0，待 Claude Code `/plugin update superpowers@claude-plugins-official` |
+| claude-mem 13.6.1 | ✅ | 6hooks + 15技能 | — |
+| understand-anything 2.7.5 | ❌ | — | l3_on_demand：插件 disabled + catalog 保留，仅 /understand-* 触发 |
 | chrome-devtools-mcp 1.1.1 | ✅ | Chrome DevTools | — |
 | frontend-design | ✅ | 前端设计 | — |
 | code-review | ✅ | 审查技能(与eng-reviewer互补) | — |
@@ -317,11 +322,20 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
+## v10.2.1 变更摘要（2026-06-19 双源刷新）
+
+- **28 repo 卡片**：+`anthropics-claude-plugins-official`（插件分发 SSOT；27→28）
+- **superpowers**：本地 override 已落地（#1773 守卫 + 单 task-reviewer 对齐）；插件二进制 5.1.0 → **6.0.0** 待 Claude Code `/plugin update`（Cursor 无法下载）
+- **codegraph**：F1（MCP 默认 4 工具，`codegraph_impact` 需 `CODEGRAPH_MCP_TOOLS`）+ F2（官方四元组 ~16%成本/~47%token/~58%工具调用/~22%更快；47% 为官方数字，仅补全）
+- **gsd-core**：v1.5.0 stable 走 ADR 评估（暂锁 1.4.5）
+- **UA**：统一 l3_on_demand（删除 disabled 残留）
+- **探索链**：codegraph → Grep → Read（impact 优先 explore blast-radius）
+
 ## v10.1 变更摘要
 
 - **27 repo 卡片**：`docs/research/repos/{slug}.md`
 - **GSD 版本**：open-gsd/gsd-core **1.4.1**（MANIFEST 对齐）
-- **探索链**：codegraph → Grep → Read（UA disabled 明示）
+- **探索链**：codegraph → Grep → Read
 - **加载**：L0 四入口 + P0 五技能 L1；sync 索引模式
 - **调研 SSOT**：30-repo-deep-research-v10.md（v10.1 内容）+ repos/
 
@@ -365,4 +379,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-> 版本：10.0 | 日期：2026-06-16 | 五柱×五阶段×三横切 | MCP 分层 + L0–L4
+> 版本：10.2.1 | 日期：2026-06-19 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3

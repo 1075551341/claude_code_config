@@ -81,6 +81,8 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 ```
 
+> **代码探索铁律（R17）**：结构/调用链/影响面 **必先 `codegraph_explore`**（默认工具，blast-radius 含影响面），次选 Grep 精确定位，禁止未探索就大范围 Read。`codegraph_impact` 默认不暴露（F1），需 `CODEGRAPH_MCP_TOOLS` env 或 CLI。codegraph 返回的源码视为已读，不重复 Read/Grep。
+
 **五轨**：codegraph(R17) | Firecrawl+Exa | claude-mem(R18) | Context7
 **Token**：RTK(shell) + caveman(输出) + codegraph(探索)
 **阈值**：见 CORE.md 三级阈值 | GSD **70%逻辑断点**（任务边界） | ⛔100%

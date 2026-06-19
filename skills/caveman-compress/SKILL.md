@@ -1,6 +1,6 @@
 ---
 name: caveman-compress
-description: 输出压缩（L2）。触发词：压缩输出 | 言简意赅 | 别废话 | caveman | 精简回复 | 压缩
+description: 输出压缩（caveman 模式）。触发词：caveman | 压缩输出 | 精简回复 | 言简意赅
 layer: supplement
 source: JuliusBrussee/caveman
 disable-model-invocation: true

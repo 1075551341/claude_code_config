@@ -18,6 +18,9 @@ source: obra/superpowers
 
 **一次一问 + 推荐答案** — 每次只问一个问题；**每个问题附带你的推荐答案及理由**，便于用户确认或纠正，而非开放式甩锅。
 
+**⚠️ #1773 守卫（仅本 skill）** — 在 Cursor / Claude Code 下，brainstorming **禁用结构化选择工具**（`AskUserQuestion` / `AskQuestion`），必须用**对话式逐条提问**。superpowers v6.0.0「平台中立」bootstrap 重写引入此回归（误用 AskUserQuestion 批量出选项，破坏 relentless interview 节奏）。
+> 边界：此禁令**仅约束 brainstorming**。其他场景（如 gstack 审查、明确的多选决策）仍可用 AskQuestion——属 per-skill 决策，非全局禁用。
+
 **终态硬流转** — brainstorming 通过后必须 Read `writing-plans`。不可跳过规划直接实施。
 
 ## Red Flags（停下，你在跳过流程）

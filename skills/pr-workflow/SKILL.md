@@ -1,6 +1,6 @@
 ---
 name: pr-workflow
-description: PR工作流（L3）。触发词：PR | pull request | 拉取请求 | 代码合并 | 创建PR | 提交审查
+description: PR 工作流。触发词：PR | pull request | 创建PR | 合并PR | code review流程
 triggers: [开 PR, create PR, pull request, 提交 PR, gh pr]
 layer: supplement
 disable-model-invocation: true

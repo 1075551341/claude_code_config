@@ -1,6 +1,6 @@
 ---
 name: taste-memory
-description: 跨会话设计品味记忆（gstack 互补）。触发：设计偏好、风格选择、minimal/dark/dense。
+description: 品味记忆学习（UI 偏好跨会话）。触发词：taste memory | 品味记忆 | UI偏好 | 设计偏好学习
 triggers: [品味, 设计偏好, 风格记忆, taste, minimal, dark mode]
 layer: supplement
 source: garrytan/gstack

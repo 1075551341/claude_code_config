@@ -270,14 +270,21 @@ HARD-GATE | P0 五技能路由 | SDD+TDD 组合 | 两阶段审查 | Fresh contex
 
 视觉伴侣 (Brainstorm Companion) | 双仓库分离 | 多 harness 支持 | marketplace.json 发布 | evals/ 测试子模块 | v6.0 单一 task-reviewer (待观察)
 
-### v6.0 待评估
+### v6.0 升级决策（v10.2.1 锁定：升级 + 本地 override）
 
-| 特性 | 影响 | 风险 |
+| 特性 | 影响 | 处置 |
 |------|------|------|
-| 单一 task-reviewer (双裁决) | 50% token减少 + 2x速度 | 待验证稳定性 |
-| forge-neutral finishing | 不硬编码 gh pr create | 低 |
-| 计划预检 (pre-flight read) | Controller首任务前检查冲突 | 中 |
-| 进度账本 (progress ledger) | 丢失上下文后可恢复 | 低 |
+| 单一 task-reviewer (双裁决) | 50% token减少 + 2x速度 | 采纳，subagent-driven 本地对齐 |
+| forge-neutral finishing | 不硬编码 gh pr create | 采纳 |
+| 计划预检 (pre-flight read) | Controller首任务前检查冲突 | 采纳 |
+| 进度账本 (progress ledger) | 丢失上下文后可恢复 | 采纳 |
+
+### ⚠️ v6.0.0 #1773 回归（本地必须 override）
+
+双源核验（Issue #1773，2026-06-19）：v6.0.0「平台中立」重写 `using-superpowers` 的 Platform Adaptation 段，导致 Claude Code/Cursor 下 **brainstorming 误用原生 `AskUserQuestion`** 结构化选择工具，而非设计意图的「逐条对话式提问」（v5.1.0 行为）。skill 正文几乎未变，回归源于 bootstrap 重写。
+
+**本地 override（D2）**：仅在 `skills/brainstorming/SKILL.md` 加 Cursor/CC 守卫「对话式提问，禁用 AskUserQuestion」。
+**边界**：gstack Conductor 故意使用 AskUserQuestion（plain-text 兜底）——证明这是 **per-skill 决策**，故守卫**不全局禁用**，仅约束 brainstorming。
 
 ---
 
@@ -326,6 +333,12 @@ HARD-GATE | P0 五技能路由 | SDD+TDD 组合 | 两阶段审查 | Fresh contex
 
 ### v6.0.1 (2026-06-16) -- 修补
 - Codex 版本显示修复, 更干净同步
+
+### v10.2.1 增量（双源刷新 2026-06-19）
+- 本地插件**仍装 5.1.0** → 升级 6.0.0（installed_plugins.json + MANIFEST 对齐）
+- **#1773 brainstorming AskUserQuestion 回归** → 本地 brainstorming 守卫（仅此 skill）
+- task-reviewer 双裁决正式采纳，subagent-driven-development 本地对齐
+- 新增 references/ per-harness 工具映射（Claude Code/Codex/Copilot/Gemini/Pi/Antigravity）→ using-superpowers 指针
 
 ### v5.1.0 (2026-04-30) -- 当前本地基准
 - 移除遗留 slash commands + named agent

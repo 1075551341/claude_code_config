@@ -1,6 +1,6 @@
-# eyaltoledano/claude-task-master
+# eyaltoledano/claude-task-master v0.43.1
 
-> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-16
+> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub CHANGELOG + npm 双源
 
 ## 核心价值
 
@@ -33,3 +33,8 @@
 ## v10.1 增量
 
 - 维持 L4 按需；不默认常驻 MCP
+
+## v10.2.1 增量（双源刷新 2026-06-19）
+
+- 稳定版 **0.43.1**（1.0.0-rc 跟踪）；保持 L4 按需
+- **deferred MCP loading**（`ENABLE_EXPERIMENTAL_MCP_CLI=true`）省 ~16% 上下文（~33k tokens）→ 若启用建议开此模式
