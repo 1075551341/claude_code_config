@@ -1,4 +1,4 @@
-﻿---
+---
 trigger: always_on
 alwaysApply: true
 layer: skeleton
@@ -210,7 +210,7 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 **codegraph_explore 返回的源码视为已读取，禁止重复 Read/Grep。**
 
-> **F1 默认工具集**：codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。需精确 impact 时设 `CODEGRAPH_MCP_TOOLS=explore,node,search,callers,impact`（同步 `.mcp.json`），或用 CLI `codegraph impact`。
+> **F1 默认工具集（v10.3 已纠偏）**：codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。**v10.3 起 `.mcp.json` 已通过 `CODEGRAPH_MCP_TOOLS` env 显式启用 `codegraph_impact`**（满足 R6 变更彻底性保障）。如需 `codegraph_callees`/`codegraph_files`/`codegraph_status`，追加到同一 env，或用 CLI `codegraph impact`。
 
 ### R16 详细声明
 

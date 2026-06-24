@@ -8,7 +8,7 @@
 |-------|---------|------|------|
 | using-superpowers | 会话开始 | L1 | skills/using-superpowers |
 | change-impact-analysis | 任何修改/变更前 | L1 | skills/change-impact-analysis |
-| brainstorming | 方案设计/架构决策/非简单任务 | L2 ① | skills/brainstorming |
+| brainstorming | 方案设计/架构决策/非简单任务 | L1 ① | skills/brainstorming |
 | verification-before-completion | 完成/验收/声称完成 | L2 ④ | skills/verification-before-completion |
 | systematic-debugging | 调试/报错/bug | L2 ③ | skills/systematic-debugging |
 
@@ -72,7 +72,7 @@ workstream-management | adr-management | onboarding-guide | claude-to-deerflow |
 
 **总计 38 skills** — 详见 [skills-INDEX.md](../skills-INDEX.md)
 
-**加载策略**：L1 常驻(2) → L2 阶段门控 Read(7) → L3 信号触发 Read(29) → catalog 按需复制
+**加载策略**：L1 常驻(3) → L2 阶段门控 Read(6) → L3 信号触发 Read(29) → catalog 按需复制
 **显式调用**：`Read skills/<name>/SKILL.md`（首选）；slash/关键词为路由信号，非替代 Read
 **互斥声明**：见 MANIFEST.yaml excludes
 **外部桥接**：claude-to-deerflow(/deer-flow) | task-master(MCP)

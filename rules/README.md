@@ -44,9 +44,9 @@
 | 编辑器 | 目标 | L0入口 |
 |--------|------|--------|
 | Cursor | `~/.cursor/rules/*.mdc` | ROUTER/CLAUDE/CORE/CURSOR-EDITOR |
-| Devin | `~/.claude/.devin/rules/*.md` | ROUTER/CLAUDE/CORE |
+| Devin | `%APPDATA%\devin\AGENTS.md` + `rules/*.md` | AGENTS.md/ROUTER/CORE |
 | Qoder | `~/.qoder/rules/*.mdc` | ROUTER/CLAUDE/CORE/CURSOR-EDITOR |
 | Trae | `~/.trae/user_rules/*.md` | ROUTER/CLAUDE/CORE |
-| CodeArts | `~/.config/codeartsdoer/rule/*.mdc` | ROUTER/CLAUDE/CORE |
+| CodeArts | `~/.codeartsdoer/rule/*.mdc` | ROUTER/CLAUDE/CORE |
 
 详细rules通过L0路由按需Read加载。源文件变更后需重新执行 `sync.ps1`。

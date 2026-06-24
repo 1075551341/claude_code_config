@@ -1,6 +1,6 @@
 # VoltAgent/awesome-design-md
 
-> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-16
+> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
 ## 核心价值
 
@@ -31,3 +31,8 @@
 ## v10.1 增量
 
 - docs/DESIGN.md 五柱职责边界已更新
+
+## v10.3 增量
+
+- Delta 刷新：91K+ Stars（2026-06）
+- 决策不变：rules/DESIGN.md 规范；项目级 DESIGN.md 按需创建

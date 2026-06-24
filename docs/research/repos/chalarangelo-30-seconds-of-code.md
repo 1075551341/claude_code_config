@@ -1,6 +1,6 @@
 # Chalarangelo/30-seconds-of-code
 
-> 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-16
+> 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
 ## 核心价值
 

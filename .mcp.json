@@ -3,9 +3,12 @@
   "_comment": "MCP v9.2 常驻 5 服务器 | 权威源 | ops/optional-dev 见 mcp-configs/*.json 按需 merge | Cursor 侧见 docs/CURSOR_MCP_PROFILE.md",
   "mcpServers": {
     "codegraph": {
-      "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。",
+      "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。F1 纠偏(v10.3)：env 启用 codegraph_impact 满足 R6 变更彻底性保障。",
       "command": "npx",
-      "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"]
+      "args": ["-y", "@colbymchenry/codegraph", "serve", "--mcp"],
+      "env": {
+        "CODEGRAPH_MCP_TOOLS": "codegraph_explore,codegraph_node,codegraph_search,codegraph_callers,codegraph_impact"
+      }
     },
     "crawl": {
       "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索（L2/L3 调研）。",

@@ -1,12 +1,12 @@
 ---
-description: 跨编辑器配置同步指南 v16.0
+description: 跨编辑器配置同步指南 v17.0
 ---
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v16.0 | **日期**: 2026-06-19 | **脚本**: `scripts/sync.ps1` | **三模式**: 默认(L0入口) / `-Skills`(+skills/) / `-All`(全量) | 预览: `-DryRun`
+> **版本**: v17.0 | **日期**: 2026-06-24 | **脚本**: `scripts/sync.ps1` | **三模式**: 默认(L0入口) / `-Skills`(+skills/) / `-All`(全量) | 预览: `-DryRun`
 >
-> **v16 重要变更**：弃用 `sync-mode.json` / `-Full` / `-Force` / `-Scope`，改为开关参数 `-Skills` / `-All` / `-DryRun`。同步方式：符号链接优先，`Copy-Item` 兜底；写入前删同名目标（去重）。
+> **v17 重要变更**：扩展至 7 编辑器（+qoder-cn, +trae-cn）；-cn 变体独立配置目录。同步方式不变：符号链接优先，`Copy-Item` 兜底；写入前删同名目标（去重）。
 
 ## 边界原则（Claude Code ↔ 编辑器）
 
@@ -14,7 +14,7 @@ description: 跨编辑器配置同步指南 v16.0
 |------|------|------|
 | **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用 |
 | **同步源（只读）** | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件 | `sync.ps1` 读取并链接/复制到编辑器 |
-| **同步目标（仅编辑器）** | `~/.cursor/`、`~/.devin/`、`~/.trae/`、`~/.qoder/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
+| **同步目标（仅编辑器）** | `~/.cursor/`、`%APPDATA%\devin\`、`~/.trae/`、`~/.qoder/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
 
 **`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。
 **`fix.ps1 -Fix`** 单独处理 Hook launcher 与编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
@@ -27,13 +27,13 @@ description: 跨编辑器配置同步指南 v16.0
 |------|-------|-------|
 | **同步内容** | 全量12个rules | 仅L0关键入口（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
 | **Cursor落点** | 双落点（个人+项目） | 仅个人级 `~/.cursor/rules/` |
-| **CodeArts落点** | 双落点（个人+项目） | 仅个人级 `~/.config/codeartsdoer/rule/` |
+| **CodeArts落点** | 双落点（个人+项目） | 仅个人级 `~/.codeartsdoer/rule/` |
 | **Windsurf** | 独立编辑器 | 已移除（已改名Devin） |
 | **详细rules** | 全量部署到编辑器 | 通过L0路由按需Read加载 |
 
 ---
 
-## 三模式概览（v16.0）
+## 三模式概览（v17.0）
 
 | 内容 | 默认（L0入口） | `-Skills` | `-All` |
 |------|:--------------:|:---------:|:------:|
@@ -42,8 +42,9 @@ description: 跨编辑器配置同步指南 v16.0
 | `agents/` | ❌ | ❌ | ✅ |
 | `rules/`（全量） + CLAUDE.md | L0 only | L0 only | ✅ |
 
-- **目标编辑器**：cursor / devin(`~/.claude/.devin`) / qoder / trae / codearts
-- **rules 扩展名**：cursor·qoder·codearts → `.mdc`；devin·trae → `.md`
+- **目标编辑器**：cursor / devin(`%APPDATA%\devin`) / qoder / qoder-cn / trae / trae-cn / codearts
+- **rules 扩展名**：cursor·qoder·qoder-cn·codearts → `.mdc`；devin·trae·trae-cn → `.md`
+- **devin 根文件名**：`AGENTS.md`（Devin CLI 全局 rules 标准）；其余编辑器 → `CLAUDE.md`
 - **`-DryRun`**：仅预览，不写盘
 - **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
 
@@ -70,15 +71,17 @@ description: 跨编辑器配置同步指南 v16.0
 **Devin**：
 
 ```
-~/.claude/.devin/rules/*.md          L0入口（trigger格式）
-~/.codeium/windsurf/memories/global_rules.md   全局 always-on（跨工作区）
-~/.devin/                            7 总纲软链 + skills/agents 联接
+%APPDATA%\devin\AGENTS.md            全局 rules（Devin CLI 标准，L0入口）
+%APPDATA%\devin\rules\*.md           L0 rule 文件（CORE/ROUTER，trigger格式）
+~/.codeium/windsurf/memories/global_rules.md   Windsurf 全局 always-on（跨工作区）
 ```
+
+> Devin CLI 可自动导入 `~/.claude/CLAUDE.md` 和 `.claude/skills/`，无需额外同步 skills。
 
 **CodeArts 码道**：
 
 ```
-~/.config/codeartsdoer/rule/*.mdc    个人级（仅L0入口：ROUTER/CLAUDE/CORE）
+~/.codeartsdoer/rule/*.mdc    个人级（仅L0入口：ROUTER/CLAUDE/CORE）
 ```
 
 > 项目级 `~/.claude/.codeartsdoer/rule/` 已取消部署，避免双份显示。
@@ -198,7 +201,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 从 v14 升级
 
-- **v16.0**：模式参数化（`-Skills`/`-All`/`-DryRun`），弃用 `sync-mode.json`/`-Full`/`-Force`/`-Scope`；符号链接优先 + Copy-Item 兜底；devin 目标移至 `~/.claude/.devin`，rules 扩展名按编辑器区分（.mdc / .md）
+- **v17.0**：扩展至 7 编辑器（+qoder-cn, +trae-cn）；-cn 变体独立配置目录；devin 目标改为 `%APPDATA%\devin`（Devin CLI 标准用户配置路径），根文件名改为 `AGENTS.md`；RULES_EXT 补全 qoder-cn/trae-cn
+- **v16.0**：模式参数化（`-Skills`/`-All`/`-DryRun`），弃用 `sync-mode.json`/`-Full`/`-Force`/`-Scope`；符号链接优先 + Copy-Item 兜底；devin 目标移至 `~/.claude/.devin`（v17 已纠正），rules 扩展名按编辑器区分（.mdc / .md）
 - v14.5：仅L0入口同步，取消项目级双落点，移除Windsurf（已改名Devin）
 - v14 索引：`skills/`、`agents/` 联接；`rules/` 改为编辑器侧单文件链接（不再联接整个目录）
 - v14 总纲 7 文件：新增 `CLAUDE-ROUTER.mdc`

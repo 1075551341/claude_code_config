@@ -15,13 +15,13 @@ layer: router
    - Agent：`agents/<name>.md`
    - 规则：`rules/<name>.md`
 
-## P0 路由集（5）= L1×2 + L2 门控×3
+## P0 路由集（5）= L1×3 + L2 门控×2
 
 | Skill | 等级 | 触发 |
 |-------|------|------|
 | using-superpowers | L1 | 会话开始、分类路由 |
 | change-impact-analysis | L1 | 任何修改意图 |
-| brainstorming | L2 | 非简单 ①规划（HARD-GATE） |
+| brainstorming | L1 | 非简单 ①规划（HARD-GATE） |
 | verification-before-completion | L2 | ④验收 |
 | systematic-debugging | L2 | Bug/调试 |
 
@@ -30,8 +30,8 @@ layer: router
 | 等级 | 内容 | 机制 |
 |------|------|------|
 | L0 | 本文件 + CLAUDE.md + rules/CORE.md | alwaysApply (~2K tokens) |
-| L1 | using-superpowers（会话常驻）, change-impact-analysis（改前必读） | L1 按需全文 Read |
-| L2 | brainstorming / writing-plans / executing-plans / verification / debugging | 阶段触发 Read 全文 |
+| L1 | using-superpowers, change-impact-analysis, brainstorming（会话常驻） | L1 按需全文 Read |
+| L2 | writing-plans / executing-plans / verification / debugging | 阶段触发 Read 全文 |
 | L3 | 所有其他 skills/rules/agents/MCP/Firecrawl/Exa | description 触发词 + slash 路由，按需 Read |
 
 **探索优先级（R17）**：`codegraph_explore` 先于 Grep/Read — 详见 `CORE.md` R17-R18 章节。

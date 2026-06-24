@@ -1,6 +1,6 @@
 # x1xhlol/system-prompts-and-models-of-ai-tools
 
-> 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-16
+> 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
 ## 核心价值
 
@@ -30,3 +30,8 @@
 ## v10.1 增量
 
 - CLAUDE.md ≤250 行约束对齐
+
+## v10.3 增量
+
+- Delta 刷新：140K+ Stars（2026-06）
+- 决策不变：采纳概念；CORE 简洁优先；不复制 prompt 全文

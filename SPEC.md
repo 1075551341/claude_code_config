@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
-> 版本：10.2 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需
+> 版本：10.3 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需
 
 ---
 
@@ -64,13 +64,13 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## P0 路由集（5）= L1×2 + L2 门控×3
+## P0 路由集（5）= L1×3 + L2 门控×2
 
 | Skill | 等级 | 触发 | 阶段 |
 |-------|------|------|------|
 | using-superpowers | L1 常驻 | 会话开始、分类路由 | 全阶段 |
 | change-impact-analysis | L1 按需全文 | 任何修改意图 | 全阶段 |
-| brainstorming | L2 门控 | 非简单 ①规划 | ① |
+| brainstorming | L1 常驻 | 非简单 ①规划 | ① |
 | verification-before-completion | L2 门控 | ④验收 | ④ |
 | systematic-debugging | L2 门控 | Bug/测试失败 | ③调试 |
 
@@ -82,8 +82,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 等级 | 内容 |
 |------|------|
 | L0 | CLAUDE-ROUTER + CLAUDE + CORE |
-| L1 | using-superpowers, change-impact-analysis |
-| L2 | 阶段门控：brainstorming, writing-plans, spec-validation, executing-plans, subagent-driven, verification, debugging |
+| L1 | using-superpowers, change-impact-analysis, brainstorming |
+| L2 | 阶段门控：writing-plans, spec-validation, executing-plans, subagent-driven, verification, debugging |
 | L3 | deep-research, adr, workstream, deer-flow, git/pr/mem workflow, … |
 | L4 | agents(Task), MCP, claude-mem, lazy rules |
 
@@ -379,4 +379,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-> 版本：10.2.1 | 日期：2026-06-19 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3
+> 版本：10.3 | 日期：2026-06-24 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3

@@ -1,6 +1,6 @@
 # Skills 技能库
 
-> **全局 38 个**（L1×2 + L2 门控×7 + L3×29）+ **catalog/** 领域库（按需复制）
+> **全局 38 个**（L1×3 + L2 门控×6 + L3×29）+ **catalog/** 领域库（按需复制）
 
 完整索引 → [skills-INDEX.md](../skills-INDEX.md)
 
@@ -8,8 +8,8 @@
 
 ## P0 路由集（5）
 
-L1: using-superpowers, change-impact-analysis  
-L2 门控: brainstorming, verification-before-completion, systematic-debugging
+L1: using-superpowers, change-impact-analysis, brainstorming  
+L2 门控: verification-before-completion, systematic-debugging
 
 ## v9.1 新增（4）
 

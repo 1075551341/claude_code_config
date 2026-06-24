@@ -47,7 +47,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
   → R18: claude-mem search?（相关则先查）
   → 简单(≤3文件,无架构)? → L1 change-impact → 直接改 → 轻量验证
   → Bug(堆栈/复现)? → L3 triage → L2 debugging
-  → 非简单 → L2 brainstorming → …五阶段全链
+  → 非简单 → L1 brainstorming → …五阶段全链
 ```
 
 **简单旁路**：不 Read executing-plans / subagent-driven-development。
@@ -58,7 +58,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 |------|-------|------|
 | L1 | using-superpowers | 会话开始 |
 | L1 | change-impact-analysis | 任何修改 |
-| L2 | brainstorming | 非简单、方案、架构 |
+| L1 | brainstorming | 非简单、方案、架构 |
 | L2 | verification-before-completion | 完成、验收 |
 | L2 | systematic-debugging | 调试、测试失败 |
 

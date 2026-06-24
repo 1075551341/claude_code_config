@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v16.0
+    Claude Code multi-editor layered sync script v17.0
     Modes: default (L0 entry files) | --skills (+ skills/) | --all (everything)
 
 .DESCRIPTION
@@ -50,10 +50,12 @@ $CLAUDE_DIR = "$env:USERPROFILE\.claude"
 # Target editor base directories
 $TARGETS = [ordered]@{
     "cursor"   = "$env:USERPROFILE\.cursor"
-    "devin"    = "$env:USERPROFILE\.claude\.devin"
+    "devin"    = "$env:APPDATA\devin"
     "qoder"    = "$env:USERPROFILE\.qoder"
+    "qoder-cn" = "$env:USERPROFILE\.qoder-cn"
     "trae"     = "$env:USERPROFILE\.trae"
-    "codearts" = "$env:USERPROFILE\.config\codeartsdoer"
+    "trae-cn"  = "$env:USERPROFILE\.trae-cn"
+    "codearts" = "$env:USERPROFILE\.codeartsdoer"
 }
 
 # Rules subdirectory name within each target base
@@ -61,7 +63,9 @@ $RULES_SUBDIR = [ordered]@{
     "cursor"   = "rules"
     "devin"    = "rules"
     "qoder"    = "rules"
+    "qoder-cn" = "rules"
     "trae"     = "user_rules"
+    "trae-cn"  = "user_rules"
     "codearts" = "rule"
 }
 
@@ -70,7 +74,9 @@ $RULES_EXT = [ordered]@{
     "cursor"   = ".mdc"
     "devin"    = ".md"
     "qoder"    = ".mdc"
+    "qoder-cn" = ".mdc"
     "trae"     = ".md"
+    "trae-cn"  = ".md"
     "codearts" = ".mdc"
 }
 
@@ -83,6 +89,18 @@ $L0_RULE_ITEMS = @(
 $L0_ROOT_ITEMS = @(
     @{ SrcRel = "CLAUDE.md"; DstName = "CLAUDE.md" }
 )
+
+# L0 root file destination name per editor (override DstName when needed)
+# Devin CLI uses AGENTS.md as global rules; others use CLAUDE.md
+$L0_ROOT_DSTNAME = [ordered]@{
+    "cursor"   = "CLAUDE.md"
+    "devin"    = "AGENTS.md"
+    "qoder"    = "CLAUDE.md"
+    "qoder-cn" = "CLAUDE.md"
+    "trae"     = "CLAUDE.md"
+    "trae-cn"  = "CLAUDE.md"
+    "codearts" = "CLAUDE.md"
+}
 
 # CLAUDE-ROUTER source (deployed as 00-CLAUDE-ROUTER.{ext} into rules/)
 $ROUTER_SRC_REL = "CLAUDE-ROUTER.mdc"
@@ -308,7 +326,7 @@ function Sync-RuleFile {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Multi-Editor Layered Sync v16.0" -ForegroundColor Cyan
+Write-Host "  Claude Code Multi-Editor Layered Sync v17.0" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Source       : $CLAUDE_DIR" -ForegroundColor DarkGray
@@ -339,11 +357,12 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     $rulesDir = Join-Path $targetBase $RULES_SUBDIR[$editor]
     $ext = $RULES_EXT[$editor]
 
-    # ---- 1. L0 root files (CLAUDE.md) ----
+    # ---- 1. L0 root files (CLAUDE.md / AGENTS.md) ----
     foreach ($item in $L0_ROOT_ITEMS) {
         $srcPath = Join-Path $CLAUDE_DIR $item.SrcRel
-        $dstPath = Join-Path $targetBase $item.DstName
-        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label "$($item.DstName) -> $editor"
+        $dstName = $L0_ROOT_DSTNAME[$editor]
+        $dstPath = Join-Path $targetBase $dstName
+        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label "$dstName -> $editor"
     }
 
     # ---- 2. L0 rule files (CORE, CLAUDE-ROUTER) ----
@@ -414,7 +433,7 @@ if ($script:STATS.Failed -gt 0) {
 
 Write-Host ""
 Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
-Write-Host "  Extensions : cursor/qoder/codearts=.mdc, devin/trae=.md" -ForegroundColor DarkGray
+Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, devin/trae/trae-cn=.md" -ForegroundColor DarkGray
 Write-Host "  Method     : symlink preferred, Copy-Item fallback" -ForegroundColor DarkGray
 Write-Host "  Dedup      : delete existing same-name target before sync" -ForegroundColor DarkGray
 Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray

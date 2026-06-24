@@ -1,9 +1,9 @@
-# 仓库全量分析报告 v2.2
+# 仓库全量分析报告 v2.3
 
-> 版本 v2.2 | 日期: 2026-06-19 | 分析范围: 28 张卡片 | 运行配置: **v10.2**（文档 v10.2.1 增量）
+> 版本 v2.3 | 日期: 2026-06-24 | 分析范围: 28 张卡片 | 运行配置: **v10.3**
 > 调研 SSOT: [docs/research/30-repo-deep-research-v10.md](research/30-repo-deep-research-v10.md) | 卡片: [repos/](research/repos/)
 >
-> **v10.2.1 双源刷新（2026-06-19）**：superpowers 6.0.0 待升级（#1773 守卫）；gsd-core v1.5.0 走 ADR 评估；codegraph F1（impact 需 env）/F2（指标 ~16%成本/~58%工具调用）；+plugins-official 第 29 卡。
+> **v10.3 delta 刷新（2026-06-24）**：17 张 stale 卡片 3 源交叉验证刷新；codegraph F1 纠偏（.mcp.json env 启用 codegraph_impact）；sync.ps1 扩展 7 编辑器（+qoder-cn, +trae-cn）；文档/注释优先中文。骨架不变：五柱×五阶段×三横切。
 
 ---
 
@@ -71,10 +71,10 @@
 | 层 | 仓库 | 本地 | v10 |
 |----|------|------|-----|
 | L1 | ECC (cherry-pick) | MANIFEST module_resolver | ✅ 无插件 |
-| L1 | deer-flow 2.0 | claude-to-deerflow L3 | 可选 |
+| L1 | deer-flow 3.1 | claude-to-deerflow L3 | 可选 |
 | L2 | RTK + caveman | hooks + skills | ✅ |
 | L3 | codegraph | MCP + mandate | ✅ |
-| L3 | Understand-Anything | **l3_on_demand** | codegraph 主；插件 disabled + catalog 保留，/understand-* 触发 |
+| L3 | Understand-Anything | **l3_on_demand** | codegraph 主；插件 disabled + catalog 保留，/understand-* 触发（组织迁移 Egonex-AI） |
 | 参考 | ruflo | 文档 only | reference_only |
 
 ---

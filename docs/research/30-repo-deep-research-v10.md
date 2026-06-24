@@ -1,8 +1,8 @@
-# 28 仓库深度调研报告 v10.2.1
+# 28 仓库深度调研报告 v10.3
 
-> 日期: 2026-06-19 | 方法: Exa + Firecrawl/官方源 交叉验证（16+ 仓库重新核验） | 28 张卡片
-> 状态: **已完成** | 运行配置: **v10.2**（文档 v10.2.1 增量） | 历史 v7/v8 → `archive/`
-> Per-repo 卡片: [`repos/`](repos/) | 五柱卡片 + codegraph + plugins-official 已刷新（2026-06-19）
+> 日期: 2026-06-24 | 方法: Exa + Firecrawl/官方源 交叉验证（17 张 stale 卡片 delta 刷新） | 28 张卡片
+> 状态: **已完成** | 运行配置: **v10.3** | 历史 v7/v8 → `archive/`
+> Per-repo 卡片: [`repos/`](repos/) | 五柱卡片 + codegraph + plugins-official 已刷新（2026-06-24）
 
 ---
 
@@ -240,6 +240,58 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ---
 
+## v10.2.1 → v10.3 变更日志
+
+> 日期: 2026-06-24 | 方法: WebSearch + GitHub + 社区三源 delta 刷新 17 张 stale 卡片 | 骨架不变,深化集成
+
+### 变更总表
+
+| 项 | v10.2.1 | v10.3 | 决策理由 |
+|----|---------|-------|----------|
+| codegraph F1 | impact 默认隐藏,explore blast-radius 优先 | `.mcp.json` env `CODEGRAPH_MCP_TOOLS` 显式启用 `codegraph_impact` | R6 变更彻底性保障:impact 工具恢复,满足铁律 |
+| sync.ps1 | 5 编辑器(cursor/devin/qoder/trae/codearts) | 7 编辑器(+qoder-cn, +trae-cn) | 用户要求 7 编辑器同步;-cn 变体独立配置目录 |
+| stale 卡片 | 28 张(部分 2026-06-19) | 17 张 delta 刷新到 2026-06-24 | 3 源交叉验证;版本/Stars/架构变更记录 |
+| 验证 | validate_config 16/16 | + plugin grep + R16 grep + R17/R18 grep + sync --DryRun | 防互博 + 铁律强制执行验证 |
+| 版本 | 10.2.1 | 10.3 | 版本号对齐(MANIFEST/CLAUDE/SPEC) |
+| 语言 | 中英混合 | 文档/注释优先中文,代码保持原样 | 用户要求 |
+
+### Delta 刷新卡片清单(17 张)
+
+| 卡片 | 关键变更 |
+|------|----------|
+| bytedance-deer-flow | v2.0→v3.1;50K+ Stars;中间件 9→11 层;五模式(+fast);AIO Sandbox |
+| github-github-mcp-server | v1.2.0;54K+ Stars;21 toolsets;MCP Apps;GitHub MCP Registry |
+| lum1104-understand-anything | 组织迁移→Egonex-AI;26.5K+ Stars;Tree-sitter+LLM;5 Agent 流水线;多语言 |
+| forrestchang-andrej-karpathy-skills | Stars 92K→176K(3 月翻倍);四原则已吸收 CORE R1-R4 |
+| zilliztech-claude-context | Stars 9.9K→11.4K;实测 -40% token/-36% 工具调用;+Ollama 本地嵌入 |
+| nextlevelbuilder-ui-ux-pro-max-skill | v2.2.1;53.7K+ Stars;50+ 风格/161 色板/57 字体;双模式 |
+| anthropics-claude-code-action | v1.0.146 |
+| anthropics-skills | ~151K+ Stars;开放标准跨平台采纳;渐进式披露 3 层 |
+| 2025emma-vibe-coding-cn | 维持中文社区最佳实践 |
+| composiohq-awesome-claude-skills | 21.7K+ Stars |
+| chalarangelo-30-seconds-of-code | 128K+ Stars |
+| hesreallyhim-awesome-claude-code | 36.8K+ Stars |
+| mattpocock-skills | 135K+ Stars |
+| ruvnet-ruflo | v3.6.30;蜂群拓扑持续演进 |
+| shanraisshan-claude-code-best-practice | 51.3K+ Stars |
+| voltagent-awesome-design-md | 91K+ Stars |
+| x1xhlol-system-prompts-and-models | 140K+ Stars |
+
+### 决策不变项
+
+- 骨架:五柱×五阶段×三横切(不变)
+- deer-flow:L3 可选(不变)
+- UA:disabled + catalog 保留(不变)
+- ruflo:reference_only(不变)
+- zilliztech-claude-context:L4 按需(不变)
+- 所有 catalog 引用:按需,不膨胀 L1(不变)
+
+### 计划依据
+
+5 轮访谈 20 问(见 [plans/2026-06-24-v10.3-optimization.md](../superpowers/plans/2026-06-24-v10.3-optimization.md))
+
+---
+
 ## 信息源
 
 | 来源 | 日期 | 可信度 |
@@ -255,3 +307,5 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | codegraph v1.0 CHANGELOG (F1/F2) + 官网 | 2026-06-19 | 高 |
 | gsd-core v1.5.0 stable releases | 2026-06-19 | 高 |
 | superpowers #1773 issue | 2026-06-19 | 高 |
+| WebSearch + GitHub + 社区三源 delta 刷新 17 张 stale 卡片 (v10.3) | 2026-06-24 | 高 |
+| v10.3 计划: plans/2026-06-24-v10.3-optimization.md (5 轮访谈 20 问) | 2026-06-24 | 高 |

@@ -1,17 +1,17 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.2
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.3
 
-## L1 — 会话常驻 (2)
+## L1 — 会话常驻 (3)
 
 - [using-superpowers](skills/using-superpowers/SKILL.md) — 技能发现与 Tool-First 路由
 - [change-impact-analysis](skills/change-impact-analysis/SKILL.md) — 变更影响分析，改前必执行
+- [brainstorming](skills/brainstorming/SKILL.md) — HARD-GATE 方案设计（非简单任务必加载）
 
-## L2 — 阶段门控 (8)
+## L2 — 阶段门控 (7)
 
 | 阶段 | Skill | 触发 |
 |------|-------|------|
-| 1规划 | [brainstorming](skills/brainstorming/SKILL.md) | HARD-GATE 方案设计 |
 | 2规格 | [writing-plans](skills/writing-plans/SKILL.md) | 原子级实施计划 |
 | 2规格 | [spec-validation](skills/spec-validation/SKILL.md) | spec可验证验收标准 |
 | 3执行 | [executing-plans](skills/executing-plans/SKILL.md) | 按计划逐步执行 |

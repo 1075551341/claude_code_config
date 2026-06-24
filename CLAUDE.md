@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.2**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.3**
 
 **五柱**：Superpowers v6.0.0(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa — 详见 `rules/CORE.md`
@@ -124,7 +124,7 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 |------|------|
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc |
 | 归属矩阵 | MANIFEST.yaml |
-| 法典/架构 | SPEC.md (v10.2) |
+| 法典/架构 | SPEC.md (v10.3) |
 | 铁律/编码/阈值 | rules/CORE.md |
 | 工作流/DAG | rules/WORKFLOW.md |
 | Agent 协作 | rules/AGENTS.md |

@@ -3,8 +3,8 @@
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.2"
-updated: "2026-06-17"
+version: "10.3"
+updated: "2026-06-24"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick  # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -143,9 +143,8 @@ horizontal_layers:
 
 loading_tiers:
   L0: [CLAUDE-ROUTER, CLAUDE.md, rules/CORE.md]
-  L1: [skill/using-superpowers, skill/change-impact-analysis]
+  L1: [skill/using-superpowers, skill/change-impact-analysis, skill/brainstorming]
   L2_gate:
-    plan: [skill/brainstorming]
     spec: [skill/writing-plans, skill/spec-validation]
     execute: [skill/executing-plans, skill/subagent-driven-development]
     verify: [skill/verification-before-completion]
@@ -698,3 +697,22 @@ superagent_forge:
   models:
     online: [openai, anthropic, deepseek]
     local: [ollama, lm-studio, llama-cpp]
+
+# ── v10.3 sync 声明 ──────────────────────────────────────────
+sync_targets:
+  editors: [cursor, devin, qoder, qoder-cn, trae, trae-cn, codearts]
+  method: symlink_first_copy_fallback
+  script: scripts/sync.ps1
+  modes: [default, -Skills, -All, -DryRun]
+  # 全部为用户级配置（非项目级）；devin 使用 %APPDATA%\devin
+  rules_ext:
+    cursor: ".mdc"
+    devin: ".md"
+    qoder: ".mdc"
+    qoder-cn: ".mdc"
+    trae: ".md"
+    trae-cn: ".md"
+    codearts: ".mdc"
+  root_filename:
+    devin: "AGENTS.md"      # Devin CLI 全局 rules 标准
+    default: "CLAUDE.md"    # 其余编辑器

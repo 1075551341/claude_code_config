@@ -1,6 +1,6 @@
 # shanraisshan/claude-code-best-practice
 
-> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-16
+> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
 ## 核心价值
 
@@ -31,3 +31,8 @@
 ## v10.1 增量
 
 - 与 v10.1 P0 五技能常驻策略一致
+
+## v10.3 增量
+
+- Delta 刷新：51.3K+ Stars（2026-06）
+- 决策不变：lazy rules + L0 四入口 sync 策略对齐
