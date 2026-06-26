@@ -1,8 +1,8 @@
-# obra/superpowers v5.1.0 --> v6.0.0
+# obra/superpowers v5.1.0 --> v6.0.3
 
-> 层: 五柱(Superpowers) | 置信度: 高 | 刷新: 2026-06-17
+> 层: 五柱(Superpowers) | 置信度: 高 | 刷新: 2026-06-26
 > 仓库: github.com/obra/superpowers | 作者: Jesse Vincent (obra/Prime Radiant) | 204K+ stars
-> 许可证: MIT | 最新稳定: v5.1.0 (2026-04-30) | 最新: v6.0.0 (2026-06-16)
+> 许可证: MIT | 最新稳定: v5.1.0 (2026-04-30) | 最新: v6.0.3 (2026-06-18)
 
 ---
 
@@ -360,6 +360,20 @@ v4.3.0 (2026-02-12): HARD-GATE标签引入, EnterPlanMode拦截
 v4.0.0 (2026-02-05): 两阶段代码审查, DOT流程图, 测试反模式
 v3.2.0: superpowers: 命名空间标准化
 v2.0.0: Skills仓库分离
+
+---
+
+### v10.3.1 增量（双源刷新 2026-06-26）
+
+**v6.0.0 → v6.0.3**（GitHub Releases 交叉验证）：
+- v6.0.3 (2026-06-18): SDD scratch 文件从 `.git/` 移至 `.superpowers/sdd/`（Claude Code 保护 `.git/` 路径，agent 写入被拒）；progress ledger 改存工作树 git-ignored 目录，`git clean -fdx` 会删除（可从 `git log` 恢复）
+- v6.0.2 (2026-06-17): 移除 `evals` 子模块（破坏插件安装），eval harness 独立仓库
+- v6.0.0 (2026-06-16): 已记录于 v10.2.1 增量段（task-reviewer 双裁决、forge-neutral、计划预检、进度账本）
+
+**本地影响**：
+- SDD scratch 路径变更需 sync 至 `skills/subagent-driven-development/SKILL.md`（如引用 `.git/sdd/`）
+- 本地 #1773 brainstorming AskUserQuestion 守卫维持（v6.0.3 未修复该回归）
+- 升级决策：v10.2.1 锁定的 6.0.0 升级可推进至 6.0.3（patch 级，无 breaking）
 
 ---
 

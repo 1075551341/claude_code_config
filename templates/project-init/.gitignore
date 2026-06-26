@@ -1,0 +1,74 @@
+# {{PROJECT_NAME}} — .gitignore
+# 用法: sync.ps1 -InitProject 自动拷贝到项目根目录
+
+# ─── 依赖 ───
+node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
+
+# ─── 构建产物 ───
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.turbo/
+.vercel/
+.netlify/
+
+# ─── 覆盖率 ───
+coverage/
+*.lcov
+.nyc_output/
+
+# ─── 环境变量（禁止提交）───
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ─── 密钥/证书 ───
+*.pem
+*.key
+*.cert
+*.p12
+secrets/
+
+# ─── 日志 ───
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+
+# ─── 缓存 ───
+.cache/
+.eslintcache
+.tsbuildinfo
+*.tsbuildinfo
+
+# ─── 编辑器 ───
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# ─── 测试 ───
+.test-results/
+playwright-report/
+playwright/.cache/
+
+# ─── 其他 ───
+*.local
+.tmp/
+temp/

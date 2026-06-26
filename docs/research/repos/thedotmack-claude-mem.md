@@ -1,6 +1,6 @@
-# thedotmack/claude-mem v13.6.1
+# thedotmack/claude-mem v13.8.1
 
-> 层: 五柱核心(L3横切) | 置信度: 高 | 刷新: 2026-06-17 | Stars: 82.8K+ | License: Apache-2.0
+> 层: 五柱核心(L3横切) | 置信度: 高 | 刷新: 2026-06-26 | Stars: 82.8K+ | License: Apache-2.0
 
 ## 核心价值
 
@@ -373,3 +373,24 @@ ContextBuilder.ts 的 generateContext 函数在三种场景触发：
 - smart-explore 与 codegraph 协同策略明确：文件级 vs 符号级
 - knowledge-agent + pathfinder 纳入重构前必跑流程
 - v13 完整版本历程补充（13.0.0 -> 13.6.1）
+
+## v10.3.1 增量（三源刷新 2026-06-26）
+
+**v13.6.1 → v13.8.1**（npm registry + GitHub package.json + GitHub Releases 三源交叉验证）：
+- npm `claude-mem@13.8.1` 为最新稳定版（registry.npmjs.org/claude-mem/latest 确认）
+- GitHub Releases 页面**不完整**：仅显示至 v13.3.0 (2026-05-21)，v13.4+ 仅 npm 发布未创建 release notes
+- GitHub `package.json` version 字段 = "13.8.1"（双源确认）
+- 卡片原 v13.6.1 (2026-06-15) 已被 v13.8.1 超越
+
+**版本纠正说明**：
+- 卡片标题 v13.6.1 → v13.8.1（同步 npm 上游最新版本）
+- **本地实际安装版本**: v13.6.0（installed_plugins.json 实测，lastUpdated: 2026-06-13）
+- **本地缓存目录**: plugins/cache/thedotmack/claude-mem/ 含 13.5.6/13.6.0/13.6.2 三个版本，最高 13.6.2（未注册安装）
+- 上游 vs 本地差异: v13.8.1（npm）vs v13.6.0（本地），差 2 个 minor 版本
+- 升级路径: `npx claude-mem install`（非 npm install -g，后者仅装 SDK 不注册 hooks）
+
+**本地影响**：
+- MANIFEST concern `memory` 路径不变（installed_plugins.json + skills/claude-mem-maintenance/SKILL.md）
+- R14 锁定 major v13.x 维持（v13 → v14 需用户确认）
+- R18 记忆优先策略不变（三层检索 search → timeline → get_observations）
+- 升级路径：`npx claude-mem install`（非 npm install -g，后者仅装 SDK 不注册 hooks）

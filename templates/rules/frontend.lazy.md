@@ -21,7 +21,7 @@ paths:
 | 工具 | 职责 |
 |------|------|
 | ESLint | 代码异常、Vue/TS 规范 |
-| Prettier | 格式化（含 Vue 模板；`htmlWhitespaceSensitivity: 'ignore'`，勿设 `bracketSameLine`） |
+| Prettier | 格式化（含 Vue 模板；`htmlWhitespaceSensitivity: 'ignore'`，`bracketSameLine: false`；v10.3.1+ ESLint 9 flat config 安全） |
 | Stylelint | 样式规范修补（嵌套空行等；配 `stylelint-config-prettier`） |
 
 ## 启用方式

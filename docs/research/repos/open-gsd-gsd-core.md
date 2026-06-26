@@ -1,6 +1,6 @@
-# open-gsd/gsd-core v1.4.5
+# open-gsd/gsd-core v1.4.5 (本地锁定) --> v1.6.0 (上游)
 
-> 层: 五柱(GSD) | 置信度: 高 | 刷新: 2026-06-17 | 来源: GitHub + README + CHANGELOG + 官方文档 + npm
+> 层: 五柱(GSD) | 置信度: 高 | 刷新: 2026-06-26 | 来源: GitHub Releases + CHANGELOG + npm
 
 ## 核心价值
 
@@ -151,3 +151,25 @@ get-shit-done (v1.0-v1.42.x, gsd-build 组织)
 - **v1.5.0 stable 已发布**（修正「仅 rc」认知）：Capability Registry / async resume-pause / Research module
 - 走独立 ADR 评估，三选一：Stay 1.4.5（推荐）/ Cherry-pick Research / Upgrade
 - Research module 与本地 deep-research 双源调研存在互博风险，评估重点
+
+## v10.3.1 增量（双源刷新 2026-06-26）
+
+**v1.5.0 → v1.6.0**（GitHub Releases 交叉验证，2026-06-24 发布）：
+- **ADR-1244 完整落地**（5 phase 全部完成）：
+  - Phase 1 (#1430): 版本化 capability manifest + native stamping
+  - Phase 2 (#1431): runtime capability registry overlay
+  - Phase 3 (#1432): capability source resolver + ledger
+  - Phase 4 (#1433): capability trust gate + upgrade/compat 检查
+  - Phase 5 (#1434): registry-driven dispatch for 第三方 capabilities
+- **新增 CLI**：`gsd capability install/update/remove/list/disable/enable`（#1457）
+- **新增配置**：`workflow.context_guard_mode`（execute-phase 主动上下文耗尽守卫，#1505）
+- **新增配置**：`workflow.mvp_mode`（VALID_CONFIG_KEYS，#1494）
+- **安全增强**：WebFetch/WebSearch injection isolation + opt-in blocking（#1585）
+- **修复**：prototype pollution (CodeQL #40, #1407)、purity gate #1777、auto-backmerge PR 门
+
+**本地影响与决策**：
+- v1.5.0 评估结论（Stay 1.4.5）需重新评估 — v1.6.0 capability registry 可能影响 MANIFEST concern 层级
+- `context_guard_mode` 与本地三级阈值（70%/90%）协同，可能替代部分 GSD 逻辑断点
+- Research module 互博风险维持（v1.6.0 未解决）
+- 走独立 ADR 评估，三选一：Stay 1.4.5（推荐）/ Cherry-pick context_guard_mode / Upgrade to 1.6.0
+- 升级阻塞：v1.5.0 → v1.6.0 跨 minor，需 changelog 评估 + 用户确认（R14）

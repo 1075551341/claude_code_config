@@ -3,15 +3,15 @@
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.3"
-updated: "2026-06-24"
+version: "10.3.1"
+updated: "2026-06-26"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick  # 吸收 ECC 2.0 模式，不安装 ECC 插件
 
 superpowers:
   source: obra/superpowers
-  version: "6.0.0"
+  version: "6.0.3"
   override: local_post_load  # 插件自动更新 + 本地 skills 后加载覆盖
 
 openspec_config:
@@ -104,7 +104,7 @@ pillars:
   claude_mem:
     {
       source: thedotmack/claude-mem,
-      version: "13.6.1",
+      version: "13.8.1",
       capabilities: [cross-session-memory, pattern-extraction],
     }
 
@@ -122,7 +122,7 @@ horizontal_layers:
     description: 优化横切层 — Token压缩 + 上下文治理
     owners:
       - source: rtk-ai/rtk
-        version: "0.42.4"
+        version: "0.41.0"
         concerns: [shell-compression, 60-90pct-savings]
       - source: JuliusBrussee/caveman
         version: "1.9.0"

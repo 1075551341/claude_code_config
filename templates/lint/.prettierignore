@@ -1,0 +1,47 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.turbo/
+.vercel/
+
+# 覆盖率
+coverage/
+.nyc_output/
+
+# 压缩文件
+*.min.js
+*.min.css
+*.min.mjs
+
+# 锁文件（格式敏感，不可重排）
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+
+# 自动生成
+*.generated.*
+__generated__/
+.gql/
+graphql.schema.json
+
+# 第三方
+vendor/
+third_party/
+
+# 数据/二进制
+*.json5
+*.geojson
+*.svg
+*.png
+*.jpg
+*.gif
+*.pdf

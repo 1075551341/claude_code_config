@@ -1,14 +1,17 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v17.0
-    Modes: default (L0 entry files) | --skills (+ skills/) | --all (everything)
+    Claude Code multi-editor layered sync script v18.0
+    Modes: default (L0 entry files) | -Skills (+ skills/) | -All (everything)
+    Project: -Lint (prettier+eslint) | -InitProject (CLAUDE.md+MANIFEST+.env+.gitignore)
 
 .DESCRIPTION
     Default: sync L0 entry files (CLAUDE.md, CORE.md, CLAUDE-ROUTER.mdc)
-    --skills: additionally sync skills/ directory
-    --all:    full sync (rules + skills + agents + CLAUDE.md)
-    --dryRun: preview only, no disk writes
+    -Skills: additionally sync skills/ directory
+    -All:    full sync (rules + skills + agents + CLAUDE.md)
+    -DryRun: preview only, no disk writes
+    -Lint:   deploy prettier + eslint templates to current project (skip existing)
+    -InitProject: deploy project-init templates to current project (skip existing)
 
     Sync method: symbolic link preferred, Copy-Item fallback
     Before syncing: delete existing target of same name (dedup)
@@ -25,17 +28,29 @@
 .PARAMETER All
     Full sync: rules + skills + agents + CLAUDE.md
 
+.PARAMETER Lint
+    Deploy prettier + eslint 9 flat config templates to current working directory.
+    Copies .prettierrc.json, .prettierignore, eslint.config.js (skip if exists).
+
+.PARAMETER InitProject
+    Deploy project-init templates to current working directory.
+    Copies CLAUDE.md, MANIFEST.yaml, .env.example, .gitignore (skip if exists).
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File sync.ps1
     powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills
     powershell -ExecutionPolicy Bypass -File sync.ps1 -All
     powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun
+    powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint
+    powershell -ExecutionPolicy Bypass -File sync.ps1 -InitProject
 #>
 
 param(
     [switch]$DryRun,
     [switch]$Skills,
-    [switch]$All
+    [switch]$All,
+    [switch]$Lint,
+    [switch]$InitProject
 )
 
 Set-StrictMode -Off
@@ -106,6 +121,21 @@ $L0_ROOT_DSTNAME = [ordered]@{
 $ROUTER_SRC_REL = "CLAUDE-ROUTER.mdc"
 $ROUTER_DST_BASE = "00-CLAUDE-ROUTER"
 
+# ─── -Lint: prettier + eslint template files (copy to CWD, skip existing) ───
+$LINT_TEMPLATES = @(
+    @{ SrcRel = "templates/lint/.prettierrc.json"; DstName = ".prettierrc.json" }
+    @{ SrcRel = "templates/lint/.prettierignore";  DstName = ".prettierignore" }
+    @{ SrcRel = "templates/lint/eslint.config.js"; DstName = "eslint.config.js" }
+)
+
+# ─── -InitProject: project bootstrap files (copy to CWD, skip existing) ───
+$PROJECT_TEMPLATES = @(
+    @{ SrcRel = "templates/project-init/CLAUDE.md";     DstName = "CLAUDE.md" }
+    @{ SrcRel = "templates/project-init/MANIFEST.yaml"; DstName = "MANIFEST.yaml" }
+    @{ SrcRel = "templates/project-init/.env.example";  DstName = ".env.example" }
+    @{ SrcRel = "templates/project-init/.gitignore";    DstName = ".gitignore" }
+)
+
 # Statistics
 $script:STATS = @{ Synced = 0; Removed = 0; Skipped = 0; Failed = 0 }
 
@@ -126,6 +156,10 @@ if ($All) {
 $MODE_LABEL = "L0 entry files"
 if ($Skills) { $MODE_LABEL = "L0 + skills/" }
 if ($All)    { $MODE_LABEL = "ALL (rules + skills + agents + CLAUDE.md)" }
+if ($Lint)       { $MODE_LABEL = "Lint templates -> CWD" }
+if ($InitProject) { $MODE_LABEL = "Project-init templates -> CWD" }
+# Lint/InitProject are standalone modes — skip editor sync entirely
+$SKIP_EDITOR_SYNC = $Lint -or $InitProject
 
 # =============================================================
 # Utility functions
@@ -321,12 +355,66 @@ function Sync-RuleFile {
 }
 
 # =============================================================
+# Deploy template files to current working directory (skip existing)
+# Used by -Lint and -InitProject flags
+# =============================================================
+
+function Deploy-Templates {
+    param(
+        [array]$TemplateList,
+        [string]$ModeName
+    )
+
+    $cwd = (Get-Location).Path
+    Write-Host ""
+    Write-Host "  -- $ModeName -----------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  Target: $cwd" -ForegroundColor DarkGray
+    Write-Host ""
+
+    foreach ($item in $TemplateList) {
+        $srcPath = Join-Path $CLAUDE_DIR $item.SrcRel
+        $dstPath = Join-Path $cwd $item.DstName
+        $label = "$($item.DstName)"
+
+        if (-not (Test-Path $srcPath)) {
+            Write-Skip "Source missing: $label"
+            $script:STATS.Skipped++
+            continue
+        }
+
+        # Skip existing files (do not overwrite customizations)
+        if (Test-Path $dstPath) {
+            Write-Skip "Already exists (skip): $label"
+            $script:STATS.Skipped++
+            continue
+        }
+
+        if ($DryRun) {
+            Write-Dry "Would copy: $label"
+            $script:STATS.Synced++
+            continue
+        }
+
+        try {
+            Copy-Item $srcPath $dstPath -Force
+            Write-Ok "Copied: $label"
+            $script:STATS.Synced++
+        } catch {
+            Write-Fail "Failed: $label -- $_"
+            $script:STATS.Failed++
+        }
+    }
+
+    Write-Host ""
+}
+
+# =============================================================
 # Print header
 # =============================================================
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Multi-Editor Layered Sync v17.0" -ForegroundColor Cyan
+Write-Host "  Claude Code Multi-Editor Layered Sync v18.0" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Source       : $CLAUDE_DIR" -ForegroundColor DarkGray
@@ -338,9 +426,20 @@ if ($DryRun) {
 Write-Host ""
 
 # =============================================================
-# Main loop: iterate over each editor target
+# Standalone modes: -Lint / -InitProject (deploy to CWD, skip editor sync)
 # =============================================================
 
+if ($Lint) {
+    Deploy-Templates -TemplateList $LINT_TEMPLATES -ModeName "Lint Templates"
+} elseif ($InitProject) {
+    Deploy-Templates -TemplateList $PROJECT_TEMPLATES -ModeName "Project-Init Templates"
+}
+
+# =============================================================
+# Main loop: iterate over each editor target (skip for standalone modes)
+# =============================================================
+
+if (-not $SKIP_EDITOR_SYNC) {
 foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     $targetBase = $TARGETS[$editor]
 
@@ -413,6 +512,7 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
 
     Write-Host ""
 }
+}  # end if (-not $SKIP_EDITOR_SYNC)
 
 # =============================================================
 # Summary report

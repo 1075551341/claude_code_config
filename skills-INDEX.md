@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.3
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.3.1
 
 ## L1 — 会话常驻 (3)
 

@@ -1,9 +1,11 @@
 # 仓库全量分析报告 v2.3
 
-> 版本 v2.3 | 日期: 2026-06-24 | 分析范围: 28 张卡片 | 运行配置: **v10.3**
+> 版本 v2.3 | 日期: 2026-06-24（v10.3）/ 2026-06-26（v10.3.1 delta） | 分析范围: 28 张卡片 | 运行配置: **v10.3.1**
 > 调研 SSOT: [docs/research/30-repo-deep-research-v10.md](research/30-repo-deep-research-v10.md) | 卡片: [repos/](research/repos/)
 >
 > **v10.3 delta 刷新（2026-06-24）**：17 张 stale 卡片 3 源交叉验证刷新；codegraph F1 纠偏（.mcp.json env 启用 codegraph_impact）；sync.ps1 扩展 7 编辑器（+qoder-cn, +trae-cn）；文档/注释优先中文。骨架不变：五柱×五阶段×三横切。
+>
+> **v10.3.1 delta 刷新（2026-06-26）**：4 张高变化卡片 delta 刷新（superpowers/claude-mem/gsd-core/rtk）；prettier + eslint 9 flat config 模板；templates/project-init/ 跨项目初始化；sync.ps1 v18.0 + -Lint/-InitProject。骨架不变。
 
 ---
 

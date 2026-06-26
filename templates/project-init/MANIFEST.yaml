@@ -1,0 +1,31 @@
+# {{PROJECT_NAME}} — 项目级 MANIFEST
+# 继承全局 ~/.claude/MANIFEST.yaml，仅声明项目特有 concern
+# 创建: sync.ps1 -InitProject
+
+version: "1.0.0"  # 项目 MANIFEST 版本（独立于全局 v10.3.1）
+project: "{{PROJECT_NAME}}"
+created: "{{DATE}}"
+inherits: "global@~/.claude/MANIFEST.yaml"
+
+# 项目特有 concern（文件 → 责任 → 依赖）
+concerns:
+  # 示例：取消注释并替换为实际文件
+  # - name: src/services/api.ts
+  #   layer: service
+  #   depends_on:
+  #     - src/types/api.ts
+  #     - .env
+  #   excludes: []  # 互斥文件列表
+
+# 项目特有依赖约束
+dependencies:
+  # locked_major: 记录锁定 major 版本的依赖
+  # 示例:
+  #   - name: react
+  #     major: 19
+  #     reason: "R14 锁定，升级需用户确认"
+
+# 项目特有互斥声明（防左右手互博）
+excludes:
+  # 示例:
+  #   - { a: state-management/redux, b: state-management/zustand, reason: "单状态管理库" }

@@ -68,20 +68,26 @@ module.exports = {
 };
 ```
 
-**`prettier.config.js`**（格式化 SSOT；Vue 模板闭合标签勿用 `strict`）
+**`prettier.config.js`**（格式化 SSOT；对齐 `templates/lint/.prettierrc.json` v10.3.1）
 
 ```js
 module.exports = {
-  printWidth: 100,
+  printWidth: 120,
   semi: true,
-  vueIndentScriptAndStyle: true,
+  tabWidth: 2,
+  useTabs: false,
   singleQuote: true,
   trailingComma: 'all',
+  arrowParens: 'always',
+  bracketSpacing: true,
+  bracketSameLine: false,           // 开标签 > 独立成行（v10.3.1+ ESLint 9 flat config 安全）
+  singleAttributePerLine: true,     // 多属性每行一个
+  vueIndentScriptAndStyle: true,    // Vue SFC script/style 块缩进一级
+  quoteProps: 'as-needed',
   proseWrap: 'never',
-  // ignore：闭合标签保持 </Button> 完整；strict 会拆成 </Button + >
-  htmlWhitespaceSensitivity: 'ignore',
-  // 勿设 bracketSameLine: true — 与 eslint-plugin-prettier 冲突，会报 Insert `⏎` 红字
-  endOfLine: 'auto',
+  htmlWhitespaceSensitivity: 'ignore',  // >/文本/</tag> 各自独占一行（勿用 strict）
+  endOfLine: 'lf',
+  embeddedLanguageFormatting: 'auto',
 };
 ```
 
@@ -218,7 +224,7 @@ pnpm add -D eslint eslint-plugin-vue @typescript-eslint/parser @typescript-eslin
 | 现象 | 原因 | 处理 |
 |------|------|------|
 | `</Button>` 拆成两行 | `htmlWhitespaceSensitivity: 'strict'` | 改为 `'ignore'` |
-| `Insert ⏎` 红字（prettier/prettier） | `bracketSameLine: true` 与 eslint-plugin-prettier 不一致 | 删除 `bracketSameLine`，保存后 `prettier --write` |
+| `Insert ⏎` 红字（prettier/prettier） | legacy `bracketSameLine: true` 与 eslint-plugin-prettier 冲突 | v10.3.1+ 用 ESLint 9 flat config + eslint-config-prettier（非 plugin 模式），`bracketSameLine: false` 安全无冲突；legacy 项目仍按旧警告处理 |
 | Less 嵌套选择器红波浪线 | Stylelint `rule-empty-line-before` 缺空行 | 保存（stylelint fix）或 `pnpm exec stylelint --fix` |
 | 保存后缩进仍乱 | 未设 `defaultFormatter` 或无 `prettier.config.js` | `prettier.requireConfig: true` + 补配置 |
 | Vue 模板被反复改坏 | 全局 `source.fixAll.stylelint` 与 Prettier 同时 fix | 仅 css/less/scss 语言块启用 stylelint fix |

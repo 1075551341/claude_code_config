@@ -1,8 +1,8 @@
 # 28 仓库深度调研报告 v10.3
 
-> 日期: 2026-06-24 | 方法: Exa + Firecrawl/官方源 交叉验证（17 张 stale 卡片 delta 刷新） | 28 张卡片
-> 状态: **已完成** | 运行配置: **v10.3** | 历史 v7/v8 → `archive/`
-> Per-repo 卡片: [`repos/`](repos/) | 五柱卡片 + codegraph + plugins-official 已刷新（2026-06-24）
+> 日期: 2026-06-24（v10.3）/ 2026-06-26（v10.3.1 delta） | 方法: Exa + Firecrawl/官方源 交叉验证 | 28 张卡片
+> 状态: **已完成** | 运行配置: **v10.3.1** | 历史 v7/v8 → `archive/`
+> Per-repo 卡片: [`repos/`](repos/) | 五柱卡片 + codegraph + plugins-official 已刷新（2026-06-24）；4 张高变化卡片 delta 刷新（2026-06-26）
 
 ---
 
@@ -289,6 +289,46 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 ### 计划依据
 
 5 轮访谈 20 问(见 [plans/2026-06-24-v10.3-optimization.md](../superpowers/plans/2026-06-24-v10.3-optimization.md))
+
+---
+
+## v10.3 → v10.3.1 变更日志
+
+> 日期: 2026-06-26 | 方法: npm registry + GitHub Releases + Tags 三源 delta 刷新高变化仓库 | patch 级修正
+
+### 变更总表
+
+| 项 | v10.3 | v10.3.1 | 决策理由 |
+|----|-------|---------|----------|
+| 高变化卡片 | 17 张刷新到 2026-06-24 | 4 张高变化卡片 delta 刷新到 2026-06-26 | 仅刷新核心五柱 + L2 仓库,避免全量刷新浪费 token |
+| claude-mem 版本 | v13.6.1 | v13.8.1 | npm registry 实际版本;GitHub Releases 不完整(仅至 v13.3.0) |
+| rtk 版本 | v0.42.4(错误) | v0.41.0 | GitHub Releases 纠正:v0.42.x 从未发布稳定版;原记录混淆 npm dev tag |
+| superpowers 版本 | v6.0.0 | v6.0.3 | patch 级升级;SDD scratch 路径变更(.git/ → .superpowers/sdd/) |
+| gsd-core 版本 | v1.5.0(评估 Stay 1.4.5) | v1.6.0(ADR-1244 完整落地) | capability registry + context_guard_mode 需独立 ADR 评估 |
+| lint 模板 | 无 | prettier + eslint 9 flat config | 用户要求:prettier 管格式,eslint 管质量,互不混淆;HTML/Vue/JSX 多属性每行一个,标签独立成行 |
+| 项目模板 | 无 | templates/project-init/ | 用户要求:跨项目迭代优化 |
+| sync.ps1 | 7 编辑器 | + -Lint / -InitProject flag | 分发 lint 模板 + 项目初始化 |
+
+### Delta 刷新卡片清单(4 张)
+
+| 卡片 | 关键变更 |
+|------|----------|
+| obra-superpowers | v6.0.0→v6.0.3;SDD scratch 路径 .git/→.superpowers/sdd/;evals 子模块移除 |
+| thedotmack-claude-mem | v13.6.1→v13.8.1;npm registry 三源验证;GitHub Releases 不完整 |
+| open-gsd-gsd-core | v1.5.0→v1.6.0;ADR-1244 五阶段完整落地;capability registry + context_guard_mode |
+| rtk-ai-rtk | 版本纠正 v0.42.4→v0.41.0;v0.42.x 从未发布稳定版;根因:混淆 dev tag |
+
+### 决策不变项
+
+- 骨架:五柱×五阶段×三横切(不变)
+- gsd-core:维持 Stay 1.4.5 推荐(v1.6.0 需独立 ADR 评估)
+- rtk:hook 接线不变(版本纠正不影响功能)
+- claude-mem:R14 锁定 major v13.x 维持
+- superpowers:升级 6.0.0→6.0.3 可推进(patch 级,无 breaking)
+
+### 计划依据
+
+3 轮访谈 22 问(见 [plans/2026-06-24-v10.3-optimization.md](../superpowers/plans/2026-06-24-v10.3-optimization.md) + 本轮访谈决策)
 
 ---
 
