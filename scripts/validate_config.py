@@ -54,14 +54,15 @@ EXTENSION_SKILLS = {
 }
 MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
 V9_SKILLS = {
-    "understand-anything", "workstream-management", "adr-management",
+    # understand-anything removed v10.5 → catalog/skills/
+    "workstream-management", "adr-management",
     "onboarding-guide", "claude-to-deerflow", "taste-memory",
 }
 REQUIRED_SKILLS = (
     P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
     | MATTPOCOCK_SKILLS | V9_SKILLS
 )
-GLOBAL_SKILLS_MAX = 38
+GLOBAL_SKILLS_MAX = 45  # v10.5: +7 L3 skills (refactor/frontend/skill-*); UA removed
 
 GLOBAL_RULES = {
     "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
@@ -343,6 +344,7 @@ def main():
     check_v16_codegraph_mandate()
     check_v17_bare_except_extended()
     check_v17_auto_compact_window()
+    check_v18_codebase_memory_optional()
 
     report(
         agents=len(agent_names),
@@ -354,13 +356,13 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v10 VALIDATION (17 checks) ===")
+    print("=== .claude v10 VALIDATION (18 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
-        "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17",
+        "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name)]
         related_w = [w for w in WARNINGS if w.startswith(check_name)]
@@ -746,6 +748,66 @@ def check_v17_bare_except_extended():
         print(f"  V17 R16 扩展: FAIL ({len(violations)} violations)")
     else:
         print("  V17 R16 扩展: PASS (0 bare except) ✓")
+
+
+def check_v18_codebase_memory_optional():
+    """V18: codebase-memory-mcp L4 — optional-dev 配置 + npx/PATH 软警告（不阻断）."""
+    import json
+    import shutil
+
+    def _cbm_entry(servers: dict) -> dict | None:
+        return servers.get("codebase-memory")
+
+    def _uses_npx(entry: dict | None) -> bool:
+        if not entry:
+            return False
+        return entry.get("command") == "npx" and any(
+            "codebase-memory-mcp" in str(a) for a in (entry.get("args") or [])
+        )
+
+    opt_path = os.path.join(BASE, "mcp-configs", "optional-dev.json")
+    mcp_path = os.path.join(BASE, ".mcp.json")
+    opt_entry = None
+    mcp_entry = None
+
+    if os.path.isfile(opt_path):
+        try:
+            with open(opt_path, "r", encoding="utf-8") as fh:
+                opt_entry = _cbm_entry((json.load(fh)).get("mcpServers") or {})
+        except (OSError, json.JSONDecodeError) as exc:
+            WARNINGS.append(f"V18: optional-dev.json unreadable: {exc}")
+    else:
+        WARNINGS.append("V18: mcp-configs/optional-dev.json missing")
+
+    if os.path.isfile(mcp_path):
+        try:
+            with open(mcp_path, "r", encoding="utf-8") as fh:
+                mcp_entry = _cbm_entry((json.load(fh)).get("mcpServers") or {})
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    if not opt_entry:
+        WARNINGS.append("V18: optional-dev.json missing codebase-memory entry (v10.4)")
+        return
+
+    if mcp_entry:
+        WARNINGS.append(
+            "V18: codebase-memory in .mcp.json — ADR D3 requires L4 optional-dev only; remove from resident config"
+        )
+
+    if _uses_npx(opt_entry) or _uses_npx(mcp_entry):
+        if shutil.which("npx"):
+            print("  V18: codebase-memory via npx ✓")
+        else:
+            WARNINGS.append("V18: npx not on PATH — cannot run codebase-memory-mcp")
+        return
+
+    if shutil.which("codebase-memory-mcp"):
+        print("  V18: codebase-memory-mcp on PATH ✓")
+    else:
+        WARNINGS.append(
+            "V18: codebase-memory-mcp not on PATH — prefer npx in optional-dev.json"
+        )
 
 
 if __name__ == "__main__":

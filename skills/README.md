@@ -31,9 +31,9 @@ autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineer
 
 triage | improve-codebase-architecture
 
-## 项目洞察（1）
+## 项目洞察
 
-understand-anything
+~~understand-anything~~ — **removed v10.5**（`catalog/skills/understand-anything/`）
 
 ## v9 新增（5）
 

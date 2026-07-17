@@ -23,7 +23,8 @@
   },
   "explore": {
     "codegraph_first": true,
-    "nudge_on_grep_read": true
+    "nudge_on_grep_read": true,
+    "enforce_mode": "soft_block"
   },
   "sync": {
     "auto_on_edit": true,

@@ -1,0 +1,27 @@
+{
+  "owner": "CodeArts",
+  "team": "Huawei",
+  "slug": "frontend-design-pattern-applier",
+  "displayName": "前端设计模式应用器",
+  "brief": "识别前端代码中的面向过程逻辑坏味道，智能推荐并辅助重构为合适的设计模式",
+  "description": "识别前端代码中的僵化、高耦合的面向过程逻辑，通过智能分析推荐最合适的设计模式，并辅助用户完成重构。支持 TypeScript/JavaScript 前端代码的模式识别、重构建议和代码生成。\n\n### Features:\n- 智能代码坏味道检测\n- 设计模式智能推荐\n- 重构前后代码对比\n- 反过度设计保护机制\n- 交互式确认流程",
+  "labels": ["重构", "设计模式", "代码质量", "TypeScript", "前端", "代码坏味道", "策略模式", "工厂模式"],
+  "license": "Apache-2.0",
+  "type": "BEST_PRACTICE",
+  "category": "rnd-coding-refactoring",
+  "lifecycleState": "DEVELOPING",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1770915785653
+  },
+  "history": [
+    {
+   	  "version": "1.0.1",
+   	  "publishedAt": 1770915785653
+    },
+    {
+      "version": "1.0.0",
+      "publishedAt": 1768443749359
+    }
+  ]
+}

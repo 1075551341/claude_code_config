@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 上游: multica-ai/andrej-karpathy-skills | 来源: GitHub + juejin + mer.vin 三源交叉
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：193,293★；`pushed_at` 2026-04-20。
+- **本地映射**：karpathy-guidelines skill integrated。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - 176K+ Stars（2026-06；4 月 92K → 6 月 176K，3 个月翻倍）
@@ -40,3 +45,8 @@
 - Delta 刷新：Stars 92K → 176K（3 个月翻倍）
 - 四原则已深度吸收到 CORE R1-R4 铁律
 - 决策不变：L3 按需 Read；CORE 骨架引用
+
+## v10.5 delta (2026-07-17)
+
+- Stars：193,283；最新 Release：无正式 Release（`gh api`）。
+- 保持现有采纳范围，无强制扩展。

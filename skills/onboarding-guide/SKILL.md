@@ -15,13 +15,12 @@ loading_tier: L3
 ## Phase 1 — 项目概览
 
 - 读 `README.md` + `CLAUDE.md`（若存在）
-- `/understand-domain` 或 understand-anything 领域视图
+- 架构全景：codebase-memory `get_architecture`；结构探索：`codegraph_explore`（UA 已 removed）
 - 输出：一句话项目目标 + 主要用户
 
 ## Phase 2 — 代码结构
 
-- `/understand` 生成交互知识图
-- `codegraph_explore` 扫描顶层模块
+- `codegraph_explore` 扫描顶层模块；架构全景用 cbm `get_architecture`（场景强制）
 - 输出：目录职责表（≤10 行）
 
 ## Phase 3 — 关键路径

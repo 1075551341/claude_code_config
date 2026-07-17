@@ -4,7 +4,8 @@
 >
 > 整合自：
 > - [github/mcp-server](https://github.com/github/mcp-server) - 官方GitHub MCP
-> - [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - 上下文增强
+> - [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) - L4 代码知识图谱（v10.4）
+> - [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - archived_redirect → codebase-memory
 
 ---
 

@@ -1,33 +1,33 @@
-# 组件唯一归属源 — 防左右手互博 — v10.0
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 27仓库全量整合 v10.1
+# 组件唯一归属源 — 防左右手互博 — v10.5.1
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 28 active + 1 removed；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.3.1"
-updated: "2026-06-26"
+version: "10.5.1"
+updated: "2026-07-17"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
-ecc_integration: cherry_pick  # 吸收 ECC 2.0 模式，不安装 ECC 插件
+ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
 
 superpowers:
   source: obra/superpowers
   version: "6.0.3"
-  override: local_post_load  # 插件自动更新 + 本地 skills 后加载覆盖
+  override: local_post_load # 插件自动更新 + 本地 skills 后加载覆盖
 
 openspec_config:
   source: Fission-AI/OpenSpec
   version: "1.4.1"
-  profile: core  # v1.4.1: sync 已并入 core；verify/bulk-archive 见 openspec init + 本地 rules
+  profile: core # v1.4.1: sync 已并入 core；verify/bulk-archive 见 openspec init + 本地 rules
   cli_required: true
 
 thresholds:
   cursor: [70, 90]
   claude_code: [70, 90]
-  gsd_logical_breakpoint: 70  # 任务边界/子Agent切换，非强制压缩
+  gsd_logical_breakpoint: 70 # 任务边界/子Agent切换，非强制压缩
 
 codegraph:
   policy: mandate_init
-  scope: global_only  # ~/.claude 全局索引；业务项目按需 init
+  scope: global_only # ~/.claude 全局索引；业务项目按需 init
   note: "探索前须 codegraph init；validate_config V16 校验"
 
 ruflo:
@@ -54,6 +54,8 @@ module_resolver:
     - [deep_research, firecrawl_agent]
     - [land_and_deploy, release_engineer]
     - [agentic_orchestrator, pair_agent]
+    - [codebase_memory:search_graph, codegraph_explore]
+    - [codebase_memory:semantic_query, claude_context_mcp]
   hook_profile:
     env: LOCAL_HOOK_PROFILE
     values: [minimal, standard, strict]
@@ -114,10 +116,12 @@ horizontal_layers:
     owners:
       - source: affaan-m/ECC
         version: "2.0.0"
-        concerns: [manifest-validation, hook-profile, loop-guard, selective-install]
+        concerns:
+          [manifest-validation, hook-profile, loop-guard, selective-install]
       - source: bytedance/deer-flow
         version: "2.0"
-        concerns: [LangGraph-orchestration, flash-standard-pro-ultra, claude-bridge]
+        concerns:
+          [LangGraph-orchestration, flash-standard-pro-ultra, claude-bridge]
   L2_optimization:
     description: 优化横切层 — Token压缩 + 上下文治理
     owners:
@@ -130,20 +134,30 @@ horizontal_layers:
       - source: internal
         concerns: [context-threshold-70-90, gsd-logical-breakpoint-70]
   L3_insight:
-    description: 洞察横切层 — 代码图谱 + 知识图 + 外部搜索
+    description: 洞察横切层 — 代码图谱 + 外部搜索（UA removed v10.5）
     owners:
       - source: colbymchenry/codegraph
         version: "1.0.1"
-        concerns: [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
-      - source: Lum1104/Understand-Anything
-        version: "2.7.3"
-        concerns: [interactive-knowledge-graph, guided-tour, 5-agent-pipeline]
+        concerns:
+          [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
+      - source: DeusData/codebase-memory-mcp
+        version: "0.8.1"
+        concerns:
+          [
+            architecture-overview,
+            adr-management,
+            change-detection,
+            semantic-query,
+            cross-service,
+          ]
+        loading: L4_on_demand
       - source: Firecrawl/Exa
         concerns: [web-scraping, external-search]
 
 loading_tiers:
   L0: [CLAUDE-ROUTER, CLAUDE.md, rules/CORE.md]
-  L1: [skill/using-superpowers, skill/change-impact-analysis, skill/brainstorming]
+  L1:
+    [skill/using-superpowers, skill/change-impact-analysis, skill/brainstorming]
   L2_gate:
     spec: [skill/writing-plans, skill/spec-validation]
     execute: [skill/executing-plans, skill/subagent-driven-development]
@@ -157,7 +171,7 @@ loading_tiers:
     - skill/git-workflow
     - skill/pr-workflow
     - skill/claude-mem-maintenance
-  L3_dispatch: [agents/*, mcp/*, rules/* lazy globs]  # was L4, merged per v10.2 D4
+  L3_dispatch: [agents/*, mcp/*, rules/* lazy globs] # was L4, merged per v10.2 D4
   note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
 
 phases:
@@ -323,17 +337,26 @@ concerns:
 
   gstack_review:
     owner: rules/AGENTS.md
-    catalog: [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer]
+    catalog:
+      [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer]
     source: garrytan/gstack
     stage: verify
     delegates: [agent/code-reviewer, agent/spec-reviewer]
-    depends_on: [agents/eng-reviewer, agents/ceo-reviewer, agents/designer, agents/dx-reviewer, rules/AGENTS.md]
+    depends_on:
+      [
+        agents/eng-reviewer,
+        agents/ceo-reviewer,
+        agents/designer,
+        agents/dx-reviewer,
+        rules/AGENTS.md,
+      ]
 
   workstreams:
     owner: skill/workstream-management
     source: open-gsd/gsd-core
     stage: execute
-    depends_on: [skill/using-git-worktrees, plugin/thedotmack, rules/WORKFLOW.md]
+    depends_on:
+      [skill/using-git-worktrees, plugin/thedotmack, rules/WORKFLOW.md]
 
   adr:
     owner: skill/adr-management
@@ -438,7 +461,8 @@ concerns:
   mcp_tiering:
     owner: config/.mcp.json
     note: Claude Code 常驻 5（codegraph+crawl+git+fs+time）；ops/optional-dev 见 mcp-configs/
-    depends_on: [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
+    depends_on:
+      [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
 
   gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
   gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
@@ -522,7 +546,7 @@ concerns:
     owner: config/.mcp.json
     source: eyaltoledano/claude-task-master
     stage: execute
-    note: "可选MCP，安装: claude mcp add task-master-ai --env TASK_MASTER_TOOLS=\"core\" -- npx -y task-master-ai"
+    note: '可选MCP，安装: claude mcp add task-master-ai --env TASK_MASTER_TOOLS="core" -- npx -y task-master-ai'
     excludes: [skill/writing-plans]
 
   plugin_attribution:
@@ -576,8 +600,20 @@ concerns:
     owner: config/.mcp.json
     source: zilliztech/claude-context
     stage: execute
-    note: optional 分组，启用条件见 rules/CONTEXT.md
-    excludes: [agent/code-explorer]
+    status: archived_redirect
+    successor: DeusData/codebase-memory-mcp
+    note: v10.4 归档 — 语义搜索位由 codebase_memory_mcp 替代
+    excludes: [agent/code-explorer, codebase_memory_mcp]
+
+  codebase_memory_mcp:
+    owner: mcp-configs/optional-dev.json
+    source: DeusData/codebase-memory-mcp
+    version: "0.8.1"
+    stage: execute
+    loading: L4_on_demand
+    note: 架构/ADR/变更影响/跨服务；日常探索见 codegraph_explore
+    excludes: [claude_context_mcp, agent/code-explorer]
+    depends_on: [rules/CONTEXT.md]
 
   design_pipeline:
     owner: skill/design-pipeline
@@ -631,12 +667,12 @@ concerns:
     note: 预索引代码知识图谱 MCP，~35% token 节省，20+ 语言，按需启用
 
   understand_anything:
-    owner: plugin/understand-anything
-    skill: skill/understand-anything
+    owner: catalog/skills/understand-anything
+    skill: catalog/skills/understand-anything
     source: Lum1104/Understand-Anything
     stage: execute
-    status: l3_on_demand  # v10.2: L3按需启用，显式 /understand-* 触发
-    note: 交互式知识图 — 保留 skill 目录作 catalog，插件默认关闭
+    status: removed # v10.5 Q5: 移出骨架；替代 cbm get_architecture + codegraph explore
+    note: 审计保留 catalog；插件保持 disabled；ADR-2026-07-17
     excludes: [agent/code-explorer]
 
   code_exploration:
@@ -647,11 +683,11 @@ concerns:
     excludes: [skill重复索引]
 
   concept_navigation:
-    owner: plugin/understand-anything
+    owner: catalog/skills/understand-anything
     source: Lum1104/Understand-Anything
     stage: execute
-    status: disabled
-    note: 交互式概念导览+领域聚类，替代长文解释
+    status: removed
+    note: v10.5 随 UA 移除；架构/onboarding 改 cbm+codegraph
     excludes: [skill重复导览]
 
   vibe_coding_cn:
@@ -667,7 +703,7 @@ p0_skills:
   - verification-before-completion
   - systematic-debugging
 
-global_skills_max: 38
+global_skills_max: 45 # v10.5: +7 L3; UA removed
 global_agents_max: 25
 
 # ═══════════════════════════════════════════════════════════════
@@ -714,5 +750,5 @@ sync_targets:
     trae-cn: ".md"
     codearts: ".mdc"
   root_filename:
-    devin: "AGENTS.md"      # Devin CLI 全局 rules 标准
-    default: "CLAUDE.md"    # 其余编辑器
+    devin: "AGENTS.md" # Devin CLI 全局 rules 标准
+    default: "CLAUDE.md" # 其余编辑器

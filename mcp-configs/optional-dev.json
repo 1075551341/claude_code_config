@@ -1,7 +1,7 @@
 {
   "toolset": "optional-dev",
-  "description": "浏览器调试 / 设计稿 / 语义搜索 — 按需 merge 到 .mcp.json",
-  "servers": ["chrome-devtools", "figma", "exa"],
+  "description": "浏览器调试 / 设计稿 / 语义搜索 / 代码知识图谱 — 按需 merge 到 .mcp.json",
+  "servers": ["chrome-devtools", "figma", "exa", "codebase-memory"],
   "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
   "mcpServers": {
     "chrome-devtools": {
@@ -24,6 +24,11 @@
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
+    },
+    "codebase-memory": {
+      "_description": "代码知识图谱 L4（DeusData/codebase-memory-mcp v0.8.1）。场景：架构全景、ADR、变更影响 detect_changes、语义搜索。需先 index。与 codegraph 双引擎互补。",
+      "command": "npx",
+      "args": ["-y", "codebase-memory-mcp@0.8.1"]
     }
   }
 }

@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：62,910★；`pushed_at` 2026-07-16。
+- **本地映射**：catalog 实证实践；清单去重仅此一卡。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - lazy-load rules：按需 Read，非 alwaysApply 全量
@@ -36,3 +41,8 @@
 
 - Delta 刷新：51.3K+ Stars（2026-06）
 - 决策不变：lazy rules + L0 四入口 sync 策略对齐
+
+## v10.5 delta (2026-07-17)
+
+- Stars：62,909；最新 Release：无正式 Release（`gh api`）。
+- 保持现有采纳范围，无强制扩展。

@@ -1,0 +1,23 @@
+{
+  "owner": "CodeArts",
+  "team": "Huawei",
+  "slug": "code-refactoring",
+  "displayName": "代码重构",
+  "brief": "在不改变代码行为的前提下优化代码结构，提升类型安全，消除代码异味。",
+  "description": "**前置条件:**\n\n- 重构前需要具备单元测试用例\n- 需要理解待重构代码的逻辑\n\n**功能特性:**\n\n- 抽取公共方法，避免函数超过50行\n- 类型安全检测，检测不安全的类型转换\n- 类型匹配检查，检测类型不匹配风险\n- 安全重构，分步验证\n- 风险评估和收益评估报告\n\n**使用场景:**\n\n- 代码难以理解或维护\n- 函数/类过大（超过50行）\n- 需要处理代码异味\n- 由于代码结构问题导致添加功能困难",
+  "labels": ["重构", "代码质量", "优化", "整洁代码", "设计模式", "类型安全"],
+  "license": "Apache-2.0",
+  "type": "BEST_PRACTICE",
+  "category": "rnd-coding-refactoring",
+  "lifecycleState": "DEVELOPING",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1744800000000
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1744800000000
+    }
+  ]
+}

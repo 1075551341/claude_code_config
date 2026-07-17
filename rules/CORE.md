@@ -15,7 +15,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 ```
 L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra四模式)
 L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
-L3 洞察 — codegraph(静态索引,官方均值~16%成本/~47%token/~58%工具调用/~22%更快) + Understand-Anything(L3按需) + Firecrawl/Exa(外部搜索)
+L3 洞察 — codegraph(R17 常驻) + codebase-memory(L4 场景强制·Claude 按需 merge) + Firecrawl/Exa(外部搜索)  # UA removed v10.5
 可选外部 — task-master MCP(任务管理,core/standard/all三级,~70%token减少,按需启用) + deer-flow bridge(claude-to-deerflow skill)
 
 所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
@@ -25,11 +25,11 @@ L3 洞察 — codegraph(静态索引,官方均值~16%成本/~47%token/~58%工具
 
 ⛔ **铁律: 绝不允许上下文达到 100%。违者任务无效。**
 
-| 使用率 | Cursor | Claude Code |
-|--------|--------|-------------|
-| <70%   | 正常工作 | 正常工作 |
-| 70%    | ⚠️ 择机 `/summarize` 或「压缩上下文」 | ⚠️ 择机 `/compact` |
-| 90%    | 🔴 强制 `/summarize` 或新子 Agent | 🔴 强制 `/compact` 或新子 Agent |
+| 使用率 | Cursor                                | Claude Code                     |
+| ------ | ------------------------------------- | ------------------------------- |
+| <70%   | 正常工作                              | 正常工作                        |
+| 70%    | ⚠️ 择机 `/summarize` 或「压缩上下文」 | ⚠️ 择机 `/compact`              |
+| 90%    | 🔴 强制 `/summarize` 或新子 Agent     | 🔴 强制 `/compact` 或新子 Agent |
 
 ⛔ 绝不允许达到 100%。子 Agent：无依赖并行 | 有依赖串行 | 同制品路径禁止并行写入。
 
@@ -45,16 +45,17 @@ L3 洞察 — codegraph(静态索引,官方均值~16%成本/~47%token/~58%工具
 
 Agent 异常 → 主 Agent 判断：
 
-| 路径 | 条件 | 动作 | 后续 |
-|------|------|------|------|
-| **重试** | 网络/超时/瞬态错误 | 重试 ≤R5 上限（同一方案≤2次） | 仍失败 → 升级为"需确认" |
-| **降级** | 非核心能力不可用（如可选 MCP 离线） | 降级方案 + 标注 DONE_WITH_CONCERNS | 继续执行，事后审计 |
-| **需确认** | 权限不足/冲突/数据风险/重试耗尽 | 暴露详细信息给用户 + 等待决策 | 用户决策后继续或中止 |
-| **硬阻断** | 安全/CVE/数据丢失/不可逆操作 | 立即停止 + 详细报告 + 建议补救 | 等待用户手动介入 |
+| 路径       | 条件                                | 动作                               | 后续                    |
+| ---------- | ----------------------------------- | ---------------------------------- | ----------------------- |
+| **重试**   | 网络/超时/瞬态错误                  | 重试 ≤R5 上限（同一方案≤2次）      | 仍失败 → 升级为"需确认" |
+| **降级**   | 非核心能力不可用（如可选 MCP 离线） | 降级方案 + 标注 DONE_WITH_CONCERNS | 继续执行，事后审计      |
+| **需确认** | 权限不足/冲突/数据风险/重试耗尽     | 暴露详细信息给用户 + 等待决策      | 用户决策后继续或中止    |
+| **硬阻断** | 安全/CVE/数据丢失/不可逆操作        | 立即停止 + 详细报告 + 建议补救     | 等待用户手动介入        |
 
 **原则**: 不静默吞错（R16），不无限重试（R5），不确定时升级而非猜测。
 
 **/learn ↔ claude-mem 管道**（v10.2）：
+
 - brainstorming 决策 → 自动写入 claude-mem observation（跨会话复用）
 - design-shotgun 品味数据 → taste_memory concern → claude-mem
 - bug 修复模式 → experiences/patterns/ + claude-mem observation
@@ -160,13 +161,13 @@ Agent 异常 → 主 Agent 判断：
 
 业务逻辑禁止 `new Date()` / `Date.now()` / `datetime.now()` — 用时区库 + 依赖注入（Clock 接口）。CLI 一次性脚本、纯 UI 展示除外。
 
-| 语言 | 推荐库 |
-|------|--------|
-| TS/JS | dayjs / date-fns |
-| Python | pendulum |
-| Go | `time` + Clock 接口 |
-| Rust | chrono / time crate |
-| C# | NodaTime |
+| 语言   | 推荐库              |
+| ------ | ------------------- |
+| TS/JS  | dayjs / date-fns    |
+| Python | pendulum            |
+| Go     | `time` + Clock 接口 |
+| Rust   | chrono / time crate |
+| C#     | NodaTime            |
 
 Claude Code 可用 `time` MCP 获取当前时间。
 
@@ -174,39 +175,41 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 > R1–R11 → `CLAUDE.md`
 
-| #   | 约束          | 核心                                                           |
-| --- | ------------- | -------------------------------------------------------------- |
-| R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态               |
-| R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化        |
-| R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认 |
-| R15 | 包管理器      | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm`          |
-| R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告             |
-| R17 | 代码探索优先  | 探索代码先 `codegraph_explore`，次选 Grep/Glob                 |
-| R18 | 记忆优先      | 历史上下文先查 claude-mem，避免重复分析文件                    |
+| #   | 约束          | 核心                                                                                                             |
+| --- | ------------- | ---------------------------------------------------------------------------------------------------------------- |
+| R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态                                                                 |
+| R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化                                                          |
+| R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认                                                   |
+| R15 | 包管理器      | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm`                                                            |
+| R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告                                                               |
+| R17 | 代码探索优先  | 探索代码先 `codegraph_explore`；架构/ADR/变更见 cbm L4；次选 Grep/Glob                                           |
+| R18 | 记忆优先      | 历史上下文先查 claude-mem，避免重复分析文件                                                                      |
 | R19 | Git 禁令      | 禁止自动 `git stash`；禁止自动 `git commit`（仅用户显式指令 + Guard 确认后执行）；禁止 force push 到 main/master |
 
 ### R17-R18 工具路由与协同
 
-| 需求 | 首选 | 次选 | 禁止 |
-|------|------|------|------|
-| 函数/类/调用链 | codegraph_explore/trace | Grep精确定位 | 全库Grep盲扫 |
-| 变更影响 | codegraph_explore blast-radius（impact 需 env） | change-impact-analysis | 手动猜 |
-| 项目全貌/领域 | codegraph_explore | Grep 精扫 | 逐文件Read |
-| 变更可视化 | codegraph_explore blast-radius | Grep | 忽略影响面 |
-| 跨会话历史 | claude-mem search→get_observations | — | 重复分析已读文件 |
+| 需求                      | 首选                                                        | 次选                            | 禁止                                    |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------- | --------------------------------------- |
+| 函数/类/调用链            | codegraph_explore/trace                                     | Grep精确定位                    | 全库Grep盲扫                            |
+| 架构全景/模块聚类/ADR     | codebase-memory get_architecture/manage_adr（**场景强制**） | codegraph explore 概览          | 双引擎同问；跳过 cbm→DONE_WITH_CONCERNS |
+| 变更影响（git diff→符号） | codebase-memory detect_changes（**场景强制**）              | codegraph_impact / blast-radius | 手动猜；跳过 cbm→DONE_WITH_CONCERNS     |
+| 变更影响（符号级）        | codegraph_explore blast-radius（impact 需 env）             | change-impact-analysis          | 手动猜                                  |
+| 项目全貌/领域             | codegraph_explore                                           | Grep 精扫                       | 逐文件Read                              |
+| 变更可视化                | codegraph_explore blast-radius                              | Grep                            | 忽略影响面                              |
+| 跨会话历史                | claude-mem search→get_observations                          | —                               | 重复分析已读文件                        |
 
 **claude-mem 三层**：search索引 → 识别关键IDs → fetch详情（token高效）
 
-**codegraph（v10.2）**：符号级低 token 快查；UA **L3 按需**（ADR-2026-06-16 修订 1），显式 /understand-* 触发
+**codegraph（v10.2）**：符号级低 token 快查；**codebase-memory（v10.4→v10.5.1）**：Claude L4 按需 merge，但架构/ADR/变更/跨服务 **场景强制**（未调用须标 `DONE_WITH_CONCERNS`，禁止静默跳过）；Cursor 侧 MCP P0 启用；**UA removed（v10.5）** — 见 ADR-2026-07-17，替代 cbm+codegraph
 
 ### R17 反模式检测
 
-| 行为 | 判定 | 后果 |
-|------|------|------|
-| 改文件前未查 blast-radius（`codegraph_explore`，或启用 env 后 `codegraph_impact`） | 违反 R17 | 变更范围不可信 |
-| 跳过 codegraph 直接 Grep 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费 |
-| codegraph 已返回结果仍 Read 同文件 | 违反 R17 | 重复 token 消耗 |
-| 探索前未确认 codegraph init | 违反 mandate | 索引缺失，回退全量 Grep |
+| 行为                                                                               | 判定         | 后果                           |
+| ---------------------------------------------------------------------------------- | ------------ | ------------------------------ |
+| 改文件前未查 blast-radius（`codegraph_explore`，或启用 env 后 `codegraph_impact`） | 违反 R17     | 变更范围不可信                 |
+| 跳过 codegraph 直接 Grep 搜函数                                                    | 违反 R17     | ~47% token / ~58% 工具调用浪费 |
+| codegraph 已返回结果仍 Read 同文件                                                 | 违反 R17     | 重复 token 消耗                |
+| 探索前未确认 codegraph init                                                        | 违反 mandate | 索引缺失，回退全量 Grep        |
 
 **codegraph_explore 返回的源码视为已读取，禁止重复 Read/Grep。**
 
@@ -244,6 +247,7 @@ Claude Code 可用 `time` MCP 获取当前时间。
 ### 三阶段流程
 
 **阶段 1: 变更前 — 影响分析（阻断式）**
+
 ```
 ① codegraph_explore(target_symbol) blast-radius — 代码级影响范围（默认工具；含调用者/被调用者）
    └ 需精确 impact 时 `CODEGRAPH_MCP_TOOLS=...,impact` 启用 codegraph_impact 或 CLI `codegraph impact`（F1）
@@ -255,12 +259,14 @@ Claude Code 可用 `time` MCP 获取当前时间。
 ```
 
 **阶段 2: 变更中 — 逐文件修改**
+
 ```
 按依赖拓扑序修改 → 每文件 Read→Edit→Read
 清单逐项勾销，中途发现新关联 → 追加到清单
 ```
 
 **阶段 3: 变更后 — 完整性验证**
+
 ```
 ① Grep 残留引用(old_pattern)  — 不应有未更新引用 → 残留 > 0 则回到阶段 2
 ② 构建/类型/Lint 通过          — 编译级验证
@@ -269,22 +275,22 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 ### 强制触发条件
 
-| 变更类型 | 必须执行 |
-|----------|----------|
+| 变更类型                 | 必须执行                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------- |
 | 改函数签名/接口/类型定义 | `codegraph_explore` blast-radius（或 env 启用 `codegraph_impact`）+ Grep 全项目引用 |
-| 改配置文件/规则/Skill | MANIFEST `depends_on` 遍历 |
-| 重命名/删除/移动文件 | Grep 全项目残留引用 |
-| 改 agent/hook/MCP 定义 | 同步更新 INDEX.md + MANIFEST.yaml |
-| 调研/分析任务 | 先 `codegraph_explore` blast-radius 确定范围，再逐文件深读 |
+| 改配置文件/规则/Skill    | MANIFEST `depends_on` 遍历                                                          |
+| 重命名/删除/移动文件     | Grep 全项目残留引用                                                                 |
+| 改 agent/hook/MCP 定义   | 同步更新 INDEX.md + MANIFEST.yaml                                                   |
+| 调研/分析任务            | 先 `codegraph_explore` blast-radius 确定范围，再逐文件深读                          |
 
 ### 反模式（禁止）
 
-| 禁止 | 原因 |
-|------|------|
-| 只改指定文件不改关联文件 | 造成不一致/死代码 |
-| "看起来差不多" 跳过 Grep | 遗漏隐藏引用 |
-| 手动估计影响范围 | codegraph 比人准 |
-| 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
+| 禁止                     | 原因                        |
+| ------------------------ | --------------------------- |
+| 只改指定文件不改关联文件 | 造成不一致/死代码           |
+| "看起来差不多" 跳过 Grep | 遗漏隐藏引用                |
+| 手动估计影响范围         | codegraph 比人准            |
+| 残留引用 > 0 声称完成    | 违反 R1（验证通过才算完成） |
 
 ## 工作原则
 

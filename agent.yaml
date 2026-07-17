@@ -64,8 +64,8 @@ skills:
       - triage
       - improve-codebase-architecture
   insight:
-    enabled:
-      - understand-anything
+    enabled: []
+    note: "understand-anything removed v10.5; use codegraph + cbm"
   bridge:
     enabled:
       - claude-to-deerflow

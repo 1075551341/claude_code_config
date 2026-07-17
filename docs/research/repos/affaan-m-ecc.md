@@ -2,6 +2,20 @@
 
 > 层: L1 治理 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub Releases + Discussion #2213 双源
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：230,370 stars；GitHub Release **v2.0.0**；`pushed_at` 2026-07-14T01:31:12Z。
+- **自 2026-06-29 的变化**：无重大漂移——最新 release 仍为 v2.0.0，只有持续仓库维护信号。
+- **本地吸收**：不变——继续 cherry-pick MANIFEST/hook 概念，禁止安装全量 ECC 以避免 duplicate hooks。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 Release 与 Discussion 研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：230,376★；Release **v2.0.0**；`pushed_at` 2026-07-14T01:31:12Z。
+- **漂移要点**：仍定位 agent harness OS（skills/instincts/memory/security/research-first）。
+- **本地吸收 / 缺口**：**cherry_pick** 不变；已吸收模块冲突声明 + hook 分级模式。
+- **不吸收**：全量 ECC 插件安装。
+- **双源**：GitHub API + 既有决策交叉。
 ## 核心价值
 
 - Module Resolver → Target Adapter → Operation Planner → Install-State

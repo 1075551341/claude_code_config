@@ -14,7 +14,8 @@
     -InitProject: deploy project-init templates to current project (skip existing)
 
     Sync method: symbolic link preferred, Copy-Item fallback
-    Before syncing: delete existing target of same name (dedup)
+    Before syncing: delete same-basename siblings in the target dir
+      (any extension / case — e.g. CORE.md + core.mdc before writing CORE.mdc)
     Rules extension: cursor/qoder/codearts -> .mdc, devin/trae -> .md
 
     Excluded: hooks/ scripts/ MCP configs plugins/ commands/ settings.json
@@ -222,6 +223,25 @@ function Remove-Target {
     }
 }
 
+# Same-type same-name: purge ALL siblings with same basename (any ext / case)
+# e.g. before writing rules/CORE.mdc, also remove CORE.md / core.mdc / Core.MD
+function Remove-SameBasenameVariants {
+    param(
+        [string]$Directory,
+        [string]$BaseName,
+        [string]$LabelPrefix
+    )
+    if (-not $Directory -or -not (Test-Path $Directory)) { return }
+    if ([string]::IsNullOrWhiteSpace($BaseName)) { return }
+
+    $matches = @(Get-ChildItem -LiteralPath $Directory -File -Force -ErrorAction SilentlyContinue |
+        Where-Object { $_.BaseName -ieq $BaseName })
+    foreach ($f in $matches) {
+        $lbl = if ($LabelPrefix) { "$LabelPrefix/$($f.Name)" } else { $f.Name }
+        Remove-Target -Path $f.FullName -Label $lbl
+    }
+}
+
 # =============================================================
 # Sync a single file (symlink -> fallback Copy-Item)
 # =============================================================
@@ -245,7 +265,10 @@ function Sync-File {
         New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
     }
 
-    # Dedup: remove existing target first
+    # Dedup: same-basename siblings (any ext/case) then exact path
+    $dstBase = [System.IO.Path]::GetFileNameWithoutExtension($DstPath)
+    $scopeName = Split-Path $dstDir -Leaf
+    Remove-SameBasenameVariants -Directory $dstDir -BaseName $dstBase -LabelPrefix "$scopeName"
     Remove-Target -Path $DstPath -Label $Label
 
     if ($DryRun) {
@@ -462,6 +485,13 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
         $dstName = $L0_ROOT_DSTNAME[$editor]
         $dstPath = Join-Path $targetBase $dstName
         Sync-File -SrcPath $srcPath -DstPath $dstPath -Label "$dstName -> $editor"
+
+        # Purge misplaced same-basename copies under rules/ (e.g. rules/CLAUDE.md)
+        $rootBase = [System.IO.Path]::GetFileNameWithoutExtension($dstName)
+        if (Test-Path $rulesDir) {
+            Remove-SameBasenameVariants -Directory $rulesDir -BaseName $rootBase `
+                -LabelPrefix "rules(misplaced)"
+        }
     }
 
     # ---- 2. L0 rule files (CORE, CLAUDE-ROUTER) ----
@@ -535,6 +565,6 @@ Write-Host ""
 Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, devin/trae/trae-cn=.md" -ForegroundColor DarkGray
 Write-Host "  Method     : symlink preferred, Copy-Item fallback" -ForegroundColor DarkGray
-Write-Host "  Dedup      : delete existing same-name target before sync" -ForegroundColor DarkGray
+Write-Host "  Dedup      : delete same-basename variants (any ext/case) then write" -ForegroundColor DarkGray
 Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""

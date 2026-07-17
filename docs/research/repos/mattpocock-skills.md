@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：174,379★；Release **v1.1.0**；`pushed_at` 2026-07-16。
+- **本地映射**：已集成 2 skills；其余 catalog。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - triage P0–P3 优先级分级
@@ -36,3 +41,9 @@
 
 - Delta 刷新：135K+ Stars（2026-06）
 - 决策不变：triage L3；grill catalog 引用
+
+## v10.5 delta (2026-07-17)
+
+- Stars：174,319；最新 Release：v1.1.0（2026-07-08，`gh api`）。
+- 可吸收点：`grilling` 明确区分可查事实与须由人决定的事项，并设确认门；与现有 brainstorming HARD-GATE 对齐，无需重复集成。
+- 决策不变：triage L3；grill catalog 引用。

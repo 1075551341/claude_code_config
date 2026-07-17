@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v9.2 常驻 5 服务器 | 权威源 | ops/optional-dev 见 mcp-configs/*.json 按需 merge | Cursor 侧见 docs/CURSOR_MCP_PROFILE.md",
+  "_comment": "MCP v10.5 常驻 5 | cbm/chrome-devtools/exa/figma 见 mcp-configs/optional-dev.json 按需 merge",
   "mcpServers": {
     "codegraph": {
       "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。F1 纠偏(v10.3)：env 启用 codegraph_impact 满足 R6 变更彻底性保障。",
@@ -29,7 +29,12 @@
     "fs": {
       "_description": "文件系统操作。场景：跨路径读写、配置仓库维护。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "D:\\apdms", "C:\\Users\\DELL\\.claude"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\apdms",
+        "C:\\Users\\DELL\\.claude"
+      ]
     },
     "time": {
       "_description": "时间与时区工具。场景：获取当前时间、时区转换（配合禁 new Date() 规范）。",

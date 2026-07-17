@@ -4,17 +4,17 @@ description: 跨编辑器配置同步指南 v17.0
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v17.0 | **日期**: 2026-06-24 | **脚本**: `scripts/sync.ps1` | **三模式**: 默认(L0入口) / `-Skills`(+skills/) / `-All`(全量) | 预览: `-DryRun`
+> **版本**: v18.0 | **日期**: 2026-06-29 | **脚本**: `scripts/sync.ps1` | **推荐**: **默认 L0**（省 token）| `-Skills` / `-All` 按需
 >
-> **v17 重要变更**：扩展至 7 编辑器（+qoder-cn, +trae-cn）；-cn 变体独立配置目录。同步方式不变：符号链接优先，`Copy-Item` 兜底；写入前删同名目标（去重）。
+> **v10.4 推荐**：日常 Cursor 使用 **默认模式（L0）** — 仅 CORE + ROUTER + CURSOR-EDITOR；lazy rules 经 `CLAUDE-ROUTER → Read rules/<name>.md` 按需加载。首次离线或需全量 rules 时用 `-All`。
 
 ## 边界原则（Claude Code ↔ 编辑器）
 
-| 范围 | 路径 | 说明 |
-|------|------|------|
-| **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用 |
-| **同步源（只读）** | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件 | `sync.ps1` 读取并链接/复制到编辑器 |
-| **同步目标（仅编辑器）** | `~/.cursor/`、`%APPDATA%\devin\`、`~/.trae/`、`~/.qoder/` 等 | 软链接、联接、原生副本、路由部署均写在此 |
+| 范围                                 | 路径                                                                                  | 说明                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------- |
+| **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用                |
+| **同步源（只读）**                   | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件                             | `sync.ps1` 读取并链接/复制到编辑器       |
+| **同步目标（仅编辑器）**             | `~/.cursor/`、`%APPDATA%\devin\`、`~/.trae/`、`~/.qoder/` 等                          | 软链接、联接、原生副本、路由部署均写在此 |
 
 **`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。
 **`fix.ps1 -Fix`** 单独处理 Hook launcher 与编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
@@ -23,24 +23,24 @@ description: 跨编辑器配置同步指南 v17.0
 
 ## v14.5 核心变更：仅L0入口 + 个人级单落点
 
-| 变更 | v14.4 | v14.5 |
-|------|-------|-------|
-| **同步内容** | 全量12个rules | 仅L0关键入口（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
-| **Cursor落点** | 双落点（个人+项目） | 仅个人级 `~/.cursor/rules/` |
-| **CodeArts落点** | 双落点（个人+项目） | 仅个人级 `~/.codeartsdoer/rule/` |
-| **Windsurf** | 独立编辑器 | 已移除（已改名Devin） |
-| **详细rules** | 全量部署到编辑器 | 通过L0路由按需Read加载 |
+| 变更             | v14.4               | v14.5                                            |
+| ---------------- | ------------------- | ------------------------------------------------ |
+| **同步内容**     | 全量12个rules       | 仅L0关键入口（ROUTER/CLAUDE/CORE/CURSOR-EDITOR） |
+| **Cursor落点**   | 双落点（个人+项目） | 仅个人级 `~/.cursor/rules/`                      |
+| **CodeArts落点** | 双落点（个人+项目） | 仅个人级 `~/.codeartsdoer/rule/`                 |
+| **Windsurf**     | 独立编辑器          | 已移除（已改名Devin）                            |
+| **详细rules**    | 全量部署到编辑器    | 通过L0路由按需Read加载                           |
 
 ---
 
 ## 三模式概览（v17.0）
 
-| 内容 | 默认（L0入口） | `-Skills` | `-All` |
-|------|:--------------:|:---------:|:------:|
-| L0 入口（CLAUDE.md / CORE / CLAUDE-ROUTER） | ✅ | ✅ | ✅ |
-| `skills/` | ❌ | ✅ | ✅ |
-| `agents/` | ❌ | ❌ | ✅ |
-| `rules/`（全量） + CLAUDE.md | L0 only | L0 only | ✅ |
+| 内容                                        | 默认（L0入口） | `-Skills` | `-All` |
+| ------------------------------------------- | :------------: | :-------: | :----: |
+| L0 入口（CLAUDE.md / CORE / CLAUDE-ROUTER） |       ✅       |    ✅     |   ✅   |
+| `skills/`                                   |       ❌       |    ✅     |   ✅   |
+| `agents/`                                   |       ❌       |    ❌     |   ✅   |
+| `rules/`（全量） + CLAUDE.md                |    L0 only     |  L0 only  |   ✅   |
 
 - **目标编辑器**：cursor / devin(`%APPDATA%\devin`) / qoder / qoder-cn / trae / trae-cn / codearts
 - **rules 扩展名**：cursor·qoder·qoder-cn·codearts → `.mdc`；devin·trae·trae-cn → `.md`
@@ -64,6 +64,7 @@ description: 跨编辑器配置同步指南 v17.0
 │   ├── CORE.mdc                          (L0骨架，源 ~/.claude/rules/CORE.md)
 │   └── CURSOR-EDITOR.mdc                 (Cursor专属守护层)
 ```
+
 > v16：不再写 `sync-mode.json`；模式由命令行开关（`-Skills`/`-All`）即时决定。
 
 > **v14.5+**：不再部署到项目级目录（`~/.claude/.cursor/rules/`），避免双份显示。详细rules通过L0路由按需Read加载。
@@ -102,10 +103,10 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -DryRun    # 预览
 
 ## 模式 B / C：`-Skills` 与 `-All`
 
-| 模式 | 同步内容 | 命令 |
-|------|----------|------|
-| `-Skills` | L0 入口 + `skills/` | `sync.ps1 -Skills` |
-| `-All` | rules（全量）+ skills + agents + CLAUDE.md | `sync.ps1 -All` |
+| 模式      | 同步内容                                   | 命令               |
+| --------- | ------------------------------------------ | ------------------ |
+| `-Skills` | L0 入口 + `skills/`                        | `sync.ps1 -Skills` |
+| `-All`    | rules（全量）+ skills + agents + CLAUDE.md | `sync.ps1 -All`    |
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills
@@ -129,12 +130,12 @@ powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 
 > Claude Code 的 `settings.json` hooks 在 Cursor 内由 `_editor_hook_launcher` 跳过。Cursor 侧能力由 **Cursor Guard** 单独提供。
 
-| 层 | 路径 | 职责 |
-|----|------|------|
-| 模板（版本化） | `~/.claude/templates/cursor-guard/` | hooks 源码 SSOT |
-| 运行时 | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | Cursor 原生 hook |
-| 状态 | `~/.cursor/.state/` | 计数/压缩快照（与 `~/.claude` 隔离） |
-| 配置 | `~/.cursor/guard-config.json` | 70%/90% 阈值、同步开关 |
+| 层             | 路径                                        | 职责                                 |
+| -------------- | ------------------------------------------- | ------------------------------------ |
+| 模板（版本化） | `~/.claude/templates/cursor-guard/`         | hooks 源码 SSOT                      |
+| 运行时         | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | Cursor 原生 hook                     |
+| 状态           | `~/.cursor/.state/`                         | 计数/压缩快照（与 `~/.claude` 隔离） |
+| 配置           | `~/.cursor/guard-config.json`               | 70%/90% 阈值、同步开关               |
 
 **部署**：
 
@@ -150,13 +151,13 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 **与 Claude Code 对照**：
 
-| 能力 | Claude Code | Cursor Guard |
-|------|-------------|--------------|
-| Hook 注册 | `~/.claude/settings.json` | `~/.cursor/hooks.json` |
-| 编辑器内执行 | 跳过（launcher） | 全量执行 |
-| 压缩命令 | `/compact` | Cursor 原生 compact + `preCompact` 快照 |
-| 计数文件 | `tool-call-counter.json` | `.cursor/.state/tool-counter.json` |
-| codegraph | MCP + post-codegraph-sync(CLI) | MCP 优先路由；无 post-codegraph-sync |
+| 能力         | Claude Code                    | Cursor Guard                            |
+| ------------ | ------------------------------ | --------------------------------------- |
+| Hook 注册    | `~/.claude/settings.json`      | `~/.cursor/hooks.json`                  |
+| 编辑器内执行 | 跳过（launcher）               | 全量执行                                |
+| 压缩命令     | `/compact`                     | Cursor 原生 compact + `preCompact` 快照 |
+| 计数文件     | `tool-call-counter.json`       | `.cursor/.state/tool-counter.json`      |
+| codegraph    | MCP + post-codegraph-sync(CLI) | MCP 优先路由；无 post-codegraph-sync    |
 
 完整编辑器独有配置见 [`CURSOR_EDITOR_SETUP.md`](CURSOR_EDITOR_SETUP.md)。
 
@@ -164,36 +165,37 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## Rules 来源与 token（v10.0）
 
-| 来源 | 平台 | 控制方式 |
-|------|------|----------|
-| CLAUDE / CORE / ROUTER | 双平台 sync | 源文件去重 |
-| plugin-* rules | 仅 Cursor | 禁插件即消失 |
-| User Rules | 仅 Cursor Settings | 指针 + L3 skills |
-| lazy rules (GIT/FRONTEND/OPENSPEC) | L0 路由按需 Read | glob 触发 |
+| 来源                               | 平台               | 控制方式         |
+| ---------------------------------- | ------------------ | ---------------- |
+| CLAUDE / CORE / ROUTER             | 双平台 sync        | 源文件去重       |
+| plugin-\* rules                    | 仅 Cursor          | 禁插件即消失     |
+| User Rules                         | 仅 Cursor Settings | 指针 + L3 skills |
+| lazy rules (GIT/FRONTEND/OPENSPEC) | L0 路由按需 Read   | glob 触发        |
 
 ## v10.0 加载策略
 
-| 等级 | 同步内容 | Cursor 机制 |
-|------|----------|-------------|
-| L0 | CLAUDE-ROUTER + CLAUDE + CORE + CURSOR-EDITOR | alwaysApply |
-| L1 | using-superpowers, change-impact-analysis | 会话常驻 |
-| L2/L3 | 其余 skills | disable-model-invocation + 阶段 Read |
-| L4 | agents, MCP, plugins | 显式调用 |
+| 等级  | 同步内容                                      | Cursor 机制                          |
+| ----- | --------------------------------------------- | ------------------------------------ |
+| L0    | CLAUDE-ROUTER + CLAUDE + CORE + CURSOR-EDITOR | alwaysApply                          |
+| L1    | using-superpowers, change-impact-analysis     | 会话常驻                             |
+| L2/L3 | 其余 skills                                   | disable-model-invocation + 阶段 Read |
+| L4    | agents, MCP, plugins                          | 显式调用                             |
 
 - **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 - **运行时**：[RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
-- **v10 任务**：[tasks-v10.md](../spec/claude-config-integration/tasks-v10.md)
-- **历史详图**：`spec/claude-config-integration/plan-v9.1-token-loading.md`
+- **当前设计**：[design-v10.5.md](../spec/claude-config-integration/design-v10.5.md)
+- **当前计划**：[2026-07-17-v10.5-optimization.md](superpowers/plans/2026-07-17-v10.5-optimization.md)
 
 ---
 
-## 去重策略（v14.5+）
+## 去重策略（v18.0+）
 
-每次 `sync.ps1` 写入前：
+每次 `sync.ps1` 写入前（`Sync-File`）：
 
-1. **L0 rules**：`Remove-AllRuleVariantsByBaseName` 删除同 basename 的 `.md`/`.mdc`/大小写变体
-2. **单文件链接**：`Remove-ScopedSameTypeTarget` 先删后 `mklink`
-3. **Cursor 项目 rules**：**不部署** `~/.claude/.cursor/rules/`（仅个人级 `~/.cursor/rules/`，防双份）
+1. **同类型同名**：`Remove-SameBasenameVariants` 删除目标目录内同 basename 的全部变体（任意扩展名 / 大小写，如 `CORE.md` + `core.mdc`）
+2. **精确路径**：再 `Remove-Target` 删除目标路径（文件或目录联接）
+3. **写入**：优先 symlink，失败则 `Copy-Item`
+4. **Cursor 项目 rules**：**不部署** `~/.claude/.cursor/rules/`（仅个人级 `~/.cursor/rules/`，防双份）
 
 回归：`powershell -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1`
 

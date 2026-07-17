@@ -36,7 +36,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 |------|--------|------|----------|
 | always | codegraph, crawl, git, fs, time | `.mcp.json` 常驻 | 探索(R17)、调研、Git、文件、时间 |
 | ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` 按需 | 缓存、DB、容器 |
-| optional-dev | chrome-devtools, figma | `mcp-configs/optional-dev.json` 按需 | 浏览器调试、设计稿 |
+| optional-dev | chrome-devtools, figma, exa, codebase-memory | `mcp-configs/optional-dev.json` 按需 | 浏览器、设计稿、L4 代码图谱 |
 | Cursor 搜索/文档 | Exa, Context7, Firecrawl | plugin + user-crawl | L1–L3 调研 |
 | 跨会话记忆 | claude-mem | plugin（非 memory MCP） | R18 |
 
@@ -45,6 +45,9 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 | 场景 | 首选 | 备选 |
 |------|------|------|
 | 代码结构/调用链 (R17) | codegraph_explore（需 `codegraph index`） | Grep → Read |
+| 架构全景/ADR/模块边界 (L4) | codebase-memory get_architecture / manage_adr | codegraph explore |
+| 变更影响 git diff→符号 (L4) | codebase-memory detect_changes | codegraph_impact |
+| 语义找代码 (L4) | codebase-memory semantic_query | Grep |
 | OpenSpec 规格变更 | openspec CLI + `/opsx:*` | rules/OPENSPEC.md |
 | 项目全貌/领域 | codegraph_explore + Grep | UA（v10 disabled） |
 | 查库文档/API (调研 L1) | ctx7 | exa 单次 |
@@ -65,7 +68,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 | L2 | 方案对比、最佳实践 | Exa + Firecrawl 单页 |
 | L3 | 技术选型、/deep-research | Read `skills/deep-research` + Firecrawl + Exa + Context7 |
 
-**前置**：claude-mem search → 项目内代码用 codegraph（禁止先用 Firecrawl 探本地代码）。
+**前置**：claude-mem search → 项目内代码用 codegraph（R17）；架构/ADR/变更用 codebase-memory（L4，需 index）；禁止先用 Firecrawl 探本地代码。
 
 ## 决策树
 
@@ -91,7 +94,7 @@ codegraph | crawl | git | fs | time
 | Profile | 服务器 |
 |---------|--------|
 | ops | redis, sqlite, docker, postgres |
-| optional-dev | chrome-devtools, figma |
+| optional-dev | chrome-devtools, figma, exa, codebase-memory |
 
 ### Cursor 常驻（用户已精简）
 

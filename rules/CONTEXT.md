@@ -16,11 +16,11 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ## 三级阈值（与 CORE.md 一致）
 
-| 使用率 | Cursor | Claude Code |
-|--------|--------|-------------|
-| <70% | 正常工作 | 正常工作 |
-| 70% | 择机 `/summarize` 或「压缩上下文」 | 择机 `/compact` |
-| 90% | 强制 `/summarize` 或新子 Agent | 强制 `/compact` 或新子 Agent |
+| 使用率 | Cursor                             | Claude Code                  |
+| ------ | ---------------------------------- | ---------------------------- |
+| <70%   | 正常工作                           | 正常工作                     |
+| 70%    | 择机 `/summarize` 或「压缩上下文」 | 择机 `/compact`              |
+| 90%    | 强制 `/summarize` 或新子 Agent     | 强制 `/compact` 或新子 Agent |
 
 ⛔ 绝不允许达到 100%。Cursor Guard 在 70%/90% 自动注入提醒；实际降低上下文环由 Cursor 原生 `/summarize`（或窗口满时自动 summarize）完成。
 
@@ -71,10 +71,10 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 ## 压缩策略
 
-| 编辑器 | 显式压缩 | 压缩前快照 | 结构化摘要（不压缩） |
-|--------|----------|------------|----------------------|
-| **Cursor** | `/summarize` 或「压缩上下文」 | `preCompact` → `~/.cursor/.state/pre-compact-state.json` | 「提取上下文」→ `session-digest.md` |
-| **Claude Code** | `/compact`（**70% 原生自动**；hook 70% 建议 / 90% 强制） | `pre-compact-state` hook | Guard 摘要制品 + claude-mem |
+| 编辑器          | 显式压缩                                                 | 压缩前快照                                               | 结构化摘要（不压缩）                |
+| --------------- | -------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------- |
+| **Cursor**      | `/summarize` 或「压缩上下文」                            | `preCompact` → `~/.cursor/.state/pre-compact-state.json` | 「提取上下文」→ `session-digest.md` |
+| **Claude Code** | `/compact`（**70% 原生自动**；hook 70% 建议 / 90% 强制） | `pre-compact-state` hook                                 | Guard 摘要制品 + claude-mem         |
 
 1. 保留：决策、状态、制品
 2. 丢弃：中间推理、已验证的细节
@@ -91,6 +91,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 > **来源**: bytedance/deer-flow 2.0 | LangGraph-based SuperAgent harness | 70K+ stars
 
 **何时考虑启用**:
+
 - 长时任务（>30分钟）需要外部编排
 - 需要 Sandbox 隔离执行（Docker）
 - 需要子 Agent 并发（max 3, 15min timeout）
@@ -100,28 +101,44 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 **不启用时**: 使用本地 subagent-driven-development + agentic-orchestrator 实现类似效果。
 
-## claude-context MCP（optional）
+## codebase-memory MCP（L4 按需 · 场景强制，v10.5.1）
 
-来源：zilliztech/claude-context | 配置：`mcp-configs/dev.json` → `optional.claude-context`
+来源：DeusData/codebase-memory-mcp | 配置：`mcp-configs/optional-dev.json` → merge `codebase-memory` | Cursor：MCP P0 启用
 
-**启用条件**（满足 ≥2）：
+**与 codegraph 双引擎互补**（见 ADR-2026-06-29）：
 
-1. **Monorepo** — 多包/多模块，grep 不足以定位
-2. **已有向量索引** — 可部署 claude-context 服务
-3. **与 GSD 互补** — 不替代 <70/90% 阈值与 claude-mem SSOT
+- codegraph：R17 日常符号/blast-radius（常驻）
+- codebase-memory：架构全景、ADR、git diff 变更风险、跨服务链接
 
-**不启用时**：用 code-explorer agent + ctx7 MCP + 项目 `CONTEXT.md`。
+**场景强制（v10.5.1）**：触及架构全景 / ADR / 变更风险（git diff→符号）/ 跨服务 时 **必须** 调用 cbm（或先 merge 再调用）。未调用不得静默跳过 → 状态标 `DONE_WITH_CONCERNS` 并写明缺口。≠ 进程常驻。
+
+**启用条件**（满足 ≥2 建议 merge；满足场景强制时 **必须** merge/启用）：
+
+1. **大 monorepo** — >500 文件，需 `get_architecture` 模块边界
+2. **ADR 持久化** — 需 `manage_adr` 跨会话架构决策
+3. **跨服务分析** — HTTP/gRPC/GraphQL 链接追踪
+4. **变更风险** — 需 `detect_changes` 映射 git diff→符号风险
+
+**安装与索引**（Windows 推荐 npx，与 codegraph 一致）：
+
+1. merge `mcp-configs/optional-dev.json` 中 `codebase-memory` 到 `.mcp.json`（**Claude 默认不进常驻 5**；Cursor 已 P0）
+2. 索引：`.\scripts\cbm-index.ps1` 或 `npx -y codebase-memory-mcp@0.8.1 cli index_repository`（PowerShell 建议用脚本传 JSON）
+3. 重启 Claude Code / Cursor MCP
+
+**不启用且非强制场景**：codegraph_explore + Grep；ADR 手写 `docs/ADR/`。
+
+**claude-context 已归档**（v10.4）：语义搜索位由本 MCP `semantic_query` 替代，无需 Milvus。
 
 ## 外部搜索策略（Firecrawl / Exa）
 
 > **来源**: L3 洞察横切 | 深度调研默认走 `/deep-research` 管线
 
-| 意图 | 工具 |
-|------|------|
+| 意图                       | 工具                                      |
+| -------------------------- | ----------------------------------------- |
 | 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
-| 语义搜索 / 学术与新闻 | Exa（Cursor 插件 MCP） |
-| 库/API 官方文档 | Context7 MCP |
-| 多角度交叉验证 | `skills/deep-research` 四阶段流程（L3） |
+| 语义搜索 / 学术与新闻      | Exa（Cursor 插件 MCP）                    |
+| 库/API 官方文档            | Context7 MCP                              |
+| 多角度交叉验证             | `skills/deep-research` 四阶段流程（L3）   |
 
 禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。
 
@@ -153,25 +170,20 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 - 无 `.codegraph/` 时回退到 explore agent
 - 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
 
-## Understand-Anything 使用策略
+## Understand-Anything（已移除）
 
-> **来源**: Lum1104/Understand-Anything v2.7.5 | 交互知识图 + 引导导览
+> **v10.5 removed**（ADR-2026-07-17）。勿再路由 `/understand-*`。
 
-**何时用 UA（而非 codegraph）**：
+**替代**：
 
-- 新项目接手需理解架构概念 → `/understand --review`
-- 领域驱动分析/业务聚类 → `/understand-domain`
-- 新人 onboarding 导览 → `/understand-onboard`
-- 交互式问答（基于图谱） → `/understand-chat`
-- 修改前影响评估 → `/understand-diff`
+| 场景              | 首选                                          |
+| ----------------- | --------------------------------------------- |
+| 代码结构/调用链   | codegraph_explore                             |
+| 架构/模块聚类/ADR | codebase-memory get_architecture / manage_adr |
+| 变更影响          | cbm detect_changes 或 codegraph blast-radius  |
+| 新人 onboarding   | codegraph explore + cbm get_architecture      |
 
-**双引擎协同**：
-| 场景 | 首选 | 补充 |
-|------|------|------|
-| 代码结构/调用链查询 | codegraph | — |
-| 概念理解/架构导览 | UA | — |
-| 探索未知代码 | codegraph 查结构 | UA 查概念 |
-| 新人 onboarding | UA 导览 | codegraph 补充细节 |
+审计材料：`catalog/skills/understand-anything/`、`docs/research/repos/lum1104-understand-anything.md`。
 
 ## claude-mem 三层搜索工作流
 

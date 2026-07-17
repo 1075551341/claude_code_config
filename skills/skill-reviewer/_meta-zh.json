@@ -1,0 +1,23 @@
+{
+  "owner": "CodeArts",
+  "team": "Huawei",
+  "slug": "skill-reviewer",
+  "displayName": "Skill 评审专家",
+  "brief": "skill合规性检查专家，基于华为skill编写规范和业界最佳实践，全面验证skill的结构、命名、内容、格式合规性",
+  "description": "**前置条件:**\n\n- 需要 skill-coding-rules.md 规则集文件\n- 需要 output-template.md 报告模板文件\n\n**功能特性:**\n\n- 验证 skill 结构、命名、内容和格式合规性\n- 提供详细的检查报告和改进建议\n- 遵循华为 skill 编码规范和业界最佳实践\n\n**使用场景:**\n\n- 用户请求检查时评审单个 skill\n- 评审目录下的多个 skill\n- 生成标准化合规报告",
+  "labels": ["评审", "验证", "质量", "合规"],
+  "license": "Apache-2.0",
+  "type": "REGULATION",
+  "category": "rnd-coding-review",
+  "lifecycleState": "DEVELOPING",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1777939200000
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1777939200000
+    }
+  ]
+}

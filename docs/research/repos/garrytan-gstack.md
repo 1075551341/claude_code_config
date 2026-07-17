@@ -4,6 +4,20 @@
 >
 > **版本说明**：CLI 自述 `v0.19`（binary 标识），npm/package 实际为 **1.58.1.0**（2026-06-14）。两套编号并存，本地以 CLI 行为为准。
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：122,320 stars；GitHub **未发布 Release/Tag**；`pushed_at` 2026-07-15T01:33:47Z。
+- **自 2026-06-29 的变化**：无可由 GitHub Release 归因的重大漂移；活跃推送持续，版本仍须按 CLI/package 双编号分别核验。
+- **本地吸收**：不变——gstack 审查路由与相关 agents 保持既有映射，不扩大 Conductor、gbrain 或 browser daemon 的吸收范围。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 CHANGELOG 研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：122,325★；无 GitHub Release tag；`pushed_at` 2026-07-15T01:33:47Z。
+- **漂移要点**：持续主线推送；仍为「审查角色包」定位（CEO/Designer/Eng/QA/…）。
+- **本地吸收 / 缺口**：审查路由 5+7 + eng/ceo/designer/dx/qa/security 等 agents **已 integrated**；无新强制吸收项。
+- **不吸收**：全量 23 工具原样复制、与 compound-engineering 重叠角色（MANIFEST 已互斥）。
+- **双源**：GitHub API + Exa/既有卡片交叉（无 release 页）。
 ## 核心价值
 
 - **40+ 角色矩阵**（非 23）：Think/Plan(10) → Build/Review(10) → Test/QA(7) → Ship/Deploy(5) → Document/Reflect(5) → iOS(5) → Tools(5) → Auxiliary(3)

@@ -19,8 +19,8 @@ source: internal
 ### 阶段 1: 范围识别
 
 ```
-① codegraph_impact(target_symbol)
-   → 返回所有调用者(callers) + 被调用者(callees) + 引用(references)
+① codegraph_explore(target) blast-radius 或 codegraph_impact（env 启用）
+   └ git diff 变更风险场景（L4）：codebase-memory detect_changes
 
 ② Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
@@ -61,13 +61,14 @@ source: internal
 
 | 变更类型 | 检测范围 |
 |----------|----------|
-| 改函数名/签名 | codegraph_impact + Grep 全项目函数名 |
-| 改类型/接口 | codegraph_impact + Grep import 引用 |
+| 改函数名/签名 | codegraph blast-radius/impact + Grep 全项目函数名 |
+| 改类型/接口 | codegraph blast-radius/impact + Grep import 引用 |
+| git diff 变更风险（L4 cbm 已启用） | detect_changes + Grep 残留 |
 | 改配置文件 | MANIFEST depends_on 遍历 |
 | 重命名/移动文件 | Grep 全项目路径引用 |
 | 改 rule/skill/agent | 同步更新 INDEX.md + MANIFEST.yaml |
 | 删除代码 | Grep 确认无残留引用 |
-| 调研/探索任务 | codegraph_impact 先确定范围 |
+| 调研/探索任务 | codegraph_explore blast-radius 先确定范围 |
 
 ## 反模式（禁止）
 
@@ -75,7 +76,7 @@ source: internal
 |------|----------|
 | 只改指定文件 | Grep 找到所有关联文件一并修改 |
 | "应该只有这些" | codegraph 验证，不靠直觉 |
-| 手动估计范围 | 用 codegraph_impact + Grep 实证 |
+| 手动估计范围 | codegraph_explore +（L4）detect_changes + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 | 跳过阶段 1 直接改 | 范围不明 = 盲改 = 必遗漏 |
 

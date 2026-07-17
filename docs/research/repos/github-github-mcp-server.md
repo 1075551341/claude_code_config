@@ -2,6 +2,11 @@
 
 > 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub Releases + newreleases.io + chatforest.com 三源交叉
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：31,502★；Release **v1.6.0**；`pushed_at` 2026-07-16。
+- **本地映射**：Cursor gh MCP plugin。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - v1.2.0(2026-06-22)：21 toolsets 覆盖 repos/issues/PR/Actions/code_security 等
@@ -42,3 +47,9 @@
 - 新增 toolsets：secret_protection / dependabot / copilot / github_support_docs_search
 - MCP Apps 交互 UI 持续成熟（remote_mcp_ui_apps feature flag）
 - 决策不变：MCP dev 分组按需；PR 流程 skill L3
+
+## v10.5 delta (2026-07-17)
+
+- Stars：31,502；最新 Release：v1.6.0（2026-07-15，`gh api`）。
+- 可吸收点：Insiders `fields` 响应字段过滤可降低工具返回上下文；待本地服务版本和配置支持时按需启用。
+- 决策不变：MCP dev 分组按需；PR 流程 skill L3。

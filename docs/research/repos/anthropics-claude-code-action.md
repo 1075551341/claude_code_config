@@ -2,6 +2,11 @@
 
 > 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub Releases + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：8,374★；Release **v1**；`pushed_at` 2026-07-17。
+- **本地映射**：CI reference。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - GitHub Actions CI PR review 模板
@@ -35,3 +40,9 @@
 
 - Delta 刷新：版本追踪到 v1.0.146
 - 决策不变：模板引用，项目 CI 按需复制
+
+## v10.5 delta (2026-07-17)
+
+- Stars：8,374；最新 Release：v1（2025-08-26，`gh api`）。
+- 可吸收点：统一 `prompt` 与 `claude_args` 的 v1 配置可作为新 CI 模板的基线；既有模板引用策略不变。
+- 决策不变：项目 CI 按需复制，非全局运行时。

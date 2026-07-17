@@ -189,7 +189,7 @@
     ]
   },
   "language": "Chinese",
-  "model": "deepseek-v4-pro[1M]",
+  "model": "opus",
   "permissions": {
     "allow": [
       "Read",

@@ -2,6 +2,20 @@
 
 > 层: L1 参考 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：64,700 stars；GitHub Release **v3.32.1**；`pushed_at` 2026-07-16T23:53:55Z。
+- **自 2026-06-29 的变化**：从 v3.6.30 演进至 v3.32.1，蜂群编排仍在快速迭代；本轮未发现可安全吸收且不与既有编排层重叠的新能力。
+- **本地吸收**：不变——**reference_only**；仅保留概念研究，不集成运行时，也不与 deer-flow / Superpowers 子代理并行部署。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 WebSearch 研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：64,703★；Release **v3.32.1**（Codex integration）；`pushed_at` 2026-07-16T23:53:55Z。
+- **漂移要点**：蜂群/多玩家编排持续迭代。
+- **本地吸收 / 缺口**：**reference_only** 不变。
+- **不吸收**：运行时集成。
+- **双源**：GitHub API + 既有决策交叉。
 ## 核心价值
 
 - Swarm 蜂群拓扑 + HNSW 向量

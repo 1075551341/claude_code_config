@@ -6,6 +6,20 @@
 
 ---
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：256,000 stars；GitHub Release **v6.1.1**；`pushed_at` 2026-07-17T00:52:29Z。
+- **自 2026-06-29 的变化**：v6.1.1 已发布；Firecrawl 复核的上游 README/Release Notes 明确补充 Cursor 插件系统清单与安装说明，利于本地 Cursor 路径对齐。
+- **本地吸收**：不变——五柱方法论与本地 override 继续保留；不因 patch release 自动扩大吸收范围。
+- **双源**：GitHub API（stars/release/push）+ Firecrawl（官方 Releases/README）。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：256,027★；Release **v6.1.1**（2026-07-02）；`pushed_at` 2026-07-17T00:52:29Z。
+- **漂移要点**：v6.1.x 聚焦 Codex portal（`hooks: {}` 防 SessionStart 误注册）、Cursor shell-hook 文档纠偏、`package-codex-plugin.sh`；方法论技能链未变。
+- **本地吸收 / 缺口**：钉 **v6.0.3** + local override；升 6.1 待评估（R14）。已有落点：P0 路由 / HARD-GATE / SDD+TDD。
+- **不吸收**：Codex portal 打包脚本、上游 SessionStart 钩子变更（本地 Cursor Guard 自管）。
+- **双源**：GitHub API + Exa（RELEASE-NOTES）交叉。
 ## 核心价值
 
 Superpowers 是一套**可组合的 AI 编码代理技能库与软件开发方法论**，将松散的建议转化为强制性的工程纪律。核心信条:
@@ -374,6 +388,11 @@ v2.0.0: Skills仓库分离
 - SDD scratch 路径变更需 sync 至 `skills/subagent-driven-development/SKILL.md`（如引用 `.git/sdd/`）
 - 本地 #1773 brainstorming AskUserQuestion 守卫维持（v6.0.3 未修复该回归）
 - 升级决策：v10.2.1 锁定的 6.0.0 升级可推进至 6.0.3（patch 级，无 breaking）
+
+## v10.4 增量（2026-06-29）
+
+- 上游无新版本（仍 v6.0.3）；五柱集成决策不变
+- v10.4 聚焦 L3 双引擎（codegraph + codebase-memory-mcp），不影响 Superpowers 工作流链
 
 ---
 

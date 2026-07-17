@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：67,904★；`pushed_at` 2026-05-22。
+- **本地映射**：catalog 发现源。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - Claude skills 发现索引
@@ -34,3 +39,8 @@
 
 - Delta 刷新：21.7K+ Stars（2026-06）
 - 决策不变：catalog 外链，不膨胀 L1
+
+## v10.5 delta (2026-07-17)
+
+- Stars：67,894；最新 Release：无正式 Release（`gh api`）。
+- 保持 catalog/reference，无强制集成。

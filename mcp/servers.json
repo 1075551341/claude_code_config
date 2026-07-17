@@ -1,10 +1,10 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "_comment": "MCP 分组视图 v9.2 | 权威源: .mcp.json（常驻5）| 按需: mcp-configs/ops.json + optional-dev.json",
+  "_comment": "MCP 分组视图 v10.4 | 权威源: .mcp.json（常驻5）| 按需: mcp-configs/ops.json + optional-dev.json",
   "toolsets": {
     "always": ["codegraph", "crawl", "git", "fs", "time"],
     "ops": ["redis", "sqlite", "docker", "postgres"],
-    "optional-dev": ["chrome-devtools", "figma"]
+    "optional-dev": ["chrome-devtools", "figma", "exa", "codebase-memory"]
   },
   "on_demand_profiles": {
     "ops": "mcp-configs/ops.json",

@@ -1,0 +1,31 @@
+{
+  "owner": "CodeArts",
+  "team": "Huawei",
+  "slug": "frontend-library-advisor",
+  "displayName": "前端包智能推荐技能",
+  "brief": "当用户需要为前端项目推荐、选择或评估npm包时使用。适用于所有前端库推荐场景。当检测到用户查找库、推荐库、包时，优先触发此技能。",
+  "description": "**前置条件:**\n\n- AI环境：确保技能运行在支持AI能力的环境中\n- npm环境：确保npm包管理器已安装，需配置华为镜像中心仓地址\n\n**功能特性:**\n\n- 五步法执行流程：需求理解、候选包生成、评估筛选、包存在性验证、精准推荐\n- 智能触发检测机制：自动检测触发词，支持基础/技术/功能/问题触发词\n- 深度语义分析：层次化关键词提取、框架智能识别、上下文增强\n- 智能评估系统：功能相关性、框架兼容性、社区活跃度、使用流行度、技术成熟度\n\n**使用场景:**\n\n- 为特定功能寻找最佳npm包\n- 性能优化和包替换建议\n- 安全性检查和包健康度评估\n- 多框架环境下的包选择决策\n- 包依赖管理优化和瘦身",
+  "labels": ["前端", "npm", "包推荐", "前端库", "vue", "react", "angular", "typescript"],
+  "license": "Apache-2.0",
+  "type": "BEST_PRACTICE",
+  "category": "rnd-infra-cicd",
+  "lifecycleState": "DEVELOPING",
+  "latest": {
+    "version": "1.0.2",
+    "publishedAt": 1775606400000
+  },
+  "history": [
+    {
+      "version": "1.0.2",
+      "publishedAt": 1775606400000
+    },
+    {
+      "version": "1.0.1",
+      "publishedAt": 1772332800000
+    },
+    {
+      "version": "1.0.0",
+      "publishedAt": 1771728000000
+    }
+  ]
+}

@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：102,445★；`pushed_at` 2026-06-16。
+- **本地映射**：design catalog。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - DESIGN.md 作为设计系统 SSOT
@@ -36,3 +41,8 @@
 
 - Delta 刷新：91K+ Stars（2026-06）
 - 决策不变：rules/DESIGN.md 规范；项目级 DESIGN.md 按需创建
+
+## v10.5 delta (2026-07-17)
+
+- Stars：102,442；最新 Release：无正式 Release（`gh api`）。
+- 保持现有采纳范围，无强制扩展。

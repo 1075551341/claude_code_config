@@ -2,6 +2,20 @@
 
 > 层: 五柱(GSD) | 置信度: 高 | 刷新: 2026-06-26 | 来源: GitHub Releases + CHANGELOG + npm
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：6,729 stars；GitHub Release **v1.7.0**；`pushed_at` 2026-07-17T01:26:16Z。
+- **自 2026-06-29 的变化**：从 v1.6.0 升至 v1.7.0，存在新的上游版本漂移；本卡现有材料未证明其已消除 capability registry / Research module 与本地 MANIFEST、调研链的互博风险。
+- **本地吸收**：不变——继续 Stay 1.4.5，v1.7.0 仅跟踪，任何跨 minor 升级仍需独立 ADR 与用户确认。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 CHANGELOG 研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：6,735★；Release **v1.7.0**（2026-07-15）；`pushed_at` 2026-07-17T01:26:16Z。
+- **漂移要点**：ADR-1239 Embeddable Orchestration System（多 runtime EoS）；Windows 可移植性 AST 规则；`/gsd:next`、brownfield onboarding、assumption-delta；CLI version-skew 警告。
+- **本地吸收 / 缺口**：钉 **1.4.5** 概念（阈值/制品/子 Agent）；升 1.7 待评估。已有：三级阈值、CONTEXT 制品、workstream。
+- **不吸收**：全量 EoS 多 runtime 安装面、GSD 专属 MCP companion、MemPalace 后端替换本地 claude-mem。
+- **双源**：GitHub API + Firecrawl（v1.7.0 release）。
 ## 核心价值
 
 GSD (Get-Shit-Done) Redux 是一套**上下文工程方法论**，核心理念：上下文腐烂是AI开发的第一大故障模式，必须通过工程纪律系统化治理。
@@ -173,3 +187,8 @@ get-shit-done (v1.0-v1.42.x, gsd-build 组织)
 - Research module 互博风险维持（v1.6.0 未解决）
 - 走独立 ADR 评估，三选一：Stay 1.4.5（推荐）/ Cherry-pick context_guard_mode / Upgrade to 1.6.0
 - 升级阻塞：v1.5.0 → v1.6.0 跨 minor，需 changelog 评估 + 用户确认（R14）
+
+## v10.4 增量（2026-06-29）
+
+- **维持 Stay 1.4.5**（访谈锁定）；v1.6.0 仅文档跟踪
+- 上游无新 release；GSD forensics/resume 仍在 P2 刻意不实现

@@ -2,6 +2,11 @@
 
 > 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub CHANGELOG + npm 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：27,863★；Release **task-master-ai@0.43.1**；`pushed_at` 2026-04-28。
+- **本地映射**：L4 optional；与 writing-plans **互斥**。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - PRD → 任务分解 MCP
@@ -38,3 +43,8 @@
 
 - 稳定版 **0.43.1**（1.0.0-rc 跟踪）；保持 L4 按需
 - **deferred MCP loading**（`ENABLE_EXPERIMENTAL_MCP_CLI=true`）省 ~16% 上下文（~33k tokens）→ 若启用建议开此模式
+
+## v10.5 delta (2026-07-17)
+
+- Stars：27,863；最新 Release：task-master-ai@0.43.1（2026-03-31，`gh api`）。
+- 保持现有 L4 可选与 deferred loading 建议；该发行版仅清理历史 shell alias，无强制集成。

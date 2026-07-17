@@ -6,6 +6,7 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 # MCP 服务器配置规范
 
 ## 适用场景
+
 - 修改 MCP 服务器配置
 - 添加/删除 MCP 服务器
 - 验证 MCP 配置一致性
@@ -25,11 +26,11 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 `mcp/servers.json` 是 `.mcp.json` 的派生分组视图。
 
-| 分组 | 服务器 | 位置 |
-|------|--------|------|
-| always | codegraph, crawl, git, fs, time | `.mcp.json` |
-| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` |
-| optional-dev | chrome-devtools, figma | `mcp-configs/optional-dev.json` |
+| 分组         | 服务器                                       | 位置                            |
+| ------------ | -------------------------------------------- | ------------------------------- |
+| always       | codegraph, crawl, git, fs, time              | `.mcp.json`                     |
+| ops          | redis, sqlite, docker, postgres              | `mcp-configs/ops.json`          |
+| optional-dev | chrome-devtools, figma, exa, codebase-memory | `mcp-configs/optional-dev.json` |
 
 按需 profile 中的 `mcpServers` 块 **手动 merge** 到 `.mcp.json` 后重启 Claude Code。
 
@@ -62,6 +63,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 ### 6. 按需安装工具
 
 **task-master** — AI 驱动任务管理 MCP（eyaltoledano/claude-task-master，27K stars）
+
 - 安装：`claude mcp add task-master-ai --scope user --env TASK_MASTER_TOOLS="core" -- npx -y task-master-ai`
 - 三级加载：core(7tools,~5K) / standard(15,~10K) / all(36,~21K) — 推荐 core 模式（~70% token 减少）
 - Claude Code 模式无需额外 API Key（使用本地实例）
@@ -69,9 +71,11 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 
 **codegraph** — 预索引代码知识图谱 MCP（R17 首选，v10 mandate）
 
+**codebase-memory** — 代码知识图谱 L4（DeusData/codebase-memory-mcp v0.8.1 钉扎；上游 v0.9.0 待评估）。架构/ADR/变更/跨服务 **场景强制**（v10.5.1）：未调用 → `DONE_WITH_CONCERNS`。Claude：merge `optional-dev` 按需，**不进常驻 5**；Cursor：MCP P0。npx `codebase-memory-mcp@0.8.1`；需先 `scripts/cbm-index.ps1`。
+
 **crawl (Firecrawl)** — `scripts/firecrawl-mcp.ps1` 从系统环境变量读 Key；Cursor `~/.cursor/mcp.json` 同配置
 
-**Understand-Anything** — **v10 disabled**（ADR-2026-06-16）；catalog 保留于 `skills/understand-anything/`
+**Understand-Anything** — **v10.5 removed**（ADR-2026-07-17）；审计 catalog 于 `catalog/skills/understand-anything/`；探索替代：codegraph + codebase-memory
 
 ## 验证清单
 

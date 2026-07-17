@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub + CSDN + tessl.io 三源交叉
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：106,622★；Release **v2.11.0**；`pushed_at` 2026-07-14。
+- **本地映射**：UI catalog；与 gstack designer 分工。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - v2.2.1(2026-01-26)；53.7K+ Stars（tessl 数据）/ 24.7K+（CSDN 数据）
@@ -42,3 +47,9 @@
 - 数据扩展：50+ 风格 / 161 色板 / 57 字体配对 / 161 产品类型
 - 双模式：Skill Mode（自动激活）+ Workflow Mode（斜杠命令）
 - 决策不变：catalog 按需；gstack 审查流程主，uupm 设计库辅
+
+## v10.5 delta (2026-07-17)
+
+- Stars：106,605；最新 Release：v2.11.0（2026-07-13，`gh api`）。
+- 可吸收点：持续将其作为按需设计素材库；不提升为全局 skill，避免与 gstack 设计流程重叠。
+- 决策不变：catalog 按需；gstack 审查流程主，uupm 设计库辅。

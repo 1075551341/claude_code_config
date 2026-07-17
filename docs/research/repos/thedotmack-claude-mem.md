@@ -2,6 +2,20 @@
 
 > 层: 五柱核心(L3横切) | 置信度: 高 | 刷新: 2026-06-26 | Stars: 82.8K+ | License: Apache-2.0
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：87,521 stars；GitHub Release **v13.11.0**；`pushed_at` 2026-07-16T11:34:41Z。
+- **自 2026-06-29 的变化**：从 v13.8.1 升至 v13.11.0；已确认版本推进，但本轮未发现足以改变 R18、三层检索或 Endless Mode 默认关闭的证据。
+- **本地吸收**：不变——claude-mem 继续是跨会话记忆 SSOT；不以版本漂移替换 codegraph/cbm 的结构职责。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 npm 研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：87,527★；Release **v13.11.0**（2026-07-13）；`pushed_at` 2026-07-16T11:34:41Z。
+- **漂移要点**：Worker-native cloud sync（退役独立 `cloud-sync.mjs`）；`/cloud-sync` skill；schema v40 自修复；prompt↔session 映射修复。
+- **本地吸收 / 缺口**：钉 **13.8.x**；升 13.11 待评估。已有：R18 search→observations、记忆柱。
+- **不吸收**：cmem.ai 云同步默认开启（隐私/企业边界需单独评估）。
+- **双源**：GitHub API + Firecrawl（v13.11.0 release）。
 ## 核心价值
 
 claude-mem 是 Alex Newman (@thedotmack) 构建的持久记忆压缩系统，为 Claude Code 等 AI coding agent 提供跨会话长期记忆层。自动捕获工具调用观察、AI压缩为结构化摘要、注入未来会话上下文 -- 解决 agent 每次启动从零开始 的核心痛点。
@@ -276,7 +290,7 @@ ContextBuilder.ts 的 generateContext 函数在三种场景触发：
 
 1. **Endless Mode** -- **默认关闭**。当前 claude-mem 已足够；Endless 增加延迟且未生产验证。用压缩 + R18 + GSD 70% 断点取得同等效果
 2. **Server Beta** -- 当前不需要多租户/Postgres 伸缩；单机 SQLite 足够
-3. **claude-context (zilliztech)** -- 仅 L4 按需启用，见下互博检查
+3. **claude-context (zilliztech)** -- v10.4 **archived_redirect** → codebase-memory-mcp；见 [deusdata-codebase-memory-mcp](deusdata-codebase-memory-mcp.md)
 
 ### 版本策略
 
@@ -287,24 +301,18 @@ ContextBuilder.ts 的 generateContext 函数在三种场景触发：
 
 ## 互博检查
 
-### vs claude-context / memsearch (zilliztech)
+### vs codebase-memory-mcp / claude-context（v10.4）
 
-| 维度 | claude-mem | memsearch/claude-context |
-|------|-----------|--------------------------|
-| **核心问题** | 跨会话记忆 | 代码库搜索（claude-context）/跨会话记忆（memsearch） |
-| **存储** | SQLite + ChromaDB | Markdown .md + Milvus |
-| **写入** | LLM 压缩转录 | 追加式无 LLM 策展 |
-| **搜索** | Chroma 向量 + SQLite 过滤 | Milvus BM25 + dense + RRF fusion |
-| **上下文开销** | MCP 工具定义常驻 | Forked 子 Agent 隔离召回（零开销） |
-| **嵌入提供商** | 内置 | 8 种可插拔 |
-| **伸缩** | 单机 -> Server Beta (Postgres) | 单机 -> Server -> Zilliz Cloud |
-| **平台覆盖** | Claude Code + Gemini + OpenClaw + Cursor | Claude Code + OpenClaw + OpenCode + Codex CLI |
-| **Stars** | 82.8K+ | ~814 |
+| 维度 | claude-mem | codebase-memory-mcp | claude-context（已归档） |
+|------|------------|---------------------|--------------------------|
+| **核心问题** | 跨会话记忆 | 代码结构图/ADR/架构 | 向量代码搜索（Milvus） |
+| **存储** | SQLite + ChromaDB | 本地知识图谱 | Milvus |
+| **与 mem 关系** | SSOT 记忆 | 互补，不替代 R18 | archived_redirect→cbm |
 
 **决策**：
 - **claude-mem SSOT** -- 跨会话记忆唯一权威源
-- **claude-context 按需** -- 仅在满足以下条件 >=2 时启用：Monorepo（>500文件）、已有 Milvus 索引、语义代码搜索需求超过 codegraph 覆盖范围
-- **两者不冲突** -- claude-mem 管"做了什么"，claude-context 管"代码在哪"
+- **codebase-memory L4 按需** -- 架构/ADR/变更；替代 claude-context 语义搜索位
+- **两者不冲突** -- claude-mem 管"做了什么"，cbm 管"代码结构在哪"
 
 ### vs agent/context-manager
 
@@ -394,3 +402,8 @@ ContextBuilder.ts 的 generateContext 函数在三种场景触发：
 - R14 锁定 major v13.x 维持（v13 → v14 需用户确认）
 - R18 记忆优先策略不变（三层检索 search → timeline → get_observations）
 - 升级路径：`npx claude-mem install`（非 npm install -g，后者仅装 SDK 不注册 hooks）
+
+## v10.4 增量（2026-06-29）
+
+- 上游无新版本（npm 仍 v13.8.1）；R18 SSOT 决策不变
+- vs codebase-memory-mcp：mem=跨会话记忆；cbm=代码结构图，边界已在 [deusdata-codebase-memory-mcp](deusdata-codebase-memory-mcp.md) 声明

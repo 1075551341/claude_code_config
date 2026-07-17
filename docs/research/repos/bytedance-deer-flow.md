@@ -2,6 +2,20 @@
 
 > 层: L1 治理 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + CSDN + awesomeagents.ai 三源交叉
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：77,226 stars；GitHub Release **v2.0.0**；`pushed_at` 2026-07-16T08:57:33Z。
+- **自 2026-06-29 的变化**：无可确认的新 release；卡片中的 v3.1 信息与 GitHub latest-release v2.0.0 口径不一致，暂不据此扩大能力结论。
+- **本地吸收**：不变——保持 catalog/L3 可选，并与 workstream-management、ruflo 外部编排互斥。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有三源研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：77,232★；Release **v2.0.0**；`pushed_at` 2026-07-16T08:57:33Z。
+- **漂移要点**：长时程 SuperAgent harness（sandbox/memory/tools/skills/subagents）。
+- **本地吸收 / 缺口**：L3 optional + `claude-to-deerflow` bridge；与 workstream **互斥**（MANIFEST）。
+- **不吸收**：默认启用全量 deer-flow 运行时。
+- **双源**：GitHub API + 既有卡片交叉。
 ## 核心价值
 
 - v3.1(2026-05-02)：LangGraph 1.0 从零重写，50K+ Stars

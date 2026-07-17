@@ -2,6 +2,20 @@
 
 > 层: 五柱(OpenSpec) | 置信度: 高 | 刷新: 2026-06-17 | 来源: GitHub + DeepWiki + npm + 官方文档
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：61,239 stars；GitHub Release **v1.6.0**；`pushed_at` 2026-07-16T22:25:56Z。
+- **自 2026-06-29 的变化**：v1.6.0 新增更安全的原地计划修订，扩展工具支持，并强化 validation、archive 与 store setup。
+- **本地吸收**：不变——Core profile、Delta Specs 与三轨互斥继续采纳；默认生成的 Cursor skills 仍由本地精简版覆盖。
+- **双源**：GitHub API（stars/release/push）+ Firecrawl（官方 Releases 页面）。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：61,246★；Release **v1.6.0**（2026-07-10）；`pushed_at` 2026-07-16T22:25:56Z。
+- **漂移要点**：`/opsx:update` 原地改计划；Oh My Pi / TRAE 适配；校验读 fenced examples；archive 失败非零退出；fresh stores 可用性。
+- **本地吸收 / 缺口**：钉 **1.4.1** profile core；升 1.6 待评估。已有：OPSX 全链 + rules/OPENSPEC。
+- **不吸收**：Oh My Pi / TRAE 生成器（非本机主路径）。
+- **双源**：GitHub API + Firecrawl（v1.6.0 release）。
 ## 核心价值
 
 OpenSpec 是**规格驱动开发（SDD）**的 CLI 工具链。核心创新：**Delta Specs** — 只描述变更（ADDED/MODIFIED/REMOVED/RENAMED），不重写全量 spec，天然适合 brownfield 项目。

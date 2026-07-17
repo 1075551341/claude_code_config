@@ -2,6 +2,11 @@
 
 > 层: 技能/实践 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
 
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：50,192★；`pushed_at` 2026-07-17。
+- **本地映射**：catalog 发现源。
+- **来源**：GitHub API（Tier-2）。
 ## 核心价值
 
 - Claude Code 生态资源目录
@@ -34,3 +39,8 @@
 
 - Delta 刷新：36.8K+ Stars（2026-06）
 - 决策不变：docs 外链，本地 MANIFEST 为权威
+
+## v10.5 delta (2026-07-17)
+
+- Stars：50,189；最新 Release：无正式 Release（`gh api`）。
+- 保持 catalog/reference，无强制集成。

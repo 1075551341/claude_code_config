@@ -5,7 +5,8 @@
 > 整合自：
 >
 > - [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Instinct系统
-> - [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - 上下文管理
+> - [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) - L4 代码知识图谱（v10.4）
+> - [zilliztech/claude-context](https://github.com/zilliztech/claude-context) - archived_redirect → codebase-memory
 > - [obra/superpowers](https://github.com/obra/superpowers) - 工作流模式
 
 ---
@@ -17,6 +18,7 @@ experiences/
 ├── README.md              # 本文件
 └── patterns/              # 已验证模式
     ├── 2026-04-15-context-management-pattern.md
+    ├── 2026-06-29-dual-engine-code-exploration.md
     ├── 2026-04-15-workflow-patterns.md
     └── 2026-04-15-security-patterns.md
 ```

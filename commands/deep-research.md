@@ -8,10 +8,10 @@ description: L3 深度调研（Firecrawl+Exa+交叉验证，Read skills/deep-res
 
 ## 调研分级（using-superpowers SSOT）
 
-| 档位 | 场景 | 加载 |
-|------|------|------|
-| L1 | 单点事实、API 签名 | Context7 或 Exa 单次 |
-| L2 | 方案对比、最佳实践 | Exa + Firecrawl 单页 |
+| 档位   | 场景                           | 加载                                 |
+| ------ | ------------------------------ | ------------------------------------ |
+| L1     | 单点事实、API 签名             | Context7 或 Exa 单次                 |
+| L2     | 方案对比、最佳实践             | Exa + Firecrawl 单页                 |
 | **L3** | 本命令、技术选型、竞品全面分析 | Read `skills/deep-research/SKILL.md` |
 
 **升级**：L1 不足 → L2；L2 不足或用户 `/deep-research` → L3。禁止无因跳级。
@@ -35,9 +35,9 @@ description: L3 深度调研（Firecrawl+Exa+交叉验证，Read skills/deep-res
 
 ## 与执行区分
 
-| 类型 | 路由 |
-|------|------|
-| 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa |
-| 代码库结构探索 | codegraph / understand-anything |
-| 功能实现 | /plan → /execute（非本命令） |
-| >30min 自主编排 | L3 `claude-to-deerflow`（非本命令） |
+| 类型               | 路由                                |
+| ------------------ | ----------------------------------- |
+| 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa              |
+| 代码库结构探索     | codegraph（+ cbm L4 架构场景）      |
+| 功能实现           | /plan → /execute（非本命令）        |
+| >30min 自主编排    | L3 `claude-to-deerflow`（非本命令） |

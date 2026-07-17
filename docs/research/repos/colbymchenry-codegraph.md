@@ -2,6 +2,20 @@
 
 > 层: L3 洞察 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub Releases + npm + 官网 双源交叉
 
+## v10.5 delta (2026-07-17)
+
+- **最新元数据**：60,419 stars；GitHub Release **v1.4.1**；`pushed_at` 2026-07-17T00:09:01Z。
+- **自 2026-06-29 的变化**：从 v1.0.1 升至 v1.4.1，版本漂移显著；本轮元数据核验未产生足以替换 R17 日常符号探索/`blast-radius` 定位的反证。
+- **本地吸收**：不变——codegraph 继续为 R17 常驻主位；cbm 仍只承担架构、ADR、跨服务与 diff 风险的 L4 按需职责。
+- **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 npm 与官网研究记录。
+
+
+## v10.5.1 delta (2026-07-17)
+- **最新元数据**：60,432★；Release **v1.4.1**（2026-07-10）；`pushed_at` 2026-07-17T00:09:01Z。
+- **漂移要点**：MCP update-check 通知；NL 查询词不再劫持符号排序；PHP DI 属性调用解析；增量 sync 跨文件边修复；Windows `upgrade`/`uninstall` 修复。
+- **本地吸收 / 缺口**：R17 mandate + `.mcp.json` 常驻；钉扎文档跟踪 1.4.1 **不自动升**。已有：explore/impact env。
+- **不吸收**：自动 `codegraph upgrade`（需人工评估）。
+- **双源**：GitHub API + Firecrawl（v1.4.1 release）。
 ## 核心价值
 
 - 本地优先（100% local）预索引代码知识图谱 MCP；Tree-sitter 20+ 语言增量解析
@@ -41,6 +55,7 @@ v1.0.0 起 MCP 默认工具列表收敛为 **4 个**：`codegraph_explore` · `c
 
 - vs UA：codegraph 主（符号级低 token）；UA L3 按需（`/understand-*` 拓扑/业务流）
 - vs Grep：codegraph 首选，Grep fallback
+- vs codebase-memory-mcp（v10.4）：**双引擎互补** — codegraph=R17 日常符号/blast-radius；cbm=架构全景/ADR/`detect_changes`/跨服务（L4 按需）。日常探索不重复调用 cbm `search_graph`
 
 ## 吸收优先级
 
@@ -62,3 +77,8 @@ v1.0.0 起 MCP 默认工具列表收敛为 **4 个**：`codegraph_explore` · `c
 - **F2**（修订）：**~47% token 系官方数字**（README L122 current-build 均值），原计划「47% 失实」premise 不成立；动作改为补全官方四元组 ~16%成本/~47%token/~58%工具调用/~22%更快
 - v1.0.1 daemon + watchdog 自愈补充
 - 证据：[README L122/L536 双源核验](https://raw.githubusercontent.com/colbymchenry/codegraph/main/README.md)（2026-06-19 fetch）
+
+## v10.4 增量
+
+- 与 [deusdata-codebase-memory-mcp](deusdata-codebase-memory-mcp.md) 建立双引擎边界：codegraph 保持 R17 常驻主位；cbm 不替代日常 `codegraph_explore`
+- 变更影响：`codegraph_impact` / explore blast-radius 仍为默认；cbm `detect_changes` 作 L4 备选（git diff→风险分类场景）

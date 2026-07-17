@@ -1,6 +1,6 @@
 {
   "cursor_home": "C:\\Users\\DELL\\.cursor",
-  "guard_version": "1.1.5",
+  "guard_version": "1.1.6",
   "tests": {
     "deploy_config": {
       "pass": true,
@@ -26,7 +26,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "agent_message": "【Cursor Guard · codegraph 优先】\n大范围读文件前请先用 codegraph_explore / codegraph_context；Read 用于定点深读。"
+        "agent_message": "【Cursor Guard · codegraph 优先】\n大范围读文件前请先用 codegraph_explore；Read 用于定点深读。"
       },
       "stderr": "",
       "behavior_pass": true
@@ -36,7 +36,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "agent_message": "【Cursor Guard · codegraph 优先】\n目录结构探索请优先 codegraph files/explore，Glob 仅作 fallback。"
+        "agent_message": "【Cursor Guard · codegraph 优先】\n目录结构探索请优先 codegraph_explore，Glob 仅作 fallback。"
       },
       "stderr": "",
       "behavior_pass": true
@@ -124,7 +124,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- 会话 ID: new-sess…\n- 新会话: 是（已重置工具计数）\n- rules: 过期规则: AGENTS, MCP\n- Cursor 上下文（preCompact 记录）: 85%\n【上轮会话交接】\n  • 结束原因: test\n  • 结束时上下文%: 85\n  • 说明: 测试交接\n  • 请让用户确认是否继续上轮任务，或输出新的迷你摘要。\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 见会话上下文\n  • 检查点: cursor-guard auto-save"
+        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- 会话 ID: new-sess…\n- 新会话: 是（已重置工具计数）\n- rules: rules 已同步\n- Cursor 上下文（preCompact 记录）: 85%\n【上轮会话交接】\n  • 结束原因: test\n  • 结束时上下文%: 85\n  • 说明: 测试交接\n  • 请让用户确认是否继续上轮任务，或输出新的迷你摘要。\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 见会话上下文\n  • 检查点: cursor-guard auto-save"
       },
       "stderr": "",
       "behavior_pass": true
@@ -184,7 +184,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- rules: 过期规则: AGENTS, MCP\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 【提取上下文】已完成: E2E 回归。进行中: 无。待定: 无。路径: ~/.cursor/.state/session-digest.md\n  • 检查点: cursor-guard auto-save"
+        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- rules: rules 已同步\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 【提取上下文】已完成: E2E 回归。进行中: 无。待定: 无。路径: ~/.cursor/.state/session-digest.md\n  • 检查点: cursor-guard auto-save"
       },
       "stderr": "",
       "behavior_pass": true
@@ -222,7 +222,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "additional_context": "【Cursor Guard · 文档/配置维护】\n  • rules 将自动 sync 到 ~/.cursor/rules；检查 rules-INDEX.md"
+        "additional_context": "【Cursor Guard · 文档/配置维护】\n  • rules 将自动 sync 到 ~/.cursor/rules 与当前工作区 .cursor/rules；检查 rules-INDEX.md"
       },
       "stderr": "",
       "behavior_pass": true

@@ -1,20 +1,30 @@
 {
-  "_comment": "参考清单 — deploy 不写入用户 MCP。在 Cursor Settings -> MCP 手工启用。",
+  "_comment": "参考清单 — deploy 不写入用户 MCP。在 Cursor Settings -> MCP 手工启用。v10.5: P0=codegraph+cbm",
   "priority_p0": [
     {
       "name": "codegraph",
-      "intent": "代码结构/调用链/影响面探索",
+      "intent": "代码结构/调用链/影响面探索（R17 强制优先）",
       "setup": "npx @colbymchenry/codegraph && codegraph init -i"
+    },
+    {
+      "name": "codebase-memory",
+      "intent": "架构全景/ADR/变更检测/跨服务（L4 按需）",
+      "setup": "npx codebase-memory-mcp@0.8.1（或跟随 optional-dev 钉扎版本）后 index_repository"
     }
   ],
   "priority_p1": [
+    { "name": "crawl", "intent": "Firecrawl 网页抓取/调研" },
     { "name": "gh", "intent": "GitHub PR/Issue" },
     { "name": "context7", "intent": "库/API 文档" },
-    { "name": "exa", "intent": "语义搜索/调研" },
-    { "name": "playwright", "intent": "浏览器 E2E" }
+    { "name": "exa", "intent": "语义搜索/调研双源" }
+  ],
+  "priority_p2_on_demand": [
+    { "name": "playwright", "intent": "浏览器 E2E" },
+    { "name": "chrome-devtools", "intent": "页面调试/性能" }
   ],
   "do_not_mirror": [
     "claude-mem plugin hooks",
-    "~/.claude/.mcp.json 全量复制"
+    "~/.claude/.mcp.json 全量复制",
+    "understand-anything（v10.5 removed）"
   ]
 }

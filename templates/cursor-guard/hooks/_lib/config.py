@@ -107,6 +107,11 @@ def load_guard_config() -> dict:
             "codegraph_first": explore.get("codegraph_first", True)
             and os.environ.get("CURSOR_GUARD_CODEGRAPH_FIRST", "1") != "0",
             "nudge_on_grep_read": explore.get("nudge_on_grep_read", True),
+            # nudge = 仅提示；soft_block = Grep/Glob 无先 codegraph 则 deny（无索引则降级 nudge）
+            "enforce_mode": os.environ.get(
+                "CURSOR_GUARD_EXPLORE_MODE",
+                explore.get("enforce_mode", "soft_block"),
+            ),
         },
         "sync": {
             "auto_on_edit": os.environ.get("CURSOR_GUARD_AUTO_SYNC", "1") != "0"

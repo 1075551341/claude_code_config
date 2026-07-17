@@ -100,6 +100,18 @@ if (-not (Test-Path $cfgDst) -or $Force) {
                 $usr | Add-Member -NotePropertyName $prop.Name -NotePropertyValue $prop.Value -Force
             }
         }
+        # Nested merge: explore.enforce_mode (v10.5 soft_block)
+        if ($tpl.explore) {
+            if (-not $usr.explore) {
+                $usr | Add-Member -NotePropertyName explore -NotePropertyValue $tpl.explore -Force
+            } else {
+                foreach ($ep in $tpl.explore.PSObject.Properties) {
+                    if (-not $usr.explore.PSObject.Properties.Match($ep.Name).Count) {
+                        $usr.explore | Add-Member -NotePropertyName $ep.Name -NotePropertyValue $ep.Value -Force
+                    }
+                }
+            }
+        }
         if (-not $usr.version) { $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force }
         Write-Utf8NoBom -Path $cfgDst -Content ($usr | ConvertTo-Json -Depth 8)
         Write-Ok "guard-config.json merged new keys"
