@@ -6,8 +6,10 @@
   "mcpServers": {
     "chrome-devtools": {
       "_description": "Chrome DevTools MCP。场景：网页调试、性能面板。",
-      "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "command": "D:\\config_sys\\dev-cache\\volta\\tools\\image\\node\\20.20.2\\node.exe",
+      "args": [
+        "D:\\config_sys\\dev-cache\\volta\\tools\\image\\packages\\chrome-devtools-mcp\\node_modules\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js"
+      ]
     },
     "figma": {
       "_description": "Figma 设计稿集成",

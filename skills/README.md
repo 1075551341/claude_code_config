@@ -33,7 +33,6 @@ triage | improve-codebase-architecture
 
 ## 项目洞察
 
-~~understand-anything~~ — **removed v10.5**（`catalog/skills/understand-anything/`）
 
 ## v9 新增（5）
 

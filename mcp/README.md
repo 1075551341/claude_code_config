@@ -194,7 +194,7 @@ servers.json 支持按场景分组管理 MCP 服务器：
     "core": ["memory", "thinking", "filesystem"],
     "dev": ["github", "context7", "playwright"],
     "ops": ["docker", "postgres", "redis"],
-    "search": ["exa", "brave"]
+    "search": ["exa"]
   }
 }
 ```
@@ -204,7 +204,7 @@ servers.json 支持按场景分组管理 MCP 服务器：
 | core | 核心必开 | memory, thinking, filesystem |
 | dev | 开发辅助 | github, context7, playwright |
 | ops | 运维部署 | docker, postgres, redis |
-| search | 搜索查询 | exa, brave |
+| search | 搜索查询 | exa |
 
 每个服务器通过 `_toolset` 字段归属分组，便于按场景批量启用/禁用。
 

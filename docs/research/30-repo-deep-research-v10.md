@@ -70,7 +70,6 @@ RUNTIME = Superpowers + GSD + OpenSpec + gstack + claude-mem
 横切    = ECC(cherry-pick) + RTK/caveman + codegraph + codebase-memory(L4) + Exa/Firecrawl
 探索    = codegraph → (cbm L4 架构/ADR/变更) → Grep → Read
 执行    = SDD+TDD → verify → learn(pattern+mem)
-REMOVED = Understand-Anything（Q5；审计卡保留）
 ```
 
 ### Tier A 版本漂移（钉扎不自动升 — R14）
@@ -85,12 +84,6 @@ REMOVED = Understand-Anything（Q5；审计卡保留）
 | codebase-memory                  | 0.8.1      | **v0.9.0**   | 文档跟踪；L4 保持                              |
 | caveman                          | 1.9.0      | **v1.9.1**   | patch 可跟                                     |
 | ECC / deer-flow / gstack / ruflo | 既有决策   | 无决策变更   | cherry_pick / L3 / integrated / reference_only |
-
-### Q5 Understand-Anything
-
-- 状态：**removed**（非 l3_on_demand）
-- 替代：`codebase-memory.get_architecture` + `codegraph_explore`
-- 卡片: [lum1104-understand-anything](repos/lum1104-understand-anything.md)
 
 ### Cursor 工具纪律（Wave3）
 
@@ -167,7 +160,6 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | ----------------------------------- | --------------------------------------------------------------------- | ------------------------------ |
 | colbymchenry/codegraph v1.0.1       | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | mandate init                   |
 | DeusData/codebase-memory-mcp v0.8.1 | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | **L4_on_demand**（双引擎互补） |
-| Lum1104/Understand-Anything v2.9.0  | [lum1104-understand-anything](repos/lum1104-understand-anything.md)   | **removed**（v10.5 Q5）        |
 | Firecrawl + Exa                     | deep-research L3                                                      | 双源，Exa 兜底                 |
 
 ---
@@ -286,7 +278,6 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | 决策                    | 来源                        | v10.2 状态                                           |
 | ----------------------- | --------------------------- | ---------------------------------------------------- |
 | superpowers v6.0.0 升级 | obra/superpowers            | ✅ 升级，本地覆盖兼容                                |
-| UA L3 按需启用          | Lum1104/Understand-Anything | ADR 更新: disabled→l3_on_demand                      |
 | 三级加载精简            | x1xhlol 工具密度研究        | L0 alwaysApply + L1 session + L2 gate + L3 on-demand |
 | gstack /learn 深度集成  | garrytan/gstack             | taste_memory concern → claude-mem observation 管道   |
 | ECC 互斥增强            | affaan-m/ECC                | +6 组 excludes，防 subagent 互博                     |
@@ -357,7 +348,6 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | -------------------------------------- | --------------------------------------------------------------------- |
 | bytedance-deer-flow                    | v2.0→v3.1;50K+ Stars;中间件 9→11 层;五模式(+fast);AIO Sandbox         |
 | github-github-mcp-server               | v1.2.0;54K+ Stars;21 toolsets;MCP Apps;GitHub MCP Registry            |
-| lum1104-understand-anything            | 组织迁移→Egonex-AI;26.5K+ Stars;Tree-sitter+LLM;5 Agent 流水线;多语言 |
 | forrestchang-andrej-karpathy-skills    | Stars 92K→176K(3 月翻倍);四原则已吸收 CORE R1-R4                      |
 | zilliztech-claude-context              | Stars 9.9K→11.4K;实测 -40% token/-36% 工具调用;+Ollama 本地嵌入       |
 | nextlevelbuilder-ui-ux-pro-max-skill   | v2.2.1;53.7K+ Stars;50+ 风格/161 色板/57 字体;双模式                  |
@@ -483,3 +473,34 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | superpowers #1773 issue                                              | 2026-06-19 | 高     |
 | WebSearch + GitHub + 社区三源 delta 刷新 17 张 stale 卡片 (v10.3)    | 2026-06-24 | 高     |
 | gh API Tier A/B delta + v10.5 访谈 Q1–Q5                             | 2026-07-17 | 高     |
+
+---
+
+## v10.5.2 Delta（2026-07-28）— 工具调用门控优化
+
+**背景**：v10.5.1完成30仓库调研整合后，用户反馈"必要工具调用不足（当前仅codegraph调用比较多，其余均存在问题）"。
+
+**诊断发现**（详见 `docs/diagnostic-v10.5.2.md`）：
+
+- claude-mem插件已安装但未启用 → R18记忆优先失效
+- pre-rtk-rewrite.py存在但未绑定 → RTK shell压缩不生效
+- Firecrawl API key占位符覆盖环境变量 → L3双源退化为单源
+- 9个悬空hook引用（文件不存在但settings.json引用）
+
+**修复措施**：
+
+1. 启用claude-mem@thedotmack插件（settings.json enabledPlugins）
+2. 绑定pre-rtk-rewrite.py到PreToolUse:Bash（RTK压缩生效）
+3. 绑定post-codegraph-sync.py到PostToolUse:Write|Edit|MultiEdit（codegraph自动同步）
+4. 修复 Firecrawl API key 为环境变量引用（`${FIRECRAWL_API_KEY}`）
+5. 清理9个悬空hook引用（post-edit-lint/post-doc-reminder/post-test-runner/pre-task-planner/pre-dep-checker/pre-git-hook-bypass-block/stop-notify/stop-debug-checker/stop-daily-summary）
+
+**路由强制性优化**：
+
+- CLAUDE.md添加"工具调用门控"章节（禁止场景+强制场景+场景-工具映射表）
+- CLAUDE-ROUTER.mdc添加"场景-工具映射（L0常驻）"表格
+- MANIFEST.yaml更新：deep_research excludes添加`tool/WebFetch, tool/WebSearch`；memory excludes添加`tool/Read重复文件`
+
+**版本钉扎维持**：superpowers 6.0.3 / gsd 1.4.5 / OpenSpec 1.4.1 / claude-mem 13.8.x / cbm 0.8.1（R14）
+
+**信息源**：docs/diagnostic-v10.5.2.md（全量诊断报告）

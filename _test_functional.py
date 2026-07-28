@@ -532,7 +532,7 @@ ctx_content = read_md(BASE / 'rules' / 'CONTEXT.md')
 context_markers = [
     ('三态制品', '三态制品通信'),
     ('codegraph', 'codegraph 策略'),
-    ('Understand-Anything', 'UA 策略'),
+    ('codebase-memory', 'L4 架构策略'),
     ('claude-mem', '三层搜索'),
     ('压缩', '压缩策略'),
 ]

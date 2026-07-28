@@ -65,7 +65,7 @@ skills:
       - improve-codebase-architecture
   insight:
     enabled: []
-    note: "understand-anything removed v10.5; use codegraph + cbm"
+    note: "architecture guidance uses codegraph + cbm"
   bridge:
     enabled:
       - claude-to-deerflow
@@ -181,7 +181,7 @@ mcp_loading:
   always: [memory, thinking, fs, fetch, time]
   dev: [gh, git, ctx7, pw, crawl, chrome-devtools, codegraph]
   ops: [redis, sqlite, docker, postgres]
-  search: [brave, exa]
+  search: [exa]
   design: [figma]
   optional: [puppeteer, glif]
   profile_env: CLAUDE_MCP_PROFILE

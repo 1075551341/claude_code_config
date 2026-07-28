@@ -170,11 +170,9 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 - 无 `.codegraph/` 时回退到 explore agent
 - 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
 
-## Understand-Anything（已移除）
+## 架构导览替代链
 
-> **v10.5 removed**（ADR-2026-07-17）。勿再路由 `/understand-*`。
-
-**替代**：
+> 当前统一使用 `codegraph` + `codebase-memory`，不再保留独立导览插件或审计目录。
 
 | 场景              | 首选                                          |
 | ----------------- | --------------------------------------------- |
@@ -182,8 +180,6 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | 架构/模块聚类/ADR | codebase-memory get_architecture / manage_adr |
 | 变更影响          | cbm detect_changes 或 codegraph blast-radius  |
 | 新人 onboarding   | codegraph explore + cbm get_architecture      |
-
-审计材料：`catalog/skills/understand-anything/`、`docs/research/repos/lum1104-understand-anything.md`。
 
 ## claude-mem 三层搜索工作流
 

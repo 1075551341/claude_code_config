@@ -49,5 +49,5 @@ loading_tier: L3
 ## 项目洞察集成
 
 - **codegraph MCP**：代码结构查询优先用 codegraph，替代 Grep 大量搜索（~35% token 节省）
-- **Understand-Anything**：概念理解/架构导览用 UA，新人 onboarding/领域分析
+- **架构导览**：概念理解/模块导览统一走 codegraph + codebase-memory，新人 onboarding 不再依赖单独插件
 - **协同**：探索代码 → codegraph 查结构 → UA 查概念 → 合并结果

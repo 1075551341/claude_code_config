@@ -6,7 +6,6 @@
 
 | 领域                | v10.4                                 | v10.5                                |
 | ------------------- | ------------------------------------- | ------------------------------------ |
-| Understand-Anything | L3 按需（catalog）                    | **removed**（Q5）                    |
 | 探索链              | codegraph → cbm(L4) → Grep（UA 可选） | codegraph → cbm(L4) → Grep → Read    |
 | Cursor 工具纪律     | explore_router 仅 nudge               | **soft_block**（不可用则降级 nudge） |
 | MCP 常驻            | 文档写 5；实际含 chrome-devtools 漂移 | **纠偏常驻 5**                       |

@@ -32,13 +32,11 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 
 | MCP                                      | 原因                      |
 | ---------------------------------------- | ------------------------- |
-| understand-anything                      | **v10.5 removed**         |
 | user-postgres                            | 非默认路径；按需开        |
 | user-puppeteer                           | 与 user-pw 重叠           |
 | user-eamodio.gitlens-extension-GitKraken | gh 已覆盖 Git 操作        |
 | user-thinking                            | token 开销高              |
 | user-memory                              | 与 claude-mem 重叠（R18） |
-| user-brave                               | Exa/Firecrawl 已覆盖      |
 | user-fetch                               | crawl 更强                |
 
 ## Cursor 常驻 Plugin
@@ -65,7 +63,6 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 | Plugin                      | 原因                                   |
 | --------------------------- | -------------------------------------- |
 | compound-engineering        | 与 `~/.claude/agents/` gstack 重叠     |
-| understand-anything@Lum1104 | **v10.5 removed**（settings 已 false） |
 | Clerk                       | 非 Clerk 项目                          |
 | Browserstack                | 专用跨端测试                           |
 | Sentry                      | 未接 Sentry 时纯开销                   |

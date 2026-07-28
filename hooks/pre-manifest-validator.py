@@ -47,7 +47,6 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/ship": "ship_pipeline",
     "skill/office-hours": "office_hours",
     # Supplement (14)
-    "skill/understand-anything": "concept_navigation",
     "skill/context-engineering": "context_engineering",
     "skill/memory-compression": "context_rot",
     "skill/caveman-compress": "output_token",
@@ -92,7 +91,6 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/codex-reviewer": "gstack_codex",
     # MCP
     "mcp/codegraph": "code_exploration",
-    "plugin/understand-anything": "concept_navigation",
 }
 
 # 动态 excludes 缓存

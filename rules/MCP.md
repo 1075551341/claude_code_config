@@ -75,7 +75,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 
 **crawl (Firecrawl)** — `scripts/firecrawl-mcp.ps1` 从系统环境变量读 Key；Cursor `~/.cursor/mcp.json` 同配置
 
-**Understand-Anything** — **v10.5 removed**（ADR-2026-07-17）；审计 catalog 于 `catalog/skills/understand-anything/`；探索替代：codegraph + codebase-memory
+**架构/导览替代链** — 当前统一使用 `codegraph` + `codebase-memory`，不再维护额外的导览插件或历史审计目录
 
 ## 验证清单
 

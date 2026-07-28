@@ -13,8 +13,8 @@ old_table_end = '| Linear、项目管理 | linear | - | 任务跟踪 | - |'
 
 new_table = """| 自然语言关键词 | 首选工具 | 备用方案 | 典型场景 |
 |--------------|---------|---------|---------|
-| "技术文档、API文档、用法、reference" | ctx7 | brave | 查询库/框架最新 API |
-| "搜索、查找资料、semantic search" | exa | brave | AI 语义搜索 |
+| "技术文档、API文档、用法、reference" | ctx7 | exa | 查询库/框架最新 API |
+| "搜索、查找资料、semantic search" | exa | crawl | AI 语义搜索 |
 | "https://...、网页内容、URL" | fetch | - | 直接获取指定 URL |
 | "figma.com、设计稿、UI 设计" | figma | - | 设计稿转代码 |
 | "git 状态、提交历史、分支" | git | gh | 本地 Git 操作 |

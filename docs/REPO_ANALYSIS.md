@@ -77,7 +77,6 @@
 | L2   | RTK + caveman       | hooks + skills           | ✅                   |
 | L3   | codegraph           | MCP + mandate            | ✅ R17 常驻          |
 | L3   | codebase-memory-mcp | optional-dev L4          | ✅ v10.4 双引擎      |
-| L3   | Understand-Anything | **removed**              | 替代 codegraph + cbm |
 | 参考 | ruflo               | 文档 only                | reference_only       |
 
 ---

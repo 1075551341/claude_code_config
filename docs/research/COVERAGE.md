@@ -1,17 +1,17 @@
-# 仓库覆盖矩阵（v10.5.1）
+# 仓库覆盖矩阵（v10.5.2）
 
-> 日期: 2026-07-17 | SSOT: 28 active + 1 removed ↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
-> 前版: v10.5（同日）→ **v10.5.1 分层 delta**
+> 日期: 2026-07-28 | SSOT: 28 active + 1 removed ↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
+> 前版: v10.5.1（2026-07-17）→ **v10.5.2 工具调用门控优化**
 
 ## 覆盖率
 
-| 指标         | 值                               |
-| ------------ | -------------------------------- |
-| 目标仓库     | 29（含 UA 审计卡）               |
-| Active       | **28**                           |
-| Removed      | **1**（Understand-Anything，Q4） |
-| 独立卡片     | 29（均含 v10.5.1 delta）         |
-| 运行配置目标 | **v10.5.1**（Wave3 落地后）      |
+| 指标         | 值                                |
+| ------------ | --------------------------------- |
+| 目标仓库     | 28                                |
+| Active       | **28**                            |
+| Removed      | **0**                             |
+| 独立卡片     | 28（均含 v10.5.1 delta）          |
+| 运行配置目标 | **v10.5.2**（工具调用门控优化后） |
 
 ## 五柱
 
@@ -45,12 +45,6 @@
 | colbymchenry/codegraph       | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | **v1.4.1** / 60K★ | mandate R17 常驻       |
 | DeusData/codebase-memory-mcp | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | **v0.9.0** / 32K★ | L4_on_demand（双引擎） |
 | Firecrawl + Exa              | deep-research                                                         | —                 | L3 调研双源            |
-
-## Removed（Q5）
-
-| 仓库                                        | 卡片                                                                | 状态                                       |
-| ------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------ |
-| Egonex-AI/Understand-Anything（原 Lum1104） | [lum1104-understand-anything](repos/lum1104-understand-anything.md) | **removed** — 审计保留；替代 cbm+codegraph |
 
 ## 技能 / 最佳实践（catalog）
 
@@ -91,7 +85,6 @@
 | Q1  | 交付边界            | 分层 delta；不推翻骨架             |
 | Q2  | 版本                | 钉现状；上游文档「待评估」         |
 | Q3  | 调研深度            | Tier-1 双源；Tier-2 gh             |
-| Q4  | Understand-Anything | **removed**                        |
 | Q5  | cbm                 | 场景强制；Claude L4；Cursor P0     |
 | Q6  | sync                | 多编辑器；修 CONTEXT/CORE/MCP 过期 |
 | Q7  | 波次                | 三波串行                           |
@@ -102,7 +95,8 @@
 ## SSOT 链
 
 ```
-repos/*.md → 30-repo-deep-research-v10.md（v10.5.1 唯一全量）→ COVERAGE.md → REPO_ANALYSIS.md → MANIFEST.yaml → SPEC.md
+repos/*.md → 30-repo-deep-research-v10.md（v10.5.2 唯一全量）→ COVERAGE.md → REPO_ANALYSIS.md → MANIFEST.yaml → SPEC.md
 计划/设计: plans/2026-07-17-v10.5.1-optimization.md · design-v10.5.1.md
+诊断/优化: docs/diagnostic-v10.5.2.md（v10.5.2 工具调用门控）
 （v10.5 计划/设计保留交叉链接）
 ```

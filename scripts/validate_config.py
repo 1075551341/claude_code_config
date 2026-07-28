@@ -54,7 +54,7 @@ EXTENSION_SKILLS = {
 }
 MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
 V9_SKILLS = {
-    # understand-anything removed v10.5 → catalog/skills/
+    # architecture guidance uses codegraph + codebase-memory
     "workstream-management", "adr-management",
     "onboarding-guide", "claude-to-deerflow", "taste-memory",
 }

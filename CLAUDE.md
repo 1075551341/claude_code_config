@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.5.1**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.5.2**
 
 **五柱**：Superpowers v6.0.3(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+codebase-memory(L4)+Firecrawl/Exa — 详见 `rules/CORE.md`
@@ -94,6 +94,34 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 ---
 
+## 工具调用门控（v10.5.2新增）
+
+**禁止场景**（违反即阻断）：
+
+- 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
+- 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
+- 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
+- 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律
+
+**强制场景**（HARD-GATE）：
+
+- ①规划阶段：必须 Read `skills/brainstorming/SKILL.md`（用户批准设计前禁止实现）
+- ④验证阶段：必须 Read `skills/verification-before-completion/SKILL.md`
+- Bug修复：必须 Read `skills/systematic-debugging/SKILL.md`
+
+**场景-工具映射**（L0常驻，详见 `CLAUDE-ROUTER.mdc`）：
+
+| 场景          | 首选工具            | 禁止替代  |
+| ------------- | ------------------- | --------- |
+| 代码结构探索  | `codegraph_explore` | Grep/Read |
+| 架构/ADR/变更 | `cbm search_graph`  | 重复Read  |
+| 网页深度调研  | `Firecrawl+Exa`     | WebFetch  |
+| 跨会话记忆    | `claude-mem search` | 重复Read  |
+| Shell输出压缩 | RTK (hook自动)      | 原生Bash  |
+| 输出压缩      | caveman             | 原生输出  |
+
+---
+
 ## 审查路由
 
 ```
@@ -124,7 +152,7 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 | ----------------- | ------------------------------------------------------- |
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
 | 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.5.1)                                       |
+| 法典/架构         | SPEC.md (v10.5.2)                                       |
 | 铁律/编码/阈值    | rules/CORE.md                                           |
 | 工作流/DAG        | rules/WORKFLOW.md                                       |
 | Agent 协作        | rules/AGENTS.md                                         |

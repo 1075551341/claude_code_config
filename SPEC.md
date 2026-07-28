@@ -279,12 +279,11 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 | 25  | trailofbits/claude-code-config  | /sandbox+deny+三层防御 | SECURITY.md §11 |
 | 26  | marc-shade/claude-code-security | 渐进硬化checklist      | SECURITY.md §14 |
 
-### 项目洞察 (2)
+### 项目洞察 (1)
 
 | #   | 仓库                        | 吸收                                                                                   | 落地                                   |
 | --- | --------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
 | 27  | colbymchenry/codegraph      | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json (optional), rules/CONTEXT.md |
-| 28  | Lum1104/Understand-Anything | **removed v10.5**（审计 catalog；替代 cbm+codegraph）                                  | catalog/skills/understand-anything     |
 
 ### 插件分发 (1)
 
@@ -294,13 +293,12 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-## Plugins（18 安装 / 15 启用 / 3 禁用）
+## Plugins（17 安装 / 15 启用 / 2 禁用）
 
 | Plugin                    | 状态 | 提供                                                                        | 禁用原因                                                                              |
 | ------------------------- | ---- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | superpowers 6.0.0（目标） | 🟡   | SessionStart + 技能（单 task-reviewer；brainstorming #1773 本地守卫已落地） | 插件当前装 5.1.0，待 Claude Code `/plugin update superpowers@claude-plugins-official` |
 | claude-mem 13.6.1         | ✅   | 6hooks + 15技能                                                             | —                                                                                     |
-| understand-anything       | ❌   | —                                                                           | **removed v10.5**；catalog 审计保留                                                   |
 | chrome-devtools-mcp 1.1.1 | ✅   | Chrome DevTools                                                             | —                                                                                     |
 | frontend-design           | ✅   | 前端设计                                                                    | —                                                                                     |
 | code-review               | ✅   | 审查技能(与eng-reviewer互补)                                                | —                                                                                     |
@@ -335,17 +333,15 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 - **调研**：分层 delta 刷新 29 卡 + SSOT；上游漂移仅文档「待评估」（R14）
 - **cbm**：架构/ADR/变更/跨服务 **场景强制**；未调用 → `DONE_WITH_CONCERNS`；Claude 仍不进常驻 5
-- **UA / 骨架**：维持 removed；五柱×五阶段×三横切不变
 - **同步**：`sync.ps1 -All` 修 CONTEXT/CORE/MCP 过期
 - 详图：`spec/claude-config-integration/design-v10.5.1.md` + `docs/superpowers/plans/2026-07-17-v10.5.1-optimization.md`
 
 ## v10.5 变更摘要（2026-07-17）
 
-- **UA removed**：Understand-Anything 移出骨架；替代 cbm + codegraph（ADR-2026-07-17）
 - **探索链**：codegraph → codebase-memory(L4) → Grep → Read
 - **Cursor Guard**：`explore.enforce_mode=soft_block`（Grep/Glob）
 - **MCP 常驻**：纠偏为 5（chrome-devtools 回 optional-dev）
-- **调研**：28 active + 1 removed；上游版本漂移仅文档跟踪（R14）
+- **调研**：28 active；上游版本漂移仅文档跟踪（R14）
 
 ## v10.2.1 变更摘要（2026-06-19 双源刷新）
 
@@ -353,7 +349,6 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 - **superpowers**：本地 override 已落地（#1773 守卫 + 单 task-reviewer 对齐）；插件二进制 5.1.0 → **6.0.0** 待 Claude Code `/plugin update`（Cursor 无法下载）
 - **codegraph**：F1（MCP 默认 4 工具，`codegraph_impact` 需 `CODEGRAPH_MCP_TOOLS`）+ F2（官方四元组 ~16%成本/~47%token/~58%工具调用/~22%更快；47% 为官方数字，仅补全）
 - **gsd-core**：v1.5.0 stable 走 ADR 评估（暂锁 1.4.5）
-- **UA**：**removed v10.5**（废止 l3_on_demand；ADR-2026-07-17）
 - **探索链**：codegraph → Grep → Read（impact 优先 explore blast-radius）
 
 ## v10.1 变更摘要

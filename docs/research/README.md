@@ -10,7 +10,7 @@
 | 文档                                                         | 说明                                |
 | ------------------------------------------------------------ | ----------------------------------- |
 | [30-repo-deep-research-v10.md](30-repo-deep-research-v10.md) | 深度调研 SSOT（v10.5.1，唯一全量）  |
-| [COVERAGE.md](COVERAGE.md)                                   | 28 active + 1 removed               |
+| [COVERAGE.md](COVERAGE.md)                                   | 28 active                           |
 | [gsd-gaps-v10.md](gsd-gaps-v10.md)                           | GSD forensics/resume 缺口与本地替代 |
 | [repos/](repos/)                                             | per-repo 卡片（含 v10.5.1 delta）   |
 
@@ -23,10 +23,6 @@
 - [affaan-m-ecc](repos/affaan-m-ecc.md) · [bytedance-deer-flow](repos/bytedance-deer-flow.md) · [ruvnet-ruflo](repos/ruvnet-ruflo.md)
 - [rtk-ai-rtk](repos/rtk-ai-rtk.md) · [juliusbrussee-caveman](repos/juliusbrussee-caveman.md)
 - [colbymchenry-codegraph](repos/colbymchenry-codegraph.md) · [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md)
-
-### Removed
-
-- [lum1104-understand-anything](repos/lum1104-understand-anything.md)
 
 ### 技能 / 工具
 

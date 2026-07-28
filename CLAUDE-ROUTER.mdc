@@ -36,4 +36,15 @@ layer: router
 
 **探索优先级（R17）**：`codegraph_explore` 先于 Grep/Read — 详见 `CORE.md` R17-R18 章节。
 
+## 场景-工具映射（L0常驻，v10.5.2新增）
+
+| 场景 | 首选工具 | 禁止替代 | 触发条件 |
+|------|----------|----------|----------|
+| 代码结构探索 | `codegraph_explore` | Grep/Read | 任何代码理解意图 |
+| 架构/ADR/变更 | `cbm search_graph` | 重复Read | 架构决策/影响分析 |
+| 网页深度调研 | `Firecrawl+Exa` | WebFetch | /deep-research 或调研意图 |
+| 跨会话记忆 | `claude-mem search` | 重复Read | 重复文件/历史决策 |
+| Shell输出压缩 | RTK (hook自动) | 原生Bash | 任何Bash调用 |
+| 输出压缩 | caveman | 原生输出 | 上下文>70% |
+
 **同步模式**：软连接 L0 入口到各编辑器（`scripts/sync.ps1`）；skills/agents/rules 通过本路由按需 Read，不复制。

@@ -39,7 +39,7 @@
     "time": {
       "_description": "时间与时区工具。场景：获取当前时间、时区转换（配合禁 new Date() 规范）。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-time"]
+      "args": ["-y", "time-mcp"]
     }
   }
 }

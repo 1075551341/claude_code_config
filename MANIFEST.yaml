@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v10.5.1
+# 组件唯一归属源 — 防左右手互博 — v10.5.2
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 28 active + 1 removed；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.5.1"
-updated: "2026-07-17"
+version: "10.5.2"
+updated: "2026-07-28"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -270,8 +270,9 @@ concerns:
     skill: skill/memory-compression
     source: thedotmack/claude-mem
     stage: learn
-    excludes: [agent/context-manager]
+    excludes: [agent/context-manager, tool/Read重复文件]
     depends_on: [skill/memory-compression]
+    note: "v10.5.2: R18记忆优先 — 重复Read相同文件前必须先 claude-mem search"
 
   context_retrieval:
     owner: plugin/thedotmack
@@ -429,8 +430,8 @@ concerns:
     source: catalog/skills/deep-research
     stage: plan
     loading_tier: L3
-    excludes: [firecrawl:firecrawl-agent]
-    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。"
+    excludes: [firecrawl:firecrawl-agent, tool/WebFetch, tool/WebSearch]
+    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。"
 
   git_workflow:
     owner: skill/git-workflow
@@ -666,14 +667,6 @@ concerns:
     stage: execute
     note: 预索引代码知识图谱 MCP，~35% token 节省，20+ 语言，按需启用
 
-  understand_anything:
-    owner: catalog/skills/understand-anything
-    skill: catalog/skills/understand-anything
-    source: Lum1104/Understand-Anything
-    stage: execute
-    status: removed # v10.5 Q5: 移出骨架；替代 cbm get_architecture + codegraph explore
-    note: 审计保留 catalog；插件保持 disabled；ADR-2026-07-17
-    excludes: [agent/code-explorer]
 
   code_exploration:
     owner: mcp/codegraph
@@ -682,13 +675,6 @@ concerns:
     note: 预索引代码结构查询，替代Grep大量搜索
     excludes: [skill重复索引]
 
-  concept_navigation:
-    owner: catalog/skills/understand-anything
-    source: Lum1104/Understand-Anything
-    stage: execute
-    status: removed
-    note: v10.5 随 UA 移除；架构/onboarding 改 cbm+codegraph
-    excludes: [skill重复导览]
 
   vibe_coding_cn:
     owner: catalog/skills/vibe-coding-cn

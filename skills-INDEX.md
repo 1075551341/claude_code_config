@@ -73,6 +73,5 @@
 
 ### 导航与引导
 
-- ~~understand-anything~~ → **removed v10.5**；审计见 `catalog/skills/understand-anything/`；替代 codegraph + cbm
 - [onboarding-guide](skills/onboarding-guide/SKILL.md) — 新人onboarding引导
 - [triage](skills/triage/SKILL.md) — Bug分类（P0-P3）

@@ -49,11 +49,11 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 | 变更影响 git diff→符号 (L4) | codebase-memory detect_changes | codegraph_impact |
 | 语义找代码 (L4) | codebase-memory semantic_query | Grep |
 | OpenSpec 规格变更 | openspec CLI + `/opsx:*` | rules/OPENSPEC.md |
-| 项目全貌/领域 | codegraph_explore + Grep | UA（v10 disabled） |
+| 项目全貌/领域 | codegraph_explore + Grep | codebase-memory get_architecture |
 | 查库文档/API (调研 L1) | ctx7 | exa 单次 |
 | GitHub PR/Issue | gh | pr-workflow skill |
 | 本地 Git 历史 | git | git-workflow skill |
-| 网页抓取/搜索 (L2/L3) | crawl + exa | brave |
+| 网页抓取/搜索 (L2/L3) | crawl + exa | — |
 | 深度调研 (L3) | skills/deep-research | /deep-research |
 | E2E/浏览器 | pw | — |
 | 跨会话记忆 (R18) | claude-mem plugin | memory MCP（临时节点） |
@@ -109,7 +109,7 @@ codegraph | crawl | git | fs | time
 
 ### 已禁用（重叠/低频）
 
-postgres, puppeteer, GitKraken, thinking, brave, memory, fetch — 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+postgres, puppeteer, GitKraken, thinking, memory, fetch — 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 
 **规则**：在各编辑器中按意图描述需求，模型自动匹配对应工具。运行时 SSOT → [RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
 

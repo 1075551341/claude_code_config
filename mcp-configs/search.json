@@ -1,5 +1,7 @@
 {
   "toolset": "search",
   "description": "网页/语义搜索",
-  "servers": ["brave", "exa"]
+  "servers": [
+    "exa"
+  ]
 }
