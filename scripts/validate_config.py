@@ -412,8 +412,9 @@ def check_v10_bare_except():
 def check_v11_hook_exception_propagation():
     """V11: Hook异常传播率100%（核心hooks无静默吞异常）"""
     core_hooks = [
-        "session-start-bootstrap.py", "pre-bash-guard.py", "pre-rtk-rewrite.py",
-        "pre-tmux-reminder.py", "pre-read-before-edit.py",
+        "session-start-bootstrap.py", "pre-userprompt-verify-gate.py",
+        "pre-bash-guard.py", "pre-rtk-rewrite.py", "pre-tmux-reminder.py",
+        "pre-read-before-edit.py", "pre-edit-impact-nudge.py",
         "pre-context-injector.py", "pre-manifest-validator.py", "pre-loop-guard.py",
         "pre-suggest-compact.py", "pre-compact-state.py",
         "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",

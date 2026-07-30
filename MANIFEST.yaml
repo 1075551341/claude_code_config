@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v10.6.0
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 28 active + 1 removed；分层 delta
+# 组件唯一归属源 — 防左右手互博 — v10.7.0
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 29 active + 1 removed；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.6.0"
-updated: "2026-07-28"
+version: "10.7.0"
+updated: "2026-07-30"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -126,10 +126,10 @@ horizontal_layers:
     description: 优化横切层 — Token压缩 + 上下文治理
     owners:
       - source: rtk-ai/rtk
-        version: "0.41.0"
+        version: "0.44.1"
         concerns: [shell-compression, 60-90pct-savings]
       - source: JuliusBrussee/caveman
-        version: "1.9.0"
+        version: "1.9.1"
         concerns: [output-compression, lite-full-ultra-wenyan]
       - source: internal
         concerns: [context-threshold-70-90, gsd-logical-breakpoint-70]
@@ -405,6 +405,27 @@ concerns:
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
     depends_on: [scripts/sync.ps1]
 
+  gate_enforcement:
+    owner: hooks/_lib/gate_messages.md
+    source: local
+    stage: all
+    note: "v10.7.0 — 三门控文本 SSOT：P0分类门(SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
+    hooks:
+      [
+        session-start-bootstrap,
+        pre-userprompt-verify-gate,
+        pre-edit-impact-nudge,
+        verification_gate,
+        impact_nudge,
+      ]
+    depends_on:
+      [
+        skills/using-superpowers,
+        skills/verification-before-completion,
+        skills/change-impact-analysis,
+        templates/cursor-guard,
+      ]
+
   tmux_reminder:
     owner: hook/pre-tmux-reminder
     source: affaan-m/ECC
@@ -674,14 +695,12 @@ concerns:
     stage: execute
     note: 预索引代码知识图谱 MCP，~35% token 节省，20+ 语言，按需启用
 
-
   code_exploration:
     owner: mcp/codegraph
     source: colbymchenry/codegraph
     stage: execute
     note: 预索引代码结构查询，替代Grep大量搜索
     excludes: [skill重复索引]
-
 
   vibe_coding_cn:
     owner: catalog/skills/vibe-coding-cn

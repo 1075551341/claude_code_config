@@ -20,69 +20,69 @@ triggers: [制定代码规范, 检查命名规范, 统一代码风格, 编写代
 
 ### 通用规则
 
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| 变量 | camelCase | `userName`, `isLoading` |
-| 常量 | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
-| 函数 | camelCase + 动词开头 | `getUserById`, `handleSubmit` |
-| 类/组件 | PascalCase | `UserService`, `UserCard` |
-| 文件名 | kebab-case | `user-service.ts`, `user-card.vue` |
-| 目录名 | kebab-case | `user-profile/`, `api-client/` |
-| 接口 | I 前缀或无前缀 | `IUser` 或 `User` |
-| 类型 | PascalCase | `UserType`, `ApiResponse` |
-| 枚举 | PascalCase + 单数 | `UserStatus` |
+| 类型    | 规范                 | 示例                               |
+| ------- | -------------------- | ---------------------------------- |
+| 变量    | camelCase            | `userName`, `isLoading`            |
+| 常量    | UPPER_SNAKE_CASE     | `MAX_RETRY_COUNT`                  |
+| 函数    | camelCase + 动词开头 | `getUserById`, `handleSubmit`      |
+| 类/组件 | PascalCase           | `UserService`, `UserCard`          |
+| 文件名  | kebab-case           | `user-service.ts`, `user-card.vue` |
+| 目录名  | kebab-case           | `user-profile/`, `api-client/`     |
+| 接口    | I 前缀或无前缀       | `IUser` 或 `User`                  |
+| 类型    | PascalCase           | `UserType`, `ApiResponse`          |
+| 枚举    | PascalCase + 单数    | `UserStatus`                       |
 
 ### 布尔变量命名
 
 ```typescript
 // ✅ 推荐 - is/has/can/should 前缀
-const isVisible = true
-const hasPermission = false
-const canEdit = true
-const shouldRender = false
-const isLoading = true
-const hasError = false
+const isVisible = true;
+const hasPermission = false;
+const canEdit = true;
+const shouldRender = false;
+const isLoading = true;
+const hasError = false;
 
 // ❌ 避免
-const visible = true
-const permission = false
-const edit = true
+const visible = true;
+const permission = false;
+const edit = true;
 ```
 
 ### 函数命名
 
 ```typescript
 // ✅ 动词开头，语义清晰
-function getUserById(id: string) { }      // 获取
-function createUser(data: UserData) { }   // 创建
-function updateUser(id: string) { }       // 更新
-function deleteUser(id: string) { }       // 删除
-function validateEmail(email: string) { } // 验证
-function formatPrice(price: number) { }   // 格式化
-function parseResponse(data: string) { }  // 解析
-function calculateTotal(items: Item[]) { }// 计算
-function handleButtonClick() { }          // 处理事件
-function onInputChange() { }              // 事件回调
+function getUserById(id: string) {} // 获取
+function createUser(data: UserData) {} // 创建
+function updateUser(id: string) {} // 更新
+function deleteUser(id: string) {} // 删除
+function validateEmail(email: string) {} // 验证
+function formatPrice(price: number) {} // 格式化
+function parseResponse(data: string) {} // 解析
+function calculateTotal(items: Item[]) {} // 计算
+function handleButtonClick() {} // 处理事件
+function onInputChange() {} // 事件回调
 
 // ❌ 避免
-function user() { }
-function data() { }
-function process() { }
+function user() {}
+function data() {}
+function process() {}
 ```
 
 ### 事件处理命名
 
 ```typescript
 // ✅ 推荐 - handle + 事件源 + 动作
-const handleFormSubmit = () => { }
-const handleUserDelete = (id: string) => { }
-const handleModalClose = () => { }
+const handleFormSubmit = () => {};
+const handleUserDelete = (id: string) => {};
+const handleModalClose = () => {};
 
 // Props 传递时 - on + 事件名
 interface Props {
-  onSubmit: () => void
-  onCancel: () => void
-  onUserSelect: (user: User) => void
+  onSubmit: () => void;
+  onCancel: () => void;
+  onUserSelect: (user: User) => void;
 }
 ```
 
@@ -160,7 +160,7 @@ src/
 ```typescript
 // ✅ 单一职责 - 一个函数只做一件事
 function validateEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function sendEmail(to: string, subject: string, body: string): Promise<void> {
@@ -169,7 +169,7 @@ function sendEmail(to: string, subject: string, body: string): Promise<void> {
 
 // ❌ 避免 - 函数职责过多
 function validateAndSendEmail(email: string, content: string) {
-  if (!validateEmail(email)) return false
+  if (!validateEmail(email)) return false;
   // 发送邮件...
 }
 ```
@@ -179,41 +179,46 @@ function validateAndSendEmail(email: string, content: string) {
 ```typescript
 // ✅ 参数对象化 - 超过 3 个参数使用对象
 interface CreateOrderParams {
-  userId: string
-  productId: string
-  quantity: number
-  address?: string
+  userId: string;
+  productId: string;
+  quantity: number;
+  address?: string;
 }
 
-function createOrder(params: CreateOrderParams): Promise<Order> { }
+function createOrder(params: CreateOrderParams): Promise<Order> {}
 
 // ❌ 避免 - 参数过多
-function createOrder(userId: string, productId: string, quantity: number, address?: string) { }
+function createOrder(
+  userId: string,
+  productId: string,
+  quantity: number,
+  address?: string,
+) {}
 
 // ✅ 使用解构设置默认值
-function createUser({ name, age = 18, role = 'user' }: CreateUserParams) { }
+function createUser({ name, age = 18, role = "user" }: CreateUserParams) {}
 ```
 
 ### 返回值设计
 
 ```typescript
 // ✅ 返回类型明确
-function getUser(id: string): Promise<User | null> { }
-function getUsers(): Promise<User[]> { }
+function getUser(id: string): Promise<User | null> {}
+function getUsers(): Promise<User[]> {}
 
 // ✅ 操作结果明确
 interface Result<T> {
-  success: boolean
-  data?: T
-  error?: string
+  success: boolean;
+  data?: T;
+  error?: string;
 }
 
 function deleteUser(id: string): Promise<Result<void>> {
   try {
-    await db.user.delete(id)
-    return { success: true }
+    await db.user.delete(id);
+    return { success: true };
   } catch (error) {
-    return { success: false, error: error.message }
+    return { success: false, error: error.message };
   }
 }
 ```
@@ -236,7 +241,7 @@ function deleteUser(id: string): Promise<Result<void>> {
 
 ### 函数注释
 
-```typescript
+````typescript
 /**
  * 根据条件查询用户列表
  *
@@ -252,8 +257,10 @@ function deleteUser(id: string): Promise<Result<void>> {
  * console.log(result.data) // User[]
  * ```
  */
-async function getUserList(params: GetUsersParams): Promise<PaginatedResult<User>> { }
-```
+async function getUserList(
+  params: GetUsersParams,
+): Promise<PaginatedResult<User>> {}
+````
 
 ### 复杂逻辑注释
 
@@ -262,7 +269,7 @@ async function getUserList(params: GetUsersParams): Promise<PaginatedResult<User
 // 规则：基础积分 × 活跃系数 × VIP 加成
 // 活跃系数：连续登录天数 / 30，上限 1.5
 // VIP 加成：普通用户 1，VIP 1.2，SVIP 1.5
-const score = baseScore * Math.min(loginDays / 30, 1.5) * vipMultiplier
+const score = baseScore * Math.min(loginDays / 30, 1.5) * vipMultiplier;
 ```
 
 ### TODO/FIXME 规范

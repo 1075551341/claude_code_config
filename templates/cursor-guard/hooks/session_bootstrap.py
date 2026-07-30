@@ -14,6 +14,7 @@ ensure_lib_path()
 setup_stdio()
 
 from config import load_guard_config, state_path
+from gate_messages import load_gate
 from context_usage_store import usage_percent
 from impact_sync import rules_out_of_sync
 from session_handoff import (
@@ -99,6 +100,8 @@ def main() -> None:
                 "- 上次压缩快照: 无（在 Agent 输入框发送 /summarize 触发 Cursor 原生压缩；"
                 "非 Claude /compact）"
             )
+
+        parts.append(load_gate("p0", cfg["sync"]["claude_home"]))
 
         write_json({"additional_context": "\n".join(parts)})
     except Exception as e:

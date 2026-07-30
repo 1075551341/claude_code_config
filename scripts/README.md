@@ -8,25 +8,25 @@
 
 ### 已同步的编辑器（按本机实际目录）
 
-| 编辑器 | 用户目录示例 | 说明 |
-| -------- | ------------------------- | ---------------- |
-| Cursor | `%USERPROFILE%\.cursor` | 若存在则参与同步 |
-| Devin | `%APPDATA%\devin` | 若存在则参与同步 |
-| Trae | `%USERPROFILE%\.trae(.cn)` | 若存在则参与同步 |
-| Qoder | `%USERPROFILE%\.qoder(-cn)` | 若不存在则跳过 |
-| CodeArts | `%USERPROFILE%\.codeartsdoer` | 若不存在则跳过 |
+| 编辑器   | 用户目录示例                  | 说明             |
+| -------- | ----------------------------- | ---------------- |
+| Cursor   | `%USERPROFILE%\.cursor`       | 若存在则参与同步 |
+| Devin    | `%APPDATA%\devin`             | 若存在则参与同步 |
+| Trae     | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步 |
+| Qoder    | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过   |
+| CodeArts | `%USERPROFILE%\.codeartsdoer` | 若不存在则跳过   |
 
 ### `sync.ps1` — 多编辑器分层同步（v18.0）
 
 **模式**：
 
-| 模式 | 同步内容 |
-| ------------ | -------------------------------------------------------------------- |
-| 默认（L0） | `CLAUDE.md` + `rules/CORE.md`→`CORE.{mdc/md}` + `CLAUDE-ROUTER.mdc`→`00-CLAUDE-ROUTER.*`；Cursor 另复制 `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` |
-| `-Skills` | L0 + `skills/` 目录 |
-| `-All` | L0 + 全部 `rules/*.md` + `skills/` + `agents/` |
-| `-ProjectRules` | 另将 L0（配合 `-All` 则全部 rules）复制到 **当前目录** `.cursor/rules`（CWD 为 `~/.claude` 时跳过，避免重复条目） |
-| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板（prettier/eslint / CLAUDE.md+MANIFEST+.env+.gitignore），不同步编辑器 |
+| 模式                     | 同步内容                                                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 默认（L0）               | `CLAUDE.md` + `rules/CORE.md`→`CORE.{mdc/md}` + `CLAUDE-ROUTER.mdc`→`00-CLAUDE-ROUTER.*`；Cursor 另复制 `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` |
+| `-Skills`                | L0 + `skills/` 目录                                                                                                                                      |
+| `-All`                   | L0 + 全部 `rules/*.md` + `skills/` + `agents/`                                                                                                           |
+| `-ProjectRules`          | 另将 L0（配合 `-All` 则全部 rules）复制到 **当前目录** `.cursor/rules`（CWD 为 `~/.claude` 时跳过，避免重复条目）                                        |
+| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板（prettier/eslint / CLAUDE.md+MANIFEST+.env+.gitignore），不同步编辑器                                                           |
 
 **用法**：
 
@@ -39,14 +39,14 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写
 
 **参数**：
 
-| 参数 | 说明 |
-| -------------- | ---------------------------------- |
-| `-Skills` | 追加同步 skills/ |
-| `-All` | 全量（rules+skills+agents+CLAUDE.md） |
-| `-ProjectRules` | 复制 rules 到当前项目 .cursor/rules |
-| `-DryRun` | 仅预览，不写盘 |
-| `-Lint` | 部署 lint 模板到当前项目 |
-| `-InitProject` | 部署项目初始化模板到当前项目 |
+| 参数            | 说明                                  |
+| --------------- | ------------------------------------- |
+| `-Skills`       | 追加同步 skills/                      |
+| `-All`          | 全量（rules+skills+agents+CLAUDE.md） |
+| `-ProjectRules` | 复制 rules 到当前项目 .cursor/rules   |
+| `-DryRun`       | 仅预览，不写盘                        |
+| `-Lint`         | 部署 lint 模板到当前项目              |
+| `-InitProject`  | 部署项目初始化模板到当前项目          |
 
 **机制**：
 
@@ -68,6 +68,16 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 - 模板：`templates/cursor-guard/`；运行时：`~/.cursor/hooks.json`、`guard-config.json`
 - 显式同步：聊天输入「同步配置」
+- **重部署时机（v10.7.0）**：改 `templates/cursor-guard/` 下任何文件（hooks/config/hooks.json）→ 重跑 `deploy-cursor-guard.ps1` → **重启 Cursor** 生效；改 `hooks/_lib/gate_messages.md` 无需重部署（Guard hook 运行时直读 `~/.claude`）
+
+### 同步触发规则（v10.7.0）
+
+| 改动                                            | 必跑                                         |
+| ----------------------------------------------- | -------------------------------------------- |
+| `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步 L0 四件套）  |
+| `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor      |
+| `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话） |
+| `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                       |
 
 ### 同步后建议自测
 

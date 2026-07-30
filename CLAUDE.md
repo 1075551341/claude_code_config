@@ -62,7 +62,7 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 | R7  | 交叉验证    | 完成前验证清单                  | —       |
 | R8  | 高危确认    | 删数据/强推main前确认           | —       |
 | R9  | 命令安全    | 禁cd+重定向/powershell -Command | —       |
-| R10 | 简洁优先    | 高内聚低耦合                    | —       |
+| R10 | 简洁优先    | 高内聚低耦合易迭代              | —       |
 | R11 | 安全默认    | 不信任输入、无硬编码密钥        | —       |
 | R12 | 子Agent隔离 | fresh context+制品通信          | CORE.md |
 | R13 | 制品存活    | 跨会话持久化                    | CORE.md |

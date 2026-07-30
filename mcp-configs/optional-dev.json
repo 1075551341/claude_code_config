@@ -1,7 +1,7 @@
 {
   "toolset": "optional-dev",
-  "description": "浏览器调试 / 设计稿 / 语义搜索 / 代码知识图谱 — 按需 merge 到 .mcp.json",
-  "servers": ["chrome-devtools", "figma", "exa", "codebase-memory"],
+  "description": "浏览器调试 / 语义搜索 / 代码知识图谱 — 按需 merge 到 .mcp.json",
+  "servers": ["chrome-devtools", "exa", "codebase-memory"],
   "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
   "mcpServers": {
     "chrome-devtools": {
@@ -10,14 +10,6 @@
       "args": [
         "D:\\config_sys\\dev-cache\\volta\\tools\\image\\packages\\chrome-devtools-mcp\\node_modules\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js"
       ]
-    },
-    "figma": {
-      "_description": "Figma 设计稿集成（figma-developer-mcp，v10.6 修复包名 404）。需 FIGMA_ACCESS_TOKEN，未设置时服务器可启动但调用失败。",
-      "command": "npx",
-      "args": ["-y", "figma-developer-mcp", "--stdio"],
-      "env": {
-        "FIGMA_API_KEY": "${FIGMA_ACCESS_TOKEN}"
-      }
     },
     "exa": {
       "_description": "Exa 语义搜索 — L3 深度调研时按需 merge。场景：学术/新闻语义搜索、多源交叉验证（与 Firecrawl 互补）。触发：/deep-research、多源验证需求。v10.6 修复包名 404。",

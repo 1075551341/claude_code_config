@@ -136,7 +136,25 @@ def load_guard_config() -> dict:
             and secrets.get("scan_prompts", True),
             "block_on_match": secrets.get("block_on_match", False),
         },
+        "verification": _load_verification_config(cfg.get("verification", {})),
+        "impact": {
+            "enabled": os.environ.get("CURSOR_GUARD_IMPACT_GATE", "1") != "0"
+            and cfg.get("impact", {}).get("enabled", True),
+        },
         "git": _load_git_config(cfg.get("git", {})),
+    }
+
+
+DEFAULT_VERIFICATION_KEYWORDS = ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
+
+
+def _load_verification_config(verification: dict) -> dict:
+    enabled = os.environ.get("CURSOR_GUARD_VERIFY_GATE", "1") != "0"
+    return {
+        "enabled": enabled and verification.get("enabled", True),
+        "prompt_keywords": verification.get(
+            "prompt_keywords", DEFAULT_VERIFICATION_KEYWORDS
+        ),
     }
 
 

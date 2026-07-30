@@ -14,11 +14,11 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 ## 前置条件（v10.1）
 
-| 能力 | 前置 | 验证 |
-|------|------|------|
-| codegraph 探索 (R17) | `codegraph init` + `codegraph index` | `validate_config.py` V16 |
-| OpenSpec CLI | `npm i -g @fission-ai/openspec`（Node>=20.19）+ `openspec init --tools cursor` | `openspec --version` |
-| 深度调研 L3 | Exa + Firecrawl（`FIRECRAWL_API_KEY` 用户环境变量 + `~/.cursor/mcp.json` `${...}`） | MCP 重启后 `firecrawl_search` |
+| 能力                 | 前置                                                                                | 验证                          |
+| -------------------- | ----------------------------------------------------------------------------------- | ----------------------------- |
+| codegraph 探索 (R17) | `codegraph init` + `codegraph index`                                                | `validate_config.py` V16      |
+| OpenSpec CLI         | `npm i -g @fission-ai/openspec`（Node>=20.19）+ `openspec init --tools cursor`      | `openspec --version`          |
+| 深度调研 L3          | Exa + Firecrawl（`FIRECRAWL_API_KEY` 用户环境变量 + `~/.cursor/mcp.json` `${...}`） | MCP 重启后 `firecrawl_search` |
 
 ### Firecrawl 认证（Req 6）
 
@@ -32,41 +32,41 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 ## 分组速查（v10.1）
 
-| 分组 | 服务器 | 加载 | 典型场景 |
-|------|--------|------|----------|
-| always | codegraph, crawl, git, fs, time | `.mcp.json` 常驻 | 探索(R17)、调研、Git、文件、时间 |
-| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` 按需 | 缓存、DB、容器 |
-| optional-dev | chrome-devtools, figma, exa, codebase-memory | `mcp-configs/optional-dev.json` 按需 | 浏览器、设计稿、L4 代码图谱 |
-| Cursor 搜索/文档 | Exa, Context7, Firecrawl | plugin + user-crawl | L1–L3 调研 |
-| 跨会话记忆 | claude-mem | plugin（非 memory MCP） | R18 |
+| 分组             | 服务器                                | 加载                                 | 典型场景                         |
+| ---------------- | ------------------------------------- | ------------------------------------ | -------------------------------- |
+| always           | codegraph, crawl, git, fs, time       | `.mcp.json` 常驻                     | 探索(R17)、调研、Git、文件、时间 |
+| ops              | redis, sqlite, docker, postgres       | `mcp-configs/ops.json` 按需          | 缓存、DB、容器                   |
+| optional-dev     | chrome-devtools, exa, codebase-memory | `mcp-configs/optional-dev.json` 按需 | 浏览器、语义搜索、L4 代码图谱    |
+| Cursor 搜索/文档 | Exa, Context7, Firecrawl              | plugin + user-crawl                  | L1–L3 调研                       |
+| 跨会话记忆       | claude-mem                            | plugin（非 memory MCP）              | R18                              |
 
 ## 场景 → 工具
 
-| 场景 | 首选 | 备选 |
-|------|------|------|
-| 代码结构/调用链 (R17) | codegraph_explore（需 `codegraph index`） | Grep → Read |
-| 架构全景/ADR/模块边界 (L4) | codebase-memory get_architecture / manage_adr | codegraph explore |
-| 变更影响 git diff→符号 (L4) | codebase-memory detect_changes | codegraph_impact |
-| 语义找代码 (L4) | codebase-memory semantic_query | Grep |
-| OpenSpec 规格变更 | openspec CLI + `/opsx:*` | rules/OPENSPEC.md |
-| 项目全貌/领域 | codegraph_explore + Grep | codebase-memory get_architecture |
-| 查库文档/API (调研 L1) | ctx7 | exa 单次 |
-| GitHub PR/Issue | gh | pr-workflow skill |
-| 本地 Git 历史 | git | git-workflow skill |
-| 网页抓取/搜索 (L2/L3) | crawl + exa | — |
-| 深度调研 (L3) | skills/deep-research | /deep-research |
-| E2E/浏览器 | pw | — |
-| 跨会话记忆 (R18) | claude-mem plugin | memory MCP（临时节点） |
-| 文件读写 | 内置 Read/Write/Grep | fs MCP |
-| Shell 命令 | 内置 Bash | — |
+| 场景                        | 首选                                          | 备选                             |
+| --------------------------- | --------------------------------------------- | -------------------------------- |
+| 代码结构/调用链 (R17)       | codegraph_explore（需 `codegraph index`）     | Grep → Read                      |
+| 架构全景/ADR/模块边界 (L4)  | codebase-memory get_architecture / manage_adr | codegraph explore                |
+| 变更影响 git diff→符号 (L4) | codebase-memory detect_changes                | codegraph_impact                 |
+| 语义找代码 (L4)             | codebase-memory semantic_query                | Grep                             |
+| OpenSpec 规格变更           | openspec CLI + `/opsx:*`                      | rules/OPENSPEC.md                |
+| 项目全貌/领域               | codegraph_explore + Grep                      | codebase-memory get_architecture |
+| 查库文档/API (调研 L1)      | ctx7                                          | exa 单次                         |
+| GitHub PR/Issue             | gh                                            | pr-workflow skill                |
+| 本地 Git 历史               | git                                           | git-workflow skill               |
+| 网页抓取/搜索 (L2/L3)       | crawl + exa                                   | —                                |
+| 深度调研 (L3)               | skills/deep-research                          | /deep-research                   |
+| E2E/浏览器                  | pw                                            | —                                |
+| 跨会话记忆 (R18)            | claude-mem plugin                             | memory MCP（临时节点）           |
+| 文件读写                    | 内置 Read/Write/Grep                          | fs MCP                           |
+| Shell 命令                  | 内置 Bash                                     | —                                |
 
 ## 调研三档（v9.1）
 
-| 档位 | 场景 | 工具链 |
-|------|------|--------|
-| L1 | 单点事实、API 签名 | Context7 或 Exa 单次 |
-| L2 | 方案对比、最佳实践 | Exa + Firecrawl 单页 |
-| L3 | 技术选型、/deep-research | Read `skills/deep-research` + Firecrawl + Exa + Context7 |
+| 档位 | 场景                     | 工具链                                                   |
+| ---- | ------------------------ | -------------------------------------------------------- |
+| L1   | 单点事实、API 签名       | Context7 或 Exa 单次                                     |
+| L2   | 方案对比、最佳实践       | Exa + Firecrawl 单页                                     |
+| L3   | 技术选型、/deep-research | Read `skills/deep-research` + Firecrawl + Exa + Context7 |
 
 **前置**：claude-mem search → 项目内代码用 codegraph（R17）；架构/ADR/变更用 codebase-memory（L4，需 index）；禁止先用 Firecrawl 探本地代码。
 
@@ -91,21 +91,21 @@ codegraph | crawl | git | fs | time
 
 ### Claude Code 按需（`mcp-configs/`）
 
-| Profile | 服务器 |
-|---------|--------|
-| ops | redis, sqlite, docker, postgres |
-| optional-dev | chrome-devtools, figma, exa, codebase-memory |
+| Profile      | 服务器                                |
+| ------------ | ------------------------------------- |
+| ops          | redis, sqlite, docker, postgres       |
+| optional-dev | chrome-devtools, exa, codebase-memory |
 
 ### Cursor 常驻（用户已精简）
 
-| 能力 | MCP / Plugin |
-|------|----------------|
-| 代码探索 | user-codegraph |
+| 能力     | MCP / Plugin                  |
+| -------- | ----------------------------- |
+| 代码探索 | user-codegraph                |
 | 网页调研 | user-crawl + plugin Firecrawl |
-| 搜索 | plugin Exa |
-| 文档 | plugin Context7 |
-| GitHub | user-gh |
-| E2E | user-pw（按需） |
+| 搜索     | plugin Exa                    |
+| 文档     | plugin Context7               |
+| GitHub   | user-gh                       |
+| E2E      | user-pw（按需）               |
 
 ### 已禁用（重叠/低频）
 

@@ -7,6 +7,20 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
+## 门控强度（v10.7.0 — 配置驱动三门）
+
+> 原则：不依赖模型自觉。三门文本 SSOT = `hooks/_lib/gate_messages.md`（改文本不改代码）；双端 hook 注入 `additionalContext`/`additional_context`。
+
+| 门         | Claude Code 触发                                             | Cursor Guard 触发                               | 行为                                                                                          | 豁免                                                              |
+| ---------- | ------------------------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| P0 分类门  | SessionStart → `session-start-bootstrap.py`                  | sessionStart → `session_bootstrap.py`           | 每会话注入分类指令（简单/Bug/非简单路由）                                                     | 无；skill 已读且范围未变可不重复 Read                             |
+| 完成验证门 | UserPromptSubmit → `pre-userprompt-verify-gate.py`           | beforeSubmitPrompt → `verification_gate.py`     | prompt 命中完成类关键词 → 注入「Read verification-before-completion + 实际运行验证 + 贴证据」 | 未命中关键词静默；关键词表见 Guard `verification.prompt_keywords` |
+| 变更影响门 | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py` | preToolUse Write/StrReplace → `impact_nudge.py` | 本会话首次编辑注入「blast-radius + Grep 引用 + MANIFEST depends_on」                          | **永不 deny**（用户决策）；二次编辑静默；状态 7 天自动清理        |
+
+- 状态文件：Claude `~/.claude/.state/impact-nudge.json`；Cursor Guard `.state/impact_nudge.json`
+- 强度调整：验证门关键词走 Guard config / 改 SSOT 文本；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
+- Cursor 侧改动生效路径：改 `templates/cursor-guard/` → 跑 `scripts/deploy-cursor-guard.ps1` → 重启 Cursor
+
 ## R16 详细声明（错误暴漏）
 
 - **Hook**：所有 `hooks/*.py` 禁止 `except:pass` 或 `except Exception:pass`，异常必须向上传播或 `sys.exit(1)` + 错误详情
@@ -59,13 +73,13 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 业务逻辑禁止原生时间 API（CORE 禁用规则）。推荐库：
 
-| 语言 | 推荐库 |
+| 语言   | 推荐库              |
 | ------ | ------------------- |
-| TS/JS | dayjs / date-fns |
-| Python | pendulum |
-| Go | `time` + Clock 接口 |
-| Rust | chrono / time crate |
-| C# | NodaTime |
+| TS/JS  | dayjs / date-fns    |
+| Python | pendulum            |
+| Go     | `time` + Clock 接口 |
+| Rust   | chrono / time crate |
+| C#     | NodaTime            |
 
 Claude Code 可用 `time` MCP 获取当前时间。
 
@@ -123,10 +137,10 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 
 ## 快速指令前缀
 
-| 前缀 | 行为 |
+| 前缀     | 行为             |
 | -------- | ---------------- |
 | `[方法]` | 生成具体功能代码 |
 | `[方案]` | 输出技术实现规划 |
 | `[解释]` | 逐步解析现有代码 |
-| `[修改]` | 对项目增删改查 |
-| `[审查]` | 代码质量评审 |
+| `[修改]` | 对项目增删改查   |
+| `[审查]` | 代码质量评审     |

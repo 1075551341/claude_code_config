@@ -53,5 +53,12 @@
   "secrets": {
     "scan_prompts": true,
     "block_on_match": false
+  },
+  "verification": {
+    "enabled": true,
+    "prompt_keywords": ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
+  },
+  "impact": {
+    "enabled": true
   }
 }

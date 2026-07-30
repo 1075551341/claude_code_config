@@ -16,28 +16,28 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 | fs        | 跨路径文件操作             |
 | time      | 时区/时间（禁 new Date()） |
 
-**按需**（merge `mcp-configs/ops.json` 或 `optional-dev.json`）：redis, sqlite, docker, postgres, chrome-devtools, figma, exa, **codebase-memory** — 见 [rules/MCP.md](../rules/MCP.md)。
+**按需**（merge `mcp-configs/ops.json` 或 `optional-dev.json`）：redis, sqlite, docker, postgres, chrome-devtools, exa, **codebase-memory** — 见 [rules/MCP.md](../rules/MCP.md)。
 
 ## Cursor 常驻 MCP（user）
 
-| MCP                  | 用途                                 |
-| -------------------- | ------------------------------------ |
-| user-codegraph       | R17 首选；Guard soft_block Grep/Glob |
-| user-codebase-memory | L4 架构/ADR/变更（P0 推荐启用）      |
-| user-crawl           | Firecrawl 网页抓取                   |
+| MCP                  | 用途                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| user-codegraph       | R17 首选；Guard soft_block Grep/Glob                                                                      |
+| user-codebase-memory | L4 架构/ADR/变更（P0 推荐启用）                                                                           |
+| user-crawl           | Firecrawl 网页抓取                                                                                        |
 | user-fetch           | 轻量单页抓取（crawl 重活，fetch 轻活）；uvx `--with "mcp<1.12"` 钉扎修复（v10.6，上游 McpError 改名断链） |
-| user-gh              | PR/Issue（pr-workflow）              |
-| user-pw              | E2E/浏览器（按需开）                 |
+| user-gh              | PR/Issue（pr-workflow）                                                                                   |
+| user-pw              | E2E/浏览器（按需开）                                                                                      |
 
 ## Cursor 已禁用 MCP
 
-| MCP                                      | 原因                                 |
-| ---------------------------------------- | ------------------------------------ |
-| user-postgres                            | 非默认路径；按需开                   |
+| MCP                                      | 原因                                    |
+| ---------------------------------------- | --------------------------------------- |
+| user-postgres                            | 非默认路径；按需开                      |
 | ~~user-puppeteer~~                       | 与 user-pw 重叠，**v10.6 已从配置移除** |
-| user-eamodio.gitlens-extension-GitKraken | gh 已覆盖 Git 操作                   |
-| user-thinking                            | token 开销高                         |
-| user-memory                              | 与 claude-mem 重叠（R18）            |
+| user-eamodio.gitlens-extension-GitKraken | gh 已覆盖 Git 操作                      |
+| user-thinking                            | token 开销高                            |
+| user-memory                              | 与 claude-mem 重叠（R18）               |
 
 ## Cursor 常驻 Plugin
 
@@ -60,13 +60,13 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 
 ## Cursor 已禁用 Plugin
 
-| Plugin                      | 原因                                   |
-| --------------------------- | -------------------------------------- |
-| compound-engineering        | 与 `~/.claude/agents/` gstack 重叠     |
-| Clerk                       | 非 Clerk 项目                          |
-| Browserstack                | 专用跨端测试                           |
-| Sentry                      | 未接 Sentry 时纯开销                   |
-| Create Plugin               | 不写插件时                             |
+| Plugin               | 原因                               |
+| -------------------- | ---------------------------------- |
+| compound-engineering | 与 `~/.claude/agents/` gstack 重叠 |
+| Clerk                | 非 Clerk 项目                      |
+| Browserstack         | 专用跨端测试                       |
+| Sentry               | 未接 Sentry 时纯开销               |
+| Create Plugin        | 不写插件时                         |
 
 ## 审查路由
 

@@ -116,27 +116,29 @@ agents:
 hooks:
   profile_env: ECC_HOOK_PROFILE
   default: standard
+  # settings.json 已注册（v10.7.0 对齐：三门控 + 补注册 5 个历史遗漏）
   core:
     - session-start-bootstrap
+    - pre-userprompt-verify-gate
     - pre-bash-guard
     - pre-rtk-rewrite
-    - pre-tmux-reminder
     - pre-read-before-edit
-    - pre-config-protection
     - pre-context-injector
     - pre-manifest-validator
-    - pre-loop-guard
-    - pre-suggest-compact
+    - pre-edit-impact-nudge
     - post-secret-detector
     - post-edit-format
     - post-codegraph-sync
-    - post-operation-log
     - pre-compact-state
     - stop-quality-gate
-    - stop-context-monitor
-    - stop-pattern-extraction
     - stop-session-summary
     - stop-readme-updater
+  # 文件在 hooks/ 但未注册：Claude Code 原生机制或 Cursor Guard 已覆盖，保留备用
+  _unregistered:
+    - pre-tmux-reminder
+    - pre-loop-guard
+    - pre-suggest-compact
+    - stop-context-monitor
   _optional:
     - pre-dep-checker
     - pre-git-hook-bypass-block
@@ -179,14 +181,12 @@ disabled_hooks:
 
 mcp_loading:
   always: [memory, thinking, fs, fetch, time]
-  dev: [gh, git, ctx7, pw, crawl, chrome-devtools, codegraph]
+  dev: [gh, git, ctx7, pw, crawl, chrome-devtools, codegraph, codebase-memory]
   ops: [redis, sqlite, docker, postgres]
   search: [exa]
-  design: [figma]
-  optional: [puppeteer, glif]
   profile_env: CLAUDE_MCP_PROFILE
 
 limits:
   global_agents_max: 25
-  global_skills_max: 34
-  global_rules_max: 10
+  global_skills_max: 44
+  global_rules_max: 12

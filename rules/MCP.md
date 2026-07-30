@@ -26,11 +26,11 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 `mcp/servers.json` 是 `.mcp.json` 的派生分组视图。
 
-| 分组         | 服务器                                       | 位置                            |
-| ------------ | -------------------------------------------- | ------------------------------- |
-| always       | codegraph, crawl, git, fs, time              | `.mcp.json`                     |
-| ops          | redis, sqlite, docker, postgres              | `mcp-configs/ops.json`          |
-| optional-dev | chrome-devtools, figma, exa, codebase-memory | `mcp-configs/optional-dev.json` |
+| 分组         | 服务器                                | 位置                            |
+| ------------ | ------------------------------------- | ------------------------------- |
+| always       | codegraph, crawl, git, fs, time       | `.mcp.json`                     |
+| ops          | redis, sqlite, docker, postgres       | `mcp-configs/ops.json`          |
+| optional-dev | chrome-devtools, exa, codebase-memory | `mcp-configs/optional-dev.json` |
 
 按需 profile 中的 `mcpServers` 块 **手动 merge** 到 `.mcp.json` 后重启 Claude Code。
 

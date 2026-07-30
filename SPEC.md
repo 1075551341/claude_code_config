@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
-> 版本：10.6.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 场景强制
+> 版本：10.7.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 场景强制
 
 ---
 
@@ -281,9 +281,9 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ### 项目洞察 (1)
 
-| #   | 仓库                        | 吸收                                                                                   | 落地                                   |
-| --- | --------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
-| 27  | colbymchenry/codegraph      | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json (optional), rules/CONTEXT.md |
+| #   | 仓库                   | 吸收                                                                                   | 落地                                   |
+| --- | ---------------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
+| 27  | colbymchenry/codegraph | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json (optional), rules/CONTEXT.md |
 
 ### 插件分发 (1)
 
@@ -328,6 +328,16 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 | hooks/, commands/, MCP, plugins     | 不同步                      |
 
 ---
+
+## v10.7.0 变更摘要（2026-07-30）
+
+- **配置驱动门控**：分类路由/完成验证/变更影响从模型自觉升级为 hook 强制注入（双端）。文本 SSOT `hooks/_lib/gate_messages.md`；Claude Code 新增 SessionStart/UserPromptSubmit 注册 + `pre-userprompt-verify-gate` + `pre-edit-impact-nudge`；Cursor Guard 新增 `verification_gate`/`impact_nudge`，`session_bootstrap` 注入 P0 门
+- **变更影响门**：首编辑注入提醒，**永不 deny**（用户决策）；状态 `~/.claude/.state/impact-nudge.json` / Guard state，7 天清理
+- **hooks 对齐**：settings.json 注册 7→15（补注册历史遗漏 5：pre-read-before-edit/pre-manifest-validator/pre-compact-state/stop-quality-gate/stop-session-summary，与 README v5.1 文档口径对齐）；Cursor Guard 15→17
+- **stdin UTF-8 修复**：Windows cp936 致中文 prompt 乱码，三个新 Claude hook 与 Guard `hook_io.read_stdin` 显式 UTF-8 解码
+- **Cursor 全量同步**：`sync.ps1 -All` 12 rules verbatim 部署为 .mdc + skills 44 + agents 25
+- **agent.yaml 漂移清理**：mcp_loading 去 figma/puppeteer/glif 对齐 `.mcp.json`；limits 对齐实际（rules 12/skills 44/agents 25）；hooks.core 对齐注册态 15
+- 详图：`docs/superpowers/plans/2026-07-30-v10.7-gate-enforcement.md`
 
 ## v10.6.0 变更摘要（2026-07-29）
 
@@ -410,4 +420,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-> 版本：10.6.0 | 日期：2026-07-29 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3
+> 版本：10.7.0 | 日期：2026-07-30 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3

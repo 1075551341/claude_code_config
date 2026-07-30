@@ -28,13 +28,17 @@ def ensure_lib_path() -> None:
 
 
 def read_stdin() -> dict:
-    """读取 Cursor 传入的单行 JSON；用 readline 避免 stdin 未关闭时 read() 阻塞至超时。"""
+    """读取 Cursor 传入的单行 JSON；用 readline 避免 stdin 未关闭时 read() 阻塞至超时。
+    显式 UTF-8 解码：Windows 默认 cp936 会把中文 prompt 读成乱码。"""
     try:
         if sys.stdin is None or sys.stdin.closed:
             return {}
         if sys.stdin.isatty():
             return {}
-        raw = sys.stdin.readline()
+        if hasattr(sys.stdin, "buffer"):
+            raw = sys.stdin.buffer.readline().decode("utf-8", errors="replace")
+        else:
+            raw = sys.stdin.readline()
         if not raw.strip():
             return {}
         return json.loads(raw)

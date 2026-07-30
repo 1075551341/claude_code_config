@@ -76,6 +76,26 @@ def load_previous_context(cwd: str) -> dict:
     return context
 
 
+def load_p0_gate() -> str | None:
+    """读取门控 SSOT 的 P0 分类门段（v10.7.0）。"""
+    fallback = (
+        "【门控 · 会话开始必做】\n"
+        "第一轮回复前必须分类：[简单(≤3文件) | Bug | 非简单]\n"
+        "Read ~/.claude/skills/using-superpowers/SKILL.md 后按路由执行。"
+    )
+    gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")
+    try:
+        with open(gate_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        start = content.index("## P0分类门")
+        end = content.index("## 完成验证门")
+        section = content[start:end].replace("## P0分类门", "").strip()
+        return section if section else fallback
+    except (OSError, ValueError) as e:
+        print(f"session-start-bootstrap: gate_messages read failed: {e}", file=sys.stderr)
+        return fallback
+
+
 def detect_codegraph(cwd: str) -> str | None:
     """检测 codegraph 索引状态"""
     is_git = os.path.exists(os.path.join(cwd, ".git"))
@@ -101,9 +121,9 @@ def detect_codegraph(cwd: str) -> str | None:
 
 def main():
     try:
-        # 读取 stdin
+        # 读取 stdin（显式 UTF-8：Claude Code 传入 UTF-8 JSON，Windows 默认 cp936 会乱码）
         try:
-            raw = sys.stdin.read()
+            raw = sys.stdin.buffer.read().decode("utf-8", errors="replace") if hasattr(sys.stdin, "buffer") else sys.stdin.read()
             data = json.loads(raw) if raw.strip() else {}
         except Exception:
             sys.exit(0)
@@ -139,6 +159,10 @@ def main():
             parts.append(f"  • {codegraph_status}")
         if context:
             parts.append(f"  • 已加载上下文: {list(context.keys())}")
+
+        p0_gate = load_p0_gate()
+        if p0_gate:
+            parts.append(p0_gate)
 
         bootstrap_info = "\n".join(parts)
 

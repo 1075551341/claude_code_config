@@ -35,6 +35,11 @@
         "command": "python hooks/compress_on_prompt.py",
         "matcher": "UserPromptSubmit",
         "timeout": 5
+      },
+      {
+        "command": "python hooks/verification_gate.py",
+        "matcher": "UserPromptSubmit",
+        "timeout": 5
       }
     ],
     "beforeShellExecution": [
@@ -52,6 +57,11 @@
       {
         "command": "python hooks/explore_router.py",
         "matcher": "Grep|Read|Glob",
+        "timeout": 5
+      },
+      {
+        "command": "python hooks/impact_nudge.py",
+        "matcher": "Write|StrReplace",
         "timeout": 5
       }
     ],
