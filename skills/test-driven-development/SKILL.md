@@ -24,15 +24,6 @@ Claude: /test-driven-development → 设计测试 → 编写失败测试 → 实
 
 **RED-GREEN-REFACTOR 循环：先写失败测试，再实现功能，最后重构优化。**
 
----
-name: test-driven-development
-description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
-triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
-
 ## 三阶段循环
 
 ### RED：写失败测试

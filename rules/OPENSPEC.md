@@ -7,6 +7,16 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 
 > 来源 Fission-AI/OpenSpec v1.4.1 | 归属 `MANIFEST.yaml` concern `change_spec`
 
+## 三处表面职责（v10.6.0 边界声明）
+
+| 表面 | 位置 | 职责 |
+|------|------|------|
+| 规则 SSOT（本文件） | `rules/OPENSPEC.md` | 规范唯一权威：轨道选择、门控、禁止项 |
+| Claude Code 入口 | `commands/propose|apply|archive|sync.md` | Claude Code 斜杠命令（`/propose` 等） |
+| Cursor 入口 | `.cursor/commands/opsx-*.md` + `.cursor/skills/openspec-*` | Cursor 斜杠命令（`/opsx:*`）+ 技能 |
+
+> 三者为同一流程的不同编辑器入口，语义以本文件为准；`~/.claude/.cursor/` 属 OpenSpec 集成本地资产，**不在 sync.ps1 同步范围**（sync 仅 L0 入口 + rules/skills/agents）。
+
 ## 核心概念
 
 - **delta specs**：只描述变更，不重写全量 spec（brownfield 首选）

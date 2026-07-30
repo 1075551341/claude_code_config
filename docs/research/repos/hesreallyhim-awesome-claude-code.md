@@ -21,7 +21,7 @@
 
 | MANIFEST concern | 路径 |
 |------------------|------|
-| 外链 | `docs/REPO_ANALYSIS.md` SSOT 链 |
+| 外链 | `docs/research/COVERAGE.md` SSOT 链 |
 
 ## 吸收决策
 

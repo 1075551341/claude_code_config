@@ -127,7 +127,7 @@ GSD 设计了但未提供稳定实现的命令：
 | context_engineering | `rules/CONTEXT.md` + `skills/context-engineering/` | ✅ |
 | GSD 70% 逻辑断点 | `rules/CORE.md` | ✅ |
 | 三态制品 | `rules/CONTEXT.md` | ✅ |
-| 缺口文档 | `docs/research/gsd-gaps-v10.md` | ✅ |
+| 缺口文档 | ~~gsd-gaps-v10.md~~（v10.6.0 删除；forensics/resume 不实现） | ✅ |
 
 ## 吸收决策
 

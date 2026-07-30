@@ -46,7 +46,7 @@ description: 跨编辑器配置同步指南 v17.0
 - **rules 扩展名**：cursor·qoder·qoder-cn·codearts → `.mdc`；devin·trae·trae-cn → `.md`
 - **devin 根文件名**：`AGENTS.md`（Devin CLI 全局 rules 标准）；其余编辑器 → `CLAUDE.md`
 - **`-DryRun`**：仅预览，不写盘
-- **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`
+- **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`、`~/.claude/.cursor/`（OpenSpec 本地资产）
 
 ---
 
@@ -58,16 +58,21 @@ description: 跨编辑器配置同步指南 v17.0
 ├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md      (软链接)
 ├── skills/  → ~/.claude/skills/        (目录联接)
 ├── agents/  → ~/.claude/agents/        (目录联接)
-├── rules/   (实体目录，仅L0入口)
-│   ├── 00-CLAUDE-ROUTER.mdc              (必加载，从总纲部署)
-│   ├── CLAUDE.mdc                        (总纲副本，源 ~/.claude/CLAUDE.md)
-│   ├── CORE.mdc                          (L0骨架，源 ~/.claude/rules/CORE.md)
-│   └── CURSOR-EDITOR.mdc                 (Cursor专属守护层)
+├── rules/   (实体 .mdc；Cursor Settings 对软链索引不稳定 → Copy)
+│   ├── 00-CLAUDE-ROUTER.mdc
+│   ├── CORE.mdc
+│   └── CURSOR-EDITOR.mdc                 (sync / deploy-cursor-guard)
 ```
 
-> v16：不再写 `sync-mode.json`；模式由命令行开关（`-Skills`/`-All`）即时决定。
-
-> **v14.5+**：不再部署到项目级目录（`~/.claude/.cursor/rules/`），避免双份显示。详细rules通过L0路由按需Read加载。
+> **Cursor Settings 显示说明（v18.1）**
+>
+> | 视图                     | 读取路径                                                               | 说明                                                         |
+> | ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
+> | Settings → Project Rules | `<当前工作区>/.cursor/rules/*.mdc`                                     | 打开业务项目时，只有这里有文件才会出现在图2                  |
+> | Agent 全局 alwaysApply   | `~/.cursor/rules/*.mdc`                                                | sync 默认写入这里；Agent 会加载，但不等于 Project Rules 面板 |
+> | 打开 `~/.claude` 工作区  | 若同时存在 `~/.cursor/rules` **与** `~/.claude/.cursor/rules` 同名文件 | Settings 会 **双份显示**（图1）                              |
+>
+> **正确做法**：全局只维护 `~/.cursor/rules`；需要某项目 Settings 可见时，在该项目根执行 `pwsh -File sync.ps1 -ProjectRules`（或 `-All -ProjectRules`）。**不要**把同一套规则再镜像进 `~/.claude/.cursor/rules`。
 
 **Devin**：
 
@@ -183,8 +188,26 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 - **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 - **运行时**：[RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
-- **当前设计**：[design-v10.5.md](../spec/claude-config-integration/design-v10.5.md)
-- **当前计划**：[2026-07-17-v10.5-optimization.md](superpowers/plans/2026-07-17-v10.5-optimization.md)
+- **当前设计**：[design-v10.5.1.md](../spec/claude-config-integration/design-v10.5.1.md)
+- **当前计划**：[2026-07-29-v10.6-optimization.md](superpowers/plans/2026-07-29-v10.6-optimization.md)
+
+## 真源→适配→链接映射表（v10.6.0）
+
+> 真源唯一：`~/.claude/`。不在任何编辑器目录直接改内容；格式适配由 sync.ps1 统一完成。
+
+| 真源文件 | Cursor 落点 | 机制 | 原因 |
+| ------------------------------ | -------------------------------------- | ------------ | ------------------------------ |
+| `CLAUDE.md` | `~/.cursor/CLAUDE.md` | symlink | 纯文本，编辑器可读链接 |
+| `CLAUDE-ROUTER.mdc` | `~/.cursor/CLAUDE-ROUTER.mdc` + `rules/00-CLAUDE-ROUTER.mdc` | symlink + **copy** | rules 目录内必须实体（Settings 不索引软链） |
+| `rules/CORE.md` | `~/.cursor/rules/CORE.mdc` | **copy**（改名 .mdc） | 同上；扩展名适配 |
+| `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` | `~/.cursor/rules/CURSOR-EDITOR.mdc` | **copy** | Cursor 专有规则，仅部署到 Cursor |
+| `MANIFEST.yaml` / `SPEC.md` / `*-INDEX.md` | `~/.cursor/` 同名 | symlink | 路由引用用 |
+| `skills/` | `~/.cursor/skills/` | junction（`mklink /J`，免管理员） | 目录级 |
+| `agents/` | `~/.cursor/agents/` | junction | 目录级 |
+| `rules/*.md`（`-All` 时） | `~/.cursor/rules/<name>.mdc` | **copy**（改名） | 实体副本，先删同名变体再写 |
+| Devin 特化 | `%APPDATA%\devin\AGENTS.md` + `rules/*.md` | copy `.md` | Devin CLI 标准 |
+
+> 写前去重：同 basename 全变体删除后重建（`Remove-SameBasenameVariants`）；非本工具生成的用户手动文件只报告不删除（详见 sync.ps1 日志）。
 
 ---
 

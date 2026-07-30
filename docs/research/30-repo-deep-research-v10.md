@@ -228,7 +228,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### P2 — 刻意不实现
 
-- GSD forensics/resume、[gsd-gaps-v10.md](gsd-gaps-v10.md)
+- GSD forensics/resume（缺口文档 gsd-gaps-v10.md 已于 v10.6.0 删除，结论：不实现，本地以 structured-artifacts + claude-mem 替代）
 - ECC install-state、ruflo 集成、UA 启用
 
 ---

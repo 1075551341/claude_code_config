@@ -109,7 +109,7 @@ codegraph | crawl | git | fs | time
 
 ### 已禁用（重叠/低频）
 
-postgres, puppeteer, GitKraken, thinking, memory, fetch — 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+postgres, GitKraken, thinking, memory — 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)（puppeteer v10.6 已从配置移除；fetch 已修复启用）
 
 **规则**：在各编辑器中按意图描述需求，模型自动匹配对应工具。运行时 SSOT → [RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
 

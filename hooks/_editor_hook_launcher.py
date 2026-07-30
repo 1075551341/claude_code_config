@@ -145,7 +145,7 @@ def main():
         sys.exit(2)
     target = os.path.abspath(sys.argv[1])
     if not os.path.isfile(target):
-        # 失效引用（脚本已移除/迁移至 _optional 等）：优雅跳过，与超时/编辑器上下文一致，不阻断工具调用
+        # 失效引用（脚本已移除/迁移至 _archive 等）：优雅跳过，与超时/编辑器上下文一致，不阻断工具调用
         print("launcher: skip missing hook: " + target, file=sys.stderr)
         sys.exit(0)
     raw = b""

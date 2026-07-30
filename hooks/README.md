@@ -1,20 +1,20 @@
-# Hooks 钩子系统 v5.0
+# Hooks 钩子系统 v5.1
 
-> Claude Code 专用，不同步编辑器。14 核心 hooks + 37 _optional
+> Claude Code 专用，不同步编辑器。12 激活核心 hooks + `_archive/` 非激活资产库（35）
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
-> **v5.0 变更**：SessionStart 改由 superpowers + claude-mem 插件负责，本地不再重复
+> **v5.1 变更（v10.6.0）**：3 个 stub（post-operation-log / pre-config-protection / stop-pattern-extraction，均为 48B 空操作）除名并移入 `_deprecated/`；`_optional/` 更名 `_archive/`，定位明确为**非激活资产库**——启用任一资产需人工迁移回 `hooks/` 并在 settings.json 注册 + 跑 validate_config 验证。
 
 ## 目录结构
 
 | 目录 | 数量 | 用途 |
 |------|------|------|
-| `hooks/` | 15 核心 | standard profile（settings.json 已注册） |
-| `hooks/_optional/` | 37 | strict profile / 已精简冗余 |
-| `hooks/_deprecated/` | 1 | pre-task-planner（禁止启用） |
+| `hooks/` | 12 激活核心 | standard profile（settings.json 已注册） |
+| `hooks/_archive/` | 35 | 非激活资产库（原 `_optional/`），不加载不扫描 |
+| `hooks/_deprecated/` | 4 | 禁止启用（pre-task-planner + 3 个 stub） |
 
 ---
 
-## 14 核心 Hook 清单（SessionStart 由插件负责）
+## 12 激活核心 Hook 清单（SessionStart 由插件负责）
 
 ### SessionStart — 由插件负责
 | 提供者 | 功能 |
@@ -24,14 +24,13 @@
 
 > 本地 `session-start-bootstrap.py` 保留备用（无插件环境），但不在 settings.local.json 中注册。
 
-### PreToolUse (6)
+### PreToolUse (5)
 | Hook | 触发 | 功能 | 层 |
 |------|------|------|-----|
 | `pre-context-injector.py` | Task/Bash/Write/Edit | 项目 CLAUDE.md 上下文注入（每会话一次） | 骨架 |
 | `pre-rtk-rewrite.py` | Bash | RTK Shell 命令压缩改写 | 横切 |
 | `pre-bash-guard.py` | Bash | 危险命令拦截 + git --no-verify 阻止 + dep check | 骨架 |
 | `pre-read-before-edit.py` | Write/Edit | GSD read-before-edit 强制 | 执行 |
-| `pre-config-protection.py` | Write/Edit | 配置文件保护 | 骨架 |
 | `pre-manifest-validator.py` | 全局 | MANIFEST 归属校验防互博 | 横切 |
 
 ### PostToolUse (3)
@@ -39,18 +38,17 @@
 |------|------|------|-----|
 | `post-edit-format.py` | Edit/Write | 代码格式化 + Lint | 执行 |
 | `post-secret-detector.py` | Edit/Write | 密钥/Token/密码泄露扫描 | 横切 |
-| `post-operation-log.py` | 全局 | 操作审计日志 | 横切 |
+| `post-codegraph-sync.py` | Edit/Write | codegraph 增量重建索引 | 横切 |
 
 ### PreCompact (1)
 | Hook | 功能 | 层 |
 |------|------|-----|
 | `pre-compact-state.py` | 压缩前状态快照 | 横切 |
 
-### Stop (4)
+### Stop (3)
 | Hook | 功能 | 层 |
 |------|------|-----|
 | `stop-quality-gate.py` | schema_drift + security_anchor + scope_reduction | 执行 |
-| `stop-pattern-extraction.py` | 会话模式提取→experiences/ | 执行 |
 | `stop-session-summary.py` | 会话摘要 | 执行 |
 | `stop-readme-updater.py` | README 自动更新 | 执行 |
 
@@ -63,14 +61,16 @@
 | `pre-dep-checker.py` | 合并到 pre-bash-guard | 功能重叠 |
 | `pre-git-hook-bypass-block.py` | 合并到 pre-bash-guard | 功能重叠 |
 | `post-edit-lint.py` | 合并到 post-edit-format | 合并减少调用 |
-| `post-test-runner.py` | _optional/ | 60s 太重，改为验证阶段手动 |
+| `post-test-runner.py` | _archive/ | 60s 太重，改为验证阶段手动 |
 | `post-doc-reminder.py` | 合并到 stop-readme-updater | 功能重叠 |
-| `stop-notify.py` | _optional/ | 桌面通知与核心流程无关 |
+| `stop-notify.py` | _archive/ | 桌面通知与核心流程无关 |
 | `stop-debug-checker.py` | 合并到 stop-quality-gate | 功能重叠 |
 | `stop-daily-summary.py` | 合并到 stop-session-summary | 功能重叠 |
 
-**新增**
-| `pre-manifest-validator.py` | 新增 | PreToolUse 校验 MANIFEST 归属，防左右手互博 |
+**v5.1 除名（stub，48B 空操作，名实不符）**
+| `post-operation-log.py` | _deprecated/ | 空操作 stub，settings.json 注册已移除 |
+| `pre-config-protection.py` | _deprecated/ | 空操作 stub，settings.json 注册已移除 |
+| `stop-pattern-extraction.py` | _deprecated/ | 空操作 stub，未注册 |
 
 ---
 
@@ -80,15 +80,15 @@
 
 ```bash
 LOCAL_HOOK_PROFILE=minimal   # 仅生命周期+安全 (5 hooks)
-LOCAL_HOOK_PROFILE=standard  # 默认：15 核心 (当前)
-LOCAL_HOOK_PROFILE=strict    # 15核心 + _optional/ 安全扫描
+LOCAL_HOOK_PROFILE=standard  # 默认：12 激活核心 (当前)
+LOCAL_HOOK_PROFILE=strict    # 12核心 + _archive/ 安全扫描（需人工迁移注册）
 ```
 
 兼容别名：`ECC_HOOK_PROFILE` 同义。
 
-**strict 额外注册**：
-- `_optional/pre-userprompt-secret-scan.py` (dwarvesf/claude-guardrails)
-- `_optional/post-prompt-injection-scan.py` (lasso-security/claude-hooks)
+**strict 候选（位于 `_archive/`，启用前先迁移+注册）**：
+- `_archive/pre-userprompt-secret-scan.py` (dwarvesf/claude-guardrails)
+- `_archive/post-prompt-injection-scan.py` (lasso-security/claude-hooks)
 
 ---
 
@@ -127,4 +127,4 @@ Cursor Guard v1.1（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`）：�
 
 ---
 
-_版本：3.0 | 15 核心 + 37 optional_
+_版本：5.1 | 12 激活核心 + 35 _archive + 4 _deprecated_

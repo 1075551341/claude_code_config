@@ -86,9 +86,10 @@ Phase 4: Optimization — 性能、监控
 
 ## 上下文腐烂预防
 
+> 三级阈值 → `rules/CORE.md`（唯一 SSOT）。
+
 - 长任务（>30分钟）拆分为独立子Agent
 - 每完成一个子目标输出状态摘要
-- 遵循三级阈值：<70% 正常 / 70% 择机压缩 / 90% 强制压缩
 - 工作流切换时保存/恢复规划上下文
 
 ## 子Agent编排（deer-flow 2.0 + DAG 四阶段）
@@ -117,13 +118,7 @@ Phase 4: 验证 → 子目标独立验证 + 整体集成验证
 
 ### 变更影响分析三阶段（强制执行）
 
-> 详见 `rules/CORE.md` 变更彻底性保障章节
-
-```
-变更前: codegraph_impact + Grep全项目 + MANIFEST depends_on → 受影响文件清单
-变更中: 按依赖拓扑序修改 → 每文件 Read→Edit→Read → 清单逐项勾销
-变更后: Grep残留引用 → 构建/类型/Lint → MANIFEST一致性 → 门控通过
-```
+> 门控与触发条件 → `rules/CORE.md`；三阶段详情 → `rules/GOVERNANCE.md`。
 
 ### 无冲突原则 + 跨会话制品
 

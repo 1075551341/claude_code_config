@@ -67,7 +67,7 @@ GLOBAL_SKILLS_MAX = 45  # v10.5: +7 L3 skills (refactor/frontend/skill-*); UA re
 GLOBAL_RULES = {
     "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
     "AGENTS.md", "MCP.md", "DESIGN.md", "CONTEXT.md", "OPENSPEC.md",
-    "FRONTEND.md",
+    "FRONTEND.md", "GOVERNANCE.md",
 }
 
 
@@ -364,8 +364,8 @@ def report(agents=0, skills=0, rules=0, claude_lines=0):
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
     ]:
-        related = [e for e in ERRORS if e.startswith(check_name)]
-        related_w = [w for w in WARNINGS if w.startswith(check_name)]
+        related = [e for e in ERRORS if e.startswith(check_name + ":")]
+        related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
         status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"
         print(f"  [{status}] {check_name}")
     print()
@@ -389,7 +389,7 @@ def check_v10_bare_except():
     hooks_dir = os.path.expanduser("~/.claude/hooks")
     count = 0
     for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
-        if "_optional" in pyfile or "_deprecated" in pyfile:
+        if "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
             continue
         basename = os.path.basename(pyfile)
         try:
@@ -413,12 +413,11 @@ def check_v11_hook_exception_propagation():
     """V11: Hook异常传播率100%（核心hooks无静默吞异常）"""
     core_hooks = [
         "session-start-bootstrap.py", "pre-bash-guard.py", "pre-rtk-rewrite.py",
-        "pre-tmux-reminder.py", "pre-read-before-edit.py", "pre-config-protection.py",
+        "pre-tmux-reminder.py", "pre-read-before-edit.py",
         "pre-context-injector.py", "pre-manifest-validator.py", "pre-loop-guard.py",
         "pre-suggest-compact.py", "pre-compact-state.py",
         "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",
-        "post-operation-log.py",
-        "stop-quality-gate.py", "stop-context-monitor.py", "stop-pattern-extraction.py",
+        "stop-quality-gate.py", "stop-context-monitor.py",
         "stop-session-summary.py", "stop-readme-updater.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")

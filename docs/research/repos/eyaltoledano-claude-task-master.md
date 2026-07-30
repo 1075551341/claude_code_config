@@ -17,7 +17,7 @@
 ## 证据
 
 - [GitHub eyaltoledano/claude-task-master](https://github.com/eyaltoledano/claude-task-master)
-- `docs/reference/task-master-integration.md`
+- `docs/research/archive/task-master-integration.md`（v10.6.0 归档）
 
 ## 本地映射
 

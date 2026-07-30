@@ -14,6 +14,12 @@
     -InitProject: deploy project-init templates to current project (skip existing)
 
     Sync method: symbolic link preferred, Copy-Item fallback
+    Cursor exception: rules/*.mdc always Copy-Item (Settings Rules UI does not
+      reliably index symbolic links under ~/.cursor/rules)
+    -ProjectRules: also copy L0/All rules into <CWD>/.cursor/rules so the
+      current project's Settings → Project Rules panel lists them (avoids the
+      duplicate list that appears if the same files are also under ~/.claude/.cursor/rules
+      when the config repo itself is the workspace)
     Before syncing: delete same-basename siblings in the target dir
       (any extension / case — e.g. CORE.md + core.mdc before writing CORE.mdc)
     Rules extension: cursor/qoder/codearts -> .mdc, devin/trae -> .md
@@ -29,6 +35,12 @@
 .PARAMETER All
     Full sync: rules + skills + agents + CLAUDE.md
 
+.PARAMETER ProjectRules
+    Also deploy Cursor rules (L0, or all rules with -All) into the current
+    working directory's .cursor/rules (Project Rules for Settings UI).
+    Does NOT write into ~/.claude/.cursor/rules by default (that caused
+    duplicate CORE/ROUTER entries when the config repo was the open workspace).
+
 .PARAMETER Lint
     Deploy prettier + eslint 9 flat config templates to current working directory.
     Copies .prettierrc.json, .prettierignore, eslint.config.js (skip if exists).
@@ -38,10 +50,11 @@
     Copies CLAUDE.md, MANIFEST.yaml, .env.example, .gitignore (skip if exists).
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File sync.ps1
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -All
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun
+    pwsh -ExecutionPolicy Bypass -File sync.ps1
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -ProjectRules
     powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint
     powershell -ExecutionPolicy Bypass -File sync.ps1 -InitProject
 #>
@@ -50,6 +63,7 @@ param(
     [switch]$DryRun,
     [switch]$Skills,
     [switch]$All,
+    [switch]$ProjectRules,
     [switch]$Lint,
     [switch]$InitProject
 )
@@ -157,6 +171,7 @@ if ($All) {
 $MODE_LABEL = "L0 entry files"
 if ($Skills) { $MODE_LABEL = "L0 + skills/" }
 if ($All)    { $MODE_LABEL = "ALL (rules + skills + agents + CLAUDE.md)" }
+if ($ProjectRules) { $MODE_LABEL = "$MODE_LABEL + CWD ProjectRules" }
 if ($Lint)       { $MODE_LABEL = "Lint templates -> CWD" }
 if ($InitProject) { $MODE_LABEL = "Project-init templates -> CWD" }
 # Lint/InitProject are standalone modes — skip editor sync entirely
@@ -250,7 +265,8 @@ function Sync-File {
     param(
         [string]$SrcPath,
         [string]$DstPath,
-        [string]$Label
+        [string]$Label,
+        [switch]$PreferCopy
     )
 
     if (-not (Test-Path $SrcPath)) {
@@ -272,25 +288,35 @@ function Sync-File {
     Remove-Target -Path $DstPath -Label $Label
 
     if ($DryRun) {
-        Write-Ok "Would symlink: $Label"
+        if ($PreferCopy) {
+            Write-Ok "Would copy (Settings-safe): $Label"
+        } else {
+            Write-Ok "Would symlink: $Label"
+        }
         $script:STATS.Synced++
         return
     }
 
-    # Try symbolic link first
-    try {
-        New-Item -ItemType SymbolicLink -Path $DstPath -Target $SrcPath -Force | Out-Null
-        Write-Ok "Symlinked: $Label"
-        $script:STATS.Synced++
-        return
-    } catch {
-        # Symlink failed, fall through to copy
+    # Cursor Rules UI: prefer real files over symlinks (symlink targets often invisible in Settings)
+    if (-not $PreferCopy) {
+        try {
+            New-Item -ItemType SymbolicLink -Path $DstPath -Target $SrcPath -Force | Out-Null
+            Write-Ok "Symlinked: $Label"
+            $script:STATS.Synced++
+            return
+        } catch {
+            # Symlink failed, fall through to copy
+        }
     }
 
-    # Fallback: Copy-Item
+    # Copy-Item (preferred for Cursor rules, or symlink fallback)
     try {
         Copy-Item $SrcPath $DstPath -Force
-        Write-Ok "Copied (symlink unavailable): $Label"
+        if ($PreferCopy) {
+            Write-Ok "Copied (Settings-safe): $Label"
+        } else {
+            Write-Ok "Copied (symlink unavailable): $Label"
+        }
         $script:STATS.Synced++
     } catch {
         Write-Fail "Failed: $Label -- $_"
@@ -374,7 +400,12 @@ function Sync-RuleFile {
     $dstPath = Join-Path $TargetRulesDir $dstName
     $label = "rules/$dstName -> $EditorName"
 
-    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+    # Cursor Settings Rules UI indexes real .mdc files; symlinks frequently do not appear
+    if ($EditorName -eq 'cursor') {
+        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label -PreferCopy
+    } else {
+        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+    }
 }
 
 # =============================================================
@@ -507,6 +538,16 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
             -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
     }
 
+    # Cursor Guard 专有规则（仅个人 ~/.cursor/rules；不写进配置仓 Project Rules，避免双份）
+    if ($editor -eq 'cursor') {
+        $ceRel = "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+        $ceSrc = Join-Path $CLAUDE_DIR $ceRel
+        if (Test-Path $ceSrc) {
+            Sync-File -SrcPath $ceSrc -DstPath (Join-Path $rulesDir "CURSOR-EDITOR.mdc") `
+                -Label "rules/CURSOR-EDITOR.mdc -> cursor" -PreferCopy
+        }
+    }
+
     # ---- 3. Directory sync (skills/, agents/) ----
     foreach ($item in $DIR_SYNC_ITEMS) {
         $srcPath = Join-Path $CLAUDE_DIR $item.SrcRel
@@ -535,7 +576,11 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
                 $srcPath = $rf.FullName
                 $dstPath = Join-Path $rulesDir "$($rf.BaseName)$ext"
                 $label = "rules/$($rf.BaseName)$ext -> $editor"
-                Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+                if ($editor -eq 'cursor') {
+                    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label -PreferCopy
+                } else {
+                    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+                }
             }
         }
     }
@@ -543,6 +588,59 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     Write-Host ""
 }
 }  # end if (-not $SKIP_EDITOR_SYNC)
+
+# =============================================================
+# Optional: deploy Cursor Project Rules into current workspace
+# Settings → Rules (Project) only reads <workspace>/.cursor/rules
+# =============================================================
+
+if ($ProjectRules -and -not $SKIP_EDITOR_SYNC) {
+    $cwd = (Get-Location).Path
+    $cwdFull = [System.IO.Path]::GetFullPath($cwd)
+    $claudeFull = [System.IO.Path]::GetFullPath($CLAUDE_DIR)
+    $projectRulesDir = Join-Path $cwd ".cursor\rules"
+    $ext = ".mdc"
+
+    Write-Host "  -- project-rules (CWD) --------------------------------" -ForegroundColor DarkGray
+    Write-Host "  Target: $projectRulesDir" -ForegroundColor DarkGray
+
+    # Opening ~/.claude as workspace already loads ~/.cursor/rules; writing the
+    # same basenames into ~/.claude/.cursor/rules creates the duplicate list.
+    if ($cwdFull.TrimEnd('\') -ieq $claudeFull.TrimEnd('\')) {
+        Write-Skip "CWD is ~/.claude — skip ProjectRules mirror (use ~/.cursor/rules only; avoids Settings duplicates)"
+        $script:STATS.Skipped++
+        Write-Host ""
+    } else {
+        foreach ($item in $L0_RULE_ITEMS) {
+            Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
+                -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
+        }
+        $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SRC_REL
+        if (Test-Path $routerSrc) {
+            Sync-RuleFile -SrcRelPath $ROUTER_SRC_REL -DstBaseName $ROUTER_DST_BASE `
+                -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
+        }
+        $ceSrc = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+        if (Test-Path $ceSrc) {
+            Sync-File -SrcPath $ceSrc -DstPath (Join-Path $projectRulesDir "CURSOR-EDITOR.mdc") `
+                -Label "project rules/CURSOR-EDITOR.mdc" -PreferCopy
+        }
+        if ($All) {
+            $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
+            $l0SkipSet = [System.Collections.Generic.HashSet[string]]::new()
+            foreach ($item in $L0_RULE_ITEMS) { $null = $l0SkipSet.Add($item.DstBase) }
+            $null = $l0SkipSet.Add($ROUTER_DST_BASE)
+            Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -ne "README.md" -and -not $l0SkipSet.Contains($_.BaseName) } |
+                Sort-Object Name |
+                ForEach-Object {
+                    $dst = Join-Path $projectRulesDir "$($_.BaseName)$ext"
+                    Sync-File -SrcPath $_.FullName -DstPath $dst -Label "project rules/$($_.BaseName)$ext" -PreferCopy
+                }
+        }
+        Write-Host ""
+    }
+}
 
 # =============================================================
 # Summary report
@@ -564,7 +662,8 @@ if ($script:STATS.Failed -gt 0) {
 Write-Host ""
 Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, devin/trae/trae-cn=.md" -ForegroundColor DarkGray
-Write-Host "  Method     : symlink preferred, Copy-Item fallback" -ForegroundColor DarkGray
+Write-Host "  Method     : symlink preferred; Cursor rules/*.mdc = Copy (Settings-safe)" -ForegroundColor DarkGray
+Write-Host "  Cursor     : personal ~/.cursor/rules only; use -ProjectRules for <CWD>/.cursor/rules" -ForegroundColor DarkGray
 Write-Host "  Dedup      : delete same-basename variants (any ext/case) then write" -ForegroundColor DarkGray
 Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""

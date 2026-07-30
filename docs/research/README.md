@@ -1,18 +1,18 @@
 # 调研文档索引
 
-> 快照日期: 2026-07-17（**v10.5.1**） | 运行配置目标: v10.5.1
+> 快照日期: 2026-07-29（**v10.6.0**） | 运行配置目标: v10.6.0
 
 **SSOT**：[`30-repo-deep-research-v10.md`](30-repo-deep-research-v10.md)  
-**覆盖矩阵**：[`COVERAGE.md`](COVERAGE.md)  
-**优化计划**：[`../superpowers/plans/2026-07-17-v10.5.1-optimization.md`](../superpowers/plans/2026-07-17-v10.5.1-optimization.md)  
-**设计**：[`../../spec/claude-config-integration/design-v10.5.1.md`](../../spec/claude-config-integration/design-v10.5.1.md)
+**覆盖矩阵**：[`COVERAGE.md`](COVERAGE.md)（含原 REPO_ANALYSIS 五柱评分，v10.6.0 已合并）  
+**优化计划**：[`../superpowers/plans/2026-07-29-v10.6-optimization.md`](../superpowers/plans/2026-07-29-v10.6-optimization.md)  
+**使用率审计**：[`usage-audit-v10.6.md`](usage-audit-v10.6.md)
 
-| 文档                                                         | 说明                                |
+| 文档 | 说明 |
 | ------------------------------------------------------------ | ----------------------------------- |
-| [30-repo-deep-research-v10.md](30-repo-deep-research-v10.md) | 深度调研 SSOT（v10.5.1，唯一全量）  |
-| [COVERAGE.md](COVERAGE.md)                                   | 28 active                           |
-| [gsd-gaps-v10.md](gsd-gaps-v10.md)                           | GSD forensics/resume 缺口与本地替代 |
-| [repos/](repos/)                                             | per-repo 卡片（含 v10.5.1 delta）   |
+| [30-repo-deep-research-v10.md](30-repo-deep-research-v10.md) | 深度调研 SSOT（v10.5.2 内容，唯一全量） |
+| [COVERAGE.md](COVERAGE.md) | 28 active 覆盖矩阵 + 五柱评分 |
+| [repos/](repos/) | per-repo 卡片（含 v10.5.x delta） |
+| [archive/](archive/) | 归档参考（task-master 等） |
 
 ### 五柱
 
@@ -31,5 +31,5 @@
 **配置真相源链**：
 
 ```
-repos/*.md → 30-repo-deep-research-v10.md → COVERAGE.md → REPO_ANALYSIS.md → MANIFEST.yaml → SPEC.md
+repos/*.md → 30-repo-deep-research-v10.md → COVERAGE.md → MANIFEST.yaml → SPEC.md
 ```

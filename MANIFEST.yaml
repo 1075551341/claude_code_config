@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v10.5.2
+# 组件唯一归属源 — 防左右手互博 — v10.6.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 28 active + 1 removed；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.5.2"
+version: "10.6.0"
 updated: "2026-07-28"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -476,6 +476,13 @@ concerns:
     owner: rules/BESTPRACTICE.md
     layer: skeleton
     source: shanraisshan/best-practice
+
+  governance:
+    owner: rules/GOVERNANCE.md
+    layer: skeleton
+    source: local
+    depends_on: [rules/CORE.md]
+    note: "v10.6.0: CORE 瘦身迁出详情（R14/R15/R16 适用范围、注释模板、变更三阶段、codegraph F1）"
 
   memory_ssot:
     owner: plugin/thedotmack

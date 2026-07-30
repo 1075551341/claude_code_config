@@ -13,7 +13,7 @@ layer: router
 5. **按需加载**（任务触发后再 Read，禁止全量扫描）：
    - 技能：`skills/<name>/SKILL.md`
    - Agent：`agents/<name>.md`
-   - 规则：`rules/<name>.md`
+   - 规则：`rules/<name>.md`（治理详情：`rules/GOVERNANCE.md` — 改配置/hook/依赖升级/审查时触发）
 
 ## P0 路由集（5）= L1×3 + L2 门控×2
 

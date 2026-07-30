@@ -22,9 +22,9 @@
       ]
     },
     "git": {
-      "_description": "Git 版本库直接操作。场景：提交历史、diff、blame、本地分支。",
+      "_description": "Git 版本库直接操作。场景：提交历史、diff、blame、本地分支。默认指向配置仓库（v10.6 修复：原 D:\\apdms 非 git 仓库；mcp<1.12 钉扎绕过上游 list_tools API 断链）。",
       "command": "uvx",
-      "args": ["mcp-server-git", "--repository", "D:\\apdms"]
+      "args": ["--with", "mcp<1.12", "mcp-server-git", "--repository", "C:\\Users\\DELL\\.claude"]
     },
     "fs": {
       "_description": "文件系统操作。场景：跨路径读写、配置仓库维护。",

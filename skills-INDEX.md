@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.4.0
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.6.0（44 全量）
 
 ## L1 — 会话常驻 (3)
 
@@ -20,7 +20,7 @@
 | 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 完成前交叉验证     |
 | 3执行 | [test-driven-development](skills/test-driven-development/SKILL.md)               | RED-GREEN-REFACTOR |
 
-## L3 — 信号触发 (28)
+## L3 — 信号触发 (34)
 
 ### 调研与决策
 
@@ -51,6 +51,16 @@
 - [improve-codebase-architecture](skills/improve-codebase-architecture/SKILL.md) — 代码库架构改进
 - [karpathy-guidelines](skills/karpathy-guidelines/SKILL.md) — Karpathy 四原则
 - [structured-artifacts](skills/structured-artifacts/SKILL.md) — GSD 结构化制品管理
+
+### 重构与技能治理
+
+- [code-refactoring](skills/code-refactoring/SKILL.md) — 行为保持重构（圈复杂度/坏味道/安全重构）
+- [frontend-refactor-proposer](skills/frontend-refactor-proposer/SKILL.md) — 前端局部重构 3 策略建议
+- [frontend-library-advisor](skills/frontend-library-advisor/SKILL.md) — 前端 npm 库选型推荐
+- [frontend-design-pattern-applier](skills/frontend-design-pattern-applier/SKILL.md) — 前端坏味道→设计模式重构
+- [skill-creator](skills/skill-creator/SKILL.md) — 创建/更新有效技能指南
+- [skill-reviewer](skills/skill-reviewer/SKILL.md) — skill 合规性审查
+- [test-edge-case-analyzer](skills/test-edge-case-analyzer/SKILL.md) — 边界测试场景发现
 
 ### 执行与编排
 

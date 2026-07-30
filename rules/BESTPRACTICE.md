@@ -92,19 +92,7 @@ description: 综合最佳实践 — 详细参考（骨架内容已迁至 CORE.md
 
 ## 依赖与版本（铁律 R14 + R15）
 
-**版本（R14）**
-
-- 默认：同 major 内 patch/minor（安全修复、bugfix）
-- major 升级：用户明确要求，或 CVE 无同 major 修补，或阻塞缺陷且已读 changelog
-- 禁止：无差别 `ncu -u` / `@latest` 批量 major、无验证清单的依赖大扫除
-- 插件/MCP/全局工具链：非用户指令不主动 bump major
-
-**包管理器（R15，Node 生态）**
-
-- 默认命令：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`
-- 项目已有 `pnpm-lock.yaml` 或 `packageManager` 指定 pnpm → 禁止改用 npm install
-- npm 兜底：无 pnpm、仅 `package-lock.json`、或 pnpm 不可用且用户未指定工具链
-- 新建 monorepo/前端项目：优先 `pnpm init` + `packageManager` 字段
+> 一行表 → `rules/CORE.md`；适用范围详情 → `rules/GOVERNANCE.md`（唯一 SSOT）。
 
 ## 调试策略
 

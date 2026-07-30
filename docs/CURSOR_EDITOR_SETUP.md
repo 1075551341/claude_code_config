@@ -8,13 +8,13 @@ description: Cursor 编辑器全局独有配置指南（与 Claude Code 低耦�
 
 ## 与 Claude Code 边界
 
-| 项           | Claude Code                                                       | Cursor                              |
-| ------------ | ----------------------------------------------------------------- | ----------------------------------- |
-| Hooks        | `~/.claude/settings.json`（编辑器内 launcher 跳过）               | `~/.cursor/hooks.json`              |
-| MCP 权威源   | `~/.claude/.mcp.json`                                             | Cursor Settings 手工启用            |
-| 状态/计数    | `tool-call-counter.json`                                          | `~/.cursor/.state/`                 |
-| 规则总纲     | sync → `~/.cursor/rules/*.mdc` + 当前工作区 `.cursor/rules/*.mdc` | + `CURSOR-EDITOR.mdc`（Guard 部署） |
-| 配置同步桥接 | —                                                                 | 仅 `sync.ps1` 在编辑可同步资产时    |
+| 项           | Claude Code                                         | Cursor                                                                                              |
+| ------------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Hooks        | `~/.claude/settings.json`（编辑器内 launcher 跳过） | `~/.cursor/hooks.json`                                                                              |
+| MCP 权威源   | `~/.claude/.mcp.json`                               | Cursor Settings 手工启用                                                                            |
+| 状态/计数    | `tool-call-counter.json`                            | `~/.cursor/.state/`                                                                                 |
+| 规则总纲     | sync → `~/.cursor/rules/*.mdc`（Agent 全局）        | Settings Project Rules 需 `<工作区>/.cursor/rules`：`sync.ps1 -ProjectRules`；+ `CURSOR-EDITOR.mdc` |
+| 配置同步桥接 | —                                                   | 仅 `sync.ps1` 在编辑可同步资产时                                                                    |
 
 ## 部署
 

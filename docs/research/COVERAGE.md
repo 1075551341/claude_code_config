@@ -72,6 +72,25 @@
 | anthropics/claude-code-action      | [anthropics…](repos/anthropics-claude-code-action.md)      | CI reference            |
 | zilliztech/claude-context          | [zilliztech…](repos/zilliztech-claude-context.md)          | archived_redirect → cbm |
 
+## 五柱评分（原 REPO_ANALYSIS v2.4，v10.6.0 并入）
+
+| 柱 | 评分 | 核心价值 | 本地 |
+| --------------------- | ------ | -------------------------------------- | ------------------------------ |
+| obra/superpowers | ⭐⭐⭐⭐⭐ | SDD+TDD、HARD-GATE、两阶段审查、原子任务 | P0 路由集 5；插件+本地优先 |
+| open-gsd/gsd-core | ⭐⭐⭐⭐⭐ | 制品优先、DAG、Trust-But-Verify、workstreams | workstream/adr/context-engineering |
+| Fission-AI/OpenSpec | ⭐⭐⭐⭐ | OPSX、delta specs、brownfield | core CLI；verify 走本地 commands |
+| garrytan/gstack | ⭐⭐⭐⭐⭐ | 25 agents、审查路由、品味记忆、ML 防御 | dx-reviewer、taste-memory 等 |
+| thedotmack/claude-mem | ⭐⭐⭐⭐⭐ | 渐进式披露、Chroma、平台隔离 | R18；Endless 默认关 |
+
+## 冗余/互博（已解决）
+
+1. codegraph vs UA — **UA removed v10.5**；双引擎 = codegraph + cbm
+2. codegraph vs codebase-memory — 互补（R17 符号级 vs L4 架构/ADR/变更）
+3. claude-context vs codebase-memory — context archived_redirect → cbm
+4. deer-flow vs workstream — MANIFEST excludes
+5. gstack vs compound-engineering — 插件禁用
+6. RTK vs caveman — 输入压缩 vs 输出压缩
+
 ## 归档 lineage
 
 | 仓库                    | 卡片                                    | 说明                             |
@@ -95,8 +114,7 @@
 ## SSOT 链
 
 ```
-repos/*.md → 30-repo-deep-research-v10.md（v10.5.2 唯一全量）→ COVERAGE.md → REPO_ANALYSIS.md → MANIFEST.yaml → SPEC.md
-计划/设计: plans/2026-07-17-v10.5.1-optimization.md · design-v10.5.1.md
-诊断/优化: docs/diagnostic-v10.5.2.md（v10.5.2 工具调用门控）
-（v10.5 计划/设计保留交叉链接）
+repos/*.md → 30-repo-deep-research-v10.md（唯一全量）→ COVERAGE.md（含原 REPO_ANALYSIS 评分/互博）→ MANIFEST.yaml → SPEC.md
+计划: plans/2026-07-29-v10.6-optimization.md（合并 v10.5/v10.5.1/v10.6 决策脉络）
+诊断: docs/diagnostic-v10.5.2.md（v10.5.2 工具调用门控）
 ```

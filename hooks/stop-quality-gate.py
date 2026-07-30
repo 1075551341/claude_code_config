@@ -31,7 +31,7 @@ def check_bare_except():
 
     for pyfile in globmod.glob(os.path.join(hooks_dir, "*.py")):
         basename_check = os.path.basename(pyfile)
-        if pyfile.endswith("__init__.py") or "_optional" in pyfile or "_deprecated" in pyfile:
+        if pyfile.endswith("__init__.py") or "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
             continue
         # 跳过扫描器自身（避免匹配自己的 docstring）
         if basename_check == "stop-quality-gate.py":

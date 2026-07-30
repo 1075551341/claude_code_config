@@ -243,7 +243,12 @@ foreach ($editor in $EDITORS) {
             if ($actual -is [array]) { $actual = $actual[0] }
             if ($actual -eq $expected) { $passes++ } else { $issues += "$file(wrong target)" }
         } else {
-            $issues += "$file(not a link)"
+            # sync v18: symlink 不可用时回退 Copy-Item — 内容一致视为通过
+            try {
+                $h1 = (Get-FileHash $fp -Algorithm SHA256).Hash
+                $h2 = (Get-FileHash $expected -Algorithm SHA256).Hash
+                if ($h1 -eq $h2) { $passes++ } else { $issues += "$file(stale copy)" }
+            } catch { $issues += "$file(not a link)" }
         }
     }
 
@@ -317,15 +322,14 @@ foreach ($editor in $EDITORS) {
             if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in index)" }
             elseif (Test-Path $rulesPath) {
                 $passes++
-                $claudeRule = Join-Path $rulesPath "CLAUDE$($native.Ext)"
-                if (Test-Path $claudeRule) { $passes++ } else { $issues += "rules/CLAUDE$($native.Ext)(missing)" }
+                # v18: CLAUDE.md 部署在编辑器根目录，不在 rules/ 内
                 $coreRule = Join-Path $rulesPath "CORE$($native.Ext)"
                 if (Test-Path $coreRule) {
                     $passes++
                     try {
                         $coreText = Get-Content $coreRule -Raw -Encoding utf8
                         if ($coreText -match '<40%' -or $coreText -match '\|\s*50%\s*\|') {
-                            $issues += "CORE(stale thresholds, run sync.ps1 -Force)"
+                            $issues += "CORE(stale thresholds, run sync.ps1)"
                         }
                     } catch {}
                 } else { $issues += "rules/CORE$($native.Ext)(missing)" }
@@ -335,7 +339,7 @@ foreach ($editor in $EDITORS) {
                         $agentsText = Get-Content $agentsRule -Raw -Encoding utf8
                         $fmCount = ([regex]::Matches($agentsText, '(?m)^---\s*$')).Count
                         if ($fmCount -gt 2) {
-                            $issues += "AGENTS(double frontmatter, run sync.ps1 -Force)"
+                            $issues += "AGENTS(double frontmatter, run sync.ps1)"
                         }
                     } catch {}
                 }
@@ -546,10 +550,10 @@ if (Test-Path $guardEditorRule) {
     Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "warn" "Run sync.ps1 -Force or deploy-cursor-guard.ps1"
 }
 
-# S4b-L0: Cursor 个人桥接 + 当前工作区项目 rules 四件套（ROUTER/CLAUDE/CORE/CURSOR-EDITOR）
+# S4b-L0: Cursor 个人桥接 + 当前工作区项目 rules 三件套（ROUTER/CORE/CURSOR-EDITOR；CLAUDE.md 在 ~/.cursor 根，由 SYNC_FILES 检查）
 $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
-$l0Bases = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE", "CURSOR-EDITOR")
+$l0Bases = @("00-CLAUDE-ROUTER", "CORE", "CURSOR-EDITOR")
 foreach ($entry in @(
     @{ Name = "personal L0 rules"; Dir = $cursorRulesDir; Label = "~/.cursor/rules/"; Required = $true },
     @{ Name = "project L0 rules"; Dir = $cursorProjectRulesDir; Label = "~/.claude/.cursor/rules/"; Required = $false }
@@ -581,11 +585,11 @@ foreach ($entry in @(
         if (Test-Path $mdVariant) { $l0Stale += "$base.md(stale variant)" }
     }
     if ($l0Missing.Count -eq 0 -and $l0Stale.Count -eq 0) {
-        Add-Check "CursorGuard" $entry.Name "pass" "4/4 in $($entry.Label) (alwaysApply)"
+        Add-Check "CursorGuard" $entry.Name "pass" "3/3 in $($entry.Label) (alwaysApply)"
     } elseif ($l0Missing.Count -gt 0) {
-        Add-Check "CursorGuard" $entry.Name "fail" "Missing: $($l0Missing -join ', ') -- run sync.ps1 -Force"
+        Add-Check "CursorGuard" $entry.Name "fail" "Missing: $($l0Missing -join ', ') -- run sync.ps1"
     } else {
-        Add-Check "CursorGuard" $entry.Name "warn" "$($l0Stale -join ', ') -- run sync.ps1 -Force"
+        Add-Check "CursorGuard" $entry.Name "warn" "$($l0Stale -join ', ') -- run sync.ps1"
     }
 }
 
@@ -595,17 +599,17 @@ $devinMisplaced = Join-Path $env:USERPROFILE ".devin\rules"
 $devinL0 = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE")
 $devinMissing = @($devinL0 | Where-Object { -not (Test-Path (Join-Path $devinGlobalRules "$_.md")) })
 if (Test-Path $devinMisplaced) {
-    Add-Check "Devin" "rules path" "warn" "~/.devin/rules/ is wrong path -- run sync.ps1 -Force to remove"
+    Add-Check "Devin" "rules path" "warn" "~/.devin/rules/ is wrong path -- run sync.ps1 to remove"
 } elseif ($devinMissing.Count -eq 0) {
     Add-Check "Devin" "global rules" "pass" "L0 in %APPDATA%\devin\rules\"
 } else {
-    Add-Check "Devin" "global rules" "warn" "Missing: $($devinMissing -join ', ') -- run sync.ps1 -Force"
+    Add-Check "Devin" "global rules" "warn" "Missing: $($devinMissing -join ', ') -- run sync.ps1"
 }
 $devinGlobal = Join-Path $env:USERPROFILE ".codeium\windsurf\memories\global_rules.md"
 if (Test-Path $devinGlobal) {
     Add-Check "Devin" "global_rules.md" "pass" "cross-workspace always-on"
 } else {
-    Add-Check "Devin" "global_rules.md" "warn" "missing -- run sync.ps1 -Force"
+    Add-Check "Devin" "global_rules.md" "warn" "missing -- run sync.ps1"
 }
 
 # S4f: CodeArts 码道（v17: 个人级路径改为 ~/.codeartsdoer/rule）
@@ -625,13 +629,13 @@ if (Test-Path $codeartsLegacyPersonal) {
     $codeartsLegacyFiles = @(Get-ChildItem $codeartsLegacyPersonal -File -ErrorAction SilentlyContinue)
 }
 if (Test-Path $codeartsLegacy) {
-    Add-Check "CodeArts" "legacy path" "warn" "codearts-agent/User/rules/ stale -- run sync.ps1 -Force"
+    Add-Check "CodeArts" "legacy path" "warn" "codearts-agent/User/rules/ stale -- run sync.ps1"
 } elseif ($codeartsLegacyFiles.Count -gt 0) {
-    Add-Check "CodeArts" "legacy personal" "warn" "~/.config/codeartsdoer/rule/ has $($codeartsLegacyFiles.Count) stale file(s) -- run sync.ps1 -Force"
+    Add-Check "CodeArts" "legacy personal" "warn" "~/.config/codeartsdoer/rule/ has $($codeartsLegacyFiles.Count) stale file(s) -- run sync.ps1"
 } elseif ($codeartsMissing.Count -eq 0) {
     Add-Check "CodeArts" "personal rules" "pass" "L0 in ~/.codeartsdoer/ (CLAUDE.md) + rule/ (ROUTER/CORE)"
 } else {
-    Add-Check "CodeArts" "personal rules" "warn" "Missing: $($codeartsMissing -join ', ') -- run sync.ps1 -Force"
+    Add-Check "CodeArts" "personal rules" "warn" "Missing: $($codeartsMissing -join ', ') -- run sync.ps1"
 }
 $codeartsProjMissing = @($codeartsRuleL0 | Where-Object { -not (Test-Path (Join-Path $codeartsProject "$_.mdc")) })
 $codeartsProjFiles = @()
@@ -643,7 +647,7 @@ if ($codeartsProjFiles.Count -eq 0) {
 } elseif ($codeartsProjMissing.Count -eq 0) {
     Add-Check "CodeArts" "project rules" "pass" "L0 in ~/.claude/.codeartsdoer/rule/"
 } else {
-    Add-Check "CodeArts" "project rules" "warn" "Stale project files: $($codeartsProjMissing -join ', ') -- run sync.ps1 -Force"
+    Add-Check "CodeArts" "project rules" "warn" "Stale project files: $($codeartsProjMissing -join ', ') -- run sync.ps1"
 }
 
 # =============================================================

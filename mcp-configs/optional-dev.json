@@ -12,17 +12,17 @@
       ]
     },
     "figma": {
-      "_description": "Figma 设计稿集成",
+      "_description": "Figma 设计稿集成（figma-developer-mcp，v10.6 修复包名 404）。需 FIGMA_ACCESS_TOKEN，未设置时服务器可启动但调用失败。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-figma"],
+      "args": ["-y", "figma-developer-mcp", "--stdio"],
       "env": {
-        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+        "FIGMA_API_KEY": "${FIGMA_ACCESS_TOKEN}"
       }
     },
     "exa": {
-      "_description": "Exa 语义搜索 — L3 深度调研时按需 merge。场景：学术/新闻语义搜索、多源交叉验证（与 Firecrawl 互补）。触发：/deep-research、多源验证需求",
+      "_description": "Exa 语义搜索 — L3 深度调研时按需 merge。场景：学术/新闻语义搜索、多源交叉验证（与 Firecrawl 互补）。触发：/deep-research、多源验证需求。v10.6 修复包名 404。",
       "command": "npx",
-      "args": ["-y", "@anthropic/exa-mcp-server"],
+      "args": ["-y", "exa-mcp-server"],
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }

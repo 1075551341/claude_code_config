@@ -14,17 +14,11 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 2. **制品存活**：PROJECT.md / REQUIREMENTS.md / ROADMAP.md / STATE.md / CONTEXT.md 跨会话存活
 3. **制品优先加载**：新会话首先加载所有结构化制品
 
-## 三级阈值（与 CORE.md 一致）
+## 三级阈值
 
-| 使用率 | Cursor                             | Claude Code                  |
-| ------ | ---------------------------------- | ---------------------------- |
-| <70%   | 正常工作                           | 正常工作                     |
-| 70%    | 择机 `/summarize` 或「压缩上下文」 | 择机 `/compact`              |
-| 90%    | 强制 `/summarize` 或新子 Agent     | 强制 `/compact` 或新子 Agent |
+> 阈值表与 GSD 逻辑断点 → `rules/CORE.md`（唯一 SSOT）。
 
 ⛔ 绝不允许达到 100%。Cursor Guard 在 70%/90% 自动注入提醒；实际降低上下文环由 Cursor 原生 `/summarize`（或窗口满时自动 summarize）完成。
-
-**GSD 逻辑断点（70%）**：任务边界 — 完成当前原子任务、切换子 Agent、写入制品；不替代上表压缩阈值。
 
 ## 三态制品
 

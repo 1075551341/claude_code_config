@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
-> 版本：10.5.1 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 场景强制
+> 版本：10.6.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 场景强制
 
 ---
 
@@ -329,12 +329,23 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
+## v10.6.0 变更摘要（2026-07-29）
+
+- **版本对齐**：SPEC/README/skills-INDEX/MANIFEST/research-README 版本串统一（修复 10.1/10.4.0/10.5.1 漂移）
+- **文档精简**：旧优化 plan（v10.5/v10.5.1）合并为 `docs/superpowers/plans/2026-07-29-v10.6-optimization.md` 后删除原件；`gsd-gaps-v10.md` 删除（已被 v10.5.2 调研吸收）；`REPO_ANALYSIS.md` 并入 `COVERAGE.md` 后删除；`reference/task-master-integration.md` 归档至 `docs/research/archive/`
+- **常驻瘦身**：`rules/CORE.md` 316→≤150 行，治理详情迁 `rules/GOVERNANCE.md`（model_decision 触发）；CONTEXT/BESTPRACTICE/WORKFLOW 去除与 CORE 重复段
+- **索引补全**：skills-INDEX 补登 7 技能（44 全量）；修复 2 个 SKILL.md 重复 frontmatter
+- **hooks 治理**：3 个 stub 移 `_deprecated/`；`_optional/` → `_archive/`（非激活资产库）
+- **使用率审计**：`docs/research/usage-audit-v10.6.md`（零触发项降级/废弃候选）
+- **OpenSpec**：三处表面职责边界文档化
+- 访谈决策记录：见 v10.6 优化计划文档
+
 ## v10.5.1 变更摘要（2026-07-17）
 
 - **调研**：分层 delta 刷新 29 卡 + SSOT；上游漂移仅文档「待评估」（R14）
 - **cbm**：架构/ADR/变更/跨服务 **场景强制**；未调用 → `DONE_WITH_CONCERNS`；Claude 仍不进常驻 5
 - **同步**：`sync.ps1 -All` 修 CONTEXT/CORE/MCP 过期
-- 详图：`spec/claude-config-integration/design-v10.5.1.md` + `docs/superpowers/plans/2026-07-17-v10.5.1-optimization.md`
+- 详图：`spec/claude-config-integration/design-v10.5.1.md` + plan（已合并入 `docs/superpowers/plans/2026-07-29-v10.6-optimization.md`）
 
 ## v10.5 变更摘要（2026-07-17）
 
@@ -386,7 +397,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 - **User Rules 迁出**：git-workflow / pr-workflow / claude-mem-maintenance（L3）
 - **spec-validation**：仅②门控；④ exclusively verification-before-completion
 - **插件边界**：禁用 compound-engineering；审查走 `~/.claude/agents/` gstack
-- 详图：`spec/claude-config-integration/design-v10.5.md` + `docs/superpowers/plans/2026-07-17-v10.5-optimization.md`（后继见 v10.5.1）
+- 详图：`spec/claude-config-integration/design-v10.5.md` + plan（已合并入 `docs/superpowers/plans/2026-07-29-v10.6-optimization.md`）
 
 ## v9.0 变更摘要
 
@@ -399,4 +410,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-> 版本：10.4.0 | 日期：2026-06-29 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3
+> 版本：10.6.0 | 日期：2026-07-29 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3

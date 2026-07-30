@@ -11,8 +11,6 @@
       "Bash(D:/Git/usr/bin/bash.exe *)",
       "Read(//d/Git/usr/bin/**)",
       "Bash(powershell *)",
-      "Bash(mv .claude-plugin 0.1.1/)",
-      "Read(//c/c/Users/DELL/.claude/plugins/cache/jarrodwatts/claude-hud/0.1.1/.claude-plugin/**)",
       "Skill(firecrawl:firecrawl-scrape)"
     ]
   }

@@ -63,15 +63,6 @@ Claude: /finishing-a-development-branch → 运行检查 → 确认可合并 →
 □ 注释充分
 ```
 
----
-name: finishing-a-development-branch
-description: 开发分支完成时检查、清理、创建PR、合并策略
-triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
-
 ## 完成流程
 
 ### 步骤 1：最终验证
@@ -150,15 +141,6 @@ git push origin --delete feature/user-auth
 # 清理已合并的分支
 git fetch -p && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -d
 ```
-
----
-name: finishing-a-development-branch
-description: 开发分支完成时检查、清理、创建PR、合并策略
-triggers: [分支完成, PR创建, 合并分支, 分支清理, 开发完成, 当开发分支工作完成, 需要决定合并策略, 准备创建PR, 执行合并前检查]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
 
 ## 决策树
 

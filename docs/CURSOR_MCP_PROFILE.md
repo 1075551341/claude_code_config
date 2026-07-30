@@ -25,19 +25,19 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 | user-codegraph       | R17 首选；Guard soft_block Grep/Glob |
 | user-codebase-memory | L4 架构/ADR/变更（P0 推荐启用）      |
 | user-crawl           | Firecrawl 网页抓取                   |
+| user-fetch           | 轻量单页抓取（crawl 重活，fetch 轻活）；uvx `--with "mcp<1.12"` 钉扎修复（v10.6，上游 McpError 改名断链） |
 | user-gh              | PR/Issue（pr-workflow）              |
 | user-pw              | E2E/浏览器（按需开）                 |
 
 ## Cursor 已禁用 MCP
 
-| MCP                                      | 原因                      |
-| ---------------------------------------- | ------------------------- |
-| user-postgres                            | 非默认路径；按需开        |
-| user-puppeteer                           | 与 user-pw 重叠           |
-| user-eamodio.gitlens-extension-GitKraken | gh 已覆盖 Git 操作        |
-| user-thinking                            | token 开销高              |
-| user-memory                              | 与 claude-mem 重叠（R18） |
-| user-fetch                               | crawl 更强                |
+| MCP                                      | 原因                                 |
+| ---------------------------------------- | ------------------------------------ |
+| user-postgres                            | 非默认路径；按需开                   |
+| ~~user-puppeteer~~                       | 与 user-pw 重叠，**v10.6 已从配置移除** |
+| user-eamodio.gitlens-extension-GitKraken | gh 已覆盖 Git 操作                   |
+| user-thinking                            | token 开销高                         |
+| user-memory                              | 与 claude-mem 重叠（R18）            |
 
 ## Cursor 常驻 Plugin
 

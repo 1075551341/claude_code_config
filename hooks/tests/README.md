@@ -8,7 +8,7 @@
 Get-Content hooks/tests/fixtures/bash_rm_rf_blocked.json | python hooks/pre-bash-guard.py
 # 预期: exit 2
 
-Get-Content hooks/tests/fixtures/secret_paste_blocked.json | python hooks/_optional/pre-userprompt-secret-scan.py
+Get-Content hooks/tests/fixtures/secret_paste_blocked.json | python hooks/_archive/pre-userprompt-secret-scan.py
 # 预期: exit 2 (strict profile)
 ```
 
