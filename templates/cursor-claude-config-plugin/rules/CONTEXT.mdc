@@ -99,28 +99,27 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 来源：DeusData/codebase-memory-mcp | 配置：`mcp-configs/optional-dev.json` → merge `codebase-memory` | Cursor：MCP P0 启用
 
-**与 codegraph 双引擎互补**（见 ADR-2026-06-29；**严格三级，禁止跳级**）：
+**与 codegraph 双引擎互补**（见 ADR-2026-06-29）：
 
-1. **codegraph（默认）**：结构/调用链/局部影响面 — 必须先 `codegraph_explore`
-2. **codebase-memory（条件升级）**：仅语义模糊搜、跨文件/跨服务大影响面、ADR、`detect_changes` 查索引新鲜度
-3. **claude-mem**：为什么/约定/偏好（代码推不出）；决策原因存 memory，决策留下的代码结构归 cbm ADR
+- codegraph：R17 日常符号/blast-radius（常驻）
+- codebase-memory：架构全景、ADR、git diff 变更风险、跨服务链接
 
-**升级条件**（满足任一才上 cbm；结构问题禁止跳过 codegraph）：
+**场景强制（v10.5.1）**：触及架构全景 / ADR / 变更风险（git diff→符号）/ 跨服务 时 **必须** 调用 cbm（或先 merge 再调用）。未调用不得静默跳过 → 状态标 `DONE_WITH_CONCERNS` 并写明缺口。≠ 进程常驻。
 
-1. **语义/模糊搜索** — 找不到确切函数名
-2. **跨服务/大重构影响面** — 需整体架构图或跨仓链接
-3. **ADR** — `manage_adr` 读写架构决策产物
-4. **detect_changes** — 确认索引是否过期 / git diff→符号风险
+**启用条件**（满足 ≥2 建议 merge；满足场景强制时 **必须** merge/启用）：
 
-**索引缺失**：cbm 返回过期/不存在 → 提示用户跑 `.\scripts\cbm-index.ps1`，**禁止 Grep 补救**。未满足升级条件却跳过 codegraph → 标 `DONE_WITH_CONCERNS`。
+1. **大 monorepo** — >500 文件，需 `get_architecture` 模块边界
+2. **ADR 持久化** — 需 `manage_adr` 跨会话架构决策
+3. **跨服务分析** — HTTP/gRPC/GraphQL 链接追踪
+4. **变更风险** — 需 `detect_changes` 映射 git diff→符号风险
 
-**安装与索引**（Windows 推荐 npx）：
+**安装与索引**（Windows 推荐 npx，与 codegraph 一致）：
 
 1. merge `mcp-configs/optional-dev.json` 中 `codebase-memory` 到 `.mcp.json`（**Claude 默认不进常驻 5**；Cursor 已 P0）
-2. 索引：`.\scripts\cbm-index.ps1` 或 hook 自动 `knowledge_graph_sync`（Edit debounce / Stop force）
+2. 索引：`.\scripts\cbm-index.ps1` 或 `npx -y codebase-memory-mcp@0.8.1 cli index_repository`（PowerShell 建议用脚本传 JSON）
 3. 重启 Claude Code / Cursor MCP
 
-**不启用且非升级场景**：仅 `codegraph_explore`；ADR 可手写 `docs/ADR/`。
+**不启用且非强制场景**：codegraph_explore + Grep；ADR 手写 `docs/ADR/`。
 
 **claude-context 已归档**（v10.4）：语义搜索位由本 MCP `semantic_query` 替代，无需 Milvus。
 
@@ -171,12 +170,10 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 | 场景              | 首选                                          |
 | ----------------- | --------------------------------------------- |
-| 代码结构/调用链   | codegraph_explore（禁止跳级）                 |
-| 语义/跨服务/ADR   | codebase-memory（仅升级条件）                 |
-| 变更影响（符号级）| codegraph blast-radius                        |
-| 变更影响（diff）  | cbm detect_changes                            |
-| 为什么/偏好       | claude-mem                                    |
-| 新人 onboarding   | codegraph explore →（需架构图时）cbm          |
+| 代码结构/调用链   | codegraph_explore                             |
+| 架构/模块聚类/ADR | codebase-memory get_architecture / manage_adr |
+| 变更影响          | cbm detect_changes 或 codegraph blast-radius  |
+| 新人 onboarding   | codegraph explore + cbm get_architecture      |
 
 ## claude-mem 三层搜索工作流
 

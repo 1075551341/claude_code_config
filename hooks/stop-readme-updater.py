@@ -31,7 +31,7 @@ GLOBAL_CLAUDE_DIR = os.path.normpath(os.path.join(os.path.expanduser("~"), ".cla
 def run_git(args: list, cwd=None) -> tuple[int, str]:
     try:
         r = subprocess.run(
-            ["git"] + args, capture_output=True, text=True, timeout=30, cwd=cwd,
+            ["git"] + args, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=cwd,
         )
         return r.returncode, (r.stdout + r.stderr).strip()
     except subprocess.TimeoutExpired:

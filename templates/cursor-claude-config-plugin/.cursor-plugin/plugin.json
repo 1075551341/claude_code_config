@@ -1,0 +1,9 @@
+{
+  "name": "claude-config",
+  "displayName": "Claude Config Rules",
+  "description": "Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.",
+  "version": "10.7.0+202607301724",
+  "author": { "name": "local" },
+  "rules": "./rules/",
+  "keywords": ["claude", "rules", "governance", "local"]
+}

@@ -28,9 +28,9 @@ except Exception as e:
 def run(cmd: list | str, cwd=None) -> bool:
     try:
         if isinstance(cmd, str):
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30, cwd=cwd)
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=cwd)
         else:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=cwd)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=cwd)
         return result.returncode == 0
     except subprocess.TimeoutExpired:
         return False

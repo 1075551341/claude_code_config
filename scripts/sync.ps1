@@ -1,25 +1,25 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v18.0
-    Modes: default (L0 entry files) | -Skills (+ skills/) | -All (everything)
+    Claude Code multi-editor layered sync script v18.1
+    Modes: default (all rules + Cursor claude-config) | -Skills (+ skills/) | -All (+ agents)
     Project: -Lint (prettier+eslint) | -InitProject (CLAUDE.md+MANIFEST+.env+.gitignore)
 
 .DESCRIPTION
-    Default: sync L0 entry files (CLAUDE.md, CORE.md, CLAUDE-ROUTER.mdc)
+    Default: sync all rules/*.md (symlink) + CLAUDE.md + Cursor local plugin claude-config
     -Skills: additionally sync skills/ directory
-    -All:    full sync (rules + skills + agents + CLAUDE.md)
+    -All:    also sync agents/ (+ skills if not already)
     -DryRun: preview only, no disk writes
     -Lint:   deploy prettier + eslint templates to current project (skip existing)
     -InitProject: deploy project-init templates to current project (skip existing)
 
     Sync method: symbolic link preferred, Copy-Item fallback
-    Cursor exception: rules/*.mdc always Copy-Item (Settings Rules UI does not
-      reliably index symbolic links under ~/.cursor/rules)
-    -ProjectRules: also copy L0/All rules into <CWD>/.cursor/rules so the
-      current project's Settings → Project Rules panel lists them (avoids the
-      duplicate list that appears if the same files are also under ~/.claude/.cursor/rules
-      when the config repo itself is the workspace)
+    Cursor: sync ONLY to personal ~/.cursor (rules/skills/agents) — never into
+      business project trees unless -ProjectRules / -ProjectRulesPath is explicit.
+    Cursor rules bridge: prefer symlink into ~/.cursor/rules.
+    Cursor Settings visibility: every run refreshes plugins/local/claude-config
+      (real .mdc copies from SSOT — plugin forbids external symlinks).
+    -ProjectRules: OPTIONAL opt-in for <CWD>/.cursor/rules (default OFF).
     Before syncing: delete same-basename siblings in the target dir
       (any extension / case — e.g. CORE.md + core.mdc before writing CORE.mdc)
     Rules extension: cursor/qoder/codearts -> .mdc, devin/trae -> .md
@@ -41,6 +41,11 @@
     Does NOT write into ~/.claude/.cursor/rules by default (that caused
     duplicate CORE/ROUTER entries when the config repo was the open workspace).
 
+.PARAMETER ProjectRulesPath
+    Deploy Project Rules into one or more absolute project roots (semicolon-
+    or comma-separated). Same payload as -ProjectRules but ignores CWD.
+    Example: -All -ProjectRulesPath "D:\apdms\pdms\pdms-teoms2"
+
 .PARAMETER Lint
     Deploy prettier + eslint 9 flat config templates to current working directory.
     Copies .prettierrc.json, .prettierignore, eslint.config.js (skip if exists).
@@ -55,6 +60,7 @@
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -ProjectRules
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -ProjectRulesPath "D:\apdms\pdms\pdms-teoms2"
     powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint
     powershell -ExecutionPolicy Bypass -File sync.ps1 -InitProject
 #>
@@ -64,6 +70,7 @@ param(
     [switch]$Skills,
     [switch]$All,
     [switch]$ProjectRules,
+    [string]$ProjectRulesPath = "",
     [switch]$Lint,
     [switch]$InitProject
 )
@@ -168,10 +175,11 @@ if ($All) {
 }
 
 # Determine mode label
-$MODE_LABEL = "L0 entry files"
-if ($Skills) { $MODE_LABEL = "L0 + skills/" }
-if ($All)    { $MODE_LABEL = "ALL (rules + skills + agents + CLAUDE.md)" }
+$MODE_LABEL = "all rules + Cursor claude-config"
+if ($Skills) { $MODE_LABEL = "$MODE_LABEL + skills/" }
+if ($All)    { $MODE_LABEL = "ALL (rules + skills + agents + claude-config)" }
 if ($ProjectRules) { $MODE_LABEL = "$MODE_LABEL + CWD ProjectRules" }
+if ($ProjectRulesPath) { $MODE_LABEL = "$MODE_LABEL + ProjectRulesPath" }
 if ($Lint)       { $MODE_LABEL = "Lint templates -> CWD" }
 if ($InitProject) { $MODE_LABEL = "Project-init templates -> CWD" }
 # Lint/InitProject are standalone modes — skip editor sync entirely
@@ -297,19 +305,37 @@ function Sync-File {
         return
     }
 
-    # Cursor Rules UI: prefer real files over symlinks (symlink targets often invisible in Settings)
+    # Prefer symlink; PreferCopy forces copy (legacy/rare). Fallback to copy if symlink fails.
     if (-not $PreferCopy) {
+        $linkErr = $null
         try {
-            New-Item -ItemType SymbolicLink -Path $DstPath -Target $SrcPath -Force | Out-Null
+            # Prefer cmd mklink on Windows — New-Item SymbolicLink is flaky under
+            # $ErrorActionPreference=Stop in some PS 5.1 hosts (silently fails → copy).
+            $mklinkOut = & cmd.exe /c "mklink `"$DstPath`" `"$SrcPath`"" 2>&1
+            if ((Test-Path -LiteralPath $DstPath) -and (IsLink $DstPath)) {
+                Write-Ok "Symlinked: $Label"
+                $script:STATS.Synced++
+                return
+            }
+            $linkErr = ($mklinkOut | Out-String).Trim()
+        } catch {
+            $linkErr = $_.Exception.Message
+        }
+        try {
+            if (Test-Path -LiteralPath $DstPath) {
+                Remove-Item -LiteralPath $DstPath -Force -ErrorAction SilentlyContinue
+            }
+            New-Item -ItemType SymbolicLink -Path $DstPath -Target $SrcPath -Force -ErrorAction Stop | Out-Null
             Write-Ok "Symlinked: $Label"
             $script:STATS.Synced++
             return
         } catch {
-            # Symlink failed, fall through to copy
+            if (-not $linkErr) { $linkErr = $_.Exception.Message }
+            Write-Host "    [--]  symlink failed ($Label): $linkErr" -ForegroundColor DarkYellow
         }
     }
 
-    # Copy-Item (preferred for Cursor rules, or symlink fallback)
+    # Copy-Item fallback when symlink unavailable
     try {
         Copy-Item $SrcPath $DstPath -Force
         if ($PreferCopy) {
@@ -383,6 +409,115 @@ function Sync-Directory {
 }
 
 # =============================================================
+# Cursor local plugin: surface global .mdc rules in Settings → User
+# (~/.cursor/rules files are NOT listed in User tab — Cursor UI limit)
+# =============================================================
+
+function Deploy-CursorLocalPlugin {
+    # Cursor rejects plugin rules that symlink outside the plugin tree
+    # (plugin-quality-gates: paths must stay inside plugin dir). Working
+    # marketplace plugins (exa) use real .mdc files + "rules": "./rules/".
+    # Every sync.ps1 run refreshes copies from ~/.claude SSOT so Settings stay current.
+    $localRoot = Join-Path $env:USERPROFILE ".cursor\plugins\local"
+    $install = Join-Path $localRoot "claude-config"
+    $installRules = Join-Path $install "rules"
+    $installManifestDir = Join-Path $install ".cursor-plugin"
+    $installManifest = Join-Path $installManifestDir "plugin.json"
+    $tplSrc = Join-Path $CLAUDE_DIR "templates\cursor-claude-config-plugin"
+    $tplManifest = Join-Path $tplSrc ".cursor-plugin\plugin.json"
+    $tplRules = Join-Path $tplSrc "rules"
+
+    if ($DryRun) {
+        Write-Ok "Would refresh local plugin claude-config (real .mdc copies from SSOT)"
+        $script:STATS.Synced++
+        return
+    }
+
+    if (-not (Test-Path $localRoot)) {
+        New-Item -ItemType Directory -Path $localRoot -Force | Out-Null
+    }
+    # If prior install was a Junction to template, replace with real directory
+    if ((Test-Path $install) -and (IsLink $install)) {
+        $null = & cmd.exe /c "rmdir `"$install`"" 2>&1
+    }
+    New-Item -ItemType Directory -Path $installManifestDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $installRules -Force | Out-Null
+    New-Item -ItemType Directory -Path (Split-Path $tplManifest -Parent) -Force | Out-Null
+    New-Item -ItemType Directory -Path $tplRules -Force | Out-Null
+
+    $pluginVer = "10.7.0"
+    try {
+        $mf = Get-Content (Join-Path $CLAUDE_DIR "MANIFEST.yaml") -TotalCount 20 -ErrorAction Stop
+        $vm = ($mf | Select-String -Pattern '^\s*version:\s*"?([0-9.]+)"?').Matches
+        if ($vm.Count -gt 0) { $pluginVer = $vm[0].Groups[1].Value }
+    } catch { }
+    $stamp = Get-Date -Format "yyyyMMddHHmm"
+    $manifestBody = @(
+        '{'
+        "  `"name`": `"claude-config`","
+        "  `"displayName`": `"Claude Config Rules`","
+        "  `"description`": `"Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.`","
+        "  `"version`": `"$pluginVer+$stamp`","
+        "  `"author`": { `"name`": `"local`" },"
+        "  `"rules`": `"./rules/`","
+        "  `"keywords`": [`"claude`", `"rules`", `"governance`", `"local`"]"
+        '}'
+    ) -join "`n"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($installManifest, $manifestBody + "`n", $utf8NoBom)
+    [System.IO.File]::WriteAllText($tplManifest, $manifestBody + "`n", $utf8NoBom)
+
+    $pairs = [System.Collections.Generic.List[hashtable]]::new()
+    Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -Filter "*.md" -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne "README.md" } |
+        ForEach-Object { $pairs.Add(@{ Src = $_.FullName; Dst = "$($_.BaseName).mdc" }) }
+    $pairs.Add(@{ Src = (Join-Path $CLAUDE_DIR "CLAUDE-ROUTER.mdc"); Dst = "00-CLAUDE-ROUTER.mdc" })
+    $pairs.Add(@{
+            Src = (Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc")
+            Dst = "CURSOR-EDITOR.mdc"
+        })
+
+    $expected = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $copied = 0
+    foreach ($p in $pairs) {
+        if (-not (Test-Path -LiteralPath $p.Src)) { continue }
+        $null = $expected.Add($p.Dst)
+        Copy-Item -LiteralPath $p.Src -Destination (Join-Path $installRules $p.Dst) -Force
+        Copy-Item -LiteralPath $p.Src -Destination (Join-Path $tplRules $p.Dst) -Force
+        $copied++
+    }
+
+    # Purge orphaned .mdc removed from SSOT (keeps plugin list exact)
+    Get-ChildItem $installRules -Filter "*.mdc" -ErrorAction SilentlyContinue | ForEach-Object {
+        if (-not $expected.Contains($_.Name)) {
+            Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+            Write-Fix "Removed stale plugin rule: $($_.Name)"
+            $script:STATS.Removed++
+        }
+    }
+    Get-ChildItem $tplRules -Filter "*.mdc" -ErrorAction SilentlyContinue | ForEach-Object {
+        if (-not $expected.Contains($_.Name)) {
+            Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    # Sync stamp for diagnostics
+    [System.IO.File]::WriteAllText(
+        (Join-Path $install ".sync-stamp"),
+        "synced=$stamp`nversion=$pluginVer+$stamp`nrules=$copied`n",
+        $utf8NoBom
+    )
+
+    if ((Test-Path $installManifest) -and $copied -gt 0) {
+        Write-Ok "Local plugin claude-config refreshed ($copied rules) -> plugins/local/claude-config"
+        $script:STATS.Synced++
+    } else {
+        Write-Fail "Failed refreshing local plugin claude-config"
+        $script:STATS.Failed++
+    }
+}
+
+# =============================================================
 # Sync a rule file (with extension conversion for target editor)
 # =============================================================
 
@@ -400,12 +535,9 @@ function Sync-RuleFile {
     $dstPath = Join-Path $TargetRulesDir $dstName
     $label = "rules/$dstName -> $EditorName"
 
-    # Cursor Settings Rules UI indexes real .mdc files; symlinks frequently do not appear
-    if ($EditorName -eq 'cursor') {
-        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label -PreferCopy
-    } else {
-        Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
-    }
+    # Prefer symlink for all editors (including Cursor personal ~/.cursor/rules).
+    # PreferCopy only when caller passes it (rare); default = symlink → copy fallback.
+    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
 }
 
 # =============================================================
@@ -544,8 +676,10 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
         $ceSrc = Join-Path $CLAUDE_DIR $ceRel
         if (Test-Path $ceSrc) {
             Sync-File -SrcPath $ceSrc -DstPath (Join-Path $rulesDir "CURSOR-EDITOR.mdc") `
-                -Label "rules/CURSOR-EDITOR.mdc -> cursor" -PreferCopy
+                -Label "rules/CURSOR-EDITOR.mdc -> cursor"
         }
+        # Settings → User 页签不枚举 ~/.cursor/rules 文件；官方全局 .mdc 通道 = local plugin
+        Deploy-CursorLocalPlugin
     }
 
     # ---- 3. Directory sync (skills/, agents/) ----
@@ -555,33 +689,42 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
         Sync-Directory -SrcPath $srcPath -DstPath $dstPath -Label "$($item.DstRel) -> $editor"
     }
 
-    # ---- 4. --all: sync all rules/*.md files individually ----
-    if ($All) {
-        $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
-        if (Test-Path $rulesSrcDir) {
-            $ruleFiles = Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
-                Where-Object { $_.Name -ne "README.md" } |
-                Sort-Object Name
+    # ---- 4. Always sync all rules/*.md (symlink preferred) ----
+    # Keeps every editor's rules/ current without requiring -All.
+    # skills/agents still gated by -Skills / -All above.
+    $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
+    if (Test-Path $rulesSrcDir) {
+        $ruleFiles = Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -ne "README.md" } |
+            Sort-Object Name
 
-            # Build set of L0 base names to skip (already synced above)
-            $l0SkipSet = [System.Collections.Generic.HashSet[string]]::new()
-            foreach ($item in $L0_RULE_ITEMS) {
-                $null = $l0SkipSet.Add($item.DstBase)
-            }
-            $null = $l0SkipSet.Add($ROUTER_DST_BASE)
+        $l0SkipSet = [System.Collections.Generic.HashSet[string]]::new()
+        foreach ($item in $L0_RULE_ITEMS) {
+            $null = $l0SkipSet.Add($item.DstBase)
+        }
+        $null = $l0SkipSet.Add($ROUTER_DST_BASE)
 
-            foreach ($rf in $ruleFiles) {
-                if ($l0SkipSet.Contains($rf.BaseName)) { continue }
+        $expectedRuleBases = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+        foreach ($item in $L0_RULE_ITEMS) { $null = $expectedRuleBases.Add($item.DstBase) }
+        $null = $expectedRuleBases.Add($ROUTER_DST_BASE)
+        if ($editor -eq 'cursor') { $null = $expectedRuleBases.Add("CURSOR-EDITOR") }
 
-                $srcPath = $rf.FullName
-                $dstPath = Join-Path $rulesDir "$($rf.BaseName)$ext"
-                $label = "rules/$($rf.BaseName)$ext -> $editor"
-                if ($editor -eq 'cursor') {
-                    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label -PreferCopy
-                } else {
-                    Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+        foreach ($rf in $ruleFiles) {
+            $null = $expectedRuleBases.Add($rf.BaseName)
+            if ($l0SkipSet.Contains($rf.BaseName)) { continue }
+            $srcPath = $rf.FullName
+            $dstPath = Join-Path $rulesDir "$($rf.BaseName)$ext"
+            $label = "rules/$($rf.BaseName)$ext -> $editor"
+            Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
+        }
+
+        # Purge orphaned rule files removed from SSOT
+        if (Test-Path $rulesDir) {
+            Get-ChildItem $rulesDir -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Extension -match '^\.(mdc|md)$' -and -not $expectedRuleBases.Contains($_.BaseName) } |
+                ForEach-Object {
+                    Remove-Target -Path $_.FullName -Label "stale rules/$($_.Name) -> $editor"
                 }
-            }
         }
     }
 
@@ -590,55 +733,78 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
 }  # end if (-not $SKIP_EDITOR_SYNC)
 
 # =============================================================
-# Optional: deploy Cursor Project Rules into current workspace
-# Settings → Rules (Project) only reads <workspace>/.cursor/rules
+# Optional OPT-IN: deploy Cursor Project Rules into workspace(s)
+# Default is OFF — AI rules stay in personal ~/.cursor only.
+# Use -ProjectRules / -ProjectRulesPath only when you explicitly want
+# <workspace>/.cursor/rules for a business project.
 # =============================================================
 
-if ($ProjectRules -and -not $SKIP_EDITOR_SYNC) {
-    $cwd = (Get-Location).Path
-    $cwdFull = [System.IO.Path]::GetFullPath($cwd)
+function Deploy-ProjectRules {
+    param([string]$ProjectRoot)
+    $rootFull = [System.IO.Path]::GetFullPath($ProjectRoot)
     $claudeFull = [System.IO.Path]::GetFullPath($CLAUDE_DIR)
-    $projectRulesDir = Join-Path $cwd ".cursor\rules"
+    $projectRulesDir = Join-Path $rootFull ".cursor\rules"
     $ext = ".mdc"
 
-    Write-Host "  -- project-rules (CWD) --------------------------------" -ForegroundColor DarkGray
+    Write-Host "  -- project-rules --------------------------------------" -ForegroundColor DarkGray
     Write-Host "  Target: $projectRulesDir" -ForegroundColor DarkGray
 
-    # Opening ~/.claude as workspace already loads ~/.cursor/rules; writing the
-    # same basenames into ~/.claude/.cursor/rules creates the duplicate list.
-    if ($cwdFull.TrimEnd('\') -ieq $claudeFull.TrimEnd('\')) {
-        Write-Skip "CWD is ~/.claude — skip ProjectRules mirror (use ~/.cursor/rules only; avoids Settings duplicates)"
+    if ($rootFull.TrimEnd('\') -ieq $claudeFull.TrimEnd('\')) {
+        Write-Skip "Target is ~/.claude — skip ProjectRules mirror (use ~/.cursor/rules only; avoids Settings duplicates)"
         $script:STATS.Skipped++
         Write-Host ""
-    } else {
-        foreach ($item in $L0_RULE_ITEMS) {
-            Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
-                -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
-        }
-        $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SRC_REL
-        if (Test-Path $routerSrc) {
-            Sync-RuleFile -SrcRelPath $ROUTER_SRC_REL -DstBaseName $ROUTER_DST_BASE `
-                -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
-        }
-        $ceSrc = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
-        if (Test-Path $ceSrc) {
-            Sync-File -SrcPath $ceSrc -DstPath (Join-Path $projectRulesDir "CURSOR-EDITOR.mdc") `
-                -Label "project rules/CURSOR-EDITOR.mdc" -PreferCopy
-        }
-        if ($All) {
-            $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
-            $l0SkipSet = [System.Collections.Generic.HashSet[string]]::new()
-            foreach ($item in $L0_RULE_ITEMS) { $null = $l0SkipSet.Add($item.DstBase) }
-            $null = $l0SkipSet.Add($ROUTER_DST_BASE)
-            Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
-                Where-Object { $_.Name -ne "README.md" -and -not $l0SkipSet.Contains($_.BaseName) } |
-                Sort-Object Name |
-                ForEach-Object {
-                    $dst = Join-Path $projectRulesDir "$($_.BaseName)$ext"
-                    Sync-File -SrcPath $_.FullName -DstPath $dst -Label "project rules/$($_.BaseName)$ext" -PreferCopy
-                }
-        }
+        return
+    }
+    if (-not (Test-Path $rootFull)) {
+        Write-Fail "Project root not found: $rootFull"
+        $script:STATS.Failed++
         Write-Host ""
+        return
+    }
+
+    foreach ($item in $L0_RULE_ITEMS) {
+        Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
+            -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
+    }
+    $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SRC_REL
+    if (Test-Path $routerSrc) {
+        Sync-RuleFile -SrcRelPath $ROUTER_SRC_REL -DstBaseName $ROUTER_DST_BASE `
+            -TargetRulesDir $projectRulesDir -EditorExt $ext -EditorName 'cursor'
+    }
+    $ceSrc = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+    if (Test-Path $ceSrc) {
+        Sync-File -SrcPath $ceSrc -DstPath (Join-Path $projectRulesDir "CURSOR-EDITOR.mdc") `
+            -Label "project rules/CURSOR-EDITOR.mdc"
+    }
+    if ($All) {
+        $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
+        $l0SkipSet = [System.Collections.Generic.HashSet[string]]::new()
+        foreach ($item in $L0_RULE_ITEMS) { $null = $l0SkipSet.Add($item.DstBase) }
+        $null = $l0SkipSet.Add($ROUTER_DST_BASE)
+        Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -ne "README.md" -and -not $l0SkipSet.Contains($_.BaseName) } |
+            Sort-Object Name |
+            ForEach-Object {
+                $dst = Join-Path $projectRulesDir "$($_.BaseName)$ext"
+                Sync-File -SrcPath $_.FullName -DstPath $dst -Label "project rules/$($_.BaseName)$ext"
+            }
+    }
+    Write-Host ""
+}
+
+if (($ProjectRules -or $ProjectRulesPath) -and -not $SKIP_EDITOR_SYNC) {
+    $targets = [System.Collections.Generic.List[string]]::new()
+    if ($ProjectRules) {
+        $targets.Add((Get-Location).Path)
+    }
+    if ($ProjectRulesPath) {
+        foreach ($part in ($ProjectRulesPath -split '[;,]')) {
+            $p = $part.Trim().Trim('"')
+            if ($p) { $targets.Add($p) }
+        }
+    }
+    foreach ($t in $targets) {
+        Deploy-ProjectRules -ProjectRoot $t
     }
 }
 
@@ -662,8 +828,30 @@ if ($script:STATS.Failed -gt 0) {
 Write-Host ""
 Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, devin/trae/trae-cn=.md" -ForegroundColor DarkGray
-Write-Host "  Method     : symlink preferred; Cursor rules/*.mdc = Copy (Settings-safe)" -ForegroundColor DarkGray
-Write-Host "  Cursor     : personal ~/.cursor/rules only; use -ProjectRules for <CWD>/.cursor/rules" -ForegroundColor DarkGray
+Write-Host "  Method     : symlink preferred; Copy-Item fallback" -ForegroundColor DarkGray
+Write-Host "  Cursor     : personal ~/.cursor (rules softlink + claude-config plugin refresh every run); -ProjectRules opt-in" -ForegroundColor DarkGray
 Write-Host "  Dedup      : delete same-basename variants (any ext/case) then write" -ForegroundColor DarkGray
 Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""
+
+# =============================================================
+# Knowledge graph refresh (codegraph + codebase-memory)
+# =============================================================
+if (-not $DryRun) {
+    $kgSync = Join-Path $CLAUDE_DIR "hooks\_lib\knowledge_graph_sync.py"
+    if (Test-Path $kgSync) {
+        Write-Host "  Refreshing knowledge graphs (force)..." -ForegroundColor Cyan
+        try {
+            $kgOut = & python $kgSync --force $CLAUDE_DIR 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "  [OK]  knowledge graph sync" -ForegroundColor Green
+            } else {
+                Write-Host "  [!!]  knowledge graph sync exit $LASTEXITCODE" -ForegroundColor Yellow
+                if ($kgOut) { Write-Host "         $kgOut" -ForegroundColor DarkGray }
+            }
+        } catch {
+            Write-Host "  [!!]  knowledge graph sync failed: $_" -ForegroundColor Yellow
+        }
+        Write-Host ""
+    }
+}

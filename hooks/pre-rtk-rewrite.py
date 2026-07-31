@@ -36,6 +36,8 @@ def main() -> int:
             input=stdin_data,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
         )
     except (subprocess.TimeoutExpired, OSError):

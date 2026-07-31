@@ -16,27 +16,28 @@
 | Qoder    | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过   |
 | CodeArts | `%USERPROFILE%\.codeartsdoer` | 若不存在则跳过   |
 
-### `sync.ps1` — 多编辑器分层同步（v18.0）
+### `sync.ps1` — 多编辑器分层同步（v18.1）
 
 **模式**：
 
 | 模式                     | 同步内容                                                                                                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 默认（L0）               | `CLAUDE.md` + `rules/CORE.md`→`CORE.{mdc/md}` + `CLAUDE-ROUTER.mdc`→`00-CLAUDE-ROUTER.*`；Cursor 另复制 `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` |
-| `-Skills`                | L0 + `skills/` 目录                                                                                                                                      |
-| `-All`                   | L0 + 全部 `rules/*.md` + `skills/` + `agents/`                                                                                                           |
-| `-ProjectRules`          | 另将 L0（配合 `-All` 则全部 rules）复制到 **当前目录** `.cursor/rules`（CWD 为 `~/.claude` 时跳过，避免重复条目）                                        |
-| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板（prettier/eslint / CLAUDE.md+MANIFEST+.env+.gitignore），不同步编辑器                                                           |
+| 默认                     | **全部** `rules/*.md`（优先软链）+ `CLAUDE.md` + ROUTER；Cursor **每次刷新** `plugins/local/claude-config`（实体 .mdc，Settings 可见）+ `CURSOR-EDITOR` |
+| `-Skills`                | 默认 + `skills/` Junction/同步                                                                                                                           |
+| `-All`                   | 默认 + `skills/` + `agents/`                                                                                                                             |
+| `-ProjectRules`          | 另将 rules 复制到 **当前目录** `.cursor/rules`（显式 opt-in；CWD 为 `~/.claude` 时跳过）                                                                |
+| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板，不同步编辑器                                                                                                                   |
 
 **用法**：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File sync.ps1                 # L0（推荐日常）
+powershell -ExecutionPolicy Bypass -File sync.ps1                 # 日常：全 rules + 刷新 claude-config
 powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills
-powershell -ExecutionPolicy Bypass -File sync.ps1 -All
+powershell -ExecutionPolicy Bypass -File sync.ps1 -All            # + agents
 powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写盘
 ```
 
+> 改 `~/.claude/rules` / `CLAUDE-ROUTER` / `CURSOR-EDITOR` 后跑一次 `sync.ps1` 即可；Cursor Settings 中的 Claude Config 插件内容会随之更新。若列表未变，完全退出 Cursor 再开（仅 Reload 有时不重扫插件）。
 **参数**：
 
 | 参数            | 说明                                  |
@@ -78,6 +79,10 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 | `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor      |
 | `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话） |
 | `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                       |
+
+> **多项目适配（全局/个人优先）**：默认只同步到 Cursor 个人目录 `~/.cursor/`（rules 软链、skills/agents Junction），**不写入业务项目**。
+>
+> **重要（Cursor UI）**：Settings → Rules → **User** 页签**不会枚举** `~/.cursor/rules/*.mdc`。全局 `.mdc` 靠本地插件 `~/.cursor/plugins/local/claude-config`（**实体 .mdc 副本**，因插件禁止外链软链）。skills/agents 仍 Junction。改规则后跑 `sync.ps1`，然后**完全退出并重开 Cursor**（Reload 有时不重扫 local plugins）。
 
 ### 同步后建议自测
 
@@ -128,6 +133,7 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 - `tests/_test_functional.py`、`tests/_simtest.py` — 功能/模拟测试资产
 - `test-cursor-guard-hooks.py`、`test-cursor-guard-regression.ps1`、`test-sync-dedup.ps1` — 回归测试
 - `cbm-index.ps1` — codebase-memory 索引辅助
+- `hooks/_lib/knowledge_graph_sync.py` — codegraph + cbm 双引擎同步（PostToolUse debounce / Stop force / sync.ps1）
 - `sync_mcp.py`、`sync-compact-window.py` — MCP/压缩窗口同步
 
 ---

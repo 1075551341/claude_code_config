@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 MANIFEST_PATH = Path.home() / ".claude" / "MANIFEST.yaml"
@@ -137,11 +138,44 @@ PLUGIN_SKILL_CONFLICTS: dict[str, str] = {
 
 
 def load_stdin() -> dict:
-    raw = sys.stdin.read() or "{}"
+    try:
+        raw = sys.stdin.buffer.read().decode("utf-8", errors="replace") if hasattr(sys.stdin, "buffer") else sys.stdin.read()
+    except OSError:
+        return {}
+    if not raw.strip():
+        return {}
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
         return {}
+
+
+# ── 会话状态：excludes 语义 = 同会话互博边界（非全局禁用）────────────────────
+# MANIFEST 注释自证：design_pipeline excludes brainstorming 但注记「不互博」；
+# autoplan 注记「先 brainstorming…autoplan 在 verify 阶段」。
+# 正确语义：本会话已用 concern X，则 excludes[X] 中的实体后续禁用（exit 2）。
+STATE_DIR = Path.home() / ".claude" / ".state"
+STATE_FILE = STATE_DIR / "manifest-validator.json"
+STALE_SECONDS = 7 * 24 * 3600
+
+
+def load_state() -> dict:
+    try:
+        if STATE_FILE.exists():
+            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"pre-manifest-validator: state read failed: {e}", file=sys.stderr)
+    return {}
+
+
+def save_state(state: dict) -> None:
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        now = time.time()
+        state = {k: v for k, v in state.items() if now - v.get("ts", 0) < STALE_SECONDS}
+        STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError as e:
+        print(f"pre-manifest-validator: state write failed: {e}", file=sys.stderr)
 
 
 def resolve_concern(tool_name: str, tool_input: dict) -> str | None:
@@ -172,21 +206,31 @@ def main() -> None:
         else f"skill/{tool_input.get('skill', '')}"
     )
 
-    # 双向检查：被调实体是否被任何 concern 的 excludes 排除
+    # 会话感知检查：当前实体被本会话「已使用 concern」的 excludes 排除才阻断
+    session_id = str(data.get("session_id") or "unknown")
+    state = load_state()
+    used_concerns = set(state.get(session_id, {}).get("used_concerns", []))
+
     excludes = load_excludes()
-    for blocking_concern, blocked_entities in excludes.items():
+    for blocking_concern in used_concerns:
+        blocked_entities = excludes.get(blocking_concern, set())
         if current_entity in blocked_entities:
             print(
                 json.dumps({
                     "continue": False,
                     "reason": (
-                        f"[MANIFEST] {current_entity} 被 {blocking_concern} 排除。"
+                        f"[MANIFEST] {current_entity} 与本会话已使用的 {blocking_concern} 互博。"
                         f"冲突实体: {blocked_entities}. 请使用 MANIFEST.yaml 指定的 owner。"
                     ),
                 })
             )
             sys.exit(2)  # block
 
+    # 放行并记录本会话已用 concern
+    if concern:
+        used_concerns.add(concern)
+        state[session_id] = {"used_concerns": sorted(used_concerns), "ts": time.time()}
+        save_state(state)
     sys.exit(0)
 
 

@@ -420,6 +420,7 @@ def check_v11_hook_exception_propagation():
         "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",
         "stop-quality-gate.py", "stop-context-monitor.py",
         "stop-session-summary.py", "stop-readme-updater.py",
+        "stop-knowledge-graph-sync.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")
     missing = []

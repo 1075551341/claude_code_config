@@ -133,6 +133,7 @@ hooks:
     - stop-quality-gate
     - stop-session-summary
     - stop-readme-updater
+    - stop-knowledge-graph-sync
   # 文件在 hooks/ 但未注册：Claude Code 原生机制或 Cursor Guard 已覆盖，保留备用
   _unregistered:
     - pre-tmux-reminder

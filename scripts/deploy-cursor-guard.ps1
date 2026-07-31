@@ -34,10 +34,15 @@ function Resolve-HookCommands {
     foreach ($prop in $raw.hooks.PSObject.Properties) {
         foreach ($entry in @($prop.Value)) {
             if (-not $entry.command) { continue }
-            if ($entry.command -match 'hooks[\\/]([^\\/\s"]+\.py)') {
+            if ($entry.command -match 'hooks[\\/]([^\\/\s"]+\.py)(.*)$') {
                 $scriptName = $Matches[1]
+                $tail = ($Matches[2] | ForEach-Object { $_.Trim() })
                 $abs = Join-Path $HooksDir $scriptName
-                $entry.command = "`"$pyExe`" `"$abs`""
+                if ($tail) {
+                    $entry.command = "`"$pyExe`" `"$abs`" $tail"
+                } else {
+                    $entry.command = "`"$pyExe`" `"$abs`""
+                }
             }
         }
     }

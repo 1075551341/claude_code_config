@@ -49,7 +49,7 @@
 | ------------------------- | ---------- | ----------------------- | ---- |
 | `post-edit-format.py`     | Edit/Write | 代码格式化 + Lint       | 执行 |
 | `post-secret-detector.py` | Edit/Write | 密钥/Token/密码泄露扫描 | 横切 |
-| `post-codegraph-sync.py`  | Edit/Write | codegraph 增量重建索引  | 横切 |
+| `post-codegraph-sync.py`  | Edit/Write | codegraph + codebase-memory 增量同步（90s debounce） | 横切 |
 
 ### PreCompact (1)
 
@@ -57,13 +57,16 @@
 | ---------------------- | -------------- | ---- |
 | `pre-compact-state.py` | 压缩前状态快照 | 横切 |
 
-### Stop (3)
+### Stop (4)
 
-| Hook                      | 功能                                             | 层   |
-| ------------------------- | ------------------------------------------------ | ---- |
-| `stop-quality-gate.py`    | schema_drift + security_anchor + scope_reduction | 执行 |
-| `stop-session-summary.py` | 会话摘要                                         | 执行 |
-| `stop-readme-updater.py`  | README 自动更新                                  | 执行 |
+| Hook                             | 功能                                             | 层   |
+| -------------------------------- | ------------------------------------------------ | ---- |
+| `stop-quality-gate.py`           | schema_drift + security_anchor + scope_reduction | 执行 |
+| `stop-session-summary.py`        | 会话摘要                                         | 执行 |
+| `stop-readme-updater.py`         | README 自动更新                                  | 执行 |
+| `stop-knowledge-graph-sync.py`   | 强制刷新 codegraph + codebase-memory（忽略 debounce） | 横切 |
+
+共享库：`hooks/_lib/knowledge_graph_sync.py`（Claude PostToolUse/Stop、Cursor Guard、`sync.ps1` 共用）。
 
 ---
 

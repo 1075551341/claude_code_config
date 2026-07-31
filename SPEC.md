@@ -162,7 +162,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 ├─ stop-context-monitor → GateGuard（loop/scope/cost）
 ├─ stop-session-summary → 会话摘要
 ├─ stop-readme-updater → README更新
-├─ post-codegraph-sync → 编辑后增量 codegraph sync
+├─ post-codegraph-sync → 编辑后增量 codegraph + codebase-memory（debounce）
+├─ stop-knowledge-graph-sync → Stop 强制刷新双引擎图谱
 └─ instinct-learning v2 [skill，非hook] → pattern提取（PreCompact/Stop触发调用）
 ```
 

@@ -16,7 +16,7 @@ alwaysApply: true
 
 ```
 用户显式指令 > CLAUDE.md > 激活skill > lazy规则 > alwaysApply > 默认
-工具路由: codegraph_explore > (codebase-memory L4 架构/ADR/变更) > Grep | claude-mem search > 重复Read
+工具路由: codegraph → cbm(仅升级条件) → Grep | 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
 ```
 
 ---
@@ -69,8 +69,8 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 | R14 | 版本克制    | 非必要不升major                 | CORE.md |
 | R15 | 包管理器    | pnpm优先；npm兜底               | CORE.md |
 | R16 | 错误暴漏    | 禁止裸except:pass               | CORE.md |
-| R17 | 代码探索    | codegraph_explore首选→Grep      | CORE.md |
-| R18 | 记忆优先    | claude-mem先于重复分析          | CORE.md |
+| R17 | 代码探索    | 三级递进 codegraph→cbm→mem，禁跳级 | CORE.md |
+| R18 | 记忆优先    | 为什么/约定/偏好→claude-mem         | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit              | CORE.md |
 
 ---
@@ -81,7 +81,7 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 ```
 
-> **代码探索铁律（R17）**：结构/调用链/影响面 **必先 `codegraph_explore`**（默认工具，blast-radius 含影响面），次选 Grep 精确定位，禁止未探索就大范围 Read。`codegraph_impact` 默认不暴露（F1），需 `CODEGRAPH_MCP_TOOLS` env 或 CLI。codegraph 返回的源码视为已读，不重复 Read/Grep。
+> **代码探索铁律（R17）**：严格三级、禁止跳级。①结构/局部→仅 `codegraph_explore`（禁止直接 Grep/Read）；②仅语义模糊/跨服务大影响/ADR/`detect_changes` 才升级 codebase-memory（索引缺失→提示 `scripts/cbm-index.ps1`，禁止 Grep 补救）；③为什么/约定/偏好→claude-mem。codegraph 返回源码视为已读，不重复 Read/Grep。
 
 **五轨**：codegraph(R17) | Firecrawl+Exa | claude-mem(R18) | Context7
 **Token**：RTK(shell) + caveman(输出) + codegraph(探索)
@@ -113,10 +113,10 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 | 场景          | 首选工具            | 禁止替代  |
 | ------------- | ------------------- | --------- |
-| 代码结构探索  | `codegraph_explore` | Grep/Read |
-| 架构/ADR/变更 | `cbm search_graph`  | 重复Read  |
+| 代码结构/调用链 | `codegraph_explore` | Grep/Read/跳级 cbm |
+| 语义/跨服务/ADR/detect_changes | codebase-memory | 索引缺失时 Grep；跳过 codegraph |
+| 为什么/约定/偏好 | `claude-mem search` | 塞入 codegraph/cbm |
 | 网页深度调研  | `Firecrawl+Exa`     | WebFetch  |
-| 跨会话记忆    | `claude-mem search` | 重复Read  |
 | Shell输出压缩 | RTK (hook自动)      | 原生Bash  |
 | 输出压缩      | caveman             | 原生输出  |
 

@@ -48,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps
 
 1. 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`
 2. Cursor Settings → MCP 启用 codegraph
-3. codegraph 自带文件监听增量索引，**无需** Claude `post-codegraph-sync`
+3. 编辑后/会话结束 hook 自动刷新 **codegraph + codebase-memory**（`knowledge_graph_sync_hook`）；也可手跑 `python ~/.claude/hooks/_lib/knowledge_graph_sync.py --force <project>`
 
 参考：[`templates/cursor-guard/mcp-recommended.json`](../templates/cursor-guard/mcp-recommended.json)
 
@@ -138,15 +138,14 @@ slash 命令是**路由信号**，不替代 Read 全文。
 
 ### Settings > Rules 面板预期
 
-| 来源                              | Settings 列表 | Agent 加载 | 说明                                                      |
-| --------------------------------- | :-----------: | :--------: | --------------------------------------------------------- |
-| User Rules 文本                   |      是       |     是     | Settings 顶部纯文本                                       |
-| 插件 rules                        |      是       |     是     | 带插件名                                                  |
-| 个人桥接 `~/.cursor/rules/*.mdc`  | 不稳定/依版本 |     是     | 兼容跨项目加载                                            |
-| 项目 `<workspace>/.cursor/rules/` |      是       |     是     | sync 写入当前 `~/.claude` 工作区，Settings > Rules 可枚举 |
-| `~/.claude/.cursor/`              |      是       |     是     | 当前工作区 Cursor 配置目录；sync 仅管理其 `rules/`        |
+| 来源                                 | Settings 列表 | Agent 加载 | 说明                                               |
+| ------------------------------------ | :-----------: | :--------: | -------------------------------------------------- |
+| User Rules 文本                      |      是       |     是     | Settings 顶部纯文本                                |
+| 插件 rules（含 local/claude-config） |    **是**     |   **是**   | **全局 .mdc 官方可见通道**；sync 默认维护          |
+| 个人桥接 `~/.cursor/rules/*.mdc`     | 否（UI 限制） |  部分版本  | 仍软链同步；User 页签不枚举文件（Cursor 论坛确认） |
+| 项目 `<workspace>/.cursor/rules/`    |      是       |     是     | **仅** `-ProjectRules` opt-in；默认不写业务项目    |
 
-sync 同时部署个人桥接规则到 `~/.cursor/rules/`，以及当前工作区项目规则到 `~/.claude/.cursor/rules/`。验证：Settings > Rules 与 Agent 上下文环。
+默认：`sync.ps1` 写个人 `~/.cursor/rules`（软链）+ Junction `plugins/local/claude-config`。验证：Reload Window → Settings → Rules → User 应出现 claude-config 规则。
 
 **codegraph 优先三层**（两侧一致，v10.5）：
 

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.6",
+  "version": "1.1.7",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -25,6 +25,12 @@
     "codegraph_first": true,
     "nudge_on_grep_read": true,
     "enforce_mode": "soft_block"
+  },
+  "knowledge_graph": {
+    "enabled": true,
+    "codegraph": true,
+    "codebase_memory": true,
+    "cbm_mode": "fast"
   },
   "sync": {
     "auto_on_edit": true,

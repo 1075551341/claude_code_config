@@ -111,6 +111,8 @@ def read_recent_git_log(project_root: str) -> str | None:
             ["git", "log", "--oneline", "-5"],  # 列表参数，不经 shell
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=3,          # FIX: 从 5s 减少到 3s
             cwd=project_root,
         )

@@ -225,7 +225,7 @@ foreach ($editor in $EDITORS) {
         Join-Path $env:USERPROFILE ".$editor"
     }
     if (-not (Test-Path $editorDir)) {
-        Add-Check "Symlink" ".$editor" "warn" "directory not found -- run sync.ps1"
+        Add-Check "Symlink" ".$editor" "pass" "editor not installed -- sync.ps1 skips by design"
         continue
     }
 
@@ -600,6 +600,8 @@ $devinL0 = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE")
 $devinMissing = @($devinL0 | Where-Object { -not (Test-Path (Join-Path $devinGlobalRules "$_.md")) })
 if (Test-Path $devinMisplaced) {
     Add-Check "Devin" "rules path" "warn" "~/.devin/rules/ is wrong path -- run sync.ps1 to remove"
+} elseif (-not (Test-Path (Join-Path $env:APPDATA "devin"))) {
+    Add-Check "Devin" "global rules" "pass" "devin not installed -- sync.ps1 skips by design"
 } elseif ($devinMissing.Count -eq 0) {
     Add-Check "Devin" "global rules" "pass" "L0 in %APPDATA%\devin\rules\"
 } else {

@@ -122,10 +122,10 @@
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
             "timeout": 10000
           },
-          {
+            {
             "type": "command",
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-codegraph-sync.py",
-            "timeout": 130000
+            "timeout": 330000
           }
         ]
       }
@@ -200,6 +200,11 @@
             "type": "command",
             "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
             "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-knowledge-graph-sync.py",
+            "timeout": 330000
           }
         ]
       }
