@@ -1,15 +1,10 @@
 {
-  "_comment": "参考清单 — deploy 不写入用户 MCP。在 Cursor Settings -> MCP 手工启用。v10.5: P0=codegraph+cbm",
+  "_comment": "参考清单 — deploy 不写入用户 MCP。codebase-memory 已禁用（全盘索引爆内存）。",
   "priority_p0": [
     {
       "name": "codegraph",
       "intent": "代码结构/调用链/影响面探索（R17 强制优先）",
       "setup": "npx @colbymchenry/codegraph && codegraph init -i"
-    },
-    {
-      "name": "codebase-memory",
-      "intent": "架构全景/ADR/变更检测/跨服务（L4 按需）",
-      "setup": "npx codebase-memory-mcp@0.8.1（或跟随 optional-dev 钉扎版本）后 index_repository"
     }
   ],
   "priority_p1": [
@@ -38,6 +33,12 @@
     {
       "name": "chrome-devtools",
       "intent": "页面调试/性能"
+    }
+  ],
+  "disabled": [
+    {
+      "name": "codebase-memory",
+      "reason": "默认禁用：index_repository 易扫到用户主目录，单进程 >6GB RAM。替代：codegraph_explore。"
     }
   ],
   "do_not_mirror": [

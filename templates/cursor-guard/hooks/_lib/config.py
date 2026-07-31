@@ -146,7 +146,9 @@ def load_guard_config() -> dict:
             "enabled": os.environ.get("CURSOR_GUARD_KG_SYNC", "1") != "0"
             and knowledge_graph.get("enabled", True),
             "codegraph": knowledge_graph.get("codegraph", True),
-            "codebase_memory": knowledge_graph.get("codebase_memory", True),
+            # codebase-memory 默认关闭（全盘索引会爆内存）；需显式 true 或 CURSOR_GUARD_CBM=1
+            "codebase_memory": os.environ.get("CURSOR_GUARD_CBM", "0") == "1"
+            and knowledge_graph.get("codebase_memory", False),
             "cbm_mode": knowledge_graph.get("cbm_mode", "fast"),
         },
         "git": _load_git_config(cfg.get("git", {})),

@@ -15,6 +15,8 @@ from pathlib import Path
 STATE_FILE = Path.home() / ".claude" / ".state" / "knowledge_graph_sync.json"
 DEFAULT_DEBOUNCE_SEC = int(os.environ.get("KG_SYNC_DEBOUNCE_SEC", "90"))
 CBM_PACKAGE = os.environ.get("CBM_MCP_PACKAGE", "codebase-memory-mcp@0.8.1")
+# codebase-memory 默认禁用（全盘/家目录索引会爆内存）；仅 KG_SYNC_CBM=1 才跑
+CBM_ENABLED = os.environ.get("KG_SYNC_CBM", "0") == "1"
 
 CODE_EXTENSIONS = {
     ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
@@ -26,15 +28,40 @@ CONFIG_EXTENSIONS = {
 
 
 def resolve_project_root(cwd: str | None, file_path: str | None = None) -> str:
-    """向上查找含 .codegraph 或 .git 的根；否则用 cwd。"""
+    """向上查找含 .codegraph 或 .git 的根；否则用 cwd。拒绝用户主目录作根。"""
     start = file_path or cwd or os.getcwd()
     p = Path(start).resolve()
     if p.is_file():
         p = p.parent
+    home = Path.home().resolve()
+    found: Path | None = None
     for cand in [p, *p.parents]:
+        if cand == home:
+            break
         if (cand / ".codegraph").is_dir() or (cand / ".git").is_dir():
-            return str(cand)
-    return str(p)
+            found = cand
+            break
+    if found is None:
+        # 无仓：用起始目录，但仍拒绝 home
+        found = p if p != home else Path.home() / ".claude"
+    return str(found)
+
+
+def is_unsafe_index_root(project_root: str) -> bool:
+    """禁止索引用户主目录、盘符根等超大路径。"""
+    try:
+        root = Path(project_root).resolve()
+        home = Path.home().resolve()
+        if root == home:
+            return True
+        if root.parent == root:  # filesystem root e.g. C:\
+            return True
+        # Users 目录本身
+        if root.name.lower() == "users" and root.parent == home.parent:
+            return True
+    except OSError:
+        return True
+    return False
 
 
 def load_state() -> dict:
@@ -119,7 +146,11 @@ CBM_INDEX_HINT = (
 
 
 def sync_codebase_memory(project_root: str, mode: str = "fast") -> tuple[bool, str]:
-    """通过 MCP CLI 刷新 codebase-memory 索引。"""
+    """通过 MCP CLI 刷新 codebase-memory 索引（默认禁用）。"""
+    if not CBM_ENABLED:
+        return False, "cbm disabled (set KG_SYNC_CBM=1 to enable; do not index home)"
+    if is_unsafe_index_root(project_root):
+        return False, f"cbm refused unsafe root: {project_root}"
     payload = json.dumps({"repo_path": project_root, "mode": mode}, ensure_ascii=False)
     npx = _which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
     cmd = [npx, "-y", CBM_PACKAGE, "cli", "index_repository", payload]
@@ -140,12 +171,27 @@ def sync_knowledge_graphs(
     *,
     force: bool = False,
     run_codegraph: bool = True,
-    run_cbm: bool = True,
+    run_cbm: bool | None = None,
     cbm_mode: str = "fast",
     debounce_sec: int | None = None,
 ) -> dict:
-    """同步双引擎。force=True 忽略 debounce（Stop / sync.ps1）。"""
+    """同步图谱。默认仅 codegraph；cbm 需 KG_SYNC_CBM=1 且 run_cbm=True。"""
     root = str(Path(project_root).resolve())
+    if is_unsafe_index_root(root):
+        msg = f"refused unsafe root: {root}"
+        print(f"knowledge_graph_sync: {msg}", file=sys.stderr)
+        return {
+            "root": root,
+            "codegraph": {"ok": False, "detail": msg},
+            "cbm": {"ok": False, "detail": msg},
+            "skipped": ["unsafe_root"],
+        }
+
+    if run_cbm is None:
+        run_cbm = CBM_ENABLED
+    else:
+        run_cbm = bool(run_cbm) and CBM_ENABLED
+
     debounce = DEFAULT_DEBOUNCE_SEC if debounce_sec is None else debounce_sec
     state = load_state()
     now = time.time()

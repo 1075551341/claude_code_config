@@ -79,7 +79,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | R14 | 版本克制 | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认 |
 | R15 | 包管理器 | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm` |
 | R16 | 错误暴漏 | 禁止裸 `except:pass`，异常必须传播或显式处理并报告 |
-| R17 | 代码探索优先 | 严格三级：codegraph → codebase-memory（条件升级）→ claude-mem；禁止跳级 |
+| R17 | 代码探索优先 | 严格：codegraph → claude-mem；codebase-memory **已禁用**；禁止跳级 |
 | R18 | 记忆优先 | 「为什么/约定/偏好」查 claude-mem；禁止塞入 codegraph/cbm |
 | R19 | Git 禁令 | 禁止自动 `git stash`/`git commit`（仅用户显式指令+Guard 确认）；禁止 force push main/master |
 
@@ -88,24 +88,18 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 ```
 1. 结构/局部（调用链、依赖、影响面、「怎么运作」）
    → 仅 codegraph_explore；禁止直接 Grep/Read
-2. 仅下列情况才升级 codebase-memory：
-   - 语义/模糊搜索（找不到确切函数名）
-   - 跨文件/跨服务整体影响面（大重构前）
-   - 查询或记录架构决策（ADR）
-   - detect_changes 确认索引是否过期
-   若 cbm 返回「索引过期/不存在」→ 提示用户跑 scripts/cbm-index.ps1，禁止 Grep 补救
+2. codebase-memory：**已禁用**（全盘索引爆内存）— 勿调用；原升级场景（语义/跨服务/ADR）一律用 codegraph
 3. 「为什么这么做」「约定是什么」「用户偏好」（代码推不出）
-   → 查 claude-mem；决策原因存 memory，决策留下的代码结构归 cbm ADR
+   → 查 claude-mem；决策原因存 memory
 ```
 
 | 需求 | 首选 | 次选 | 禁止 |
 | ------------------------- | -------------------------------- | ---------------------- | --------------------------------------- |
-| 函数/类/调用链/符号影响面 | codegraph_explore（blast-radius） | —（无索引才 Grep 定点） | 跳过 codegraph 直接 Grep/Read/cbm |
-| 语义模糊搜 / 跨服务大影响 / ADR / detect_changes | codebase-memory | — | 索引缺失时 Grep 补救；与 codegraph 同问 |
-| 为什么/约定/偏好/决策原因 | claude-mem search→get_observations | — | 往 codegraph/cbm 塞偏好；重复 Read |
-| 决策产生的代码结构（ADR 产物） | codebase-memory manage_adr | docs/ADR/ 手写 | 把「原因」只写进代码图谱 |
+| 函数/类/调用链/符号影响面 | codegraph_explore（blast-radius） | —（无索引才 Grep 定点） | 跳过 codegraph 直接 Grep/Read |
+| 语义模糊 / 跨服务 / ADR | codegraph_explore | docs/ADR/ 手写 | 启用/调用 codebase-memory（已禁用） |
+| 为什么/约定/偏好/决策原因 | claude-mem search→get_observations | — | 往 codegraph 塞偏好；重复 Read |
 
-**索引刷新**：Edit/Stop hook 自动同步 codegraph + codebase-memory（见 `hooks/_lib/knowledge_graph_sync.py`）；claude-mem 不在 hook 刷新范围。
+**索引刷新**：Edit/Stop hook **仅**自动同步 codegraph（`hooks/_lib/knowledge_graph_sync.py`；`KG_SYNC_CBM` 默认 0）。claude-mem / codebase-memory 不在 hook 刷新范围。
 
 ### R17 反模式检测
 
@@ -113,8 +107,8 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | ---------------------------------------------------------------------------------- | ------------ | ------------------------------ |
 | 改文件前未查 blast-radius（`codegraph_explore`） | 违反 R17 | 变更范围不可信 |
 | 跳过 codegraph 直接 Grep 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费 |
-| 结构问题未用 codegraph 就上 cbm | 违反 R17 | 跳级；标 DONE_WITH_CONCERNS |
-| cbm 索引缺失却 Grep 补救 | 违反 R17 | 应提示 `scripts/cbm-index.ps1` |
+| 结构问题未用 codegraph 就上 cbm | 违反 R17 | cbm 已禁用；标 DONE_WITH_CONCERNS |
+| 启用/调用 codebase-memory | 禁止 | 全盘索引爆内存；用 codegraph |
 | codegraph 已返回结果仍 Read 同文件 | 违反 R17 | 重复 token 消耗 |
 | 探索前未确认 codegraph init | 违反 mandate | 索引缺失，回退全量 Grep |
 

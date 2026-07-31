@@ -11,15 +11,14 @@ alwaysApply: true
 
 ```
 1. 结构/局部 → codegraph_explore（禁止直接 Grep/Read）
-2. 仅语义模糊 / 跨服务大影响 / ADR / detect_changes → codebase-memory
-   （索引缺失 → 提示 scripts/cbm-index.ps1，禁止 Grep 补救）
-3. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph/cbm）
+2. codebase-memory：已禁用（全盘索引爆内存）— 勿调用；架构问题仍用 codegraph
+3. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
 ```
 
 - 结构、调用链、影响面：必须先 MCP `codegraph_explore`
 - Grep 仅 codegraph 不可用时的定点 fallback（非跳级捷径）
 - 禁止未探索就大范围 Read 扫目录
-- Edit/Stop 由 Cursor Guard `knowledge_graph_sync_hook` 自动刷新 codegraph + cbm
+- Edit/Stop 由 Cursor Guard `knowledge_graph_sync_hook` **仅刷新 codegraph**（cbm 已关）
 
 ## 编辑与引用
 

@@ -31,12 +31,18 @@ def main():
 
     cwd = data.get("cwd") or data.get("working_directory") or None
     root = resolve_project_root(cwd, None)
-    result = sync_knowledge_graphs(root, force=True, cbm_mode="fast")
+    result = sync_knowledge_graphs(root, force=True, run_cbm=False)
     cg = (result.get("codegraph") or {}).get("ok")
-    cbm = (result.get("cbm") or {}).get("ok")
+    cbm_res = result.get("cbm")
+    if cbm_res is None:
+        cbm_label = "disabled"
+    elif cbm_res.get("ok"):
+        cbm_label = "ok"
+    else:
+        cbm_label = "skip/fail"
     print(
         f"stop-knowledge-graph-sync: root={root} codegraph={'ok' if cg else 'skip/fail'} "
-        f"cbm={'ok' if cbm else 'skip/fail'}",
+        f"cbm={cbm_label}",
         file=sys.stderr,
     )
     sys.exit(0)

@@ -81,7 +81,7 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 ```
 
-> **代码探索铁律（R17）**：严格三级、禁止跳级。①结构/局部→仅 `codegraph_explore`（禁止直接 Grep/Read）；②仅语义模糊/跨服务大影响/ADR/`detect_changes` 才升级 codebase-memory（索引缺失→提示 `scripts/cbm-index.ps1`，禁止 Grep 补救）；③为什么/约定/偏好→claude-mem。codegraph 返回源码视为已读，不重复 Read/Grep。
+> **代码探索铁律（R17）**：结构/局部→仅 `codegraph_explore`（禁止直接 Grep/Read）。**codebase-memory 已禁用**（全盘索引爆内存）。为什么/约定/偏好→claude-mem。codegraph 返回源码视为已读，不重复 Read/Grep。
 
 **五轨**：codegraph(R17) | Firecrawl+Exa | claude-mem(R18) | Context7
 **Token**：RTK(shell) + caveman(输出) + codegraph(探索)
@@ -113,9 +113,8 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 | 场景          | 首选工具            | 禁止替代  |
 | ------------- | ------------------- | --------- |
-| 代码结构/调用链 | `codegraph_explore` | Grep/Read/跳级 cbm |
-| 语义/跨服务/ADR/detect_changes | codebase-memory | 索引缺失时 Grep；跳过 codegraph |
-| 为什么/约定/偏好 | `claude-mem search` | 塞入 codegraph/cbm |
+| 代码结构/调用链 | `codegraph_explore` | Grep/Read；调用 cbm（已禁用） |
+| 为什么/约定/偏好 | `claude-mem search` | 塞入 codegraph |
 | 网页深度调研  | `Firecrawl+Exa`     | WebFetch  |
 | Shell输出压缩 | RTK (hook自动)      | 原生Bash  |
 | 输出压缩      | caveman             | 原生输出  |
@@ -164,7 +163,7 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 **插件**：~/.claude 15启用；Cursor 禁用 compound-engineering（与本地 agents 重叠）。
 **同步**：`scripts/sync.ps1` 软链 L0 入口；skills/agents/rules 按需 Read，不复制。
-**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；架构/ADR 场景可选 merge cbm + `scripts/cbm-index.ps1`（L4，见 rules/CONTEXT.md）。
+**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；仅语义/跨服务/ADR/`detect_changes` 才升级 cbm（索引缺失→`scripts/cbm-index.ps1`，禁止 Grep；见 CORE R17-R18）。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。
 
 @RTK.md

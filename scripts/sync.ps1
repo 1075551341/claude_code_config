@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Claude Code multi-editor layered sync script v18.1
@@ -452,17 +452,17 @@ function Deploy-CursorLocalPlugin {
         if ($vm.Count -gt 0) { $pluginVer = $vm[0].Groups[1].Value }
     } catch { }
     $stamp = Get-Date -Format "yyyyMMddHHmm"
-    $manifestBody = @(
-        '{'
-        "  `"name`": `"claude-config`","
-        "  `"displayName`": `"Claude Config Rules`","
-        "  `"description`": `"Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.`","
-        "  `"version`": `"$pluginVer+$stamp`","
-        "  `"author`": { `"name`": `"local`" },"
-        "  `"rules`": `"./rules/`","
-        "  `"keywords`": [`"claude`", `"rules`", `"governance`", `"local`"]"
-        '}'
-    ) -join "`n"
+    # JSON lines: prefer single quotes so PS5.1 does not treat braces as script blocks
+    $manifestObj = [ordered]@{
+        name        = "claude-config"
+        displayName = "Claude Config Rules"
+        description = "Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1."
+        version     = "$pluginVer+$stamp"
+        author      = @{ name = "local" }
+        rules       = "./rules/"
+        keywords    = @("claude", "rules", "governance", "local")
+    }
+    $manifestBody = ($manifestObj | ConvertTo-Json -Depth 5)
     $utf8NoBom = New-Object System.Text.UTF8Encoding $false
     [System.IO.File]::WriteAllText($installManifest, $manifestBody + "`n", $utf8NoBom)
     [System.IO.File]::WriteAllText($tplManifest, $manifestBody + "`n", $utf8NoBom)
@@ -478,10 +478,16 @@ function Deploy-CursorLocalPlugin {
         })
 
     $expected = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $expectedBases = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $copied = 0
     foreach ($p in $pairs) {
         if (-not (Test-Path -LiteralPath $p.Src)) { continue }
         $null = $expected.Add($p.Dst)
+        $base = [System.IO.Path]::GetFileNameWithoutExtension($p.Dst)
+        $null = $expectedBases.Add($base)
+        # 同步前先删同类型同名，避免残留双份（.md/.mdc/大小写）
+        Remove-SameBasenameVariants -Directory $installRules -BaseName $base -LabelPrefix "plugin-rules"
+        Remove-SameBasenameVariants -Directory $tplRules -BaseName $base -LabelPrefix "plugin-tpl-rules"
         Copy-Item -LiteralPath $p.Src -Destination (Join-Path $installRules $p.Dst) -Force
         Copy-Item -LiteralPath $p.Src -Destination (Join-Path $tplRules $p.Dst) -Force
         $copied++
@@ -501,6 +507,16 @@ function Deploy-CursorLocalPlugin {
         }
     }
 
+    # Cursor 同时加载 ~/.cursor/rules 与 local plugin → UI/Agent 双份 Always Apply。
+    # 全局 SSOT 规则只走 plugin；从个人 rules/ 清除同 basename，杜绝如图重复。
+    $cursorRules = Join-Path $env:USERPROFILE ".cursor\rules"
+    if (Test-Path $cursorRules) {
+        foreach ($base in $expectedBases) {
+            Remove-SameBasenameVariants -Directory $cursorRules -BaseName $base `
+                -LabelPrefix "cursor-rules(dedupe-vs-plugin)"
+        }
+    }
+
     # Sync stamp for diagnostics
     [System.IO.File]::WriteAllText(
         (Join-Path $install ".sync-stamp"),
@@ -510,6 +526,7 @@ function Deploy-CursorLocalPlugin {
 
     if ((Test-Path $installManifest) -and $copied -gt 0) {
         Write-Ok "Local plugin claude-config refreshed ($copied rules) -> plugins/local/claude-config"
+        Write-Ok "Deduped ~/.cursor/rules vs plugin (same basename removed; User UI = plugin only)"
         $script:STATS.Synced++
     } else {
         Write-Fail "Failed refreshing local plugin claude-config"
@@ -658,27 +675,23 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     }
 
     # ---- 2. L0 rule files (CORE, CLAUDE-ROUTER) ----
-    foreach ($item in $L0_RULE_ITEMS) {
-        Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
-            -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
-    }
-
-    # Add CLAUDE-ROUTER if source exists
-    $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SRC_REL
-    if (Test-Path $routerSrc) {
-        Sync-RuleFile -SrcRelPath $ROUTER_SRC_REL -DstBaseName $ROUTER_DST_BASE `
-            -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
-    }
-
-    # Cursor Guard 专有规则（仅个人 ~/.cursor/rules；不写进配置仓 Project Rules，避免双份）
-    if ($editor -eq 'cursor') {
-        $ceRel = "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
-        $ceSrc = Join-Path $CLAUDE_DIR $ceRel
-        if (Test-Path $ceSrc) {
-            Sync-File -SrcPath $ceSrc -DstPath (Join-Path $rulesDir "CURSOR-EDITOR.mdc") `
-                -Label "rules/CURSOR-EDITOR.mdc -> cursor"
+    # Cursor: SSOT rules live ONLY in local plugin (claude-config) to avoid
+    # User Settings + Agent double Always-Apply. Other editors keep softlinks.
+    if ($editor -ne 'cursor') {
+        foreach ($item in $L0_RULE_ITEMS) {
+            Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
+                -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
         }
-        # Settings → User 页签不枚举 ~/.cursor/rules 文件；官方全局 .mdc 通道 = local plugin
+
+        $routerSrc = Join-Path $CLAUDE_DIR $ROUTER_SRC_REL
+        if (Test-Path $routerSrc) {
+            Sync-RuleFile -SrcRelPath $ROUTER_SRC_REL -DstBaseName $ROUTER_DST_BASE `
+                -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
+        }
+    }
+
+    # Cursor Guard 专有 + local plugin（唯一 Always Apply 通道）
+    if ($editor -eq 'cursor') {
         Deploy-CursorLocalPlugin
     }
 
@@ -690,10 +703,11 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     }
 
     # ---- 4. Always sync all rules/*.md (symlink preferred) ----
-    # Keeps every editor's rules/ current without requiring -All.
-    # skills/agents still gated by -Skills / -All above.
-    $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
-    if (Test-Path $rulesSrcDir) {
+    # Cursor: skip — plugin already holds copies; writing softlinks recreates duplicates.
+    if ($editor -eq 'cursor') {
+        Write-Host "  [skip] ~/.cursor/rules softlinks (deduped; SSOT via claude-config plugin)" -ForegroundColor DarkGray
+    } elseif (Test-Path (Join-Path $CLAUDE_DIR "rules")) {
+        $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
         $ruleFiles = Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -ne "README.md" } |
             Sort-Object Name
@@ -707,7 +721,6 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
         $expectedRuleBases = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
         foreach ($item in $L0_RULE_ITEMS) { $null = $expectedRuleBases.Add($item.DstBase) }
         $null = $expectedRuleBases.Add($ROUTER_DST_BASE)
-        if ($editor -eq 'cursor') { $null = $expectedRuleBases.Add("CURSOR-EDITOR") }
 
         foreach ($rf in $ruleFiles) {
             $null = $expectedRuleBases.Add($rf.BaseName)
@@ -718,7 +731,6 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
             Sync-File -SrcPath $srcPath -DstPath $dstPath -Label $label
         }
 
-        # Purge orphaned rule files removed from SSOT
         if (Test-Path $rulesDir) {
             Get-ChildItem $rulesDir -File -ErrorAction SilentlyContinue |
                 Where-Object { $_.Extension -match '^\.(mdc|md)$' -and -not $expectedRuleBases.Contains($_.BaseName) } |
@@ -835,7 +847,7 @@ Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settin
 Write-Host ""
 
 # =============================================================
-# Knowledge graph refresh (codegraph + codebase-memory)
+# Knowledge graph refresh (codegraph only; codebase-memory disabled)
 # =============================================================
 if (-not $DryRun) {
     $kgSync = Join-Path $CLAUDE_DIR "hooks\_lib\knowledge_graph_sync.py"

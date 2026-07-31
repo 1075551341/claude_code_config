@@ -7,16 +7,18 @@ alwaysApply: true
 
 > 五阶段/铁律见 sync 的 CORE.md、CLAUDE.md。本文仅 Cursor Agent 行为。
 
-## 探索优先级（R17 Cursor 版）
+## 探索优先级（R17 Cursor 版 · 严格三级禁止跳级）
 
 ```
-codegraph_explore / codegraph_impact / codegraph_search
-  > Grep > Read
+1. 结构/局部 → codegraph_explore（禁止直接 Grep/Read）
+2. codebase-memory：已禁用（全盘索引爆内存）— 勿调用；架构问题仍用 codegraph
+3. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
 ```
 
-- 结构、调用链、影响面：必须先 MCP codegraph
-- Grep 仅 codegraph 不可用时的 fallback
+- 结构、调用链、影响面：必须先 MCP `codegraph_explore`
+- Grep 仅 codegraph 不可用时的定点 fallback（非跳级捷径）
 - 禁止未探索就大范围 Read 扫目录
+- Edit/Stop 由 Cursor Guard `knowledge_graph_sync_hook` **仅刷新 codegraph**（cbm 已关）
 
 ## 编辑与引用
 

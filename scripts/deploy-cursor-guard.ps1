@@ -117,6 +117,20 @@ if (-not (Test-Path $cfgDst) -or $Force) {
                 }
             }
         }
+        # Nested merge: knowledge_graph (force codebase_memory=false — cbm disabled)
+        if ($tpl.knowledge_graph) {
+            if (-not $usr.knowledge_graph) {
+                $usr | Add-Member -NotePropertyName knowledge_graph -NotePropertyValue $tpl.knowledge_graph -Force
+            } else {
+                foreach ($kp in $tpl.knowledge_graph.PSObject.Properties) {
+                    if (-not $usr.knowledge_graph.PSObject.Properties.Match($kp.Name).Count) {
+                        $usr.knowledge_graph | Add-Member -NotePropertyName $kp.Name -NotePropertyValue $kp.Value -Force
+                    }
+                }
+            }
+            # Always pin off — indexing user home exhausted RAM
+            $usr.knowledge_graph.codebase_memory = $false
+        }
         if (-not $usr.version) { $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force }
         Write-Utf8NoBom -Path $cfgDst -Content ($usr | ConvertTo-Json -Depth 8)
         Write-Ok "guard-config.json merged new keys"
@@ -125,18 +139,17 @@ if (-not (Test-Path $cfgDst) -or $Force) {
     }
 }
 
-# CURSOR-EDITOR.mdc — 先删同类型同名变体，再写入（与 sync.ps1 L0 部署一致）
+# CURSOR-EDITOR / SSOT rules: owned by claude-config plugin only.
+# Do NOT write into ~/.cursor/rules — that duplicates Always Apply in UI/Agent.
 $rulesDst = Join-Path $DST "rules"
-if (-not (Test-Path $rulesDst)) {
-    New-Item -ItemType Directory -Path $rulesDst -Force | Out-Null
+if (Test-Path $rulesDst) {
+    foreach ($f in Get-ChildItem $rulesDst -File -Force -ErrorAction SilentlyContinue) {
+        if ($f.BaseName -ieq "CURSOR-EDITOR") {
+            Remove-Item $f.FullName -Force -ErrorAction SilentlyContinue
+            Write-Fix "removed ~/.cursor/rules/$($f.Name) (use plugin claude-config)"
+        }
+    }
 }
-$ceSrc = Join-Path $SRC "rules\CURSOR-EDITOR.mdc"
-$ceDst = Join-Path $rulesDst "CURSOR-EDITOR.mdc"
-foreach ($f in Get-ChildItem $rulesDst -File -Force -ErrorAction SilentlyContinue) {
-    if ($f.BaseName -ieq "CURSOR-EDITOR") { Remove-Item $f.FullName -Force }
-}
-Copy-Item $ceSrc $ceDst -Force
-Write-Fix "rules/CURSOR-EDITOR.mdc (delete-then-write)"
 
 # .cursorignore merge
 $ignoreSrc = Join-Path $SRC "dot-cursorignore"

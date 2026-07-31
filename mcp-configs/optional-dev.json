@@ -1,8 +1,11 @@
 {
   "toolset": "optional-dev",
-  "description": "浏览器调试 / 语义搜索 / 代码知识图谱 — 按需 merge 到 .mcp.json",
-  "servers": ["chrome-devtools", "exa", "codebase-memory"],
-  "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code",
+  "description": "浏览器调试 / 语义搜索 — 按需 merge 到 .mcp.json（codebase-memory 已禁用：索引用户主目录会耗尽 CPU/内存）",
+  "servers": ["chrome-devtools", "exa"],
+  "disabled": {
+    "codebase-memory": "2026-07-31: 默认禁用。根因：hook/MCP 易对 C:\\\\Users\\\\<user> 全盘 index_repository，单进程 >6GB RAM。需要时手动临时 merge，且必须限定明确业务仓路径。"
+  },
+  "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code（勿启用 codebase-memory 除非显式限定 repo）",
   "mcpServers": {
     "chrome-devtools": {
       "_description": "Chrome DevTools MCP。场景：网页调试、性能面板。",
@@ -18,11 +21,11 @@
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
-    },
-    "codebase-memory": {
-      "_description": "代码知识图谱 L4（DeusData/codebase-memory-mcp v0.8.1）。场景：架构全景、ADR、变更影响 detect_changes、语义搜索。需先 index。与 codegraph 双引擎互补。",
-      "command": "npx",
-      "args": ["-y", "codebase-memory-mcp@0.8.1"]
     }
+  },
+  "_archive_codebase_memory": {
+    "_description": "DISABLED — 勿 merge。原 L4 架构/ADR/detect_changes。替代：codegraph_explore。",
+    "command": "npx",
+    "args": ["-y", "codebase-memory-mcp@0.8.1"]
   }
 }

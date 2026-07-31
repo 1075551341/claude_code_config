@@ -29,7 +29,7 @@
   "knowledge_graph": {
     "enabled": true,
     "codegraph": true,
-    "codebase_memory": true,
+    "codebase_memory": false,
     "cbm_mode": "fast"
   },
   "sync": {

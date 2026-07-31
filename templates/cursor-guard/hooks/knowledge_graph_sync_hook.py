@@ -71,16 +71,25 @@ def main() -> None:
             root,
             force=force,
             run_codegraph=kg.get("codegraph", True),
-            run_cbm=kg.get("codebase_memory", True),
-            cbm_mode=str(kg.get("cbm_mode", "fast")),
+            run_cbm=False,  # codebase-memory 已禁用
         )
         cg = (result.get("codegraph") or {}).get("ok")
-        cbm = (result.get("cbm") or {}).get("ok")
+        cbm_res = result.get("cbm")
         skipped = result.get("skipped") or []
+        if cbm_res is None:
+            cbm_label = "disabled"
+        elif cbm_res.get("ok"):
+            cbm_label = "ok"
+        elif "cbm_debounce" in skipped:
+            cbm_label = "skip"
+        else:
+            cbm_label = "fail"
+        cg_label = (
+            "ok" if cg else ("skip" if "codegraph_debounce" in skipped else "fail")
+        )
         print(
             f"knowledge_graph_sync_hook: force={force} root={root} "
-            f"codegraph={'ok' if cg else ('skip' if 'codegraph_debounce' in skipped else 'fail')} "
-            f"cbm={'ok' if cbm else ('skip' if 'cbm_debounce' in skipped else 'fail')}",
+            f"codegraph={cg_label} cbm={cbm_label}",
             file=sys.stderr,
         )
     except Exception as e:

@@ -47,7 +47,7 @@ def main():
 
     cwd = data.get("cwd") or data.get("working_directory") or None
     root = resolve_project_root(cwd, file_path or None)
-    result = sync_knowledge_graphs(root, force=False, cbm_mode="fast")
+    result = sync_knowledge_graphs(root, force=False, run_cbm=False)
     # 静默成功；失败已 stderr
     if result.get("skipped") and not result.get("codegraph") and not result.get("cbm"):
         sys.exit(0)

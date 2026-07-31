@@ -16,18 +16,19 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.5
 | fs        | 跨路径文件操作             |
 | time      | 时区/时间（禁 new Date()） |
 
-**按需**（merge `mcp-configs/ops.json` 或 `optional-dev.json`）：redis, sqlite, docker, postgres, chrome-devtools, exa, **codebase-memory** — 见 [rules/MCP.md](../rules/MCP.md)。
+**按需**（merge `mcp-configs/ops.json` 或 `optional-dev.json`）：redis, sqlite, docker, postgres, chrome-devtools, exa — 见 [rules/MCP.md](../rules/MCP.md)。
+
+> **codebase-memory 已禁用（2026-07-31）**：根因是 `index_repository` 易对 `C:\Users\<user>` 全盘索引，单进程 >6GB RAM。架构/ADR 场景用 `codegraph_explore`；勿再 merge cbm。
 
 ## Cursor 常驻 MCP（user）
 
-| MCP                  | 用途                                                                                                      |
-| -------------------- | --------------------------------------------------------------------------------------------------------- |
-| user-codegraph       | R17 首选；Guard soft_block Grep/Glob                                                                      |
-| user-codebase-memory | L4 架构/ADR/变更（P0 推荐启用）                                                                           |
-| user-crawl           | Firecrawl 网页抓取                                                                                        |
-| user-fetch           | 轻量单页抓取（crawl 重活，fetch 轻活）；uvx `--with "mcp<1.12"` 钉扎修复（v10.6，上游 McpError 改名断链） |
-| user-gh              | PR/Issue（pr-workflow）                                                                                   |
-| user-pw              | E2E/浏览器（按需开）                                                                                      |
+| MCP            | 用途                                                                                                      |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| user-codegraph | R17 首选；Guard soft_block Grep/Glob                                                                      |
+| user-crawl     | Firecrawl 网页抓取                                                                                        |
+| user-fetch     | 轻量单页抓取（crawl 重活，fetch 轻活）；uvx `--with "mcp<1.12"` 钉扎修复（v10.6，上游 McpError 改名断链） |
+| user-gh        | PR/Issue（pr-workflow）                                                                                   |
+| user-pw        | E2E/浏览器（按需开）                                                                                      |
 
 ## Cursor 已禁用 MCP
 
