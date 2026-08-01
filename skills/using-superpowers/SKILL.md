@@ -45,18 +45,22 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 ```
 用户输入
   → R18: claude-mem search?（相关则先查）
-  → 简单(≤3文件,无架构)? → L1 change-impact → 直接改 → 轻量验证
-  → Bug(堆栈/复现)? → L3 triage → L2 debugging
-  → 非简单 → L1 brainstorming → …五阶段全链
+  → Read skills/task-triage/SKILL.md（两大类+使用类型树 SSOT，禁止仅凭文件数）
+  → 简单(单文件+白名单+五维全低)? → L1 change-impact → 直接改 → 轻量验证
+  → 非简单(多文件/黑名单/五维含中高/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
+       → Bug类(多文件/根因不明) → L3 triage → L2 debugging
+       → 功能/架构/配置/删除类 → L1 brainstorming → …五阶段全链
+       → 调研类 → L3 deep-research
 ```
 
 **简单旁路**：不 Read executing-plans / subagent-driven-development。
 
-## P0 路由集（5）
+## P0 路由集（6）
 
 | 等级 | Skill | 触发 |
 |------|-------|------|
 | L1 | using-superpowers | 会话开始 |
+| L1 | task-triage | 会话开始分类、新任务（两大类+使用类型；简单=单文件） |
 | L1 | change-impact-analysis | 任何修改 |
 | L1 | brainstorming | 非简单、方案、架构 |
 | L2 | verification-before-completion | 完成、验收 |
@@ -76,8 +80,8 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 |--------|------|------|---------|
 | 1 | `/workstream` 或「并行流」 | GSD | workstream-management |
 | 2 | `openspec/changes/` 或 brownfield | OpenSpec | rules/OPENSPEC.md |
-| 3 | ≤3 文件单模块 | 轻量 `spec/` | — |
-| 4 | 默认 >3 文件 | OpenSpec | rules/OPENSPEC.md；无目录则创建 change id |
+| 3 | 简单(task-triage判定=单文件)单模块 | 轻量 `spec/` | — |
+| 4 | 默认 多文件（非简单） | OpenSpec | rules/OPENSPEC.md；无目录则创建 change id |
 
 ## 调研三档（① brainstorming 内嵌）
 

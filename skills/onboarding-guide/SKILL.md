@@ -37,7 +37,7 @@ loading_tier: L3
 
 ## Phase 5 — 第一个任务
 
-- 选最小有价值任务（≤3 文件）
+- 选最小有价值任务（task-triage 判定为简单：单文件）
 - 走完整五阶段：discuss → plan → execute → verify
 - 输出：PR 或本地 commit
 

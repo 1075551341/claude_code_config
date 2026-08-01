@@ -1,6 +1,6 @@
 # github/github-mcp-server v1.2.0
 
-> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub Releases + newreleases.io + chatforest.com 三源交叉
+> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + newreleases.io + chatforest.com 三源交叉
 
 
 ## v10.5.1 delta (2026-07-17)

@@ -1,17 +1,17 @@
-# 组件唯一归属源 — 防左右手互博 — v10.7.0
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 29 active + 1 removed；分层 delta
+# 组件唯一归属源 — 防左右手互博 — v10.11.0
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.7.0"
-updated: "2026-07-30"
+version: "10.11.0"
+updated: "2026-08-01"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
 
 superpowers:
   source: obra/superpowers
-  version: "6.0.3"
+  version: "6.2.0" # v10.11: 插件 autoUpdater 运行态（installed_plugins.json 事实源）；override 机制不变
   override: local_post_load # 插件自动更新 + 本地 skills 后加载覆盖
 
 openspec_config:
@@ -103,10 +103,9 @@ pillars:
           design-shotgun,
         ],
     }
-  claude_mem:
-    {
+  claude_mem: {
       source: thedotmack/claude-mem,
-      version: "13.8.1",
+      version: "13.12.4", # v10.11: 插件运行态对齐（原钉 13.8.1）
       capabilities: [cross-session-memory, pattern-extraction],
     }
 
@@ -137,7 +136,7 @@ horizontal_layers:
     description: 洞察横切层 — 代码图谱 + 外部搜索（UA removed v10.5）
     owners:
       - source: colbymchenry/codegraph
-        version: "1.0.1"
+        version: "1.5.0" # v10.11: MCP daemon 实测；CLI 0.9.7 待对齐（可选 V1）；原记 1.0.1
         concerns:
           [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
       - source: DeusData/codebase-memory-mcp
@@ -157,7 +156,12 @@ horizontal_layers:
 loading_tiers:
   L0: [CLAUDE-ROUTER, CLAUDE.md, rules/CORE.md]
   L1:
-    [skill/using-superpowers, skill/change-impact-analysis, skill/brainstorming]
+    [
+      skill/using-superpowers,
+      skill/task-triage,
+      skill/change-impact-analysis,
+      skill/brainstorming,
+    ]
   L2_gate:
     spec: [skill/writing-plans, skill/spec-validation]
     execute: [skill/executing-plans, skill/subagent-driven-development]
@@ -221,7 +225,7 @@ concerns:
     owner: skill/executing-plans
     source: obra/superpowers
     stage: execute
-    note: 仅 NON_SIMPLE 路径；简单任务(≤3文件)旁路 executing-plans/subagent-driven
+    note: 仅 NON_SIMPLE 路径；简单任务(task-triage判定=单文件)旁路 executing-plans/subagent-driven
     depends_on: [skill/writing-plans, skill/subagent-driven-development]
 
   verification:
@@ -323,10 +327,38 @@ concerns:
     source: VoltAgent/awesome-design-md
     stage: spec
 
+  codex_plugin_review:
+    owner: config/MANIFEST.yaml
+    source: openai/codex-plugin-cc
+    stage: verify
+    status: reference # v10.11: 评估=不集成（跨模型双倍计费；本地 codex-reviewer 承接）
+    note: 对抗审查模式可注入 codex-reviewer 提示词
+
+  claude_code_router:
+    owner: config/MANIFEST.yaml
+    source: musistudio/claude-code-router
+    stage: execute
+    status: reference # v10.11: 评估=不集成（常驻进程 vs 单供应商 Kimi 直连）
+    note: 内置 Kimi preset；未来多供应商场景重新评估
+
+  superclaude_framework:
+    owner: config/MANIFEST.yaml
+    source: SuperClaude-Org/SuperClaude_Framework
+    stage: skeleton
+    status: reference # v10.11: 不集成（元编程框架与五柱架构重叠）
+    note: PLANNING.md 架构文档参考
+
+  claude_code_cli:
+    owner: config/MANIFEST.yaml
+    source: anthropics/claude-code
+    stage: skeleton
+    status: reference # v10.11: 官方安装路径文档（npm 弃用）
+    note: "Windows: irm https://claude.ai/install.ps1 | iex"
+
   coding_philosophy:
     owner: skill/karpathy-guidelines
     rules_ref: rules/CORE.md
-    source: forrestchang/andrej-karpathy-skills
+    source: multica-ai/andrej-karpathy-skills # v10.11: forrestchang 组织迁移（同仓库双名）
 
   gsd_context:
     owner: skill/subagent-driven-development
@@ -393,7 +425,7 @@ concerns:
     hooks: [post-codegraph-sync]
 
   context_monitor:
-    owner: hook/stop-context-monitor
+    owner: rules/CORE.md # 未注册 hook：stop-context-monitor 文件保留，由 Cursor Guard 阈值/原生机制覆盖（v10.10 对齐运行态）
     source: affaan-m/ECC
     depends_on: [hook/pre-suggest-compact, rules/CORE.md]
 
@@ -409,7 +441,7 @@ concerns:
     owner: hooks/_lib/gate_messages.md
     source: local
     stage: all
-    note: "v10.7.0 — 三门控文本 SSOT：P0分类门(SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
+    note: "v10.9.0 — 三门控文本 SSOT：P0分类门(task-triage两大类+单文件判定，SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
     hooks:
       [
         session-start-bootstrap,
@@ -421,6 +453,7 @@ concerns:
     depends_on:
       [
         skills/using-superpowers,
+        skills/task-triage,
         skills/verification-before-completion,
         skills/change-impact-analysis,
         templates/cursor-guard,
@@ -482,7 +515,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude Code 常驻 5（codegraph+crawl+git+fs+time）；ops/optional-dev 见 mcp-configs/
+    note: Claude Code 常驻 5（codegraph+fetch+git+fs+time）；crawl 已按需化（v10.10，L2/L3 调研时 merge）；ops/optional-dev 见 mcp-configs/
     depends_on:
       [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
 
@@ -553,6 +586,15 @@ concerns:
     excludes: [skill/systematic-debugging]
     stage: plan
     note: "triage = 未知Bug分类(P0-P3优先级)；systematic-debugging = 已知Bug根因分析。互斥不重叠。"
+
+  task_triage:
+    owner: skill/task-triage
+    source: internal
+    stage: plan
+    loading_tier: L1
+    depends_on: [skill/using-superpowers, skill/brainstorming]
+    excludes: [skill/triage, catalog/skills/grill-with-docs]
+    note: "v10.9.0 — 两大类(简单/非简单)+使用类型细分路由；简单=单文件+白名单+五维全低；非简单先 grill 再进 brainstorming；triage=bug P0-P3 分级(L3)互补不重叠"
 
   architecture_improvement:
     owner: skill/improve-codebase-architecture
@@ -630,8 +672,8 @@ concerns:
     source: zilliztech/claude-context
     stage: execute
     status: archived_redirect
-    successor: DeusData/codebase-memory-mcp
-    note: v10.4 归档 — 语义搜索位由 codebase_memory_mcp 替代
+    successor: colbymchenry/codegraph # cbm 已禁用，语义/探索位由 codegraph 承接
+    note: v10.4 归档 — 语义搜索位由 codegraph 替代（cbm 已禁用）
     excludes: [agent/code-explorer, codebase_memory_mcp]
 
   codebase_memory_mcp:
@@ -639,8 +681,8 @@ concerns:
     source: DeusData/codebase-memory-mcp
     version: "0.8.1"
     stage: execute
-    loading: L4_on_demand
-    note: 架构/ADR/变更影响/跨服务；日常探索见 codegraph_explore
+    loading: disabled # v10.10: 永久禁用 — 启用后疯狂消耗 CPU/内存（全盘索引）
+    note: 已禁用；全盘索引爆 CPU/内存，codegraph 全权替代（CORE R17）；禁止启用
     excludes: [claude_context_mcp, agent/code-explorer]
     depends_on: [rules/CONTEXT.md]
 
@@ -714,8 +756,9 @@ p0_skills:
   - change-impact-analysis
   - verification-before-completion
   - systematic-debugging
+  - task-triage
 
-global_skills_max: 45 # v10.5: +7 L3; UA removed
+global_skills_max: 45 # v10.10: 对齐实际 45（零触发技能保持观察）
 global_agents_max: 25
 
 # ═══════════════════════════════════════════════════════════════

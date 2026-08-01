@@ -1,6 +1,6 @@
 # affaan-m/ECC v2.0.0
 
-> 层: L1 治理 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub Releases + Discussion #2213 双源
+> 层: L1 治理 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + Discussion #2213 双源
 
 ## v10.5 delta (2026-07-17)
 

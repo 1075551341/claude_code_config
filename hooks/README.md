@@ -1,6 +1,6 @@
 # Hooks 钩子系统 v5.2
 
-> Claude Code 专用，不同步编辑器。15 注册激活 hooks + `_archive/` 非激活资产库（35）
+> Claude Code 专用，不同步编辑器。16 注册激活 hooks + `_archive/` 非激活资产库（35）
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
 > **v5.2 变更（v10.7.0）**：① 三门控 hook 落地（session-start-bootstrap 注册 SessionStart、pre-userprompt-verify-gate、pre-edit-impact-nudge），文本 SSOT `hooks/_lib/gate_messages.md`；② 补注册历史遗漏 5 个（pre-read-before-edit / pre-manifest-validator / pre-compact-state / stop-quality-gate / stop-session-summary），运行态与本文件 v5.1 口径对齐；③ 三个新 hook stdin 显式 UTF-8 解码（Windows cp936 中文乱码修复）。Cursor Guard 同步 15→17（+verification_gate、impact_nudge，deploy-cursor-guard.ps1 部署）。
 
@@ -8,7 +8,7 @@
 
 | 目录                 | 数量        | 用途                                                                                                                                         |
 | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hooks/`             | 15 注册激活 | standard profile（settings.json 已注册）                                                                                                     |
+| `hooks/`             | 16 注册激活 | standard profile（settings.json 已注册）                                                                                                     |
 | `hooks/`（未注册 4） | 4           | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor — 文件保留未注册：Claude Code 原生机制或 Cursor Guard 已覆盖 |
 | `hooks/_lib/`        | 2           | 共享库：context_thresholds.py + gate_messages.md（门控文本 SSOT）                                                                            |
 | `hooks/_archive/`    | 35          | 非激活资产库（原 `_optional/`），不加载不扫描                                                                                                |
@@ -16,7 +16,7 @@
 
 ---
 
-## 15 注册激活 Hook 清单（v10.7.0 对齐运行态）
+## 16 注册激活 Hook 清单（v10.7.0 对齐运行态）
 
 ### SessionStart (1)
 
@@ -45,10 +45,10 @@
 
 ### PostToolUse (3)
 
-| Hook                      | 触发       | 功能                    | 层   |
-| ------------------------- | ---------- | ----------------------- | ---- |
-| `post-edit-format.py`     | Edit/Write | 代码格式化 + Lint       | 执行 |
-| `post-secret-detector.py` | Edit/Write | 密钥/Token/密码泄露扫描 | 横切 |
+| Hook                      | 触发       | 功能                                                 | 层   |
+| ------------------------- | ---------- | ---------------------------------------------------- | ---- |
+| `post-edit-format.py`     | Edit/Write | 代码格式化 + Lint                                    | 执行 |
+| `post-secret-detector.py` | Edit/Write | 密钥/Token/密码泄露扫描                              | 横切 |
 | `post-codegraph-sync.py`  | Edit/Write | codegraph + codebase-memory 增量同步（90s debounce） | 横切 |
 
 ### PreCompact (1)
@@ -59,12 +59,12 @@
 
 ### Stop (4)
 
-| Hook                             | 功能                                             | 层   |
-| -------------------------------- | ------------------------------------------------ | ---- |
-| `stop-quality-gate.py`           | schema_drift + security_anchor + scope_reduction | 执行 |
-| `stop-session-summary.py`        | 会话摘要                                         | 执行 |
-| `stop-readme-updater.py`         | README 自动更新                                  | 执行 |
-| `stop-knowledge-graph-sync.py`   | 强制刷新 codegraph + codebase-memory（忽略 debounce） | 横切 |
+| Hook                           | 功能                                                  | 层   |
+| ------------------------------ | ----------------------------------------------------- | ---- |
+| `stop-quality-gate.py`         | schema_drift + security_anchor + scope_reduction      | 执行 |
+| `stop-session-summary.py`      | 会话摘要                                              | 执行 |
+| `stop-readme-updater.py`       | README 自动更新                                       | 执行 |
+| `stop-knowledge-graph-sync.py` | 强制刷新 codegraph + codebase-memory（忽略 debounce） | 横切 |
 
 共享库：`hooks/_lib/knowledge_graph_sync.py`（Claude PostToolUse/Stop、Cursor Guard、`sync.ps1` 共用）。
 
@@ -96,8 +96,8 @@
 
 ```bash
 LOCAL_HOOK_PROFILE=minimal   # 仅生命周期+安全 (5 hooks)
-LOCAL_HOOK_PROFILE=standard  # 默认：15 注册激活 (当前)
-LOCAL_HOOK_PROFILE=strict    # 15核心 + _archive/ 安全扫描（需人工迁移注册）
+LOCAL_HOOK_PROFILE=standard  # 默认：16 注册激活 (当前)
+LOCAL_HOOK_PROFILE=strict    # 16核心 + _archive/ 安全扫描（需人工迁移注册）
 ```
 
 兼容别名：`ECC_HOOK_PROFILE` 同义。

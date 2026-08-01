@@ -1,12 +1,19 @@
-# forrestchang/andrej-karpathy-skills
+# forrestchang/andrej-karpathy-skills（上游 multica-ai/andrej-karpathy-skills）
 
-> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-06-24 | 上游: multica-ai/andrej-karpathy-skills | 来源: GitHub + juejin + mer.vin 三源交叉
+> 层: 技能/实践 | 置信度: 高 | 刷新: 2026-08-01 | 上游: multica-ai/andrej-karpathy-skills（forrestchang 组织迁移，同仓库双名） | 来源: 主 agent 网络核实快照
 
+## v10.11 delta (2026-08-01)
+
+- **组织迁移确认**：仓库由 forrestchang 迁移至 multica-ai 组织；README 安装命令仍为 `forrestchang/andrej-karpathy-skills` marketplace（兼容双名）
+- **安装方式**：`/plugin marketplace add forrestchang/andrej-karpathy-skills` + `/plugin install andrej-karpathy-skills@karpathy-skills`；或 CLAUDE.md 单文件注入
+- **本地映射**：karpathy-guidelines skill integrated（四原则）；MANIFEST `coding_philosophy.source` 同步更新为 multica-ai 名
 
 ## v10.5.1 delta (2026-07-17)
+
 - **最新元数据**：193,293★；`pushed_at` 2026-04-20。
 - **本地映射**：karpathy-guidelines skill integrated。
 - **来源**：GitHub API（Tier-2）。
+
 ## 核心价值
 
 - 176K+ Stars（2026-06；4 月 92K → 6 月 176K，3 个月翻倍）
@@ -23,10 +30,10 @@
 
 ## 本地映射
 
-| MANIFEST concern | 路径 |
-|------------------|------|
+| MANIFEST concern  | 路径                                  |
+| ----------------- | ------------------------------------- |
 | coding_philosophy | `skills/karpathy-guidelines/SKILL.md` |
-| rules_ref | `rules/CORE.md` Karpathy 段 |
+| rules_ref         | `rules/CORE.md` Karpathy 段           |
 
 ## 吸收决策
 

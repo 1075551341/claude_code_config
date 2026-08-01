@@ -1,6 +1,6 @@
 # colbymchenry/codegraph v1.0.1
 
-> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub Releases + npm + 官网 双源交叉
+> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + npm + 官网 双源交叉
 
 ## v10.5 delta (2026-07-17)
 

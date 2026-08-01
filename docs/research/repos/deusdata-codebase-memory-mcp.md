@@ -1,6 +1,6 @@
 # DeusData/codebase-memory-mcp v0.8.1
 
-> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-06-29 | 来源: Exa + 官方站 + GitHub Releases v0.8.1 双源交叉
+> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-07-31 | 来源: Exa + 官方站 + GitHub Releases v0.8.1 双源交叉
 > 仓库: github.com/DeusData/codebase-memory-mcp | 许可证: Apache-2.0 | Stars: 3.3K+
 
 ## v10.5 delta (2026-07-17)

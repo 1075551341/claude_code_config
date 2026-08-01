@@ -1,6 +1,6 @@
 # .claude 配置集成设计 v10.5.1
 
-> 状态: **已完成** 2026-07-17 | 调研: `docs/research/` v10.5.1 | 计划: `docs/superpowers/plans/2026-07-17-v10.5.1-optimization.md`
+> 状态: **已完成** 2026-07-17 | 调研: `docs/research/` v10.5.1 | 计划: `docs/superpowers/plans/2026-07-31-v10.10-optimization.md`（原 v10.5.1 计划已删）
 
 ## 相对 v10.5 增量
 
@@ -15,7 +15,7 @@
 
 ## 访谈共识（Q1–Q8）
 
-见计划 [`docs/superpowers/plans/2026-07-17-v10.5.1-optimization.md`](../../docs/superpowers/plans/2026-07-17-v10.5.1-optimization.md)。
+见计划 [`docs/superpowers/plans/2026-07-31-v10.10-optimization.md`](../../docs/superpowers/plans/2026-07-31-v10.10-optimization.md)。
 
 ## 设计原则
 

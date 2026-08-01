@@ -1,9 +1,52 @@
-# 29 仓库深度调研报告 v10.5 / v10.5.1
+# 44 仓库深度调研报告（v10.11.0）
 
-> 日期: 2026-06-24…v10.4 → v10.5 → **2026-07-17 v10.5.1** | 方法: 分层 delta（Tier-1 gh+Firecrawl/Exa；Tier-2 gh）| **28 active + 1 removed**
-> 状态: **v10.5.1 Wave1 已完成** | 运行配置目标: **v10.5.1** | 历史版本已清理（仅保留本文件为调研全量 SSOT）
-> Per-repo 卡片: [`repos/`](repos/) | 覆盖矩阵: [`COVERAGE.md`](COVERAGE.md)
-> 计划/设计: [`../superpowers/plans/2026-07-17-v10.5.1-optimization.md`](../superpowers/plans/2026-07-17-v10.5.1-optimization.md) · [`../../spec/claude-config-integration/design-v10.5.1.md`](../../spec/claude-config-integration/design-v10.5.1.md)（前版 v10.5 仍保留交叉链接）
+> 日期: 2026-06-24…v10.10.0 → **2026-08-01 v10.11.0** | 方法: 分层 delta（Tier-1 gh+Firecrawl/Exa；Tier-2 gh）+ 主 agent 网络核实快照（2026-08-01）
+> 状态: **v10.11.0 已完成** | 运行配置目标: **v10.11.0** | 历史版本已清理（仅保留本文件为调研全量 SSOT；原 30-repo 文件已并入本文件）
+> Per-repo 卡片: [`repos/`](repos/)（44） | 覆盖矩阵: [`COVERAGE.md`](COVERAGE.md)
+> 计划/设计: [`../superpowers/plans/2026-07-31-v10.10-optimization.md`](../superpowers/plans/2026-07-31-v10.10-optimization.md) · [`../../spec/claude-config-integration/design-v10.5.1.md`](../../spec/claude-config-integration/design-v10.5.1.md)
+
+---
+
+## v10.11.0 摘要（2026-08-01）— 44 仓库全量
+
+**四分类**：
+
+| 分类                                     | 数量 | 说明                                                                                                   |
+| ---------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------ |
+| A 已集成（五柱+横切+技能+工具）          | 29   | 含 1 removed（Lum1104/Understand-Anything）+ 1 archived（gsd-build/get-shit-done → open-gsd/gsd-core） |
+| B 新增卡片（文档引用/catalog/reference） | 15   | 本轮新建 15 张卡片 + multica-ai 组织迁移指针更新（forrestchang 卡）                                    |
+| C 明确不集成                             | 2    | claude-code-best/claude-code、SuperClaude_Framework（非官方复原版/元编程框架与五柱重叠）               |
+| D 已处置                                 | —    | codebase-memory 永久禁用（v10.10 确认）、zilliztech archived_redirect、UA removed                      |
+
+**核心决策（v10.11.0）**：
+
+- **0 新增 skill/agent/MCP/plugin** — 45 skills 已有 7 个零触发观察项，克制优先（R10）；全部 44 仓库走卡片/文档级记录
+- **版本对齐运行态而非升级** — superpowers 6.2.0 / claude-mem 13.12.4 / codegraph MCP 1.5.0（插件 autoUpdater 已自动更新，文档钉扎值失效）；rtk 0.44.1 / caveman 1.9.1 / gstack 0.19 确认一致
+- **维持钉扎（R14）** — OpenSpec 1.4.1 / gsd 1.4.5 / ECC 2.0 cherry_pick；升级评估记录见 `COVERAGE.md` "升级评估记录"（gsd 1.7.0 / OpenSpec 1.6.0 / ECC 2.1+），本轮不落地
+- **不集成评估** — CCR（musistudio/claude-code-router：Kimi preset 有吸引力，但常驻进程 ~100-200MB vs 单供应商直连收益不匹配）、codex-plugin-cc（跨模型双倍计费；本地已有 codex-reviewer agent 承接）
+- **清理** — 删除旧计划 2 份（v10.6/v10.7）+ diagnostic-v10.5.2 + 7 个空 backups 子目录；保留 v10.10 计划 + 本 SSOT（最全最新一次）
+
+### 版本实况（2026-08-01 运行态核实）
+
+| 组件            | 本地运行态                       | MANIFEST 原记录 | 动作                       |
+| --------------- | -------------------------------- | --------------- | -------------------------- |
+| superpowers     | **6.2.0**（插件缓存）            | 6.0.3           | 对齐运行态（v10.11）       |
+| claude-mem      | **13.12.4**（插件缓存）          | 13.8.1          | 对齐运行态（v10.11）       |
+| codegraph       | MCP daemon **1.5.0** / CLI 0.9.7 | 1.0.1           | 对齐 MCP 实况；CLI 可选 V1 |
+| rtk             | **0.44.1**（`rtk --version`）    | 0.44.1          | 一致                       |
+| caveman         | **1.9.1**                        | 1.9.1           | 一致                       |
+| gstack          | **0.19**                         | 0.19            | 一致                       |
+| OpenSpec        | 1.4.1（钉）                      | 1.4.1           | 上游 1.6.0 待评估          |
+| gsd-core        | 1.4.5（钉）                      | 1.4.5           | 上游 1.7.0 待评估          |
+| ECC             | 2.0 cherry_pick（钉）            | 2.0.0           | 上游 2.1+ 待评估           |
+| codebase-memory | **永久禁用**（v10.10 确认）      | 0.8.1           | 禁用，勿复活               |
+
+### v10.11.0 Delta（≤15 行）
+
+- 新增 15 张浅层卡：anthropics-claude-code / travisvn-awesome-claude-skills / voltagent-awesome-claude-code-subagents / piebald-ai-claude-code-system-prompts / wasp-lang-open-saas / claude-code-best-claude-code / superclaude-org-superclaude-framework / alirezarezvani-claude-skills / jeffallan-claude-skills / luongnv89-claude-howto / yeachan-heo-oh-my-claudecode / davila7-claude-code-templates / musistudio-claude-code-router / openai-codex-plugin-cc / jarrodwatts-claude-hud
+- multica-ai/andrej-karpathy-skills = forrestchang 组织迁移（同仓库双名），更新指针不新建卡
+- 四分类表 + 版本实况表（见上）；卡片 29 → 44；COVERAGE 矩阵同步
+- 版本串 v10.10.0 → **v10.11.0**（MANIFEST/CLAUDE/SPEC/INDEXs/README/agent.yaml 同步）
 
 ---
 
@@ -110,13 +153,13 @@ RUNTIME = Superpowers(方法论) + GSD(上下文) + OpenSpec(规格) + gstack(�
 
 ## 五柱骨架
 
-| 柱     | 仓库                          | 卡片                                                    |
-| ------ | ----------------------------- | ------------------------------------------------------- |
-| 方法论 | obra/superpowers v5.1.0       | [obra-superpowers](repos/obra-superpowers.md)           |
-| 上下文 | open-gsd/gsd-core v1.4.5      | [open-gsd-gsd-core](repos/open-gsd-gsd-core.md)         |
-| 规格   | Fission-AI/OpenSpec v1.4.1    | [fission-ai-openspec](repos/fission-ai-openspec.md)     |
-| 审查   | garrytan/gstack v0.19         | [garrytan-gstack](repos/garrytan-gstack.md)             |
-| 记忆   | thedotmack/claude-mem v13.6.1 | [thedotmack-claude-mem](repos/thedotmack-claude-mem.md) |
+| 柱     | 仓库                           | 卡片                                                    |
+| ------ | ------------------------------ | ------------------------------------------------------- |
+| 方法论 | obra/superpowers v6.2.0        | [obra-superpowers](repos/obra-superpowers.md)           |
+| 上下文 | open-gsd/gsd-core v1.4.5       | [open-gsd-gsd-core](repos/open-gsd-gsd-core.md)         |
+| 规格   | Fission-AI/OpenSpec v1.4.1     | [fission-ai-openspec](repos/fission-ai-openspec.md)     |
+| 审查   | garrytan/gstack v0.19          | [garrytan-gstack](repos/garrytan-gstack.md)             |
+| 记忆   | thedotmack/claude-mem v13.12.4 | [thedotmack-claude-mem](repos/thedotmack-claude-mem.md) |
 
 **Superpowers 工作流链**：
 
@@ -148,19 +191,19 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 | 仓库                         | 卡片                                                    |
 | ---------------------------- | ------------------------------------------------------- |
-| rtk-ai/rtk v0.42.1           | [rtk-ai-rtk](repos/rtk-ai-rtk.md)                       |
-| JuliusBrussee/caveman v1.8.2 | [juliusbrussee-caveman](repos/juliusbrussee-caveman.md) |
+| rtk-ai/rtk v0.44.1           | [rtk-ai-rtk](repos/rtk-ai-rtk.md)                       |
+| JuliusBrussee/caveman v1.9.1 | [juliusbrussee-caveman](repos/juliusbrussee-caveman.md) |
 | 内部阈值                     | rules/CORE.md + CONTEXT.md                              |
 
 ---
 
 ## L3 洞察横切
 
-| 仓库                                | 卡片                                                                  | 决策                           |
-| ----------------------------------- | --------------------------------------------------------------------- | ------------------------------ |
-| colbymchenry/codegraph v1.0.1       | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | mandate init                   |
-| DeusData/codebase-memory-mcp v0.8.1 | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | **L4_on_demand**（双引擎互补） |
-| Firecrawl + Exa                     | deep-research L3                                                      | 双源，Exa 兜底                 |
+| 仓库                                | 卡片                                                                  | 决策                                |
+| ----------------------------------- | --------------------------------------------------------------------- | ----------------------------------- |
+| colbymchenry/codegraph v1.5.0(MCP)  | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | mandate init                        |
+| DeusData/codebase-memory-mcp v0.8.1 | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | **永久禁用**（全盘索引爆 CPU/内存） |
+| Firecrawl + Exa                     | deep-research L3                                                      | 双源，Exa 兜底                      |
 
 ---
 
@@ -195,6 +238,28 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ---
 
+## v10.11.0 新增卡片（15）
+
+| 仓库                                    | 卡片                                                                                        | 决策                     |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------ |
+| anthropics/claude-code                  | [anthropics-claude-code](repos/anthropics-claude-code.md)                                   | reference                |
+| travisvn/awesome-claude-skills          | [travisvn-awesome-claude-skills](repos/travisvn-awesome-claude-skills.md)                   | marketplace              |
+| VoltAgent/awesome-claude-code-subagents | [voltagent-awesome-claude-code-subagents](repos/voltagent-awesome-claude-code-subagents.md) | catalog                  |
+| Piebald-AI/claude-code-system-prompts   | [piebald-ai-claude-code-system-prompts](repos/piebald-ai-claude-code-system-prompts.md)     | reference                |
+| wasp-lang/open-saas                     | [wasp-lang-open-saas](repos/wasp-lang-open-saas.md)                                         | pattern ref              |
+| claude-code-best/claude-code            | [claude-code-best-claude-code](repos/claude-code-best-claude-code.md)                       | reference（不集成）      |
+| SuperClaude-Org/SuperClaude_Framework   | [superclaude-org-superclaude-framework](repos/superclaude-org-superclaude-framework.md)     | reference（不集成）      |
+| alirezarezvani/claude-skills            | [alirezarezvani-claude-skills](repos/alirezarezvani-claude-skills.md)                       | catalog                  |
+| Jeffallan/claude-skills                 | [jeffallan-claude-skills](repos/jeffallan-claude-skills.md)                                 | catalog                  |
+| luongnv89/claude-howto                  | [luongnv89-claude-howto](repos/luongnv89-claude-howto.md)                                   | reference                |
+| Yeachan-Heo/oh-my-claudecode            | [yeachan-heo-oh-my-claudecode](repos/yeachan-heo-oh-my-claudecode.md)                       | reference                |
+| davila7/claude-code-templates           | [davila7-claude-code-templates](repos/davila7-claude-code-templates.md)                     | reference                |
+| musistudio/claude-code-router           | [musistudio-claude-code-router](repos/musistudio-claude-code-router.md)                     | reference（评估=不集成） |
+| openai/codex-plugin-cc                  | [openai-codex-plugin-cc](repos/openai-codex-plugin-cc.md)                                   | reference（评估=不集成） |
+| jarrodwatts/claude-hud                  | [jarrodwatts-claude-hud](repos/jarrodwatts-claude-hud.md)                                   | reference                |
+
+---
+
 ## 去重决策矩阵（v10.4 更新）
 
 | 重叠领域     | 涉及                                  | 决策                                                     |
@@ -211,6 +276,8 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | 压缩         | RTK vs caveman                        | 输入 vs 输出                                             |
 | Superpowers  | 插件 vs 本地 skills                   | 后加载本地覆盖                                           |
 | 加载         | L0 四入口 vs 全量 rules               | sync 默认 L0；-Skills/-All 按需                          |
+| 模型路由     | CCR vs 直连 Kimi API                  | 直连（settings.json ANTHROPIC_BASE_URL）；CCR 不集成     |
+| 跨模型审查   | codex-plugin-cc vs codex-reviewer     | 本地 codex-reviewer 主；plugin 不集成                    |
 
 ---
 
@@ -275,14 +342,12 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### v10.2 架构决策更新
 
-| 决策                    | 来源                        | v10.2 状态                                           |
-| ----------------------- | --------------------------- | ---------------------------------------------------- |
-| superpowers v6.0.0 升级 | obra/superpowers            | ✅ 升级，本地覆盖兼容                                |
-| 三级加载精简            | x1xhlol 工具密度研究        | L0 alwaysApply + L1 session + L2 gate + L3 on-demand |
-| gstack /learn 深度集成  | garrytan/gstack             | taste_memory concern → claude-mem observation 管道   |
-| ECC 互斥增强            | affaan-m/ECC                | +6 组 excludes，防 subagent 互博                     |
-
----
+| 决策                    | 来源                 | v10.2 状态                                           |
+| ----------------------- | -------------------- | ---------------------------------------------------- |
+| superpowers v6.0.0 升级 | obra/superpowers     | ✅ 升级，本地覆盖兼容                                |
+| 三级加载精简            | x1xhlol 工具密度研究 | L0 alwaysApply + L1 session + L2 gate + L3 on-demand |
+| gstack /learn 深度集成  | garrytan/gstack      | taste_memory concern → claude-mem observation 管道   |
+| ECC 互斥增强            | affaan-m/ECC         | +6 组 excludes，防 subagent 互博                     |
 
 ---
 
@@ -344,24 +409,24 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### Delta 刷新卡片清单(17 张)
 
-| 卡片                                   | 关键变更                                                              |
-| -------------------------------------- | --------------------------------------------------------------------- |
-| bytedance-deer-flow                    | v2.0→v3.1;50K+ Stars;中间件 9→11 层;五模式(+fast);AIO Sandbox         |
-| github-github-mcp-server               | v1.2.0;54K+ Stars;21 toolsets;MCP Apps;GitHub MCP Registry            |
-| forrestchang-andrej-karpathy-skills    | Stars 92K→176K(3 月翻倍);四原则已吸收 CORE R1-R4                      |
-| zilliztech-claude-context              | Stars 9.9K→11.4K;实测 -40% token/-36% 工具调用;+Ollama 本地嵌入       |
-| nextlevelbuilder-ui-ux-pro-max-skill   | v2.2.1;53.7K+ Stars;50+ 风格/161 色板/57 字体;双模式                  |
-| anthropics-claude-code-action          | v1.0.146                                                              |
-| anthropics-skills                      | ~151K+ Stars;开放标准跨平台采纳;渐进式披露 3 层                       |
-| 2025emma-vibe-coding-cn                | 维持中文社区最佳实践                                                  |
-| composiohq-awesome-claude-skills       | 21.7K+ Stars                                                          |
-| chalarangelo-30-seconds-of-code        | 128K+ Stars                                                           |
-| hesreallyhim-awesome-claude-code       | 36.8K+ Stars                                                          |
-| mattpocock-skills                      | 135K+ Stars                                                           |
-| ruvnet-ruflo                           | v3.6.30;蜂群拓扑持续演进                                              |
-| shanraisshan-claude-code-best-practice | 51.3K+ Stars                                                          |
-| voltagent-awesome-design-md            | 91K+ Stars                                                            |
-| x1xhlol-system-prompts-and-models      | 140K+ Stars                                                           |
+| 卡片                                   | 关键变更                                                        |
+| -------------------------------------- | --------------------------------------------------------------- |
+| bytedance-deer-flow                    | v2.0→v3.1;50K+ Stars;中间件 9→11 层;五模式(+fast);AIO Sandbox   |
+| github-github-mcp-server               | v1.2.0;54K+ Stars;21 toolsets;MCP Apps;GitHub MCP Registry      |
+| forrestchang-andrej-karpathy-skills    | Stars 92K→176K(3 月翻倍);四原则已吸收 CORE R1-R4                |
+| zilliztech-claude-context              | Stars 9.9K→11.4K;实测 -40% token/-36% 工具调用;+Ollama 本地嵌入 |
+| nextlevelbuilder-ui-ux-pro-max-skill   | v2.2.1;53.7K+ Stars;50+ 风格/161 色板/57 字体;双模式            |
+| anthropics-claude-code-action          | v1.0.146                                                        |
+| anthropics-skills                      | ~151K+ Stars;开放标准跨平台采纳;渐进式披露 3 层                 |
+| 2025emma-vibe-coding-cn                | 维持中文社区最佳实践                                            |
+| composiohq-awesome-claude-skills       | 21.7K+ Stars                                                    |
+| chalarangelo-30-seconds-of-code        | 128K+ Stars                                                     |
+| hesreallyhim-awesome-claude-code       | 36.8K+ Stars                                                    |
+| mattpocock-skills                      | 135K+ Stars                                                     |
+| ruvnet-ruflo                           | v3.6.30;蜂群拓扑持续演进                                        |
+| shanraisshan-claude-code-best-practice | 51.3K+ Stars                                                    |
+| voltagent-awesome-design-md            | 91K+ Stars                                                      |
+| x1xhlol-system-prompts-and-models      | 140K+ Stars                                                     |
 
 ### 决策不变项
 
@@ -473,6 +538,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 | superpowers #1773 issue                                              | 2026-06-19 | 高     |
 | WebSearch + GitHub + 社区三源 delta 刷新 17 张 stale 卡片 (v10.3)    | 2026-06-24 | 高     |
 | gh API Tier A/B delta + v10.5 访谈 Q1–Q5                             | 2026-07-17 | 高     |
+| 主 agent 网络核实快照 44 仓库 + 本机运行态核实 (v10.11.0)            | 2026-08-01 | 高     |
 
 ---
 
@@ -480,7 +546,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 **背景**：v10.5.1完成30仓库调研整合后，用户反馈"必要工具调用不足（当前仅codegraph调用比较多，其余均存在问题）"。
 
-**诊断发现**（详见 `docs/diagnostic-v10.5.2.md`）：
+**诊断发现**（详见 `docs/diagnostic-v10.5.2.md`，该文件 v10.11 已删除，内容并入 CLAUDE.md 工具调用门控）：
 
 - claude-mem插件已安装但未启用 → R18记忆优先失效
 - pre-rtk-rewrite.py存在但未绑定 → RTK shell压缩不生效
@@ -503,4 +569,15 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 **版本钉扎维持**：superpowers 6.0.3 / gsd 1.4.5 / OpenSpec 1.4.1 / claude-mem 13.8.x / cbm 0.8.1（R14）
 
-**信息源**：docs/diagnostic-v10.5.2.md（全量诊断报告）
+**信息源**：docs/diagnostic-v10.5.2.md（全量诊断报告；v10.11 已删除）
+
+---
+
+## v10.9.0 Delta（2026-07-31）— 任务分类重构：两大类 + 单文件收窄
+
+- 承接 v10.8.0：新增 `skills/task-triage`（L1，分类 SSOT）+ grill 门控（非简单先访谈再 brainstorming HARD-GATE）+ UA 归档卡（COVERAGE 统计自洽 29/29，skills 容量 45→46）
+- 分类树重构：顶层 简单/非简单 两大类 → 底层按使用类型细分（文档/实现/配置值/Bug / Bug/功能/架构/配置/删除/调研），每种类型独立路由
+- 简单判定严格收窄：单文件(=1) + 白名单 + 五维全低，缺一不可；"≤3文件"判据废弃
+- 五维矩阵文件数档位：低=1 / 中=2–5 / 高=>5
+- Bug 归属：可复现+根因明确+单文件 → 简单；其余 → triage(P0-P3)→systematic-debugging
+- 双端门控/CLAUDE/ROUTER/using-superpowers/MANIFEST/索引同步；版本 v10.9.0

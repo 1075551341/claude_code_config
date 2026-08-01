@@ -38,7 +38,7 @@ GLOBAL_AGENTS_MAX = 25
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
-    "verification-before-completion", "systematic-debugging",
+    "verification-before-completion", "systematic-debugging", "task-triage",
 }
 WORKFLOW_SKILLS = {
     "writing-plans", "executing-plans", "test-driven-development",
@@ -62,7 +62,7 @@ REQUIRED_SKILLS = (
     P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
     | MATTPOCOCK_SKILLS | V9_SKILLS
 )
-GLOBAL_SKILLS_MAX = 45  # v10.5: +7 L3 skills (refactor/frontend/skill-*); UA removed
+GLOBAL_SKILLS_MAX = 45  # v10.10: 对齐实际 45（零触发技能保持观察）
 
 GLOBAL_RULES = {
     "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
@@ -476,7 +476,7 @@ def check_v13_cursor_guard():
         print(f"  V13: Cursor Guard 模板 {len(required_hooks)} hooks ✓")
 
 
-SKILL_TIER_L1 = {"using-superpowers", "change-impact-analysis"}
+SKILL_TIER_L1 = {"using-superpowers", "change-impact-analysis", "task-triage"}
 SKILL_TIER_L2 = {
     "brainstorming", "writing-plans", "spec-validation", "executing-plans",
     "subagent-driven-development", "verification-before-completion", "systematic-debugging",
@@ -752,29 +752,19 @@ def check_v17_bare_except_extended():
 
 
 def check_v18_codebase_memory_optional():
-    """V18: codebase-memory-mcp L4 — optional-dev 配置 + npx/PATH 软警告（不阻断）."""
+    """V18: codebase-memory-mcp 已永久禁用（v10.10，全盘索引爆 CPU/内存）。
+    要求：不在 .mcp.json mcpServers；optional-dev.json 中仅 disabled/归档（无运行条目）。"""
     import json
-    import shutil
-
-    def _cbm_entry(servers: dict) -> dict | None:
-        return servers.get("codebase-memory")
-
-    def _uses_npx(entry: dict | None) -> bool:
-        if not entry:
-            return False
-        return entry.get("command") == "npx" and any(
-            "codebase-memory-mcp" in str(a) for a in (entry.get("args") or [])
-        )
 
     opt_path = os.path.join(BASE, "mcp-configs", "optional-dev.json")
     mcp_path = os.path.join(BASE, ".mcp.json")
-    opt_entry = None
-    mcp_entry = None
+    opt_data = {}
+    mcp_data = {}
 
     if os.path.isfile(opt_path):
         try:
             with open(opt_path, "r", encoding="utf-8") as fh:
-                opt_entry = _cbm_entry((json.load(fh)).get("mcpServers") or {})
+                opt_data = json.load(fh)
         except (OSError, json.JSONDecodeError) as exc:
             WARNINGS.append(f"V18: optional-dev.json unreadable: {exc}")
     else:
@@ -783,32 +773,22 @@ def check_v18_codebase_memory_optional():
     if os.path.isfile(mcp_path):
         try:
             with open(mcp_path, "r", encoding="utf-8") as fh:
-                mcp_entry = _cbm_entry((json.load(fh)).get("mcpServers") or {})
+                mcp_data = json.load(fh)
         except (OSError, json.JSONDecodeError):
             pass
 
-    if not opt_entry:
-        WARNINGS.append("V18: optional-dev.json missing codebase-memory entry (v10.4)")
-        return
+    opt_entry = (opt_data.get("mcpServers") or {}).get("codebase-memory")
+    mcp_entry = (mcp_data.get("mcpServers") or {}).get("codebase-memory")
+    disabled = opt_data.get("disabled") or {}
+    archived = opt_data.get("_archive_codebase_memory")
 
     if mcp_entry:
-        WARNINGS.append(
-            "V18: codebase-memory in .mcp.json — ADR D3 requires L4 optional-dev only; remove from resident config"
-        )
-
-    if _uses_npx(opt_entry) or _uses_npx(mcp_entry):
-        if shutil.which("npx"):
-            print("  V18: codebase-memory via npx ✓")
-        else:
-            WARNINGS.append("V18: npx not on PATH — cannot run codebase-memory-mcp")
-        return
-
-    if shutil.which("codebase-memory-mcp"):
-        print("  V18: codebase-memory-mcp on PATH ✓")
-    else:
-        WARNINGS.append(
-            "V18: codebase-memory-mcp not on PATH — prefer npx in optional-dev.json"
-        )
+        WARNINGS.append("V18: codebase-memory in .mcp.json - v10.10 永久禁用（全盘索引爆 CPU/内存），remove")
+    if opt_entry:
+        WARNINGS.append("V18: codebase-memory active in optional-dev mcpServers - v10.10 永久禁用，move to disabled/archive")
+    if "codebase-memory" not in disabled and not archived:
+        WARNINGS.append("V18: codebase-memory disabled/archive note missing in optional-dev.json")
+    print("  V18: codebase-memory permanently disabled (CPU/RAM) OK")
 
 
 if __name__ == "__main__":

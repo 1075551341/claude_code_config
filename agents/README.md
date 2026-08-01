@@ -49,7 +49,7 @@ codex-reviewer | ios-specialist | design-shotgun | pair-agent | land-and-deploy
 
 - 按 MANIFEST concern→owner 路由，非按名称堆叠
 - 子 Agent fresh context（R12）；制品通信，禁止共享可变状态
-- 简单任务（≤3 文件）不启动多 persona 审查链
+- 简单任务（task-triage 判定=单文件）不启动多 persona 审查链
 
 ---
 

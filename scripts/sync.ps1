@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v18.1
+    Claude Code multi-editor layered sync script v18.2
     Modes: default (all rules + Cursor claude-config) | -Skills (+ skills/) | -All (+ agents)
     Project: -Lint (prettier+eslint) | -InitProject (CLAUDE.md+MANIFEST+.env+.gitignore)
 
@@ -72,11 +72,23 @@ param(
     [switch]$ProjectRules,
     [string]$ProjectRulesPath = "",
     [switch]$Lint,
-    [switch]$InitProject
+    [switch]$InitProject,
+    # Cursor Guard contract (sync_runner.py): -Scope rules|indexes|all [-Force]
+    [ValidateSet("rules", "indexes", "all")][string]$Scope = "",
+    [switch]$Force
 )
 
 Set-StrictMode -Off
 $ErrorActionPreference = "Stop"
+
+# Scope normalization (Cursor Guard contract). -Force skips change detection.
+#   all     -> full sync (-All semantics: rules + skills + agents + plugin)
+#   rules   -> default L0 mode (root files + L0 rules + plugin + full rules)
+#   indexes -> entry-level only (root files + L0 rules + plugin, skip full rules)
+$IndexesOnly = $false
+if ($Scope -eq "all") { $All = $true }
+if ($Scope -eq "indexes") { $IndexesOnly = $true }
+if ($All) { $IndexesOnly = $false }
 
 # =============================================================
 # Configuration
@@ -283,6 +295,28 @@ function Sync-File {
         return
     }
 
+    # Change detection: skip identical targets unless -Force (Cursor Guard contract)
+    if (-not $Force -and (Test-Path -LiteralPath $DstPath)) {
+        if ((IsLink $DstPath) -and (Get-Item -LiteralPath $DstPath -Force).LinkType -eq 'SymbolicLink') {
+            $linkTarget = (Get-Item -LiteralPath $DstPath -Force).Target
+            if ($linkTarget -and ([IO.Path]::GetFullPath($linkTarget) -ieq [IO.Path]::GetFullPath($SrcPath))) {
+                Write-Skip "Unchanged (link): $Label"
+                $script:STATS.Skipped++
+                return
+            }
+        } else {
+            try {
+                $srcHash = (Get-FileHash -LiteralPath $SrcPath -Algorithm SHA256).Hash
+                $dstHash = (Get-FileHash -LiteralPath $DstPath -Algorithm SHA256).Hash
+                if ($srcHash -eq $dstHash) {
+                    Write-Skip "Unchanged: $Label"
+                    $script:STATS.Skipped++
+                    return
+                }
+            } catch { }
+        }
+    }
+
     # Ensure parent directory exists
     $dstDir = Split-Path $DstPath -Parent
     if (-not (Test-Path $dstDir) -and -not $DryRun) {
@@ -485,11 +519,25 @@ function Deploy-CursorLocalPlugin {
         $null = $expected.Add($p.Dst)
         $base = [System.IO.Path]::GetFileNameWithoutExtension($p.Dst)
         $null = $expectedBases.Add($base)
+        $dstPath = Join-Path $installRules $p.Dst
+        $dstTpl = Join-Path $tplRules $p.Dst
+        # Change detection: copy only when content differs (unless -Force)
+        $needCopy = $Force
+        if (-not $needCopy) {
+            try {
+                $srcHash = (Get-FileHash -LiteralPath $p.Src -Algorithm SHA256).Hash
+                foreach ($dst in @($dstPath, $dstTpl)) {
+                    if (-not (Test-Path -LiteralPath $dst)) { $needCopy = $true; break }
+                    if ((Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash -ne $srcHash) { $needCopy = $true; break }
+                }
+            } catch { $needCopy = $true }
+        }
+        if (-not $needCopy) { continue }
         # 同步前先删同类型同名，避免残留双份（.md/.mdc/大小写）
         Remove-SameBasenameVariants -Directory $installRules -BaseName $base -LabelPrefix "plugin-rules"
         Remove-SameBasenameVariants -Directory $tplRules -BaseName $base -LabelPrefix "plugin-tpl-rules"
-        Copy-Item -LiteralPath $p.Src -Destination (Join-Path $installRules $p.Dst) -Force
-        Copy-Item -LiteralPath $p.Src -Destination (Join-Path $tplRules $p.Dst) -Force
+        Copy-Item -LiteralPath $p.Src -Destination $dstPath -Force
+        Copy-Item -LiteralPath $p.Src -Destination $dstTpl -Force
         $copied++
     }
 
@@ -524,12 +572,17 @@ function Deploy-CursorLocalPlugin {
         $utf8NoBom
     )
 
-    if ((Test-Path $installManifest) -and $copied -gt 0) {
-        Write-Ok "Local plugin claude-config refreshed ($copied rules) -> plugins/local/claude-config"
-        Write-Ok "Deduped ~/.cursor/rules vs plugin (same basename removed; User UI = plugin only)"
-        $script:STATS.Synced++
+    if (Test-Path $installManifest) {
+        if ($copied -gt 0) {
+            Write-Ok "Local plugin claude-config refreshed ($copied rules) -> plugins/local/claude-config"
+            Write-Ok "Deduped ~/.cursor/rules vs plugin (same basename removed; User UI = plugin only)"
+            $script:STATS.Synced++
+        } else {
+            # v10.11: 无变更（hash 跳过）也是同步成功——不误报 Failed（原 $copied -gt 0 条件在稳定状态下恒失败）
+            Write-Ok "Local plugin claude-config unchanged ($copied rules, hash skip)"
+        }
     } else {
-        Write-Fail "Failed refreshing local plugin claude-config"
+        Write-Fail "Failed refreshing local plugin claude-config (manifest missing)"
         $script:STATS.Failed++
     }
 }
@@ -617,7 +670,7 @@ function Deploy-Templates {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Multi-Editor Layered Sync v18.0" -ForegroundColor Cyan
+Write-Host "  Claude Code Multi-Editor Layered Sync v18.2" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Source       : $CLAUDE_DIR" -ForegroundColor DarkGray
@@ -706,6 +759,8 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
     # Cursor: skip — plugin already holds copies; writing softlinks recreates duplicates.
     if ($editor -eq 'cursor') {
         Write-Host "  [skip] ~/.cursor/rules softlinks (deduped; SSOT via claude-config plugin)" -ForegroundColor DarkGray
+    } elseif ($IndexesOnly) {
+        Write-Host "  [skip] full rules softlinks (indexes scope)" -ForegroundColor DarkGray
     } elseif (Test-Path (Join-Path $CLAUDE_DIR "rules")) {
         $rulesSrcDir = Join-Path $CLAUDE_DIR "rules"
         $ruleFiles = Get-ChildItem $rulesSrcDir -Filter "*.md" -ErrorAction SilentlyContinue |
@@ -852,9 +907,9 @@ Write-Host ""
 if (-not $DryRun) {
     $kgSync = Join-Path $CLAUDE_DIR "hooks\_lib\knowledge_graph_sync.py"
     if (Test-Path $kgSync) {
-        Write-Host "  Refreshing knowledge graphs (force)..." -ForegroundColor Cyan
+        Write-Host "  Refreshing knowledge graphs (debounced, non-force) ..." -ForegroundColor Cyan
         try {
-            $kgOut = & python $kgSync --force $CLAUDE_DIR 2>&1
+            $kgOut = & python $kgSync $CLAUDE_DIR 2>&1
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "  [OK]  knowledge graph sync" -ForegroundColor Green
             } else {

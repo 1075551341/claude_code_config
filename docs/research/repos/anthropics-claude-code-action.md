@@ -1,6 +1,6 @@
 # anthropics/claude-code-action v1.0.146
 
-> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-06-24 | 来源: GitHub Releases + WebSearch 双源
+> 层: 工具/集成 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + WebSearch 双源
 
 
 ## v10.5.1 delta (2026-07-17)

@@ -1,6 +1,6 @@
 # ruvnet/ruflo
 
-> 层: L1 参考 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + WebSearch 双源
+> 层: L1 参考 | 置信度: 中 | 刷新: 2026-07-31 | 来源: GitHub + WebSearch 双源
 
 ## v10.5 delta (2026-07-17)
 

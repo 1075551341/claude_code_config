@@ -18,7 +18,7 @@ source: bytedance/deer-flow
 |------|-------------|-------------|
 | >30min 自主调研 | ✅ | ❌ |
 | 多角度交叉验证 + 沙箱 | ✅ | 用 /deep-research |
-| ≤3 文件小任务 | ❌ | ✅ |
+| 简单(task-triage判定=单文件)小任务 | ❌ | ✅ |
 | 常规功能开发 | ❌ | ✅ executing-plans |
 
 ## 接口

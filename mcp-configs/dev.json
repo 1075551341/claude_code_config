@@ -1,6 +1,6 @@
 {
   "toolset": "dev",
-  "description": "开发常驻：codegraph + crawl + git（与 .mcp.json 同步）",
-  "servers": ["codegraph", "crawl", "git"],
+  "description": "开发常驻：codegraph + crawl + fetch + git（与 .mcp.json 同步）",
+  "servers": ["codegraph", "crawl", "fetch", "git"],
   "note": "chrome-devtools 已移至 optional-dev.json 按需启用"
 }

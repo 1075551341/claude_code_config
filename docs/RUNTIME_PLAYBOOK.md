@@ -2,7 +2,7 @@
 description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理、R16
 ---
 
-# Runtime Playbook（v10.4）
+# Runtime Playbook（v10.11.0）
 
 > 加载等级详图 → [CLAUDE.md](../CLAUDE.md) L0–L3 | 路由 → [using-superpowers/SKILL.md](../skills/using-superpowers/SKILL.md)
 
@@ -16,7 +16,7 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 用户输入
   → R18: claude-mem search?（相关则先查）
   → L1 using-superpowers 分类
-  → 简单(≤3文件)? → L1 change-impact → 改 → 轻量验证
+  → 简单(task-triage判定=单文件)? → L1 change-impact → 改 → 轻量验证
   → Bug? → L3 triage → L2 systematic-debugging
   → 非简单 → L1 brainstorming → 五阶段全链
 ```

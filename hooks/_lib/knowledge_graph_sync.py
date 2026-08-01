@@ -202,12 +202,18 @@ def sync_knowledge_graphs(
         last_cg = float(proj_state.get("codegraph_ts", 0) or 0)
         if force or (now - last_cg) >= debounce:
             ok, detail = sync_codegraph(root)
-            results["codegraph"] = {"ok": ok, "detail": detail}
-            if ok:
-                proj_state["codegraph_ts"] = now
+            # No index yet is expected (home/empty workspace) — skip, don't fail the hook
+            if (not ok) and detail and "no .codegraph" in detail:
+                results["skipped"].append("codegraph_missing")
+                results["codegraph"] = {"ok": True, "detail": detail, "skipped": True}
             else:
-                proj_state["codegraph_error"] = detail
-                print(f"knowledge_graph_sync: {detail}", file=sys.stderr)
+                results["codegraph"] = {"ok": ok, "detail": detail}
+                if ok:
+                    proj_state["codegraph_ts"] = now
+                    proj_state.pop("codegraph_error", None)
+                else:
+                    proj_state["codegraph_error"] = detail
+                    print(f"knowledge_graph_sync: {detail}", file=sys.stderr)
         else:
             results["skipped"].append("codegraph_debounce")
 

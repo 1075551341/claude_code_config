@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
-> 版本：10.7.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 场景强制
+> 版本：10.11.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
 
 ---
 
@@ -12,14 +12,14 @@ RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gs
 FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 5审查 + 7补全
 OPTIMIZE = RTK(shell token) + caveman(输出token)
-INSIGHT  = codegraph(R17 常驻) + codebase-memory(L4 场景强制·Claude 按需) + Exa/Firecrawl(外部调研)  # UA removed v10.5
+INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
 ## 三层架构
 
 ```
-骨架层 (methodology)  → P0 路由集(5) L1×2+L2门控×3 + CORE铁律 + 审查路由 + MCP basic
+骨架层 (methodology)  → P0 路由集(6) L1×4+L2门控×2 + CORE铁律 + 审查路由 + MCP basic
 执行层 (capability)   → 阶段 skill + agent + domain rules（按需 reactive）
 护栏层 (guardrails)   → 安全/治理/效率 hook（骨架级4 + 按需级4）
                         + 学习 loop（Stop/PreCompact 触发）
@@ -41,7 +41,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 | 柱          | 来源                  | 职责                                    | 骨架                        | 执行                                         | 护栏                                                   |
 | ----------- | --------------------- | --------------------------------------- | --------------------------- | -------------------------------------------- | ------------------------------------------------------ |
-| Superpowers | obra/superpowers      | 方法论 + P0 + HARD-GATE                 | P0×4                        | brainstorming→writing-plans(原子)→TDD→verify | def-in-depth + 反合理化                                |
+| Superpowers | obra/superpowers      | 方法论 + P0 + HARD-GATE                 | P0×5                        | brainstorming→writing-plans(原子)→TDD→verify | def-in-depth + 反合理化                                |
 | GSD Redux   | open-gsd/gsd-core     | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先         | subagent(两阶段审查) + context-engineering   | read-before-edit + canonical-source + trust-but-verify |
 | OpenSpec    | Fission-AI/OpenSpec   | 规格格式 core OPSX                      | 三轨互斥                    | spec-validation + opsx 全链                  | spec-reviewer门控                                      |
 | gstack      | garrytan/gstack       | 审查角色                                | 审查路由5+7 + autoplan/ship | eng/ceo/design/qa/security review            | browser-qa + quality-gate                              |
@@ -53,9 +53,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 | 类型         | v9.1   | 说明                                                                |
 | ------------ | ------ | ------------------------------------------------------------------- |
-| 全局 skills  | 38     | P0 路由集 5 + supplement 33（含 deep-research/git/pr/mem workflow） |
+| 全局 skills  | 45     | P0 路由集 6 + supplement 39（含 deep-research/git/pr/mem workflow） |
 | 全局 agents  | 25     | core 7 + gstack审查 6(+dx) + gstack补全 9 + gstack v0.19=3          |
-| 全局 rules   | 10     | alwaysApply 1(CORE) + lazy 9（含 OPENSPEC）                         |
+| 全局 rules   | 12     | alwaysApply 1(CORE) + lazy 11（含 OPENSPEC）                        |
 | CLAUDE.md    | ≤200   | 精简路由层 + R17-R19 引用 + 五轨搜索策略 + Exa 按需                 |
 | 全局 hooks   | 15     | 核心15（SessionStart 由插件负责）+ \_optional 37                    |
 | 全局 MCP     | 5 常驻 | codegraph+crawl+git+fs+time；ops 见 mcp-configs/                    |
@@ -64,17 +64,18 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## P0 路由集（5）= L1×3 + L2 门控×2
+## P0 路由集（6）= L1×4 + L2 门控×2
 
-| Skill                          | 等级        | 触发               | 阶段   |
-| ------------------------------ | ----------- | ------------------ | ------ |
-| using-superpowers              | L1 常驻     | 会话开始、分类路由 | 全阶段 |
-| change-impact-analysis         | L1 按需全文 | 任何修改意图       | 全阶段 |
-| brainstorming                  | L1 常驻     | 非简单 ①规划       | ①      |
-| verification-before-completion | L2 门控     | ④验收              | ④      |
-| systematic-debugging           | L2 门控     | Bug/测试失败       | ③调试  |
+| Skill                          | 等级        | 触发                    | 阶段   |
+| ------------------------------ | ----------- | ----------------------- | ------ |
+| using-superpowers              | L1 常驻     | 会话开始、分类路由      | 全阶段 |
+| task-triage                    | L1 常驻     | 新任务两大类+单文件判定 | 全阶段 |
+| change-impact-analysis         | L1 按需全文 | 任何修改意图            | 全阶段 |
+| brainstorming                  | L1 常驻     | 非简单 ①规划            | ①      |
+| verification-before-completion | L2 门控     | ④验收                   | ④      |
+| systematic-debugging           | L2 门控     | Bug/测试失败            | ③调试  |
 
-**Cursor**：L2/L3 supplement 用 `disable-model-invocation: true` + 显式 Read。  
+**Cursor**：L2/L3 supplement 用 `disable-model-invocation: true` + 显式 Read。
 **Claude Code**：`layer: skeleton/supplement` + using-superpowers 路由 Read。
 
 ### 加载等级 L0–L4（MANIFEST SSOT）
@@ -82,7 +83,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 等级 | 内容                                                                                                |
 | ---- | --------------------------------------------------------------------------------------------------- |
 | L0   | CLAUDE-ROUTER + CLAUDE + CORE                                                                       |
-| L1   | using-superpowers, change-impact-analysis, brainstorming                                            |
+| L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming                               |
 | L2   | 阶段门控：writing-plans, spec-validation, executing-plans, subagent-driven, verification, debugging |
 | L3   | deep-research, adr, workstream, deer-flow, git/pr/mem workflow, …                                   |
 | L4   | agents(Task), MCP, claude-mem, lazy rules                                                           |
@@ -171,11 +172,11 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## 规格三轨（互斥）
 
-| 轨道            | 路径                     | 场景                | 入口                                    |
-| --------------- | ------------------------ | ------------------- | --------------------------------------- |
-| OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更/brownfield | /opsx:propose → verify → sync → archive |
-| GSD Redux       | `.planning/phases/`      | 大功能多阶段        | /plan                                   |
-| 轻量            | `spec/<project>/`        | ≤3文件小功能        | /plan                                   |
+| 轨道            | 路径                     | 场景                               | 入口                                    |
+| --------------- | ------------------------ | ---------------------------------- | --------------------------------------- |
+| OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更/brownfield                | /opsx:propose → verify → sync → archive |
+| GSD Redux       | `.planning/phases/`      | 大功能多阶段                       | /plan                                   |
+| 轻量            | `spec/<project>/`        | 简单(task-triage判定=单文件)小功能 | /plan                                   |
 
 ---
 
@@ -330,6 +331,32 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
+## v10.11.0 变更摘要（2026-08-01）
+
+- **44 仓库全量调研**：SSOT 30-repo → `44-repo-deep-research-v10.11.md`（四分类：29 已集成 + 15 新卡 + 2 不集成）；COVERAGE 矩阵 44；repos/ 新增 15 张浅层卡（anthropics-claude-code / musistudio-claude-code-router / openai-codex-plugin-cc / VoltAgent-subagents 等）
+- **版本对齐运行态（非升级）**：superpowers 6.2.0 / claude-mem 13.12.4 / codegraph MCP 1.5.0（插件 autoUpdater 自动更新，installed_plugins.json 为事实源）；rtk 0.44.1 确认
+- **0 新增组件**：45 skills / 25 agents / 5 MCP 常驻 保持；新仓库全部卡片/文档级记录（CCR/codex-plugin-cc/claude-code-best/SuperClaude 评估=不集成，MANIFEST reference concern）
+- **agent.yaml 漂移修复**：v9.0 → v10.11.0；p0 补 task-triage（6）；mcp_loading 对齐 .mcp.json 常驻 5；global_skills_max 45
+- **清理（保留最全最新一次）**：删 v10.6/v10.7 计划 + diagnostic-v10.5.2 + 7 空 backups 子目录；保留 v10.10 计划 + 44-repo SSOT
+- **可选变更（用户确认）**：feature-dev 插件停用（MANIFEST 冲突落地）；codegraph CLI 0.9.7 → 1.5.0（版本分裂消除）；autoCompactWindow 按模型窗口计算=1M 保持不变；fs MCP 未选
+- **validate_config warn 收敛**：V17 env 显式化（70/70/90）+ V9 deny 补 3 条 + V1 触发词消歧（9 → 1 warn）
+
+## v10.10.0 变更摘要（2026-07-31）
+
+- **同步链路修复**：sync.ps1 v18.2 新增 `-Scope rules|indexes|all` + `-Force`（对齐 Cursor Guard sync_runner 契约，修复自动同步必失败）；变更检测（hash 跳过）；结尾图谱刷新去 force；Guard hooks.json 移除 postToolUse 双注册；Cursor 规则通道 = local plugin 永久方案（`~/.cursor/rules` 实测不生效，不做其他通道尝试）
+- **安全**：settings.json 密钥外置（环境变量）+ gitignore + 取消跟踪；sync-mode.json 删除
+- **cbm 永久禁用**：全盘索引爆 CPU/内存（用户确认）；SPEC/MANIFEST/CORE/plugin 模板统一口径，codegraph 全权替代；validate_config V18 改为禁用断言
+- **重复合并**：CLAUDE.md -9 行（R17 收敛 CORE SSOT 指针、场景映射表单点化、@RTK.md 指针化、/deer-flow 命令对齐）；版本/计数全串对齐 v10.10.0（skills 45、hooks 16、global_skills_max 45）
+- **MCP 分层**：crawl 移 optional-dev.json 按需，常驻 5（codegraph+fetch+git+fs+time）
+- **可测量性**：stop-session-summary 追加 skill/agent 真实触发日志（logs/skill-triggers.jsonl），下一轮 usage-audit 数据源
+
+## v10.9.0 变更摘要（2026-07-31）
+
+- **任务分类重构**：两大类（简单/非简单）→ 使用类型细分（文档/实现/配置值/Bug / Bug/功能/架构/配置/删除/调研），`skills/task-triage/SKILL.md` 为唯一 SSOT
+- **简单判定严格收窄**：单文件(=1) + 白名单 + 五维全低，缺一不可；"≤3文件"判据废弃；五维文件数档位 低=1/中=2–5/高=>5
+- **Bug 归属**：可复现+根因明确+单文件 → 简单；其余 → triage(P0-P3)→systematic-debugging
+- **双端同步**：gate_messages P0 段（两大类+单文件判定）/CLAUDE/ROUTER/using-superpowers/MANIFEST/索引三文件/Cursor 插件副本统一 v10.9.0
+
 ## v10.7.0 变更摘要（2026-07-30）
 
 - **配置驱动门控**：分类路由/完成验证/变更影响从模型自觉升级为 hook 强制注入（双端）。文本 SSOT `hooks/_lib/gate_messages.md`；Claude Code 新增 SessionStart/UserPromptSubmit 注册 + `pre-userprompt-verify-gate` + `pre-edit-impact-nudge`；Cursor Guard 新增 `verification_gate`/`impact_nudge`，`session_bootstrap` 注入 P0 门
@@ -379,14 +406,14 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 - **GSD 版本**：open-gsd/gsd-core **1.4.1**（MANIFEST 对齐）
 - **探索链**：codegraph → Grep → Read
 - **加载**：L0 四入口 + P0 五技能 L1；sync 索引模式
-- **调研 SSOT**：30-repo-deep-research-v10.md（v10.1 内容）+ repos/
+- **调研 SSOT**：44-repo-deep-research-v10.11.md（v10.11 内容）+ repos/
 
 ## v10.0 变更摘要
 
 - **MANIFEST v10**：ecc_integration cherry_pick、module_resolver、thresholds 双轨、ruflo reference_only
 - **OpenSpec CLI** 1.4.1 **core**（含 sync）；本地 commands 权威；`openspec init --tools cursor`
 - **codegraph mandate**：V16 校验 + `codegraph index`；UA 当时 **disabled**（v10.5 已 **removed**，见 ADR-2026-07-17）
-- **调研 SSOT**：仅 `docs/research/30-repo-deep-research-v10.md`（历史多版本已清理）
+- **调研 SSOT**：仅 `docs/research/44-repo-deep-research-v10.11.md`（历史多版本已清理）
 - **Firecrawl**：`scripts/firecrawl-mcp.ps1` 包装启动
 - **Git 禁令**：禁止 Agent auto commit / stash（Guard v1.1.6）
 - **阈值**：Cursor/Claude 70/90 + GSD 70% 逻辑断点
@@ -421,4 +448,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 
 ---
 
-> 版本：10.7.0 | 日期：2026-07-30 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3
+> 版本：10.11.0 | 日期：2026-08-01 | 五柱×五阶段×三横切 | MCP 分层 + L0–L3

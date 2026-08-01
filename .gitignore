@@ -31,6 +31,8 @@ context_cache.json
 plan_cache.json
 config.json
 .claude.json
+settings.json
+settings.local.json
 .last-cleanup
 .last-update-result.json
 mcp-needs-auth-cache.json

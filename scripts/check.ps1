@@ -30,17 +30,20 @@ Set-StrictMode -Off
 $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
-$EDITORS    = @("cursor", "devin", "trae", "qoder")
+$EDITORS    = @("cursor", "devin", "qoder", "qoder-cn", "trae", "trae-cn", "codearts")
 $LINK_DIRS  = @("skills", "agents", "rules")
 $SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 $ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
 $CLAUDE_RULE_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 $STALE_LINKS = @("hooks", "scripts")
 $NATIVE_RULES = @{
-    "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\rules"); Ext = ".mdc" }
+    "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"); Ext = ".mdc" }
     "devin"    = @{ Dir = (Join-Path $env:APPDATA "devin\rules"); Ext = ".md" }
-    "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
     "qoder"    = @{ Dir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc" }
+    "qoder-cn" = @{ Dir = (Join-Path $env:USERPROFILE ".qoder-cn\rules"); Ext = ".mdc" }
+    "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
+    "trae-cn"  = @{ Dir = (Join-Path $env:USERPROFILE ".trae-cn\user_rules"); Ext = ".md" }
+    "codearts" = @{ Dir = (Join-Path $env:USERPROFILE ".codeartsdoer\rule"); Ext = ".mdc" }
 }
 $NATIVE_SKILLS = @{
     "cursor"   = Join-Path $env:USERPROFILE ".cursor\skills-native"
@@ -218,9 +221,11 @@ function Get-SyncMode {
 }
 
 foreach ($editor in $EDITORS) {
-    # v17: devin 用户级路径为 %APPDATA%\devin（非 ~/.devin）
+    # v17: devin 用户级路径为 %APPDATA%\devin（非 ~/.devin）；codearts 目录为 .codeartsdoer
     $editorDir = if ($editor -eq "devin") {
         Join-Path $env:APPDATA "devin"
+    } elseif ($editor -eq "codearts") {
+        Join-Path $env:USERPROFILE ".codeartsdoer"
     } else {
         Join-Path $env:USERPROFILE ".$editor"
     }
@@ -234,6 +239,8 @@ foreach ($editor in $EDITORS) {
     $syncMode = Get-SyncMode -EditorDir $editorDir
 
     foreach ($file in $SYNC_FILES) {
+        # v18.2 对齐：非 cursor 编辑器仅部署 CLAUDE.md 根文件（路由入口经 rules/ 内 00-CLAUDE-ROUTER 检查，见 S3 router）
+        if ($editor -ne "cursor" -and $file -ne "CLAUDE.md") { continue }
         $fp = Join-Path $editorDir $file
         $expected = Join-Path $CLAUDE_DIR $file
         if (-not (Test-Path $fp)) {
@@ -491,7 +498,7 @@ $requiredGuardScripts = @(
     "shell_guard.py",
     "prompt_secret_scan.py"
 )
-$guardEditorRule = Join-Path $env:USERPROFILE ".cursor\rules\CURSOR-EDITOR.mdc"
+$guardEditorRule = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules\CURSOR-EDITOR.mdc"
 $guardEditorRuleTpl = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
 
 if (-not (Test-Path $guardTemplate)) {
@@ -545,52 +552,53 @@ if (-not (Test-Path $guardEditorRuleTpl)) {
     Add-Check "CursorGuard" "CURSOR-EDITOR.mdc tpl" "pass" "present"
 }
 if (Test-Path $guardEditorRule) {
-    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "pass" "~/.cursor/rules/"
+    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "pass" "~/.cursor/plugins/local/claude-config/rules/"
 } else {
-    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "warn" "Run sync.ps1 -Force or deploy-cursor-guard.ps1"
+    Add-Check "CursorGuard" "CURSOR-EDITOR deployed" "warn" "Run sync.ps1 or deploy-cursor-guard.ps1"
 }
 
-# S4b-L0: Cursor 个人桥接 + 当前工作区项目 rules 三件套（ROUTER/CORE/CURSOR-EDITOR；CLAUDE.md 在 ~/.cursor 根，由 SYNC_FILES 检查）
+# S4b-L0: Cursor 个人桥接 = local plugin claude-config（~/.cursor/rules 实测不生效，plugin 永久通道）
+$cursorPluginRulesDir = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"
 $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
 $l0Bases = @("00-CLAUDE-ROUTER", "CORE", "CURSOR-EDITOR")
-foreach ($entry in @(
-    @{ Name = "personal L0 rules"; Dir = $cursorRulesDir; Label = "~/.cursor/rules/"; Required = $true },
-    @{ Name = "project L0 rules"; Dir = $cursorProjectRulesDir; Label = "~/.claude/.cursor/rules/"; Required = $false }
-)) {
-    if (-not $entry.Required -and -not (Test-Path $entry.Dir)) {
-        Add-Check "CursorGuard" $entry.Name "pass" "absent by design (v14.5 personal-only)"
-        continue
-    }
-    if (-not $entry.Required) {
-        $projFiles = @(Get-ChildItem $entry.Dir -File -Force -ErrorAction SilentlyContinue)
-        if ($projFiles.Count -eq 0) {
-            Add-Check "CursorGuard" $entry.Name "pass" "empty/absent (v14.5 — avoid duplicate with ~/.cursor/rules/)"
-            continue
-        }
-    }
-    $l0Missing = @()
-    $l0Stale = @()
-    foreach ($base in $l0Bases) {
-        $p = Join-Path $entry.Dir "$base.mdc"
-        if (-not (Test-Path $p)) {
-            $l0Missing += "$base.mdc"
-            continue
-        }
-        try {
-            $txt = Get-Content $p -Raw -Encoding utf8
-            if ($txt -notmatch 'alwaysApply:\s*true') { $l0Stale += "$base(no alwaysApply)" }
-        } catch {}
-        $mdVariant = Join-Path $entry.Dir "$base.md"
-        if (Test-Path $mdVariant) { $l0Stale += "$base.md(stale variant)" }
-    }
-    if ($l0Missing.Count -eq 0 -and $l0Stale.Count -eq 0) {
-        Add-Check "CursorGuard" $entry.Name "pass" "3/3 in $($entry.Label) (alwaysApply)"
-    } elseif ($l0Missing.Count -gt 0) {
-        Add-Check "CursorGuard" $entry.Name "fail" "Missing: $($l0Missing -join ', ') -- run sync.ps1"
-    } else {
-        Add-Check "CursorGuard" $entry.Name "warn" "$($l0Stale -join ', ') -- run sync.ps1"
-    }
+$l0SrcMap = @{
+    "00-CLAUDE-ROUTER" = Join-Path $CLAUDE_DIR "CLAUDE-ROUTER.mdc"
+    "CORE"             = Join-Path $CLAUDE_DIR "rules\CORE.md"
+    "CURSOR-EDITOR"    = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+}
+# plugin 三件套：存在 + hash 与真源一致
+$pluginMissing = @()
+$pluginStale = @()
+foreach ($base in $l0Bases) {
+    $p = Join-Path $cursorPluginRulesDir "$base.mdc"
+    if (-not (Test-Path $p)) { $pluginMissing += "$base.mdc"; continue }
+    try {
+        $h1 = (Get-FileHash $p -Algorithm SHA256).Hash
+        $h2 = (Get-FileHash $l0SrcMap[$base] -Algorithm SHA256).Hash
+        if ($h1 -ne $h2) { $pluginStale += "$base(hash drift)" }
+    } catch { $pluginStale += "$base(hash check failed)" }
+}
+if ($pluginMissing.Count -eq 0 -and $pluginStale.Count -eq 0) {
+    Add-Check "CursorGuard" "plugin L0 rules" "pass" "3/3 in plugin claude-config (hash match)"
+} elseif ($pluginMissing.Count -gt 0) {
+    Add-Check "CursorGuard" "plugin L0 rules" "fail" "Missing: $($pluginMissing -join ', ') -- run sync.ps1"
+} else {
+    Add-Check "CursorGuard" "plugin L0 rules" "warn" "$($pluginStale -join ', ') -- run sync.ps1"
+}
+# ~/.cursor/rules 期望为空（plugin 永久通道；避免双份 Always Apply）
+$cursorRulesFiles = @(Get-ChildItem $cursorRulesDir -File -Force -ErrorAction SilentlyContinue)
+if ($cursorRulesFiles.Count -eq 0) {
+    Add-Check "CursorGuard" "~/.cursor/rules empty" "pass" "empty by design (plugin-only channel)"
+} else {
+    Add-Check "CursorGuard" "~/.cursor/rules empty" "warn" "non-plugin files: $($cursorRulesFiles.Name -join ', ')"
+}
+# project L0 rules（~/.claude/.cursor/rules）: v14.5 personal-only，期望空
+$projFiles = @(Get-ChildItem $cursorProjectRulesDir -File -Force -ErrorAction SilentlyContinue)
+if ($projFiles.Count -eq 0) {
+    Add-Check "CursorGuard" "project L0 rules" "pass" "empty/absent (v14.5 — personal-only)"
+} else {
+    Add-Check "CursorGuard" "project L0 rules" "warn" "files present: $($projFiles.Name -join ', ')"
 }
 
 # S4c: Devin global rules（v17: 用户级路径改为 %APPDATA%\devin）

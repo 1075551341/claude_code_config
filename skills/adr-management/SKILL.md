@@ -1,7 +1,7 @@
 ---
 name: adr-management
 description: 架构决策记录（ADR）管理。触发词：ADR | 架构决策 | 技术决策 | /adr
-triggers: [架构决策, 技术选型, ADR, 为什么用]
+triggers: [架构决策, ADR, 为什么用] # v10.11: 去除'技术选型'（与 deep-research 共享；调研场景归属 deep-research）
 layer: supplement
 source: open-gsd/gsd-core
 disable-model-invocation: true
@@ -26,25 +26,29 @@ loading_tier: L3
 日期: YYYY-MM-DD
 
 ## 背景
+
 为什么需要做这个决策
 
 ## 决策
+
 我们决定...
 
 ## 后果
+
 正面 / 负面影响
 
 ## 替代方案
+
 考虑过的其他选项及拒绝理由
 ```
 
 ## 命令
 
-| 命令 | 作用 |
-|------|------|
-| `/adr new <title>` | 创建新 ADR（自动编号+日期前缀） |
-| `/adr list` | 列出 `docs/ADR/` 全部 ADR |
-| `/adr search <query>` | Grep docs/ADR 防重复讨论 |
+| 命令                  | 作用                            |
+| --------------------- | ------------------------------- |
+| `/adr new <title>`    | 创建新 ADR（自动编号+日期前缀） |
+| `/adr list`           | 列出 `docs/ADR/` 全部 ADR       |
+| `/adr search <query>` | Grep docs/ADR 防重复讨论        |
 
 ## 与 OpenSpec
 

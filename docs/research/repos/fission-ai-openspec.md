@@ -1,6 +1,6 @@
 # Fission-AI/OpenSpec v1.4.1
 
-> 层: 五柱(OpenSpec) | 置信度: 高 | 刷新: 2026-06-17 | 来源: GitHub + DeepWiki + npm + 官方文档
+> 层: 五柱(OpenSpec) | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub + DeepWiki + npm + 官方文档
 
 ## v10.5 delta (2026-07-17)
 
@@ -120,7 +120,7 @@ openspec update                              # 刷新 agent skills
 |------|------|------|
 | OpenSpec /opsx: | `openspec/changes/<id>/` | 功能变更 / brownfield |
 | GSD .planning | `.planning/phases/` | 大功能多阶段 |
-| 轻量 spec | `spec/<project>/` | ≤3 文件小功能 |
+| 轻量 spec | `spec/<project>/` | ≤3 文件小功能（catalog 描述，task-triage SSOT 为准） |
 
 同功能不可跨轨双写。
 

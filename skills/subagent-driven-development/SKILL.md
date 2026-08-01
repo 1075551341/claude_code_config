@@ -8,7 +8,7 @@ loading_tier: L2
 source: obra/superpowers
 ---
 
-> **L2 门控**：非简单任务在 spec-validation 通过后，与 `executing-plans` 一并 Read。简单任务（≤3 文件）不加载。
+> **L2 门控**：非简单任务在 spec-validation 通过后，与 `executing-plans` 一并 Read。简单任务（task-triage 判定=单文件）不加载。
 
 # 子Agent驱动开发
 

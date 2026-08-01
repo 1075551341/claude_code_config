@@ -20,13 +20,13 @@
 
 **模式**：
 
-| 模式                     | 同步内容                                                                                                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 模式                     | 同步内容                                                                                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 默认                     | **全部** `rules/*.md`（优先软链）+ `CLAUDE.md` + ROUTER；Cursor **每次刷新** `plugins/local/claude-config`（实体 .mdc，Settings 可见）+ `CURSOR-EDITOR` |
-| `-Skills`                | 默认 + `skills/` Junction/同步                                                                                                                           |
-| `-All`                   | 默认 + `skills/` + `agents/`                                                                                                                             |
+| `-Skills`                | 默认 + `skills/` Junction/同步                                                                                                                          |
+| `-All`                   | 默认 + `skills/` + `agents/`                                                                                                                            |
 | `-ProjectRules`          | 另将 rules 复制到 **当前目录** `.cursor/rules`（显式 opt-in；CWD 为 `~/.claude` 时跳过）                                                                |
-| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板，不同步编辑器                                                                                                                   |
+| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板，不同步编辑器                                                                                                                  |
 
 **用法**：
 
@@ -38,7 +38,9 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写
 ```
 
 > 改 `~/.claude/rules` / `CLAUDE-ROUTER` / `CURSOR-EDITOR` 后跑一次 `sync.ps1` 即可；Cursor Settings 中的 Claude Config 插件内容会随之更新。若列表未变，完全退出 Cursor 再开（仅 Reload 有时不重扫插件）。
-**参数**：
+
+> **Claude Code 官方安装**（v10.11 更新）：npm 安装已弃用；Windows 推荐 `irm https://claude.ai/install.ps1 | iex`，macOS/Linux `curl -fsSL https://claude.ai/install.sh | bash`，或 `winget install Anthropic.ClaudeCode`。
+> **参数**：
 
 | 参数            | 说明                                  |
 | --------------- | ------------------------------------- |
@@ -160,4 +162,4 @@ powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 
 - 脚本内注释与界面文案以中文为主；部分技术字段名保持英文。
 - `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文。
-- **文档与脚本版本对齐（v10.6.0）**：`sync.ps1` **v18.0**，`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。
+- **文档与脚本版本对齐（v10.6.0）**：`sync.ps1` **v18.2**，`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。

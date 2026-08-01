@@ -8,13 +8,13 @@ description: Cursor 编辑器全局独有配置指南（与 Claude Code 低耦�
 
 ## 与 Claude Code 边界
 
-| 项           | Claude Code                                         | Cursor                                                                                              |
-| ------------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Hooks        | `~/.claude/settings.json`（编辑器内 launcher 跳过） | `~/.cursor/hooks.json`                                                                              |
-| MCP 权威源   | `~/.claude/.mcp.json`                               | Cursor Settings 手工启用                                                                            |
-| 状态/计数    | `tool-call-counter.json`                            | `~/.cursor/.state/`                                                                                 |
-| 规则总纲     | sync → `~/.cursor/rules/*.mdc`（Agent 全局）        | Settings Project Rules 需 `<工作区>/.cursor/rules`：`sync.ps1 -ProjectRules`；+ `CURSOR-EDITOR.mdc` |
-| 配置同步桥接 | —                                                   | 仅 `sync.ps1` 在编辑可同步资产时                                                                    |
+| 项           | Claude Code                                                                   | Cursor                                                                                                           |
+| ------------ | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Hooks        | `~/.claude/settings.json`（编辑器内 launcher 跳过）                           | `~/.cursor/hooks.json`                                                                                           |
+| MCP 权威源   | `~/.claude/.mcp.json`                                                         | Cursor Settings 手工启用                                                                                         |
+| 状态/计数    | `tool-call-counter.json`                                                      | `~/.cursor/.state/`                                                                                              |
+| 规则总纲     | sync → `~/.cursor/plugins/local/claude-config/rules/*.mdc`（plugin 唯一通道） | Settings Project Rules 需 `<工作区>/.cursor/rules`：`sync.ps1 -ProjectRules`；+ `CURSOR-EDITOR.mdc`（plugin 内） |
+| 配置同步桥接 | —                                                                             | 仅 `sync.ps1` 在编辑可同步资产时                                                                                 |
 
 ## 部署
 
@@ -125,33 +125,35 @@ slash 命令是**路由信号**，不替代 Read 全文。
 
 ## 配置一致性清单（Claude ↔ Cursor）
 
-| 资产                | Claude 权威源   | Cursor 目标                                                             | 同步方式                                                    |
-| ------------------- | --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 铁律 R17 / CORE     | `rules/CORE.md` | `~/.cursor/rules/CORE.mdc` + `.cursor/rules/CORE.mdc`                   | `sync.ps1`                                                  |
-| 路由 CLAUDE         | `CLAUDE.md`     | `~/.cursor/rules/CLAUDE.mdc` + `.cursor/rules/CLAUDE.mdc`               | `sync.ps1`                                                  |
-| MCP 文档            | `rules/MCP.md`  | `~/.cursor/rules/MCP.mdc` + `.cursor/rules/MCP.mdc`                     | `sync.ps1`                                                  |
-| codegraph MCP 服务  | `.mcp.json`     | `~/.cursor/mcp.json`                                                    | **手工对照**（仅 codegraph 等需启用的项）                   |
-| codegraph 路由 hook | Guard 模板      | `~/.cursor/hooks/explore_router.py`                                     | `deploy-cursor-guard.ps1`                                   |
-| 编辑器专有规则      | Guard 模板      | `~/.cursor/rules/CURSOR-EDITOR.mdc` + `.cursor/rules/CURSOR-EDITOR.mdc` | `deploy-cursor-guard.ps1` + `sync.ps1`（sync 已白名单保护） |
+> **Cursor 规则通道 = local plugin（永久方案）**：`~/.cursor/rules` 实测不生效（UI 不枚举、Agent 不加载），不再尝试其他通道；规则仅经 `~/.cursor/plugins/local/claude-config/rules/` 实体 .mdc 由 Cursor 加载。
 
-**推荐顺序**：先 `sync.ps1 -Scope all -Force`，再 `deploy-cursor-guard.ps1`。
+| 资产                | Claude 权威源   | Cursor 目标（plugin 通道）                                         | 同步方式                               |
+| ------------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------- |
+| 铁律 R17 / CORE     | `rules/CORE.md` | `~/.cursor/plugins/local/claude-config/rules/CORE.mdc`             | `sync.ps1`（实体副本）                 |
+| 路由 CLAUDE         | `CLAUDE.md`     | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE-ROUTER.mdc` | `sync.ps1`（实体副本）                 |
+| 编辑器专有规则      | Guard 模板      | `~/.cursor/plugins/local/claude-config/rules/CURSOR-EDITOR.mdc`    | `deploy-cursor-guard.ps1` + `sync.ps1` |
+| MCP 文档            | `rules/MCP.md`  | plugin 规则集内（`sync.ps1` 全量复制 rules/\*.md → .mdc）          | `sync.ps1`                             |
+| codegraph MCP 服务  | `.mcp.json`     | `~/.cursor/mcp.json`                                               | **手工对照**（仅启用项）               |
+| codegraph 路由 hook | Guard 模板      | `~/.cursor/hooks/explore_router.py`                                | `deploy-cursor-guard.ps1`              |
+
+**推荐顺序**：先 `sync.ps1`（默认 L0 即刷新 plugin），再 `deploy-cursor-guard.ps1`。Guard 自动同步契约：`sync.ps1 -Scope rules|indexes|all [-Force]`（v18.2 支持）。
 
 ### Settings > Rules 面板预期
 
-| 来源                                 | Settings 列表 | Agent 加载 | 说明                                               |
-| ------------------------------------ | :-----------: | :--------: | -------------------------------------------------- |
-| User Rules 文本                      |      是       |     是     | Settings 顶部纯文本                                |
-| 插件 rules（含 local/claude-config） |    **是**     |   **是**   | **全局 .mdc 官方可见通道**；sync 默认维护          |
-| 个人桥接 `~/.cursor/rules/*.mdc`     | 否（UI 限制） |  部分版本  | 仍软链同步；User 页签不枚举文件（Cursor 论坛确认） |
-| 项目 `<workspace>/.cursor/rules/`    |      是       |     是     | **仅** `-ProjectRules` opt-in；默认不写业务项目    |
+| 来源                                 | Settings 列表 |    Agent 加载    | 说明                                                                  |
+| ------------------------------------ | :-----------: | :--------------: | --------------------------------------------------------------------- |
+| User Rules 文本                      |      是       |        是        | Settings 顶部纯文本                                                   |
+| 插件 rules（含 local/claude-config） |    **是**     |      **是**      | **全局 .mdc 唯一通道**（`~/.cursor/rules` 实测不生效）；sync 默认维护 |
+| 个人桥接 `~/.cursor/rules/*.mdc`     | 否（UI 限制） | 否（实测不生效） | **不部署**（plugin 永久通道，空目录为正确状态）                       |
+| 项目 `<workspace>/.cursor/rules/`    |      是       |        是        | **仅** `-ProjectRules` opt-in；默认不写业务项目                       |
 
-默认：`sync.ps1` 写个人 `~/.cursor/rules`（软链）+ Junction `plugins/local/claude-config`。验证：Reload Window → Settings → Rules → User 应出现 claude-config 规则。
+默认：`sync.ps1` 维护 `~/.cursor/plugins/local/claude-config`（实体 .mdc 副本，规则唯一通道）；`~/.cursor/rules` 保持空。验证：Reload Window → Settings → Rules → User 应出现 claude-config 规则。
 
 **codegraph 优先三层**（两侧一致，v10.5）：
 
-1. 规则：`CORE` R17 + `CURSOR-EDITOR.mdc`（Cursor alwaysApply）
+1. 规则：`CORE` R17 + `CURSOR-EDITOR.mdc`（Cursor alwaysApply，plugin 通道）
 2. Hook：`explore_router` — `enforce_mode: soft_block`（Grep/Glob 无先 codegraph 则 deny；无 `.codegraph` 降级 nudge）
-3. MCP：`codegraph` + `codebase-memory` 必须在 Cursor Settings 启用；项目已 `codegraph init`
+3. MCP：`codegraph` 在 Cursor Settings 启用（**codebase-memory 已禁用**：全盘索引爆 CPU/内存）；项目已 `codegraph init`
 
 ## 勿做
 

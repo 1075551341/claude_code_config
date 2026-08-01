@@ -1,6 +1,6 @@
 # obra/superpowers v5.1.0 --> v6.0.3
 
-> 层: 五柱(Superpowers) | 置信度: 高 | 刷新: 2026-06-26
+> 层: 五柱(Superpowers) | 置信度: 高 | 刷新: 2026-07-31
 > 仓库: github.com/obra/superpowers | 作者: Jesse Vincent (obra/Prime Radiant) | 204K+ stars
 > 许可证: MIT | 最新稳定: v5.1.0 (2026-04-30) | 最新: v6.0.3 (2026-06-18)
 

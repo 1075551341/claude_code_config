@@ -1,6 +1,6 @@
 # rtk-ai/rtk v0.41.0
 
-> 层: L2 优化 | 置信度: 高 | 刷新: 2026-06-26 | 来源: GitHub Releases + Tags + 官网 三源
+> 层: L2 优化 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + Tags + 官网 三源
 
 ## v10.6 delta (2026-07-30)
 

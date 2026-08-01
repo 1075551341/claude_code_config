@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v10.7.0）
+# 门控注入文本 SSOT（v10.11.0）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 修改后无需改 hook 代码；Cursor 侧改动随 deploy-cursor-guard.ps1 生效。
@@ -8,11 +8,12 @@
 【门控 · 会话开始必做】
 本消息为 hook 强制注入，非可选建议。第一轮回复前必须执行分类：
 
-1. Read ~/.claude/skills/using-superpowers/SKILL.md（本会话未读则必读）
-2. 输出分类：[简单(≤3文件) | Bug(堆栈/复现) | 非简单]
-   - 简单 → Read change-impact-analysis 后直接改
-   - Bug → triage 分级 → Read systematic-debugging
-   - 非简单 → Read brainstorming（HARD-GATE：用户批准设计前禁止实现）
+1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读；简单=单文件+白名单+五维全低，分类树以该文件为唯一 SSOT）
+2. 输出分类（两大类）：[简单(单文件+白名单+五维全低) | 非简单(多文件/黑名单/五维含中或高/无法判定)]
+   - 简单（含单文件可复现Bug）→ Read change-impact-analysis 后直接改
+   - 非简单 Bug（多文件/根因不明）→ triage 分级 → Read systematic-debugging
+   - 非简单 功能/架构/配置/删除 → 先访谈用户（grill：一次一问+推荐答案，≤5问收敛：目标/范围/风险/约束/输出）→ Read brainstorming（HARD-GATE：用户批准设计前禁止实现）
+   - 非简单 调研 → Read skills/deep-research（L3 双源）
      禁止凭记忆跳过；skill 已读且范围未变可不重复 Read。
 
 ## 完成验证门

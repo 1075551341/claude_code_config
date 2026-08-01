@@ -1,7 +1,7 @@
 ---
 name: workstream-management
-description: 并行任务流管理（git worktree 隔离，GSD workstreams）。触发词：workstream | 并行任务 | worktree | 多任务 | /workstream
-triggers: [并行任务, workstream, 多任务, 工作流, git worktree]
+description: 并行任务流管理（GSD workstreams，隔离分支）。触发词：workstream | 并行任务 | 多任务 | /workstream # v10.11: 触发词去除'worktree'（归属 using-git-worktrees）
+triggers: [并行任务, workstream, 多任务, 工作流] # v10.11: 去除'git worktree'（与 using-git-worktrees 共享；worktree 技术场景归属该技能）
 layer: supplement
 source: open-gsd/gsd-core
 disable-model-invocation: true
@@ -19,12 +19,12 @@ loading_tier: L3
 
 ## 命令
 
-| 命令 | 作用 |
-|------|------|
-| `/workstream new <name>` | `git worktree add` + `.planning/phases/<name>/` |
-| `/workstream status` | 列出活跃流状态 |
-| `/workstream list` | 所有流（含已完成） |
-| `/workstream merge <name>` | PR 合并 + claude-mem 整合记忆 |
+| 命令                       | 作用                                            |
+| -------------------------- | ----------------------------------------------- |
+| `/workstream new <name>`   | `git worktree add` + `.planning/phases/<name>/` |
+| `/workstream status`       | 列出活跃流状态                                  |
+| `/workstream list`         | 所有流（含已完成）                              |
+| `/workstream merge <name>` | PR 合并 + claude-mem 整合记忆                   |
 
 ## 流程
 
@@ -49,8 +49,8 @@ loading_tier: L3
 
 ## 与规格三轨
 
-| 场景 | 轨道 |
-|------|------|
-| 单流大功能 | GSD `.planning/phases/` |
-| 多流并行 | workstreams + `.planning/phases/<name>/` |
-| brownfield 变更 | OpenSpec `openspec/changes/<id>/` |
+| 场景            | 轨道                                     |
+| --------------- | ---------------------------------------- |
+| 单流大功能      | GSD `.planning/phases/`                  |
+| 多流并行        | workstreams + `.planning/phases/<name>/` |
+| brownfield 变更 | OpenSpec `openspec/changes/<id>/`        |

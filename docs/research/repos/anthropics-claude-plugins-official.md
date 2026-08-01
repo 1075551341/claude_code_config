@@ -1,6 +1,6 @@
 # anthropics/claude-plugins-official
 
-> 层: L1 治理(插件分发) | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub + claude.com/plugins + 官方 docs 双源
+> 层: L1 治理(插件分发) | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub + claude.com/plugins + 官方 docs 双源
 > 许可证: Apache-2.0 | 创建: 2025-11-20 | 主语言: Python
 
 

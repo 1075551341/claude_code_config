@@ -5,10 +5,10 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.6.0**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.11.0**
 
-**五柱**：Superpowers v6.0.3(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
-**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+codebase-memory(L4)+Firecrawl/Exa — 详见 `rules/CORE.md`
+**五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.12.4(记忆)
+**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
 
 ---
 
@@ -24,9 +24,9 @@ alwaysApply: true
 ## 五阶段流程（SSOT）
 
 ```
-简单(≤3文件) → L1 change-impact → 执行 → 轻量验证
-Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
-非简单 → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
+简单(单文件+白名单+五维全低) → L1 change-impact → 执行 → 轻量验证
+Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析)
+非简单 → ①grill访谈(一次一问+推荐答案) → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md)
@@ -51,37 +51,37 @@ Bug → triage(L2 P0-P3) → L2 systematic-debugging(根因分析)
 
 ## 铁律 R1–R19
 
-| #   | 约束        | 核心                            | 全文    |
-| --- | ----------- | ------------------------------- | ------- |
-| R1  | 任务完成    | 验证通过才算完成                | —       |
-| R2  | 修改确认    | Read→Edit→Read                  | —       |
-| R3  | Bug修复     | Grep全修→确认                   | —       |
-| R4  | 配置变更    | Grep引用→构建                   | —       |
-| R5  | 重试上限    | 同方案≤2次                      | —       |
-| R6  | 非简单      | ①→⑤全流程                       | —       |
-| R7  | 交叉验证    | 完成前验证清单                  | —       |
-| R8  | 高危确认    | 删数据/强推main前确认           | —       |
-| R9  | 命令安全    | 禁cd+重定向/powershell -Command | —       |
-| R10 | 简洁优先    | 高内聚低耦合易迭代              | —       |
-| R11 | 安全默认    | 不信任输入、无硬编码密钥        | —       |
-| R12 | 子Agent隔离 | fresh context+制品通信          | CORE.md |
-| R13 | 制品存活    | 跨会话持久化                    | CORE.md |
-| R14 | 版本克制    | 非必要不升major                 | CORE.md |
-| R15 | 包管理器    | pnpm优先；npm兜底               | CORE.md |
-| R16 | 错误暴漏    | 禁止裸except:pass               | CORE.md |
+| #   | 约束        | 核心                               | 全文    |
+| --- | ----------- | ---------------------------------- | ------- |
+| R1  | 任务完成    | 验证通过才算完成                   | —       |
+| R2  | 修改确认    | Read→Edit→Read                     | —       |
+| R3  | Bug修复     | Grep全修→确认                      | —       |
+| R4  | 配置变更    | Grep引用→构建                      | —       |
+| R5  | 重试上限    | 同方案≤2次                         | —       |
+| R6  | 非简单      | ①→⑤全流程                          | —       |
+| R7  | 交叉验证    | 完成前验证清单                     | —       |
+| R8  | 高危确认    | 删数据/强推main前确认              | —       |
+| R9  | 命令安全    | 禁cd+重定向/powershell -Command    | —       |
+| R10 | 简洁优先    | 高内聚低耦合易迭代                 | —       |
+| R11 | 安全默认    | 不信任输入、无硬编码密钥           | —       |
+| R12 | 子Agent隔离 | fresh context+制品通信             | CORE.md |
+| R13 | 制品存活    | 跨会话持久化                       | CORE.md |
+| R14 | 版本克制    | 非必要不升major                    | CORE.md |
+| R15 | 包管理器    | pnpm优先；npm兜底                  | CORE.md |
+| R16 | 错误暴漏    | 禁止裸except:pass                  | CORE.md |
 | R17 | 代码探索    | 三级递进 codegraph→cbm→mem，禁跳级 | CORE.md |
-| R18 | 记忆优先    | 为什么/约定/偏好→claude-mem         | CORE.md |
-| R19 | Git 禁令    | 禁自动stash/commit              | CORE.md |
+| R18 | 记忆优先    | 为什么/约定/偏好→claude-mem        | CORE.md |
+| R19 | Git 禁令    | 禁自动stash/commit                 | CORE.md |
 
 ---
 
 ## Tool-First 路由
 
 ```
-MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
+MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 ```
 
-> **代码探索铁律（R17）**：结构/局部→仅 `codegraph_explore`（禁止直接 Grep/Read）。**codebase-memory 已禁用**（全盘索引爆内存）。为什么/约定/偏好→claude-mem。codegraph 返回源码视为已读，不重复 Read/Grep。
+> **代码探索（R17 铁律）** → SSOT `rules/CORE.md`：codegraph_explore 首选（禁止直接 Grep/Read）；codebase-memory 已禁用（全盘索引爆 CPU/内存）；为什么/偏好 → claude-mem。
 
 **五轨**：codegraph(R17) | Firecrawl+Exa | claude-mem(R18) | Context7
 **Token**：RTK(shell) + caveman(输出) + codegraph(探索)
@@ -105,19 +105,10 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 **强制场景**（HARD-GATE）：
 
+- 任务分类：必须 Read `skills/task-triage/SKILL.md`（新任务按两大类+使用类型分类；简单=单文件；非简单先 grill）
 - ①规划阶段：必须 Read `skills/brainstorming/SKILL.md`（用户批准设计前禁止实现）
 - ④验证阶段：必须 Read `skills/verification-before-completion/SKILL.md`
 - Bug修复：必须 Read `skills/systematic-debugging/SKILL.md`
-
-**场景-工具映射**（L0常驻，详见 `CLAUDE-ROUTER.mdc`）：
-
-| 场景          | 首选工具            | 禁止替代  |
-| ------------- | ------------------- | --------- |
-| 代码结构/调用链 | `codegraph_explore` | Grep/Read；调用 cbm（已禁用） |
-| 为什么/约定/偏好 | `claude-mem search` | 塞入 codegraph |
-| 网页深度调研  | `Firecrawl+Exa`     | WebFetch  |
-| Shell输出压缩 | RTK (hook自动)      | 原生Bash  |
-| 输出压缩      | caveman             | 原生输出  |
 
 ---
 
@@ -132,14 +123,15 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 
 ## 命令速查
 
-| 命令                                  | 阶段     | 作用                        |
-| ------------------------------------- | -------- | --------------------------- |
-| /discuss /plan /execute /verify /ship | ①-⑤      | 五阶段                      |
-| /deep-research                        | ①调研 L3 | Firecrawl+Exa+交叉验证      |
-| /deer-flow                            | ③执行 L3 | 外部编排（>30min 自主任务） |
-| /workstream                           | GSD      | 并行任务流                  |
-| /adr                                  | ①        | 架构决策                    |
-| /opsx:sync                            | ②        | OpenSpec delta 同步主 spec  |
+| 命令                                  | 阶段     | 作用                       |
+| ------------------------------------- | -------- | -------------------------- |
+| /discuss /plan /execute /verify /ship | ①-⑤      | 五阶段                     |
+| /deep-research                        | ①调研 L3 | Firecrawl+Exa+交叉验证     |
+| /workstream                           | GSD      | 并行任务流                 |
+| /adr                                  | ①        | 架构决策                   |
+| /opsx:sync                            | ②        | OpenSpec delta 同步主 spec |
+
+> 命令全集 → `commands/`（18 个）；deer-flow 外部编排经 `skills/claude-to-deerflow` 触发（无独立命令）。
 
 **OpenSpec OPSX**：`/opsx:propose` → `continue|ff` → `apply` → `verify` → `sync` → `archive` | CLI: `openspec init --tools cursor`（profile: core）
 
@@ -151,19 +143,19 @@ MANIFEST → P0路由集(5) → 全局 skill → catalog → agent → MCP
 | ----------------- | ------------------------------------------------------- |
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
 | 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.6.0)                                       |
+| 法典/架构         | SPEC.md (v10.11.0)                                      |
 | 铁律/编码/阈值    | rules/CORE.md                                           |
 | 工作流/DAG        | rules/WORKFLOW.md                                       |
 | Agent 协作        | rules/AGENTS.md                                         |
-| 调研 SSOT         | docs/research/30-repo-deep-research-v10.md + repos/     |
+| 调研 SSOT         | docs/research/44-repo-deep-research-v10.11.md + repos/  |
 | 同步指南          | docs/SYNC_GUIDE.md                                      |
 | MCP 规范          | docs/TOOL_MATCHING_GUIDE.md, docs/CURSOR_MCP_PROFILE.md |
 | Git/PR 流程       | skills/git-workflow, skills/pr-workflow                 |
 | 记忆搜索          | claude-mem (R18)                                        |
 
-**插件**：~/.claude 15启用；Cursor 禁用 compound-engineering（与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1` 软链 L0 入口；skills/agents/rules 按需 Read，不复制。
-**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；仅语义/跨服务/ADR/`detect_changes` 才升级 cbm（索引缺失→`scripts/cbm-index.ps1`，禁止 Grep；见 CORE R17-R18）。
+**插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
+**同步**：`scripts/sync.ps1`（v18.2）— 软链 L0 入口 + Cursor local plugin 实体规则（唯一规则通道）；skills/agents/rules 按需 Read，不复制。
+**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；探索一律 codegraph_explore（R17），索引缺失→`scripts/cbm-index.ps1` 已弃用，改 `codegraph init`；codebase-memory 已禁用。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。
 
-@RTK.md
+**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`（按需 Read，不常驻全文）。

@@ -20,7 +20,7 @@ loading_tier: L2
 |------|------|------|
 | 功能变更/brownfield | `openspec/changes/<id>/` | `/propose` |
 | 大功能多阶段 | `.planning/phases/` | `/plan` |
-| ≤3文件小功能 | `spec/<project>/` | `/plan` |
+| 简单(task-triage判定=单文件)小功能 | `spec/<project>/` | `/plan` |
 
 ## 原子任务模板
 

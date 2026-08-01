@@ -1,7 +1,7 @@
-# ECC harness manifest — 全局启用组件清单 v9.0
-# 权威: MANIFEST.yaml v9.0 | 五柱×五阶段×三横切
+# ECC harness manifest — 全局启用组件清单 v10.11.0
+# 权威: MANIFEST.yaml v10.11.0 | 五柱×五阶段×三横切
 
-version: "9.0"
+version: "10.11.0"
 harness: claude-code-primary
 
 phases:
@@ -26,6 +26,7 @@ skills:
     - change-impact-analysis
     - verification-before-completion
     - systematic-debugging
+    - task-triage # v10.11: 对齐 P0 路由集 6（原缺）
   workflow:
     source: obra/superpowers
     enabled:
@@ -181,13 +182,13 @@ disabled_hooks:
   - pre-task-planner
 
 mcp_loading:
-  always: [memory, thinking, fs, fetch, time]
-  dev: [gh, git, ctx7, pw, crawl, chrome-devtools, codegraph, codebase-memory]
+  always: [codegraph, fetch, git, fs, time] # v10.11: 对齐 .mcp.json 常驻 5（原 memory/thinking 移除）
+  dev: [gh, ctx7, pw, crawl, chrome-devtools] # codebase-memory 永久禁用（v10.10 确认）
   ops: [redis, sqlite, docker, postgres]
   search: [exa]
   profile_env: CLAUDE_MCP_PROFILE
 
 limits:
   global_agents_max: 25
-  global_skills_max: 44
+  global_skills_max: 45 # v10.11: 对齐实际 45（原 44 滞后）
   global_rules_max: 12

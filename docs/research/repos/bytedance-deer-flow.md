@@ -1,6 +1,6 @@
 # bytedance/deer-flow v3.1
 
-> 层: L1 治理 | 置信度: 中 | 刷新: 2026-06-24 | 来源: GitHub + CSDN + awesomeagents.ai 三源交叉
+> 层: L1 治理 | 置信度: 中 | 刷新: 2026-07-31 | 来源: GitHub + CSDN + awesomeagents.ai 三源交叉
 
 ## v10.5 delta (2026-07-17)
 

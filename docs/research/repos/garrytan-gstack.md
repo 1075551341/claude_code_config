@@ -1,6 +1,6 @@
 # garrytan/gstack（包 1.58.x / CLI 0.19）
 
-> 层: 五柱(审查) | 置信度: 高 | 刷新: 2026-06-19 | 来源: GitHub CHANGELOG + PR + repo 双源交叉
+> 层: 五柱(审查) | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub CHANGELOG + PR + repo 双源交叉
 >
 > **版本说明**：CLI 自述 `v0.19`（binary 标识），npm/package 实际为 **1.58.1.0**（2026-06-14）。两套编号并存，本地以 CLI 行为为准。
 

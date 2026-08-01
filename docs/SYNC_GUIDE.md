@@ -1,10 +1,10 @@
 ---
-description: 跨编辑器配置同步指南 v17.0
+description: 跨编辑器配置同步指南 v18.2
 ---
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v18.0 | **日期**: 2026-06-29 | **脚本**: `scripts/sync.ps1` | **推荐**: **默认 L0**（省 token）| `-Skills` / `-All` 按需
+> **版本**: v18.2 | **日期**: 2026-07-31 | **脚本**: `scripts/sync.ps1` | **推荐**: **默认 L0**（省 token）| `-Skills` / `-All` 按需
 >
 > **v10.4 推荐**：日常 Cursor 使用 **默认模式（L0）** — 仅 CORE + ROUTER + CURSOR-EDITOR；lazy rules 经 `CLAUDE-ROUTER → Read rules/<name>.md` 按需加载。首次离线或需全量 rules 时用 `-All`。
 
@@ -33,7 +33,7 @@ description: 跨编辑器配置同步指南 v17.0
 
 ---
 
-## 三模式概览（v17.0）
+## 三模式概览（v18.2）
 
 | 内容                                        | 默认（L0入口） | `-Skills` | `-All` |
 | ------------------------------------------- | :------------: | :-------: | :----: |
@@ -52,27 +52,33 @@ description: 跨编辑器配置同步指南 v17.0
 
 ## 模式 A：索引同步（默认）
 
+> **Cursor 规则通道 = local plugin（永久方案）**：`~/.cursor/rules` 实测不生效（UI 不枚举、Agent 不加载），不做其他通道尝试；全局规则仅经 `~/.cursor/plugins/local/claude-config/rules/` 实体 .mdc 由 Cursor 加载（`sync.ps1` 每次刷新实体副本 + 去重）。
+
 ```
 ~/.cursor/  （Cursor 个人级；Devin/Trae/Qoder 同理）
 ├── CLAUDE.md, CLAUDE-ROUTER.mdc, SPEC.md, MANIFEST.yaml  (软链接)
 ├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md      (软链接)
 ├── skills/  → ~/.claude/skills/        (目录联接)
 ├── agents/  → ~/.claude/agents/        (目录联接)
-├── rules/   (实体 .mdc；Cursor Settings 对软链索引不稳定 → Copy)
-│   ├── 00-CLAUDE-ROUTER.mdc
-│   ├── CORE.mdc
-│   └── CURSOR-EDITOR.mdc                 (sync / deploy-cursor-guard)
+├── rules/   （保持空 — plugin 永久通道，不写实体）
+└── plugins/local/claude-config/       (实体 .mdc 副本，规则唯一通道)
+    ├── .cursor-plugin/plugin.json
+    ├── .sync-stamp
+    └── rules/
+        ├── 00-CLAUDE-ROUTER.mdc
+        ├── CORE.mdc
+        └── CURSOR-EDITOR.mdc …（rules/*.md 全量转换）
 ```
 
-> **Cursor Settings 显示说明（v18.1）**
+> **Cursor Settings 显示说明（v18.2）**
 >
-> | 视图                     | 读取路径                                                               | 说明                                                         |
-> | ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
-> | Settings → Project Rules | `<当前工作区>/.cursor/rules/*.mdc`                                     | 打开业务项目时，只有这里有文件才会出现在图2                  |
-> | Agent 全局 alwaysApply   | `~/.cursor/rules/*.mdc`                                                | sync 默认写入这里；Agent 会加载，但不等于 Project Rules 面板 |
-> | 打开 `~/.claude` 工作区  | 若同时存在 `~/.cursor/rules` **与** `~/.claude/.cursor/rules` 同名文件 | Settings 会 **双份显示**（图1）                              |
+> | 视图                     | 读取路径                                                               | 说明                                                        |
+> | ------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+> | Settings → Project Rules | `<当前工作区>/.cursor/rules/*.mdc`                                     | 打开业务项目时，只有这里有文件才会出现在图2                 |
+> | Agent 全局 alwaysApply   | `~/.cursor/plugins/local/claude-config/rules/*.mdc`                    | **唯一通道**：plugin 实体副本；`~/.cursor/rules` 实测不生效 |
+> | 打开 `~/.claude` 工作区  | 若同时存在 `~/.cursor/rules` **与** `~/.claude/.cursor/rules` 同名文件 | Settings 会 **双份显示**（图1）                             |
 >
-> **正确做法**：全局只维护 `~/.cursor/rules`；需要某项目 Settings 可见时，在该项目根执行 `pwsh -File sync.ps1 -ProjectRules`（或 `-All -ProjectRules`）。**不要**把同一套规则再镜像进 `~/.claude/.cursor/rules`。
+> **正确做法**：全局规则只维护 `~/.cursor/plugins/local/claude-config`（sync.ps1 自动刷新）；`~/.cursor/rules` 保持空。需要某项目 Settings 可见时，在该项目根执行 `pwsh -File sync.ps1 -ProjectRules`（或 `-All -ProjectRules`）。**不要**把同一套规则镜像进 `~/.claude/.cursor/rules` 或 `~/.cursor/rules`。
 
 **Devin**：
 
@@ -188,37 +194,36 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 - **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 - **运行时**：[RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
-- **当前设计**：[design-v10.5.1.md](../spec/claude-config-integration/design-v10.5.1.md)
-- **当前计划**：[2026-07-29-v10.6-optimization.md](superpowers/plans/2026-07-29-v10.6-optimization.md)
+- **当前设计**：[design-v10.5.1.md](../spec/claude-config-integration/design-v10.5.1.md)（历史设计；现行计划见下）
+- **当前计划**：[2026-07-31-v10.10-optimization.md](superpowers/plans/2026-07-31-v10.10-optimization.md) + [2026-08-01-v10.11-44repo.md](superpowers/plans/2026-08-01-v10.11-44repo.md)
 
 ## 真源→适配→链接映射表（v10.6.0）
 
 > 真源唯一：`~/.claude/`。不在任何编辑器目录直接改内容；格式适配由 sync.ps1 统一完成。
 
-| 真源文件 | Cursor 落点 | 机制 | 原因 |
-| ------------------------------ | -------------------------------------- | ------------ | ------------------------------ |
-| `CLAUDE.md` | `~/.cursor/CLAUDE.md` | symlink | 纯文本，编辑器可读链接 |
-| `CLAUDE-ROUTER.mdc` | `~/.cursor/CLAUDE-ROUTER.mdc` + `rules/00-CLAUDE-ROUTER.mdc` | symlink + **copy** | rules 目录内必须实体（Settings 不索引软链） |
-| `rules/CORE.md` | `~/.cursor/rules/CORE.mdc` | **copy**（改名 .mdc） | 同上；扩展名适配 |
-| `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` | `~/.cursor/rules/CURSOR-EDITOR.mdc` | **copy** | Cursor 专有规则，仅部署到 Cursor |
-| `MANIFEST.yaml` / `SPEC.md` / `*-INDEX.md` | `~/.cursor/` 同名 | symlink | 路由引用用 |
-| `skills/` | `~/.cursor/skills/` | junction（`mklink /J`，免管理员） | 目录级 |
-| `agents/` | `~/.cursor/agents/` | junction | 目录级 |
-| `rules/*.md`（`-All` 时） | `~/.cursor/rules/<name>.mdc` | **copy**（改名） | 实体副本，先删同名变体再写 |
-| Devin 特化 | `%APPDATA%\devin\AGENTS.md` + `rules/*.md` | copy `.md` | Devin CLI 标准 |
+| 真源文件                                         | Cursor 落点                                                        | 机制                              | 原因                                            |
+| ------------------------------------------------ | ------------------------------------------------------------------ | --------------------------------- | ----------------------------------------------- |
+| `CLAUDE.md`                                      | `~/.cursor/CLAUDE.md`                                              | symlink                           | 纯文本，编辑器可读链接                          |
+| `CLAUDE-ROUTER.mdc`                              | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE-ROUTER.mdc` | **copy**（实体 .mdc）             | plugin 唯一通道（`~/.cursor/rules` 实测不生效） |
+| `rules/CORE.md`                                  | `~/.cursor/plugins/local/claude-config/rules/CORE.mdc`             | **copy**（改名 .mdc）             | 同上                                            |
+| `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` | `~/.cursor/plugins/local/claude-config/rules/CURSOR-EDITOR.mdc`    | **copy**                          | Cursor 专有规则，仅 plugin                      |
+| `MANIFEST.yaml` / `SPEC.md` / `*-INDEX.md`       | `~/.cursor/` 同名                                                  | symlink                           | 路由引用用                                      |
+| `skills/`                                        | `~/.cursor/skills/`                                                | junction（`mklink /J`，免管理员） | 目录级                                          |
+| `agents/`                                        | `~/.cursor/agents/`                                                | junction                          | 目录级                                          |
+| Devin 特化                                       | `%APPDATA%\devin\AGENTS.md` + `rules/*.md`                         | copy `.md`                        | Devin CLI 标准                                  |
 
 > 写前去重：同 basename 全变体删除后重建（`Remove-SameBasenameVariants`）；非本工具生成的用户手动文件只报告不删除（详见 sync.ps1 日志）。
 
 ---
 
-## 去重策略（v18.0+）
+## 去重策略（v18.2+）
 
 每次 `sync.ps1` 写入前（`Sync-File`）：
 
 1. **同类型同名**：`Remove-SameBasenameVariants` 删除目标目录内同 basename 的全部变体（任意扩展名 / 大小写，如 `CORE.md` + `core.mdc`）
 2. **精确路径**：再 `Remove-Target` 删除目标路径（文件或目录联接）
 3. **写入**：优先 symlink，失败则 `Copy-Item`
-4. **Cursor 项目 rules**：**不部署** `~/.claude/.cursor/rules/`（仅个人级 `~/.cursor/rules/`，防双份）
+4. **Cursor 项目 rules**：**不部署** `~/.claude/.cursor/rules/`（全局规则仅 plugin 通道 `~/.cursor/plugins/local/claude-config/`，`~/.cursor/rules/` 保持空，防双份）
 
 回归：`powershell -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1`
 

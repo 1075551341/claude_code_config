@@ -77,11 +77,11 @@ def load_previous_context(cwd: str) -> dict:
 
 
 def load_p0_gate() -> str | None:
-    """读取门控 SSOT 的 P0 分类门段（v10.7.0）。"""
+    """读取门控 SSOT 的 P0 分类门段（v10.10.0）。"""
     fallback = (
         "【门控 · 会话开始必做】\n"
-        "第一轮回复前必须分类：[简单(≤3文件) | Bug | 非简单]\n"
-        "Read ~/.claude/skills/using-superpowers/SKILL.md 后按路由执行。"
+        "第一轮回复前必须按 task-triage 两大类分类：[简单(单文件+白名单+五维全低) | 非简单(多文件/黑名单/五维含中高)]\n"
+        "Read ~/.claude/skills/task-triage/SKILL.md 后按使用类型路由执行。"
     )
     gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")
     try:

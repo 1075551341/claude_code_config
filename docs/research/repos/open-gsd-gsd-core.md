@@ -1,6 +1,6 @@
 # open-gsd/gsd-core v1.4.5 (本地锁定) --> v1.6.0 (上游)
 
-> 层: 五柱(GSD) | 置信度: 高 | 刷新: 2026-06-26 | 来源: GitHub Releases + CHANGELOG + npm
+> 层: 五柱(GSD) | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + CHANGELOG + npm
 
 ## v10.5 delta (2026-07-17)
 

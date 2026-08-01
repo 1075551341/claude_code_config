@@ -75,16 +75,6 @@
         "command": "python hooks/maintenance_hints.py",
         "matcher": "Write|StrReplace",
         "timeout": 5
-      },
-      {
-        "command": "python hooks/sync_on_edit.py",
-        "matcher": "Write|StrReplace",
-        "timeout": 130
-      },
-      {
-        "command": "python hooks/knowledge_graph_sync_hook.py",
-        "matcher": "Write|StrReplace",
-        "timeout": 330
       }
     ],
     "afterFileEdit": [

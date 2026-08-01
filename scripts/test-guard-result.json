@@ -1,6 +1,6 @@
 {
   "cursor_home": "C:\\Users\\DELL\\.cursor",
-  "guard_version": "1.1.6",
+  "guard_version": "1.1.7",
   "tests": {
     "deploy_config": {
       "pass": true,
@@ -124,7 +124,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- 会话 ID: new-sess…\n- 新会话: 是（已重置工具计数）\n- rules: rules 已同步\n- Cursor 上下文（preCompact 记录）: 85%\n【上轮会话交接】\n  • 结束原因: test\n  • 结束时上下文%: 85\n  • 说明: 测试交接\n  • 请让用户确认是否继续上轮任务，或输出新的迷你摘要。\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 见会话上下文\n  • 检查点: cursor-guard auto-save\n【门控 · 会话开始必做】\n本消息为 hook 强制注入，非可选建议。第一轮回复前必须执行分类：\n\n1. Read ~/.claude/skills/using-superpowers/SKILL.md（本会话未读则必读）\n2. 输出分类：[简单(≤3文件) | Bug(堆栈/复现) | 非简单]\n   - 简单 → Read change-impact-analysis 后直接改\n   - Bug → triage 分级 → Read systematic-debugging\n   - 非简单 → Read brainstorming（HARD-GATE：用户批准设计前禁止实现）\n     禁止凭记忆跳过；skill 已读且范围未变可不重复 Read。"
+        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- 会话 ID: new-sess…\n- 新会话: 是（已重置工具计数）\n- rules: 过期规则: AGENTS, BESTPRACTICE, CONTEXT, CORE, DESIGN, FRONTEND, GIT, GOVERNANCE...\n- Cursor 上下文（preCompact 记录）: 85%\n【上轮会话交接】\n  • 结束原因: test\n  • 结束时上下文%: 85\n  • 说明: 测试交接\n  • 请让用户确认是否继续上轮任务，或输出新的迷你摘要。\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 见会话上下文\n  • 检查点: cursor-guard auto-save\n【门控 · 会话开始必做】\n本消息为 hook 强制注入，非可选建议。第一轮回复前必须执行分类：\n\n1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读；简单=单文件+白名单+五维全低，分类树以该文件为唯一 SSOT）\n2. 输出分类（两大类）：[简单(单文件+白名单+五维全低) | 非简单(多文件/黑名单/五维含中或高/无法判定)]\n   - 简单（含单文件可复现Bug）→ Read change-impact-analysis 后直接改\n   - 非简单 Bug（多文件/根因不明）→ triage 分级 → Read systematic-debugging\n   - 非简单 功能/架构/配置/删除 → 先访谈用户（grill：一次一问+推荐答案，≤5问收敛：目标/范围/风险/约束/输出）→ Read brainstorming（HARD-GATE：用户批准设计前禁止实现）\n   - 非简单 调研 → Read skills/deep-research（L3 双源）\n     禁止凭记忆跳过；skill 已读且范围未变可不重复 Read。"
       },
       "stderr": "",
       "behavior_pass": true
@@ -184,7 +184,7 @@
       "exit": 0,
       "json_ok": true,
       "stdout": {
-        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- rules: rules 已同步\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 【提取上下文】已完成: E2E 回归。进行中: 无。待定: 无。路径: ~/.cursor/.state/session-digest.md\n  • 检查点: cursor-guard auto-save\n【门控 · 会话开始必做】\n本消息为 hook 强制注入，非可选建议。第一轮回复前必须执行分类：\n\n1. Read ~/.claude/skills/using-superpowers/SKILL.md（本会话未读则必读）\n2. 输出分类：[简单(≤3文件) | Bug(堆栈/复现) | 非简单]\n   - 简单 → Read change-impact-analysis 后直接改\n   - Bug → triage 分级 → Read systematic-debugging\n   - 非简单 → Read brainstorming（HARD-GATE：用户批准设计前禁止实现）\n     禁止凭记忆跳过；skill 已读且范围未变可不重复 Read。"
+        "additional_context": "【Cursor Guard 状态】\n- 自动同步: 开\n- 自动压缩阈值: 70% / 90%\n- codegraph 优先: 开\n- Shell 守卫: 开\n- rules: 过期规则: AGENTS, BESTPRACTICE, CONTEXT, CORE, DESIGN, FRONTEND, GIT, GOVERNANCE...\n上次压缩快照:\n  • 压缩时上下文: 85%\n  • 任务: 【提取上下文】已完成: E2E 回归。进行中: 无。待定: 无。路径: ~/.cursor/.state/session-digest.md\n  • 检查点: cursor-guard auto-save\n【门控 · 会话开始必做】\n本消息为 hook 强制注入，非可选建议。第一轮回复前必须执行分类：\n\n1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读；简单=单文件+白名单+五维全低，分类树以该文件为唯一 SSOT）\n2. 输出分类（两大类）：[简单(单文件+白名单+五维全低) | 非简单(多文件/黑名单/五维含中或高/无法判定)]\n   - 简单（含单文件可复现Bug）→ Read change-impact-analysis 后直接改\n   - 非简单 Bug（多文件/根因不明）→ triage 分级 → Read systematic-debugging\n   - 非简单 功能/架构/配置/删除 → 先访谈用户（grill：一次一问+推荐答案，≤5问收敛：目标/范围/风险/约束/输出）→ Read brainstorming（HARD-GATE：用户批准设计前禁止实现）\n   - 非简单 调研 → Read skills/deep-research（L3 双源）\n     禁止凭记忆跳过；skill 已读且范围未变可不重复 Read。"
       },
       "stderr": "",
       "behavior_pass": true

@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v10.5 常驻 5 | cbm/chrome-devtools/exa/figma 见 mcp-configs/optional-dev.json 按需 merge",
+  "_comment": "MCP v10.10 常驻 5 | crawl/chrome-devtools/exa/cbm(禁用) 见 mcp-configs/optional-dev.json 按需 merge",
   "mcpServers": {
     "codegraph": {
       "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。F1 纠偏(v10.3)：env 启用 codegraph_impact 满足 R6 变更彻底性保障。",
@@ -10,21 +10,27 @@
         "CODEGRAPH_MCP_TOOLS": "codegraph_explore,codegraph_node,codegraph_search,codegraph_callers,codegraph_impact"
       }
     },
-    "crawl": {
-      "_description": "Firecrawl 官方 MCP。场景：网页抓取、结构化提取、爬虫与搜索（L2/L3 调研）。",
+    "fetch": {
+      "_description": "网页抓取 MCP（2026-07-31 修复）。场景：单页抓取、转 markdown。wrapper 移除 node（readabilipy 的 ExtractArticle.js 打包损坏会失败/挂起）+ 钉扎 mcp==1.28.1（mcp 2.x 移除 McpError 导致 ImportError）。",
       "command": "powershell",
       "args": [
         "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
         "-File",
-        "C:\\Users\\DELL\\.claude\\scripts\\firecrawl-mcp.ps1"
+        "C:\\Users\\DELL\\.claude\\scripts\\fetch-mcp.ps1"
       ]
     },
     "git": {
       "_description": "Git 版本库直接操作。场景：提交历史、diff、blame、本地分支。默认指向配置仓库（v10.6 修复：原 D:\\apdms 非 git 仓库；mcp<1.12 钉扎绕过上游 list_tools API 断链）。",
       "command": "uvx",
-      "args": ["--with", "mcp<1.12", "mcp-server-git", "--repository", "C:\\Users\\DELL\\.claude"]
+      "args": [
+        "--with",
+        "mcp<1.12",
+        "mcp-server-git",
+        "--repository",
+        "C:\\Users\\DELL\\.claude"
+      ]
     },
     "fs": {
       "_description": "文件系统操作。场景：跨路径读写、配置仓库维护。",
