@@ -1,13 +1,13 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.12.0（45 全量）
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.13.0（45 全量）
 
 ## L1 — 会话常驻 (4)
 
 - [using-superpowers](skills/using-superpowers/SKILL.md) — 技能发现与 Tool-First 路由
 - [change-impact-analysis](skills/change-impact-analysis/SKILL.md) — 变更影响分析，改前必执行
 - [brainstorming](skills/brainstorming/SKILL.md) — HARD-GATE 方案设计（非简单任务必加载）
-- [task-triage](skills/task-triage/SKILL.md) — 简单/非简单两大类+使用类型（简单=关联需改≤2，非简单先 grill；完成前均须验证）
+- [task-triage](skills/task-triage/SKILL.md) — Phase0盘点；简单=关联需改≤2+六维+模型匹配+attempt=1；持续处理执行升档；非简单先 grill；完成前均须验证
 
 ## L2 — 阶段门控 (7)
 

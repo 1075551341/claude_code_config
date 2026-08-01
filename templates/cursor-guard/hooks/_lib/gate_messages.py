@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""门控注入文本共享读取器（v10.10.0）。
+"""门控注入文本共享读取器（v10.13.0）。
 SSOT: <claude_home>/hooks/_lib/gate_messages.md，Claude Code 与 Cursor Guard 双端共读。"""
 from __future__ import annotations
 
@@ -15,7 +15,9 @@ SECTIONS = {
 FALLBACKS = {
     "p0": (
         "【门控 · 会话开始必做】\n"
-        "第一轮回复前必须按 task-triage 两大类分类：[简单(关联需改≤2+白名单+六维全低+模型匹配) | 非简单(需改>2/黑名单/六维含中高/模型不足)]\n"
+        "第一轮回复前必须按 task-triage 分类：Phase0 盘点 → "
+        "[简单(关联需改≤2+白名单+六维全低+模型匹配+attempt=1) | "
+        "非简单(需改>2/黑名单/六维含中高/模型不足/持续处理执行升档)]\n"
         "Read ~/.claude/skills/task-triage/SKILL.md 后按使用类型路由执行。"
     ),
     "verify": (

@@ -2,7 +2,7 @@
 description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理、R16
 ---
 
-# Runtime Playbook（v10.12.0）
+# Runtime Playbook（v10.13.0）
 
 > 加载等级详图 → [CLAUDE.md](../CLAUDE.md) L0–L3 | 路由 → [using-superpowers/SKILL.md](../skills/using-superpowers/SKILL.md)
 
@@ -15,13 +15,14 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 ```
 用户输入
   → R18: claude-mem search?（相关则先查）
-  → L1 using-superpowers 分类
-  → 简单(task-triage判定=关联需改≤2)? → L1 change-impact → 改 → ④验证(比例；持续处理则全量)
+  → L1 using-superpowers + task-triage（Phase0 前置盘点）
+  → 简单(关联需改≤2+attempt=1)? → L1 change-impact → 一次改齐 → ④验证(比例)
+  → 持续处理(attempt≥2/首轮未解决)? → 执行升档非简单 + verify_tier=全量
   → Bug? → L3 triage → L2 systematic-debugging
   → 非简单 → L1 brainstorming → 五阶段全链
 ```
 
-**简单旁路**：不 Read `executing-plans` / `subagent-driven-development`；完成前仍须 verification（比例；持续处理则全量）。
+**简单旁路**：仅 attempt=1；不 Read `executing-plans` / `subagent-driven-development`；完成前仍须 verification（比例）。
 
 ## 非简单五阶段（L1 常驻 + L2 门控 Read）
 

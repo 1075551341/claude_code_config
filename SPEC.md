@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引。
-> 版本：10.12.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
+> 版本：10.13.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 分层 + Exa 按需 | UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
 
 ---
 
@@ -330,6 +330,14 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行
 | hooks/, commands/, MCP, plugins     | 不同步                      |
 
 ---
+
+## v10.13.0 变更摘要（2026-08-01）
+
+- **Phase0 前置盘点**：分类前强制盘点已知文件/工具/记忆/成功标准；未盘点不得宣称简单
+- **持续处理 = 执行升档**：attempt≥2 / 首轮未解决 → verify_tier=全量 **且** 执行升档非简单（不再停留简单旁路）
+- **一次改完**：简单路径仅 attempt=1；清单膨胀>2 立即执行升档；禁止多轮简单旁路
+- **模型档映射表**：frontier/mid/light 典型模型对照，防虚报；设计 doc → `spec/task-difficulty-precision/design.md`
+- **SSOT**：`skills/task-triage`；verification / gate_messages / CLAUDE / ROUTER / using-superpowers 短引用对齐
 
 ## v10.12.0 变更摘要（2026-08-01）
 

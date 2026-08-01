@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v10.12.0
+# 组件唯一归属源 — 防左右手互博 — v10.13.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.12.0"
+version: "10.13.0"
 updated: "2026-08-01"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -440,7 +440,7 @@ concerns:
     owner: hooks/_lib/gate_messages.md
     source: local
     stage: all
-    note: "v10.9.0 — 三门控文本 SSOT：P0分类门(task-triage两大类+单文件判定，SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
+    note: "v10.13.0 — 三门控文本 SSOT：P0分类门(task-triage Phase0+关联需改≤2+attempt=1，持续处理执行升档；SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
     hooks:
       [
         session-start-bootstrap,
@@ -593,7 +593,7 @@ concerns:
     loading_tier: L1
     depends_on: [skill/using-superpowers, skill/brainstorming]
     excludes: [skill/triage, catalog/skills/grill-with-docs]
-    note: "v10.9.0 — 两大类(简单/非简单)+使用类型细分路由；简单=单文件+白名单+五维全低；非简单先 grill 再进 brainstorming；triage=bug P0-P3 分级(L3)互补不重叠"
+    note: "v10.13.0 — 两大类(简单/非简单)+使用类型细分；简单=Phase0+关联需改≤2+白名单+六维全低+模型匹配+attempt=1；持续处理执行升档非简单；非简单先 grill 再进 brainstorming；triage=bug P0-P3 分级(L3)互补不重叠"
 
   architecture_improvement:
     owner: skill/improve-codebase-architecture

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.12.0**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.13.0**
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.12.4(记忆)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -24,8 +24,8 @@ alwaysApply: true
 ## 五阶段流程（SSOT）
 
 ```
-简单(关联需改≤2+白名单+六维全低+模型匹配) → L1 change-impact → 执行 → ④验证(比例；持续处理则全量)
-Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析) → ④全量验证
+简单(Phase0盘点+关联需改≤2+白名单+六维全低+模型匹配+attempt=1) → L1 change-impact → 一次改齐 → ④验证(比例)
+Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析) → ④全量验证
 非简单 → ①grill访谈(一次一问+推荐答案) → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
@@ -33,7 +33,7 @@ Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根
        → ⑤学习
 ```
 
-> 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理同一问题 → verify_tier=全量。
+> 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理（attempt≥2/首轮未解决）→ **执行升档非简单** + verify_tier=全量。
 
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
 
@@ -107,7 +107,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 **强制场景**（HARD-GATE）：
 
-- 任务分类：必须 Read `skills/task-triage/SKILL.md`（新任务按两大类+使用类型；简单=关联需改≤2+白名单+六维全低+模型匹配；非简单先 grill；完成前均须验证）
+- 任务分类：必须 Read `skills/task-triage/SKILL.md`（Phase0 盘点；简单=关联需改≤2+白名单+六维全低+模型匹配+attempt=1；持续处理→执行升档非简单；非简单先 grill；完成前均须验证）
 - ①规划阶段：必须 Read `skills/brainstorming/SKILL.md`（用户批准设计前禁止实现）
 - ④验证阶段：必须 Read `skills/verification-before-completion/SKILL.md`
 - Bug修复：必须 Read `skills/systematic-debugging/SKILL.md`
@@ -145,7 +145,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | ----------------- | ------------------------------------------------------- |
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
 | 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.12.0)                                      |
+| 法典/架构         | SPEC.md (v10.13.0)                                      |
 | 铁律/编码/阈值    | rules/CORE.md                                           |
 | 工作流/DAG        | rules/WORKFLOW.md                                       |
 | Agent 协作        | rules/AGENTS.md                                         |

@@ -77,10 +77,12 @@ def load_previous_context(cwd: str) -> dict:
 
 
 def load_p0_gate() -> str | None:
-    """读取门控 SSOT 的 P0 分类门段（v10.10.0）。"""
+    """读取门控 SSOT 的 P0 分类门段（v10.13.0）。"""
     fallback = (
         "【门控 · 会话开始必做】\n"
-        "第一轮回复前必须按 task-triage 两大类分类：[简单(关联需改≤2+白名单+六维全低+模型匹配) | 非简单(需改>2/黑名单/六维含中高/模型不足)]\n"
+        "第一轮回复前必须按 task-triage 分类：Phase0 盘点 → "
+        "[简单(关联需改≤2+白名单+六维全低+模型匹配+attempt=1) | "
+        "非简单(需改>2/黑名单/六维含中高/模型不足/持续处理执行升档)]\n"
         "Read ~/.claude/skills/task-triage/SKILL.md 后按使用类型路由执行。"
     )
     gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")

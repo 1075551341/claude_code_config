@@ -45,22 +45,23 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 ```
 用户输入
   → R18: claude-mem search?（相关则先查）
-  → Read skills/task-triage/SKILL.md（两大类+使用类型树 SSOT，禁止仅凭文件数）
-  → 简单(关联需改≤2+白名单+六维全低+模型匹配)? → L1 change-impact → 直接改 → ④验证(比例；持续处理则全量)
+  → Read skills/task-triage/SKILL.md（Phase0 前置盘点 → 两大类+使用类型树 SSOT，禁止仅凭文件数）
+  → 简单(关联需改≤2+白名单+六维全低+模型匹配+attempt=1)? → L1 change-impact → 一次改齐 → ④验证(比例)
+  → 持续处理(attempt≥2/首轮未解决)? → 执行升档非简单 + verify_tier=全量
   → 非简单(需改>2/黑名单/六维含中高/模型不足/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
-       → Bug类(多文件/根因不明) → L3 triage → L2 debugging → 全量验证
+       → Bug类(多文件/根因不明/执行升档) → L3 triage → L2 debugging → 全量验证
        → 功能/架构/配置/删除类 → L1 brainstorming → …五阶段全链 → 全量验证
        → 调研类 → L3 deep-research
 ```
 
-**简单旁路**：不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion。
+**简单旁路**：仅 attempt=1；不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion。
 
 ## P0 路由集（6）
 
 | 等级 | Skill                          | 触发                                                     |
 | ---- | ------------------------------ | -------------------------------------------------------- |
 | L1   | using-superpowers              | 会话开始                                                 |
-| L1   | task-triage                    | 会话开始分类、新任务（两大类+使用类型；简单=关联需改≤2） |
+| L1   | task-triage                    | 会话开始分类、新任务（Phase0；简单=关联需改≤2+attempt=1；持续处理执行升档） |
 | L1   | change-impact-analysis         | 任何修改                                                 |
 | L1   | brainstorming                  | 非简单、方案、架构                                       |
 | L2   | verification-before-completion | 完成、验收                                               |

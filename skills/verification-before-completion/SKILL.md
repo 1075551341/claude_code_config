@@ -11,7 +11,7 @@ source: obra/superpowers
 # 完成前强制交叉验证
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
-> **verify_tier / 持续处理升档** 的触发 SSOT → `skills/task-triage/SKILL.md`。
+> **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
 
 ## @Examples
 
@@ -32,9 +32,10 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 | 档       | 何时                                                            | 必须项                                                  |
 | -------- | --------------------------------------------------------------- | ------------------------------------------------------- |
 | **比例** | 初判简单 **且** attempt=1 **且** 未触发持续处理                 | 代码级（适用项）+ 功能级核验 + 关联文件验证；贴命令证据 |
-| **全量** | 非简单；**或** 持续处理升档；**或** 初判简单但 verify_tier 已升 | 比例全部 + **交叉验证全项** + 残留引用                  |
+| **全量** | 非简单；**或** 持续处理（验证+执行升档）；**或** verify_tier 已升 | 比例全部 + **交叉验证全项** + 残留引用                  |
 
-持续处理触发（与 task-triage 一致）：同任务 attempt≥2；用户反馈未解决；验失败后继续改；首轮处理后问题仍在。
+持续处理触发（与 task-triage 一致）：同任务 attempt≥2；用户反馈未解决；验失败后继续改；首轮处理后问题仍在。  
+触发后：**verify_tier=全量**，且 **执行升档为非简单**（不再停留简单旁路；路由见 task-triage）。
 
 ## 强制验证流程
 
@@ -143,7 +144,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 ## 失败与升级
 
 - 验证失败 → **不声称完成**；输出失败项 + 修复方案
-- 初判简单且继续处理 → `verify_tier=全量`（持续处理），不自动要求 grill，除非执行升档
+- 初判简单且继续处理 → `verify_tier=全量` + **执行升档非简单**（Bug 升档可跳过 grill，见 task-triage）
 - 需改膨胀>2 / 黑名单 / 同方案达 R5 仍失败 → 执行升档非简单或 NEEDS_CONTEXT（禁止第 3 次同方案空转）
 
 ## 反合理化检查

@@ -20,7 +20,7 @@ layer: router
 | Skill                          | 等级 | 触发                                                     |
 | ------------------------------ | ---- | -------------------------------------------------------- |
 | using-superpowers              | L1   | 会话开始、分类路由                                       |
-| task-triage                    | L1   | 会话开始分类、新任务（两大类+使用类型；简单=关联需改≤2） |
+| task-triage                    | L1   | 会话开始分类、新任务（Phase0盘点；简单=关联需改≤2+attempt=1；持续处理执行升档） |
 | change-impact-analysis         | L1   | 任何修改意图                                             |
 | brainstorming                  | L1   | 非简单 ①规划（grill→HARD-GATE）                          |
 | verification-before-completion | L2   | ④验收                                                    |
