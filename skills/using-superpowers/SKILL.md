@@ -14,23 +14,23 @@ loading_tier: L1
 
 ## 显式调用（Cursor / Claude Code 通用）
 
-| 方式 | 用法 | 适用 |
-|------|------|------|
-| **Read 工具** | `Read skills/<name>/SKILL.md` | **首选**；L2/L3 必须 |
-| slash 命令 | `/discuss` `/plan` `/deep-research` 等 | 入口快捷；仍应 Read 全文 |
-| 关键词 | description/triggers 匹配 | 路由信号；触发后 Read |
-| Task 子代理 | `subagent_type` + 任务描述 | L4 agents |
+| 方式          | 用法                                   | 适用                     |
+| ------------- | -------------------------------------- | ------------------------ |
+| **Read 工具** | `Read skills/<name>/SKILL.md`          | **首选**；L2/L3 必须     |
+| slash 命令    | `/discuss` `/plan` `/deep-research` 等 | 入口快捷；仍应 Read 全文 |
+| 关键词        | description/triggers 匹配              | 路由信号；触发后 Read    |
+| Task 子代理   | `subagent_type` + 任务描述             | L4 agents                |
 
 L2/L3 设 `disable-model-invocation: true` → 不会自动注入上下文；**进入阶段时必须显式 Read**。
 
 ## 加载等级（L0–L3，CLAUDE.md 细分 L4）
 
-| 等级 | 机制 |
-|------|------|
-| L0 | CLAUDE-ROUTER + CLAUDE + CORE alwaysApply |
-| L1 | 本 skill + change-impact-analysis 常驻 |
-| L2 | 进入阶段 Read 全文（见下表） |
-| L3 | slash/关键词后 Read supplement skill / agent / MCP / claude-mem |
+| 等级 | 机制                                                            |
+| ---- | --------------------------------------------------------------- |
+| L0   | CLAUDE-ROUTER + CLAUDE + CORE alwaysApply                       |
+| L1   | 本 skill + change-impact-analysis 常驻                          |
+| L2   | 进入阶段 Read 全文（见下表）                                    |
+| L3   | slash/关键词后 Read supplement skill / agent / MCP / claude-mem |
 
 > **统一口径**：ROUTER（L0 always）以 **L0–L3** 为准，L3 = 其余 skills/rules/agents/MCP/claude-mem。CLAUDE.md 出于细分把 agents(Task)/MCP/claude-mem 单列为 **L4**，等价于 ROUTER 的 L3 子集。本 skill 采用 ROUTER 口径。
 
@@ -46,50 +46,50 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 用户输入
   → R18: claude-mem search?（相关则先查）
   → Read skills/task-triage/SKILL.md（两大类+使用类型树 SSOT，禁止仅凭文件数）
-  → 简单(单文件+白名单+五维全低)? → L1 change-impact → 直接改 → 轻量验证
-  → 非简单(多文件/黑名单/五维含中高/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
-       → Bug类(多文件/根因不明) → L3 triage → L2 debugging
-       → 功能/架构/配置/删除类 → L1 brainstorming → …五阶段全链
+  → 简单(关联需改≤2+白名单+六维全低+模型匹配)? → L1 change-impact → 直接改 → ④验证(比例；持续处理则全量)
+  → 非简单(需改>2/黑名单/六维含中高/模型不足/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
+       → Bug类(多文件/根因不明) → L3 triage → L2 debugging → 全量验证
+       → 功能/架构/配置/删除类 → L1 brainstorming → …五阶段全链 → 全量验证
        → 调研类 → L3 deep-research
 ```
 
-**简单旁路**：不 Read executing-plans / subagent-driven-development。
+**简单旁路**：不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion。
 
 ## P0 路由集（6）
 
-| 等级 | Skill | 触发 |
-|------|-------|------|
-| L1 | using-superpowers | 会话开始 |
-| L1 | task-triage | 会话开始分类、新任务（两大类+使用类型；简单=单文件） |
-| L1 | change-impact-analysis | 任何修改 |
-| L1 | brainstorming | 非简单、方案、架构 |
-| L2 | verification-before-completion | 完成、验收 |
-| L2 | systematic-debugging | 调试、测试失败 |
+| 等级 | Skill                          | 触发                                                     |
+| ---- | ------------------------------ | -------------------------------------------------------- |
+| L1   | using-superpowers              | 会话开始                                                 |
+| L1   | task-triage                    | 会话开始分类、新任务（两大类+使用类型；简单=关联需改≤2） |
+| L1   | change-impact-analysis         | 任何修改                                                 |
+| L1   | brainstorming                  | 非简单、方案、架构                                       |
+| L2   | verification-before-completion | 完成、验收                                               |
+| L2   | systematic-debugging           | 调试、测试失败                                           |
 
 ## 非简单 L2 链
 
-| 阶段 | Read |
-|------|------|
-| ② | writing-plans → spec-validation（门控） |
-| ③ | executing-plans + subagent-driven-development |
-| ④ | verification-before-completion |
+| 阶段 | Read                                          |
+| ---- | --------------------------------------------- |
+| ②    | writing-plans → spec-validation（门控）       |
+| ③    | executing-plans + subagent-driven-development |
+| ④    | verification-before-completion                |
 
 ## 规格三轨（自动判定，互斥）
 
-| 优先级 | 条件 | 轨道 | L3 追加 |
-|--------|------|------|---------|
-| 1 | `/workstream` 或「并行流」 | GSD | workstream-management |
-| 2 | `openspec/changes/` 或 brownfield | OpenSpec | rules/OPENSPEC.md |
-| 3 | 简单(task-triage判定=单文件)单模块 | 轻量 `spec/` | — |
-| 4 | 默认 多文件（非简单） | OpenSpec | rules/OPENSPEC.md；无目录则创建 change id |
+| 优先级 | 条件                                   | 轨道         | L3 追加                                   |
+| ------ | -------------------------------------- | ------------ | ----------------------------------------- |
+| 1      | `/workstream` 或「并行流」             | GSD          | workstream-management                     |
+| 2      | `openspec/changes/` 或 brownfield      | OpenSpec     | rules/OPENSPEC.md                         |
+| 3      | 简单(task-triage判定=关联需改≤2)单模块 | 轻量 `spec/` | —                                         |
+| 4      | 默认 多文件（非简单）                  | OpenSpec     | rules/OPENSPEC.md；无目录则创建 change id |
 
 ## 调研三档（① brainstorming 内嵌）
 
-| 档 | 场景 | 工具 |
-|----|------|------|
-| L1 | 单点 API/事实 | Context7 / Exa |
-| L2 | 方案对比 | Exa + Firecrawl 单页 |
-| L3 | 深度选型、/deep-research | skills/deep-research |
+| 档  | 场景                     | 工具                 |
+| --- | ------------------------ | -------------------- |
+| L1  | 单点 API/事实            | Context7 / Exa       |
+| L2  | 方案对比                 | Exa + Firecrawl 单页 |
+| L3  | 深度选型、/deep-research | skills/deep-research |
 
 升级：L1 不足→L2→L3。代码库用 codegraph，禁止先用 Firecrawl。
 
@@ -101,16 +101,16 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 
 ## 工作流扩展（L3 信号触发）
 
-| 信号 | Skill |
-|------|-------|
-| 写计划 | writing-plans |
-| TDD | test-driven-development |
+| 信号     | Skill                                 |
+| -------- | ------------------------------------- |
+| 写计划   | writing-plans                         |
+| TDD      | test-driven-development               |
 | 代码审查 | requesting-code-review → eng-reviewer |
-| 架构决策 | adr-management |
-| 长时自主 | claude-to-deerflow（/deer-flow） |
-| Git 提交 | git-workflow |
-| 开 PR | pr-workflow |
-| 输出冗长 | caveman-compress |
+| 架构决策 | adr-management                        |
+| 长时自主 | claude-to-deerflow（/deer-flow）      |
+| Git 提交 | git-workflow                          |
+| 开 PR    | pr-workflow                           |
+| 输出冗长 | caveman-compress                      |
 
 ## Token
 

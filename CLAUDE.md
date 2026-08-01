@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.11.0**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.12.0**
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.12.4(记忆)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -16,7 +16,7 @@ alwaysApply: true
 
 ```
 用户显式指令 > CLAUDE.md > 激活skill > lazy规则 > alwaysApply > 默认
-工具路由: codegraph → cbm(仅升级条件) → Grep | 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
+工具路由: codegraph → Grep（codebase-memory 已禁用）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
 ```
 
 ---
@@ -24,14 +24,16 @@ alwaysApply: true
 ## 五阶段流程（SSOT）
 
 ```
-简单(单文件+白名单+五维全低) → L1 change-impact → 执行 → 轻量验证
-Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析)
+简单(关联需改≤2+白名单+六维全低+模型匹配) → L1 change-impact → 执行 → ④验证(比例；持续处理则全量)
+Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析) → ④全量验证
 非简单 → ①grill访谈(一次一问+推荐答案) → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
-       → ④验证(Read skills/verification-before-completion/SKILL.md)
+       → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
        → ⑤学习
 ```
+
+> 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理同一问题 → verify_tier=全量。
 
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
 
@@ -69,7 +71,7 @@ Bug(多文件/根因不明) → triage(L3 P0-P3) → L2 systematic-debugging(根
 | R14 | 版本克制    | 非必要不升major                    | CORE.md |
 | R15 | 包管理器    | pnpm优先；npm兜底                  | CORE.md |
 | R16 | 错误暴漏    | 禁止裸except:pass                  | CORE.md |
-| R17 | 代码探索    | 三级递进 codegraph→cbm→mem，禁跳级 | CORE.md |
+| R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级 | CORE.md |
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem        | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit                 | CORE.md |
 
@@ -105,7 +107,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 **强制场景**（HARD-GATE）：
 
-- 任务分类：必须 Read `skills/task-triage/SKILL.md`（新任务按两大类+使用类型分类；简单=单文件；非简单先 grill）
+- 任务分类：必须 Read `skills/task-triage/SKILL.md`（新任务按两大类+使用类型；简单=关联需改≤2+白名单+六维全低+模型匹配；非简单先 grill；完成前均须验证）
 - ①规划阶段：必须 Read `skills/brainstorming/SKILL.md`（用户批准设计前禁止实现）
 - ④验证阶段：必须 Read `skills/verification-before-completion/SKILL.md`
 - Bug修复：必须 Read `skills/systematic-debugging/SKILL.md`
@@ -143,7 +145,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | ----------------- | ------------------------------------------------------- |
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
 | 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.11.0)                                      |
+| 法典/架构         | SPEC.md (v10.12.0)                                      |
 | 铁律/编码/阈值    | rules/CORE.md                                           |
 | 工作流/DAG        | rules/WORKFLOW.md                                       |
 | Agent 协作        | rules/AGENTS.md                                         |

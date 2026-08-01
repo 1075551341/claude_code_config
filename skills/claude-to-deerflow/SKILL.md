@@ -14,12 +14,12 @@ source: bytedance/deer-flow
 
 ## 何时用
 
-| 场景 | 用 deer-flow | 用本地五阶段 |
-|------|-------------|-------------|
-| >30min 自主调研 | ✅ | ❌ |
-| 多角度交叉验证 + 沙箱 | ✅ | 用 /deep-research |
-| 简单(task-triage判定=单文件)小任务 | ❌ | ✅ |
-| 常规功能开发 | ❌ | ✅ executing-plans |
+| 场景                                   | 用 deer-flow | 用本地五阶段       |
+| -------------------------------------- | ------------ | ------------------ |
+| >30min 自主调研                        | ✅           | ❌                 |
+| 多角度交叉验证 + 沙箱                  | ✅           | 用 /deep-research  |
+| 简单(task-triage判定=关联需改≤2)小任务 | ❌           | ✅                 |
+| 常规功能开发                           | ❌           | ✅ executing-plans |
 
 ## 接口
 
@@ -27,12 +27,12 @@ source: bytedance/deer-flow
 /deer-flow --mode <flash|standard|pro|ultra> <task描述>
 ```
 
-| 模式 | 适用 |
-|------|------|
-| flash | 快速调研，单角度 |
-| standard | 默认，2-3 角度 |
-| pro | 深度调研 + 沙箱验证 |
-| ultra | 长时间多 Agent 编排 |
+| 模式     | 适用                |
+| -------- | ------------------- |
+| flash    | 快速调研，单角度    |
+| standard | 默认，2-3 角度      |
+| pro      | 深度调研 + 沙箱验证 |
+| ultra    | 长时间多 Agent 编排 |
 
 ## 流程
 

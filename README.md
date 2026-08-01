@@ -1,6 +1,6 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v10.11.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md` | 运行时: `docs/RUNTIME_PLAYBOOK.md`
+> 五柱 × 五阶段 × 三横切 | **v10.12.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md` | 运行时: `docs/RUNTIME_PLAYBOOK.md`
 
 ## 快速导航
 
@@ -8,7 +8,7 @@
 | ------------------- | -------------------------------------------- |
 | `CLAUDE.md`         | 入口 — 优先级链 + 铁律 R1-R19 + 路由         |
 | `CLAUDE-ROUTER.mdc` | Tool-First 路由 — P0 路由集 + L0–L3 加载等级 |
-| `SPEC.md`           | 配置法典（v10.11.0）                         |
+| `SPEC.md`           | 配置法典（v10.12.0）                         |
 | `MANIFEST.yaml`     | 组件唯一归属 + 防互博                        |
 | `.mcp.json`         | MCP 常驻配置；ops/optional 见 `mcp-configs/` |
 | `settings.json`     | 运行时配置                                   |
@@ -54,6 +54,6 @@ powershell scripts/check.ps1      # 一致性体检
 
 ## 版本
 
-- 当前：**v10.11.0**（2026-08-01）— 44 仓库全量调研：0 新增组件 + 版本对齐运行态 + 文档清理
+- 当前：**v10.12.0**（2026-08-01）— 任务判定：关联需改≤2 + 六维/模型匹配 + 全任务验证（持续处理升全量）
 - 变更史：`SPEC.md` 末尾 changelog 链
 - 调研 SSOT：`docs/research/44-repo-deep-research-v10.11.md` + `COVERAGE.md`

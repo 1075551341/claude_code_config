@@ -2,7 +2,7 @@
 description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理、R16
 ---
 
-# Runtime Playbook（v10.11.0）
+# Runtime Playbook（v10.12.0）
 
 > 加载等级详图 → [CLAUDE.md](../CLAUDE.md) L0–L3 | 路由 → [using-superpowers/SKILL.md](../skills/using-superpowers/SKILL.md)
 
@@ -16,12 +16,12 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 用户输入
   → R18: claude-mem search?（相关则先查）
   → L1 using-superpowers 分类
-  → 简单(task-triage判定=单文件)? → L1 change-impact → 改 → 轻量验证
+  → 简单(task-triage判定=关联需改≤2)? → L1 change-impact → 改 → ④验证(比例；持续处理则全量)
   → Bug? → L3 triage → L2 systematic-debugging
   → 非简单 → L1 brainstorming → 五阶段全链
 ```
 
-**简单旁路**：不 Read `executing-plans` / `subagent-driven-development`。
+**简单旁路**：不 Read `executing-plans` / `subagent-driven-development`；完成前仍须 verification（比例；持续处理则全量）。
 
 ## 非简单五阶段（L1 常驻 + L2 门控 Read）
 
@@ -72,7 +72,7 @@ codegraph init（首次/新项目）
 
 未索引时 MCP 降级为 Grep；`validate_config.py` V16 检查 `~/.claude/.codegraph/` 就绪。
 
-禁止未探索就大范围 Read。探索链：codegraph → cbm(L4) → Grep → Read（**UA removed v10.5**）。
+禁止未探索就大范围 Read。探索链：codegraph → Grep → Read（**cbm 已禁用 v10.10+**；**UA removed v10.5**）。
 
 ### codegraph init（mandate — 全局 + 项目按需）
 
@@ -83,9 +83,7 @@ cd ~/.claude && codegraph init && codegraph index
 # 业务项目（按需，进入项目根后执行）
 codegraph init && codegraph index
 
-# 业务项目 L4 可选（merge optional-dev.json 或 .mcp.json 已含 cbm）：
-# Windows: .\scripts\cbm-index.ps1 D:\your-project
-# 或: npx -y codebase-memory-mcp@0.8.1 cli index_repository (Get-Content -Raw index.json)
+# codebase-memory 已禁用（全盘索引爆内存）；勿跑 cbm-index；仅实验可设 KG_SYNC_CBM=1
 ```
 
 **策略（访谈）**：mandate `~/.claude` 全局索引；各业务仓库按需 init；cbm 见 `rules/CONTEXT.md` 启用条件。

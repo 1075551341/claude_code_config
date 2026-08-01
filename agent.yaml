@@ -1,7 +1,7 @@
-# ECC harness manifest — 全局启用组件清单 v10.11.0
-# 权威: MANIFEST.yaml v10.11.0 | 五柱×五阶段×三横切
+# ECC harness manifest — 全局启用组件清单 v10.12.0
+# 权威: MANIFEST.yaml v10.12.0 | 五柱×五阶段×三横切
 
-version: "10.11.0"
+version: "10.12.0"
 harness: claude-code-primary
 
 phases:

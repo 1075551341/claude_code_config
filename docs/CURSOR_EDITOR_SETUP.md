@@ -48,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps
 
 1. 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`
 2. Cursor Settings → MCP 启用 codegraph
-3. 编辑后/会话结束 hook 自动刷新 **codegraph + codebase-memory**（`knowledge_graph_sync_hook`）；也可手跑 `python ~/.claude/hooks/_lib/knowledge_graph_sync.py --force <project>`
+3. 编辑后/会话结束 hook **仅刷新 codegraph**（`knowledge_graph_sync_hook`；cbm 默认关）；也可手跑 `python ~/.claude/hooks/_lib/knowledge_graph_sync.py --force <project>`
 
 参考：[`templates/cursor-guard/mcp-recommended.json`](../templates/cursor-guard/mcp-recommended.json)
 

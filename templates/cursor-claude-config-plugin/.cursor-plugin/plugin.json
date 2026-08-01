@@ -1,16 +1,11 @@
 {
-    "name":  "claude-config",
-    "displayName":  "Claude Config Rules",
-    "description":  "Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.",
-    "version":  "10.11.0+202608011421",
-    "author":  {
-                   "name":  "local"
-               },
-    "rules":  "./rules/",
-    "keywords":  [
-                     "claude",
-                     "rules",
-                     "governance",
-                     "local"
-                 ]
+  "name": "claude-config",
+  "displayName": "Claude Config Rules",
+  "description": "Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.",
+  "version": "10.12.0+202608012123",
+  "author": {
+    "name": "local"
+  },
+  "rules": "./rules/",
+  "keywords": ["claude", "rules", "governance", "local"]
 }

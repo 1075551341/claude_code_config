@@ -262,22 +262,24 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ## 去重决策矩阵（v10.4 更新）
 
-| 重叠领域     | 涉及                                  | 决策                                                     |
-| ------------ | ------------------------------------- | -------------------------------------------------------- |
-| 任务规划     | superpowers vs task-master            | superpowers 主；task-master L4 PRD                       |
-| 编排         | subagent vs deer-flow vs ruflo        | 内部 / L3 长时 / 仅文档                                  |
-| 代码探索     | codegraph vs UA vs Grep               | codegraph → cbm(L4) → Grep（**UA removed v10.5**）       |
-| **代码图谱** | **codegraph vs codebase-memory**      | **双引擎互补：codegraph=R17 日常；cbm=L4 架构/ADR/变更** |
-| UI 设计      | gstack vs ui-ux-pro-max               | gstack 流程；uupm catalog                                |
-| 记忆         | claude-mem vs claude-context          | mem SSOT；context **archived_redirect→cbm**              |
-| **语义搜索** | **claude-context vs codebase-memory** | **cbm 替代（本地嵌入，无 Milvus）**                      |
-| 规格         | OpenSpec vs GSD .planning             | 三轨互斥                                                 |
-| 审查         | gstack vs compound-engineering        | 禁用 plugin；本地 agents                                 |
-| 压缩         | RTK vs caveman                        | 输入 vs 输出                                             |
-| Superpowers  | 插件 vs 本地 skills                   | 后加载本地覆盖                                           |
-| 加载         | L0 四入口 vs 全量 rules               | sync 默认 L0；-Skills/-All 按需                          |
-| 模型路由     | CCR vs 直连 Kimi API                  | 直连（settings.json ANTHROPIC_BASE_URL）；CCR 不集成     |
-| 跨模型审查   | codex-plugin-cc vs codex-reviewer     | 本地 codex-reviewer 主；plugin 不集成                    |
+> **v10.10+ 现行**：codebase-memory **永久禁用**；探索 = codegraph → Grep → Read。下表保留历史决策，标 ⚠️ 的行以 v10.10/v10.11 摘要为准。
+
+| 重叠领域     | 涉及                                  | 决策                                                       |
+| ------------ | ------------------------------------- | ---------------------------------------------------------- |
+| 任务规划     | superpowers vs task-master            | superpowers 主；task-master L4 PRD                         |
+| 编排         | subagent vs deer-flow vs ruflo        | 内部 / L3 长时 / 仅文档                                    |
+| 代码探索     | codegraph vs UA vs Grep               | ⚠️ **现行** codegraph → Grep（cbm 已禁用；UA removed）     |
+| **代码图谱** | **codegraph vs codebase-memory**      | ⚠️ **现行** codegraph 全权；cbm loading:disabled（v10.10） |
+| UI 设计      | gstack vs ui-ux-pro-max               | gstack 流程；uupm catalog                                  |
+| 记忆         | claude-mem vs claude-context          | mem SSOT；context **archived_redirect→cbm**                |
+| **语义搜索** | **claude-context vs codebase-memory** | ⚠️ 历史：cbm 曾替代 context；**现行 cbm 亦禁用**           |
+| 规格         | OpenSpec vs GSD .planning             | 三轨互斥                                                   |
+| 审查         | gstack vs compound-engineering        | 禁用 plugin；本地 agents                                   |
+| 压缩         | RTK vs caveman                        | 输入 vs 输出                                               |
+| Superpowers  | 插件 vs 本地 skills                   | 后加载本地覆盖                                             |
+| 加载         | L0 四入口 vs 全量 rules               | sync 默认 L0；-Skills/-All 按需                            |
+| 模型路由     | CCR vs 直连 Kimi API                  | 直连（settings.json ANTHROPIC_BASE_URL）；CCR 不集成       |
+| 跨模型审查   | codex-plugin-cc vs codex-reviewer     | 本地 codex-reviewer 主；plugin 不集成                      |
 
 ---
 

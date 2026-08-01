@@ -26,20 +26,20 @@ codex-reviewer | ios-specialist | design-shotgun | pair-agent | land-and-deploy
 
 ## Cursor Task 注册 vs 本地 agents
 
-| 来源 | 机制 | Token 影响 |
-|------|------|------------|
+| 来源                    | 机制                                 | Token 影响                          |
+| ----------------------- | ------------------------------------ | ----------------------------------- |
 | `~/.claude/agents/*.md` | sync 联接；Task `subagent_type` 引用 | 每个定义计入 Subagent + Task schema |
-| plugin subagents | 已禁用 compound-engineering | 勿重复启用 |
-| Cursor 内置 | explore, shell, generalPurpose 等 | 保留；按需委派 |
+| plugin subagents        | 已禁用 compound-engineering          | 勿重复启用                          |
+| Cursor 内置             | explore, shell, generalPurpose 等    | 保留；按需委派                      |
 
 **审查路由 SSOT**：仅 `~/.claude/agents/` gstack。MANIFEST `excludes: plugin/compound-engineering/*`。
 
 ### 推荐常驻（核心 7 + 审查 6）
 
-| 类别 | Agents |
-|------|--------|
+| 类别   | Agents                                                                                                      |
+| ------ | ----------------------------------------------------------------------------------------------------------- |
 | 核心 7 | planner, code-explorer, code-reviewer, build-error-resolver, architect, spec-reviewer, agentic-orchestrator |
-| 审查 6 | eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer |
+| 审查 6 | eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer                                    |
 
 > `context-manager` 已合并至 claude-mem（MANIFEST `memory_ssot`）；勿重复注册。
 
@@ -49,7 +49,7 @@ codex-reviewer | ios-specialist | design-shotgun | pair-agent | land-and-deploy
 
 - 按 MANIFEST concern→owner 路由，非按名称堆叠
 - 子 Agent fresh context（R12）；制品通信，禁止共享可变状态
-- 简单任务（task-triage 判定=单文件）不启动多 persona 审查链
+- 简单任务（task-triage 判定=关联需改≤2）不启动多 persona 审查链
 
 ---
 
