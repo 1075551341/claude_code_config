@@ -1,18 +1,18 @@
-# 仓库覆盖矩阵（v10.11.0）
+# 仓库覆盖矩阵（v10.14.0）
 
-> 日期: 2026-08-01 | SSOT: 44（29 已集成 + 15 新卡）↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
-> 前版: v10.10.0（2026-07-31）→ **v10.11.0 44 仓库全量**（新增 15 卡 + 版本对齐运行态）
+> 日期: 2026-08-07 | SSOT: 46（29 已集成 + 15 新卡 + 2 v10.14 新增）↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
+> 前版: v10.11.0（2026-08-01）→ **v10.14.0** 新增 code-review-graph（integrated）+ CodeGraphContext（评估未引入）
 
 ## 覆盖率
 
 | 指标         | 值                                                             |
 | ------------ | -------------------------------------------------------------- |
-| 目标仓库     | 44（29 已有 + 15 新增卡片）                                    |
-| Active       | **29**（28 active + 1 removed）                                |
+| 目标仓库     | 46（44 + 2 v10.14 新增）                                       |
+| Active       | **30**（28 active + 1 removed + CRG 新增 integrated）          |
 | Removed      | **1**（Lum1104/Understand-Anything）                           |
-| 新增卡片     | **15**（reference/catalog 层，浅层卡）                         |
-| 独立卡片     | 44                                                             |
-| 运行配置目标 | **v10.11.0**（44 仓库全量调研：0 新增 skill/agent/MCP/plugin） |
+| 新增卡片     | **17**（15 + CRG + CGC）                                       |
+| 独立卡片     | 46                                                             |
+| 运行配置目标 | **v10.14.0**（+code-review-graph MCP 审查/验证专用层）         |
 
 ## 五柱
 
@@ -44,6 +44,8 @@
 | 仓库                         | 卡片                                                                  | 最新                             | 状态                                |
 | ---------------------------- | --------------------------------------------------------------------- | -------------------------------- | ----------------------------------- |
 | colbymchenry/codegraph       | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | **MCP 1.5.0 / CLI 0.9.7** / 60K★ | mandate R17 常驻                    |
+| tirth8205/code-review-graph  | [tirth8205-code-review-graph](repos/tirth8205-code-review-graph.md)   | **v2.3.6** / 8.5K★               | **v10.14 integrated**（审查/验证专用层，与 codegraph 互补） |
+| CodeGraphContext/CodeGraphContext | [codegraphcontext-cgc](repos/codegraphcontext-cgc.md)            | v0.5.5 / 3.2K★                   | 评估未引入（与 codegraph 重叠；备选） |
 | DeusData/codebase-memory-mcp | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | 上游 **v0.9.0** / 32K★           | **永久禁用**（全盘索引爆 CPU/内存） |
 | Firecrawl + Exa              | deep-research                                                         | —                                | L3 调研双源                         |
 

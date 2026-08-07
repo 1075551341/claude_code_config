@@ -117,6 +117,18 @@ if (-not (Test-Path $cfgDst) -or $Force) {
                 }
             }
         }
+        # Nested merge: verification (v10.14 enforce_mode/unverified_reminder)
+        if ($tpl.verification) {
+            if (-not $usr.verification) {
+                $usr | Add-Member -NotePropertyName verification -NotePropertyValue $tpl.verification -Force
+            } else {
+                foreach ($vp in $tpl.verification.PSObject.Properties) {
+                    if (-not $usr.verification.PSObject.Properties.Match($vp.Name).Count) {
+                        $usr.verification | Add-Member -NotePropertyName $vp.Name -NotePropertyValue $vp.Value -Force
+                    }
+                }
+            }
+        }
         # Nested merge: knowledge_graph (force codebase_memory=false — cbm disabled)
         if ($tpl.knowledge_graph) {
             if (-not $usr.knowledge_graph) {

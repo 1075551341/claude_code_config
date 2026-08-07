@@ -62,6 +62,8 @@
   },
   "verification": {
     "enabled": true,
+    "enforce_mode": "soft",
+    "unverified_reminder": true,
     "prompt_keywords": ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
   },
   "impact": {

@@ -63,7 +63,7 @@ $ErrorActionPreference = "SilentlyContinue"
 $CLAUDE_DIR   = Join-Path $env:USERPROFILE ".claude"
 $HOOKS_DIR    = Join-Path $CLAUDE_DIR "hooks"
 $SETTINGS     = Join-Path $CLAUDE_DIR "settings.json"
-$ALL_EDITORS  = @("cursor", "trae", "devin", "qoder")
+$ALL_EDITORS  = @("cursor", "trae", "qoder", "workbuddy", "codearts")
 $LAUNCHER_NAME = "_editor_hook_launcher.py"
 $LAUNCHER_PATH = Join-Path $HOOKS_DIR $LAUNCHER_NAME
 
@@ -84,10 +84,10 @@ import json, os, subprocess, sys
 
 _EDITOR_PATH_NEEDLES = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", ".devin", "/.trae/", "/qoder/", ".vscode/",
+    ".windsurf", ".devin", "/.trae/", "/qoder/", ".workbuddy", ".vscode/",
     "agent-transcripts", "workspacestorage", "cursor_version", "cursor\\projects",
 )
-_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "devin", "trae", "qoder", "code.exe")
+_EDITOR_EXE_NEEDLES = ("cursor", "windsurf", "devin", "trae", "qoder", "workbuddy", "code.exe")
 
 
 def _eg_scan(obj, depth=0):

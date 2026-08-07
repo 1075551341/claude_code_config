@@ -5,6 +5,11 @@
       "name": "codegraph",
       "intent": "代码结构/调用链/影响面探索（R17 强制优先）",
       "setup": "npx @colbymchenry/codegraph && codegraph init -i"
+    },
+    {
+      "name": "code-review-graph",
+      "intent": "审查/验证专用图谱：test-gap 检测、变更风险评分、受影响执行流（v10.14 引入，与 codegraph 互补）",
+      "setup": "pipx install code-review-graph==2.3.6 && code-review-graph build"
     }
   ],
   "priority_p1": [

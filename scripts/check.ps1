@@ -30,7 +30,7 @@ Set-StrictMode -Off
 $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
-$EDITORS    = @("cursor", "devin", "qoder", "qoder-cn", "trae", "trae-cn", "codearts")
+$EDITORS    = @("cursor", "qoder", "qoder-cn", "trae", "trae-cn", "workbuddy", "codearts")
 $LINK_DIRS  = @("skills", "agents", "rules")
 $SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 $ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
@@ -38,18 +38,18 @@ $CLAUDE_RULE_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 $STALE_LINKS = @("hooks", "scripts")
 $NATIVE_RULES = @{
     "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"); Ext = ".mdc" }
-    "devin"    = @{ Dir = (Join-Path $env:APPDATA "devin\rules"); Ext = ".md" }
     "qoder"    = @{ Dir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc" }
     "qoder-cn" = @{ Dir = (Join-Path $env:USERPROFILE ".qoder-cn\rules"); Ext = ".mdc" }
     "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
     "trae-cn"  = @{ Dir = (Join-Path $env:USERPROFILE ".trae-cn\user_rules"); Ext = ".md" }
     "codearts" = @{ Dir = (Join-Path $env:USERPROFILE ".codeartsdoer\rule"); Ext = ".mdc" }
+    # workbuddy: no native rules channel — CLAUDE.md + skills only
 }
 $NATIVE_SKILLS = @{
-    "cursor"   = Join-Path $env:USERPROFILE ".cursor\skills-native"
-    "devin"    = Join-Path $env:APPDATA "devin\skills-native"
-    "trae"     = Join-Path $env:USERPROFILE ".trae\skills-native"
-    "qoder"    = Join-Path $env:USERPROFILE ".qoder\skills-native"
+    "cursor" = Join-Path $env:USERPROFILE ".cursor\skills-native"
+    "trae"   = Join-Path $env:USERPROFILE ".trae\skills-native"
+    "qoder"  = Join-Path $env:USERPROFILE ".qoder\skills-native"
+    # workbuddy uses skills/ junction (not skills-native)
 }
 
 $results   = [System.Collections.Generic.List[hashtable]]::new()
@@ -80,23 +80,22 @@ function Get-EditorSettingsPath {
                 (Join-Path (Join-Path $env:USERPROFILE ".cursor") "settings.json")
             )
         }
-        "devin" {
-            @(
-                (Join-Path $env:APPDATA "devin\settings.json"),
-                (Join-Path $env:APPDATA "Devin\User\settings.json")
-            )
-        }
         "trae" {
             @(
                 (Join-Path $env:APPDATA "Trae\User\settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".trae") "settings.json")
+                (Join-Path (Join-Path $env:USERPROFILE ".trae") "settings.json"),
+                (Join-Path (Join-Path $env:USERPROFILE ".trae-cn") "settings.json")
             )
         }
         "qoder" {
             @(
                 (Join-Path $env:APPDATA "Qoder\User\settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".qoder") "settings.json")
+                (Join-Path (Join-Path $env:USERPROFILE ".qoder") "settings.json"),
+                (Join-Path (Join-Path $env:USERPROFILE ".qoder-cn") "settings.json")
             )
+        }
+        "workbuddy" {
+            @((Join-Path (Join-Path $env:USERPROFILE ".workbuddy") "settings.json"))
         }
         default {
             @((Join-Path (Join-Path $env:USERPROFILE ".$Editor") "settings.json"))
@@ -221,10 +220,7 @@ function Get-SyncMode {
 }
 
 foreach ($editor in $EDITORS) {
-    # v17: devin 用户级路径为 %APPDATA%\devin（非 ~/.devin）；codearts 目录为 .codeartsdoer
-    $editorDir = if ($editor -eq "devin") {
-        Join-Path $env:APPDATA "devin"
-    } elseif ($editor -eq "codearts") {
+    $editorDir = if ($editor -eq "codearts") {
         Join-Path $env:USERPROFILE ".codeartsdoer"
     } else {
         Join-Path $env:USERPROFILE ".$editor"
@@ -260,13 +256,21 @@ foreach ($editor in $EDITORS) {
     }
 
     $routerExt = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Ext } else { ".mdc" }
-    $routerRulesDir = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Dir } else { Join-Path $editorDir "rules" }
-    $routerPath = Join-Path $routerRulesDir "${ROUTER_DEPLOY_BASENAME}$routerExt"
-    if (Test-Path $routerPath) { $passes++ } else { $issues += "router(missing)" }
+    $routerRulesDir = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Dir } else { $null }
+    if ($routerRulesDir) {
+        $routerPath = Join-Path $routerRulesDir "${ROUTER_DEPLOY_BASENAME}$routerExt"
+        if (Test-Path $routerPath) { $passes++ } else { $issues += "router(missing)" }
+    } elseif ($editor -eq "workbuddy") {
+        $passes++  # no rules channel by design
+    }
 
     $agentsPath = Join-Path $editorDir "agents"
     $agentsExpected = Join-Path $CLAUDE_DIR "agents"
-    if (Test-IsReparseLink $agentsPath) {
+    if ($editor -eq "workbuddy") {
+        # agents optional for workbuddy (only with -All)
+        if ((-not (Test-Path $agentsPath)) -or (Test-IsReparseLink $agentsPath)) { $passes++ }
+        else { $issues += "agents(entity dir)" }
+    } elseif (Test-IsReparseLink $agentsPath) {
         $actual = (Get-Item $agentsPath -Force).Target
         if ($actual -is [array]) { $actual = $actual[0] }
         if ($actual -eq $agentsExpected) { $passes++ } else { $issues += "agents(wrong target)" }
@@ -601,34 +605,49 @@ if ($projFiles.Count -eq 0) {
     Add-Check "CursorGuard" "project L0 rules" "warn" "files present: $($projFiles.Name -join ', ')"
 }
 
-# S4c: Devin global rules（v17: 用户级路径改为 %APPDATA%\devin）
-$devinGlobalRules = Join-Path $env:APPDATA "devin\rules"
-$devinMisplaced = Join-Path $env:USERPROFILE ".devin\rules"
-$devinL0 = @("00-CLAUDE-ROUTER", "CLAUDE", "CORE")
-$devinMissing = @($devinL0 | Where-Object { -not (Test-Path (Join-Path $devinGlobalRules "$_.md")) })
-if (Test-Path $devinMisplaced) {
-    Add-Check "Devin" "rules path" "warn" "~/.devin/rules/ is wrong path -- run sync.ps1 to remove"
-} elseif (-not (Test-Path (Join-Path $env:APPDATA "devin"))) {
-    Add-Check "Devin" "global rules" "pass" "devin not installed -- sync.ps1 skips by design"
-} elseif ($devinMissing.Count -eq 0) {
-    Add-Check "Devin" "global rules" "pass" "L0 in %APPDATA%\devin\rules\"
+# S4c: WorkBuddy（CLAUDE.md + skills/；无 rules 通道）
+$wbBase = Join-Path $env:USERPROFILE ".workbuddy"
+$wbClaude = Join-Path $wbBase "CLAUDE.md"
+$wbSkills = Join-Path $wbBase "skills"
+$wbSkillsExpected = Join-Path $CLAUDE_DIR "skills"
+if (-not (Test-Path $wbBase)) {
+    Add-Check "WorkBuddy" "install" "pass" "workbuddy not installed -- sync.ps1 skips by design"
 } else {
-    Add-Check "Devin" "global rules" "warn" "Missing: $($devinMissing -join ', ') -- run sync.ps1"
-}
-$devinGlobal = Join-Path $env:USERPROFILE ".codeium\windsurf\memories\global_rules.md"
-if (Test-Path $devinGlobal) {
-    Add-Check "Devin" "global_rules.md" "pass" "cross-workspace always-on"
-} else {
-    Add-Check "Devin" "global_rules.md" "warn" "missing -- run sync.ps1"
+    if (-not (Test-Path $wbClaude)) {
+        Add-Check "WorkBuddy" "CLAUDE.md" "warn" "missing -- run sync.ps1"
+    } elseif (Test-IsReparseLink $wbClaude) {
+        $actual = (Get-Item $wbClaude -Force).Target
+        if ($actual -is [array]) { $actual = $actual[0] }
+        $expected = Join-Path $CLAUDE_DIR "CLAUDE.md"
+        if ($actual -eq $expected) {
+            Add-Check "WorkBuddy" "CLAUDE.md" "pass" "symlink to ~/.claude/CLAUDE.md"
+        } else {
+            Add-Check "WorkBuddy" "CLAUDE.md" "warn" "wrong target -- run sync.ps1"
+        }
+    } else {
+        Add-Check "WorkBuddy" "CLAUDE.md" "pass" "present (copy fallback ok)"
+    }
+    if (Test-IsReparseLink $wbSkills) {
+        $actual = (Get-Item $wbSkills -Force).Target
+        if ($actual -is [array]) { $actual = $actual[0] }
+        if ($actual -eq $wbSkillsExpected) {
+            Add-Check "WorkBuddy" "skills/" "pass" "junction to ~/.claude/skills"
+        } else {
+            Add-Check "WorkBuddy" "skills/" "warn" "wrong target -- run sync.ps1"
+        }
+    } elseif (Test-Path $wbSkills) {
+        Add-Check "WorkBuddy" "skills/" "warn" "entity dir (not junction) -- run sync.ps1"
+    } else {
+        Add-Check "WorkBuddy" "skills/" "warn" "missing -- run sync.ps1"
+    }
 }
 
-# S4f: CodeArts 码道（v17: 个人级路径改为 ~/.codeartsdoer/rule）
+# S4f: CodeArts 码道（个人级 ~/.codeartsdoer/rule）
 $codeartsBase = Join-Path $env:USERPROFILE ".codeartsdoer"
 $codeartsPersonal = Join-Path $codeartsBase "rule"
 $codeartsLegacyPersonal = Join-Path $env:USERPROFILE ".config\codeartsdoer\rule"
 $codeartsProject = Join-Path $CLAUDE_DIR ".codeartsdoer\rule"
 $codeartsLegacy = Join-Path $env:APPDATA "codearts-agent\User\rules"
-# CLAUDE.md 在根目录，ROUTER/CORE 在 rule/ 子目录
 $codeartsRootL0 = @("CLAUDE")
 $codeartsRuleL0 = @("00-CLAUDE-ROUTER", "CORE")
 $codeartsRootMissing = @($codeartsRootL0 | Where-Object { -not (Test-Path (Join-Path $codeartsBase "$_.md")) })
@@ -638,7 +657,9 @@ $codeartsLegacyFiles = @()
 if (Test-Path $codeartsLegacyPersonal) {
     $codeartsLegacyFiles = @(Get-ChildItem $codeartsLegacyPersonal -File -ErrorAction SilentlyContinue)
 }
-if (Test-Path $codeartsLegacy) {
+if (-not (Test-Path $codeartsBase)) {
+    Add-Check "CodeArts" "install" "pass" "codearts not installed -- sync.ps1 skips by design"
+} elseif (Test-Path $codeartsLegacy) {
     Add-Check "CodeArts" "legacy path" "warn" "codearts-agent/User/rules/ stale -- run sync.ps1"
 } elseif ($codeartsLegacyFiles.Count -gt 0) {
     Add-Check "CodeArts" "legacy personal" "warn" "~/.config/codeartsdoer/rule/ has $($codeartsLegacyFiles.Count) stale file(s) -- run sync.ps1"
@@ -647,17 +668,14 @@ if (Test-Path $codeartsLegacy) {
 } else {
     Add-Check "CodeArts" "personal rules" "warn" "Missing: $($codeartsMissing -join ', ') -- run sync.ps1"
 }
-$codeartsProjMissing = @($codeartsRuleL0 | Where-Object { -not (Test-Path (Join-Path $codeartsProject "$_.mdc")) })
 $codeartsProjFiles = @()
 if (Test-Path $codeartsProject) {
     $codeartsProjFiles = @(Get-ChildItem $codeartsProject -File -Force -ErrorAction SilentlyContinue)
 }
 if ($codeartsProjFiles.Count -eq 0) {
     Add-Check "CodeArts" "project rules" "pass" "empty/absent (personal-only, v14.5)"
-} elseif ($codeartsProjMissing.Count -eq 0) {
-    Add-Check "CodeArts" "project rules" "pass" "L0 in ~/.claude/.codeartsdoer/rule/"
 } else {
-    Add-Check "CodeArts" "project rules" "warn" "Stale project files: $($codeartsProjMissing -join ', ') -- run sync.ps1"
+    Add-Check "CodeArts" "project rules" "warn" "stale project files present -- personal-only expected"
 }
 
 # =============================================================

@@ -58,7 +58,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 10 + glob 1（FRONTEND；不含 README）   |
 | CLAUDE.md    | ≤200   | 精简路由层 + R17-R19 引用 + 五轨搜索策略 + Exa 按需                         |
 | 全局 hooks   | 20     | 顶层 `.py` 20（经 `_editor_hook_launcher` 分发；含 SessionStart bootstrap） |
-| 全局 MCP     | 5 常驻 | codegraph+crawl+git+fs+time；ops 见 mcp-configs/                            |
+| 全局 MCP     | 6 常驻 | codegraph+crawl+fetch+git+fs+time；pw/cdt 插件；ops 见 mcp-configs/         |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 启用16 / 禁用3                |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                             |
 
@@ -156,7 +156,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 ├─ pre-rtk-rewrite → Shell token优化
 ├─ pre-context-injector → 会话缓存注入
 ├─ post-edit-format → 编辑后格式化
-└─ stop-quality-gate → /verify或/ship时
+└─ stop-verification-gate → 完成验证硬门（exit 2 回灌）+ /verify或/ship时
 
 学习loop (Stop/PreCompact)
 ├─ pre-compact-state → 压缩前快照 → ~/.claude/state.json
@@ -198,7 +198,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ------------ | ------------------------------- | ------------------------------------ |
 | always       | codegraph, crawl, git, fs, time | `.mcp.json` 常驻                     |
 | ops          | redis, sqlite, docker, postgres | `mcp-configs/ops.json` 按需 merge    |
-| optional-dev | chrome-devtools, figma          | `mcp-configs/optional-dev.json` 按需 |
+| optional-dev | chrome-devtools, exa（回退）    | 默认插件/HTTP；`optional-dev.json` 仅回退 |
 
 Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md) | 运行时 → [docs/RUNTIME_PLAYBOOK.md](docs/RUNTIME_PLAYBOOK.md)
 

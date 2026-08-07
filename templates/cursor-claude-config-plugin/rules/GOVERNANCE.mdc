@@ -7,18 +7,20 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v10.7.0 — 配置驱动三门）
+## 门控强度（v10.14.0 — 配置驱动三门 + 完成验证硬阻断）
 
 > 原则：不依赖模型自觉。三门文本 SSOT = `hooks/_lib/gate_messages.md`（改文本不改代码）；双端 hook 注入 `additionalContext`/`additional_context`。
+> v10.14：完成验证门升级硬阻断（Claude Stop hook exit 2 回灌强制补验）；新增 PostToolUse 追踪器记录编辑/验证/审查状态；引入 code-review-graph 审查/验证专用层。
 
 | 门         | Claude Code 触发                                             | Cursor Guard 触发                               | 行为                                                                                          | 豁免                                                              |
 | ---------- | ------------------------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | P0 分类门  | SessionStart → `session-start-bootstrap.py`                  | sessionStart → `session_bootstrap.py`           | 每会话注入分类指令（简单/Bug/非简单路由）                                                     | 无；skill 已读且范围未变可不重复 Read                             |
-| 完成验证门 | UserPromptSubmit → `pre-userprompt-verify-gate.py`           | beforeSubmitPrompt → `verification_gate.py`     | prompt 命中完成类关键词 → 注入「Read verification-before-completion + 实际运行验证 + 贴证据」 | 未命中关键词静默；关键词表见 Guard `verification.prompt_keywords` |
+| 完成验证门 | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**） | beforeSubmitPrompt → `verification_gate.py`（软注入，enforce_mode=soft）+ postToolUse → `verify_tracker.py`（状态追踪） | 软注入：命中关键词**或**状态显示未验证编辑 → 注入验证指令；硬阻断（Claude）：Stop 时强制核查变更范围轻量检查+测试证据+预期符合性+eng-reviewer 委派，未通过 exit 2 回灌 | 纯文档编辑降级；逃逸关键词（跳过验证）；max_blocks=3 上限后放行标 DONE_WITH_CONCERNS；Cursor 无 Stop 阻断能力仅注入 |
 | 变更影响门 | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py` | preToolUse Write/StrReplace → `impact_nudge.py` | 本会话首次编辑注入「blast-radius + Grep 引用 + MANIFEST depends_on」                          | **永不 deny**（用户决策）；二次编辑静默；状态 7 天自动清理        |
 
-- 状态文件：Claude `~/.claude/.state/impact-nudge.json`；Cursor Guard `.state/impact_nudge.json`
-- 强度调整：验证门关键词走 Guard config / 改 SSOT 文本；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
+- 状态文件：Claude `~/.claude/.state/impact-nudge.json` + `verification-gate.json`；Cursor Guard 同路径共用
+- 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节（max_blocks / auto_check_timeout_sec / skip_keywords / verify_command_patterns / require_reviewer_min_files）
+- 强度调整：验证门硬阻断由 `verification_gate.enabled` 控制；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
 - Cursor 侧改动生效路径：改 `templates/cursor-guard/` → 跑 `scripts/deploy-cursor-guard.ps1` → 重启 Cursor
 
 ## R16 详细声明（错误暴漏）

@@ -68,3 +68,22 @@ history.jsonl
 # Misc generated
 *.txt
 *.html
+
+# v10.14: runtime state, secrets, temp & non-config artifacts
+.credentials.json
+.tmp_*.py
+daemon.status.json
+/jobs/
+/image-cache/
+/test-results/
+state.json
+/state/
+plugins/*.bak
+plugins/plugin-catalog-cache.json
+plugins/known_marketplaces.json
+skills/_bm_skillid_migration.json
+scripts/test-guard-result.json
+/.codegraph/
+/.claude/
+openspec/changes/
+.planning/

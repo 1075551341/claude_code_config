@@ -12,6 +12,7 @@ source: obra/superpowers
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
+> **v10.14 硬门兜底**：Stop 时 `stop-verification-gate.py` 强制核查验证证据（exit 2 阻止停止），本 skill 为模型侧前置自审；项目已建 code-review-graph 时全量档须调用 `detect_changes_tool` 检查 test-gap。
 
 ## @Examples
 

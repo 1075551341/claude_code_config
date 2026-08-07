@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v18.2
+    Claude Code multi-editor layered sync script v18.3
     Modes: default (all rules + Cursor claude-config) | -Skills (+ skills/) | -All (+ agents)
     Project: -Lint (prettier+eslint) | -InitProject (CLAUDE.md+MANIFEST+.env+.gitignore)
 
@@ -22,7 +22,8 @@
     -ProjectRules: OPTIONAL opt-in for <CWD>/.cursor/rules (default OFF).
     Before syncing: delete same-basename siblings in the target dir
       (any extension / case — e.g. CORE.md + core.mdc before writing CORE.mdc)
-    Rules extension: cursor/qoder/codearts -> .mdc, devin/trae -> .md
+    Rules extension: cursor/qoder/codearts -> .mdc, trae -> .md
+    WorkBuddy: CLAUDE.md + skills/ only (no rules/ channel)
 
     Excluded: hooks/ scripts/ MCP configs plugins/ commands/ settings.json
 
@@ -97,36 +98,38 @@ if ($All) { $IndexesOnly = $false }
 $CLAUDE_DIR = "$env:USERPROFILE\.claude"
 
 # Target editor base directories
+# Supported: cursor / trae(+cn) / qoder(+cn) / workbuddy / codearts
 $TARGETS = [ordered]@{
-    "cursor"   = "$env:USERPROFILE\.cursor"
-    "devin"    = "$env:APPDATA\devin"
-    "qoder"    = "$env:USERPROFILE\.qoder"
-    "qoder-cn" = "$env:USERPROFILE\.qoder-cn"
-    "trae"     = "$env:USERPROFILE\.trae"
-    "trae-cn"  = "$env:USERPROFILE\.trae-cn"
-    "codearts" = "$env:USERPROFILE\.codeartsdoer"
+    "cursor"    = "$env:USERPROFILE\.cursor"
+    "qoder"     = "$env:USERPROFILE\.qoder"
+    "qoder-cn"  = "$env:USERPROFILE\.qoder-cn"
+    "trae"      = "$env:USERPROFILE\.trae"
+    "trae-cn"   = "$env:USERPROFILE\.trae-cn"
+    "workbuddy" = "$env:USERPROFILE\.workbuddy"
+    "codearts"  = "$env:USERPROFILE\.codeartsdoer"
 }
 
 # Rules subdirectory name within each target base
+# workbuddy: placeholder only — rules sync skipped (no native rules channel)
 $RULES_SUBDIR = [ordered]@{
-    "cursor"   = "rules"
-    "devin"    = "rules"
-    "qoder"    = "rules"
-    "qoder-cn" = "rules"
-    "trae"     = "user_rules"
-    "trae-cn"  = "user_rules"
-    "codearts" = "rule"
+    "cursor"    = "rules"
+    "qoder"     = "rules"
+    "qoder-cn"  = "rules"
+    "trae"      = "user_rules"
+    "trae-cn"   = "user_rules"
+    "workbuddy" = "rules"
+    "codearts"  = "rule"
 }
 
 # Rules file extension per editor
 $RULES_EXT = [ordered]@{
-    "cursor"   = ".mdc"
-    "devin"    = ".md"
-    "qoder"    = ".mdc"
-    "qoder-cn" = ".mdc"
-    "trae"     = ".md"
-    "trae-cn"  = ".md"
-    "codearts" = ".mdc"
+    "cursor"    = ".mdc"
+    "qoder"     = ".mdc"
+    "qoder-cn"  = ".mdc"
+    "trae"      = ".md"
+    "trae-cn"   = ".md"
+    "workbuddy" = ".md"
+    "codearts"  = ".mdc"
 }
 
 # L0 entry rules: deployed into rules/ subdirectory (extension converted per editor)
@@ -140,16 +143,18 @@ $L0_ROOT_ITEMS = @(
 )
 
 # L0 root file destination name per editor (override DstName when needed)
-# Devin CLI uses AGENTS.md as global rules; others use CLAUDE.md
 $L0_ROOT_DSTNAME = [ordered]@{
-    "cursor"   = "CLAUDE.md"
-    "devin"    = "AGENTS.md"
-    "qoder"    = "CLAUDE.md"
-    "qoder-cn" = "CLAUDE.md"
-    "trae"     = "CLAUDE.md"
-    "trae-cn"  = "CLAUDE.md"
-    "codearts" = "CLAUDE.md"
+    "cursor"    = "CLAUDE.md"
+    "qoder"     = "CLAUDE.md"
+    "qoder-cn"  = "CLAUDE.md"
+    "trae"      = "CLAUDE.md"
+    "trae-cn"   = "CLAUDE.md"
+    "workbuddy" = "CLAUDE.md"
+    "codearts"  = "CLAUDE.md"
 }
+
+# Editors that skip rules/ softlinks (native channel differs or absent)
+$RULES_SKIP_EDITORS = @("cursor", "workbuddy")
 
 # CLAUDE-ROUTER source (deployed as 00-CLAUDE-ROUTER.{ext} into rules/)
 $ROUTER_SRC_REL = "CLAUDE-ROUTER.mdc"
@@ -670,7 +675,7 @@ function Deploy-Templates {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Multi-Editor Layered Sync v18.2" -ForegroundColor Cyan
+Write-Host "  Claude Code Multi-Editor Layered Sync v18.3" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Source       : $CLAUDE_DIR" -ForegroundColor DarkGray
@@ -729,8 +734,9 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
 
     # ---- 2. L0 rule files (CORE, CLAUDE-ROUTER) ----
     # Cursor: SSOT rules live ONLY in local plugin (claude-config) to avoid
-    # User Settings + Agent double Always-Apply. Other editors keep softlinks.
-    if ($editor -ne 'cursor') {
+    # User Settings + Agent double Always-Apply. WorkBuddy: no rules channel.
+    # Other editors keep softlinks.
+    if ($RULES_SKIP_EDITORS -notcontains $editor) {
         foreach ($item in $L0_RULE_ITEMS) {
             Sync-RuleFile -SrcRelPath $item.SrcRel -DstBaseName $item.DstBase `
                 -TargetRulesDir $rulesDir -EditorExt $ext -EditorName $editor
@@ -754,11 +760,24 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
         $dstPath = Join-Path $targetBase $item.DstRel
         Sync-Directory -SrcPath $srcPath -DstPath $dstPath -Label "$($item.DstRel) -> $editor"
     }
+    # WorkBuddy: always junction skills/ (recommended entry; no rules channel)
+    if ($editor -eq 'workbuddy') {
+        $wbSkillsSrc = Join-Path $CLAUDE_DIR "skills"
+        $wbSkillsDst = Join-Path $targetBase "skills"
+        $already = $DIR_SYNC_ITEMS | Where-Object { $_.SrcRel -eq "skills" }
+        if (-not $already) {
+            Sync-Directory -SrcPath $wbSkillsSrc -DstPath $wbSkillsDst -Label "skills -> workbuddy"
+        }
+    }
 
     # ---- 4. Always sync all rules/*.md (symlink preferred) ----
-    # Cursor: skip — plugin already holds copies; writing softlinks recreates duplicates.
-    if ($editor -eq 'cursor') {
-        Write-Host "  [skip] ~/.cursor/rules softlinks (deduped; SSOT via claude-config plugin)" -ForegroundColor DarkGray
+    # Cursor / WorkBuddy: skip rules softlinks
+    if ($RULES_SKIP_EDITORS -contains $editor) {
+        if ($editor -eq 'cursor') {
+            Write-Host "  [skip] ~/.cursor/rules softlinks (deduped; SSOT via claude-config plugin)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "  [skip] ~/.workbuddy/rules (no native rules channel; CLAUDE.md + skills only)" -ForegroundColor DarkGray
+        }
     } elseif ($IndexesOnly) {
         Write-Host "  [skip] full rules softlinks (indexes scope)" -ForegroundColor DarkGray
     } elseif (Test-Path (Join-Path $CLAUDE_DIR "rules")) {
@@ -894,9 +913,11 @@ if ($script:STATS.Failed -gt 0) {
 
 Write-Host ""
 Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
-Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, devin/trae/trae-cn=.md" -ForegroundColor DarkGray
+Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, trae/trae-cn=.md; workbuddy=CLAUDE.md+skills (no rules)" -ForegroundColor DarkGray
 Write-Host "  Method     : symlink preferred; Copy-Item fallback" -ForegroundColor DarkGray
-Write-Host "  Cursor     : personal ~/.cursor (rules softlink + claude-config plugin refresh every run); -ProjectRules opt-in" -ForegroundColor DarkGray
+Write-Host "  Cursor     : personal ~/.cursor (claude-config plugin refresh every run); -ProjectRules opt-in" -ForegroundColor DarkGray
+Write-Host "  WorkBuddy  : ~/.workbuddy CLAUDE.md + skills/ junction (SOUL/USER untouched)" -ForegroundColor DarkGray
+Write-Host "  CodeArts   : ~/.codeartsdoer (CLAUDE.md + rule/*.mdc)" -ForegroundColor DarkGray
 Write-Host "  Dedup      : delete same-basename variants (any ext/case) then write" -ForegroundColor DarkGray
 Write-Host "  Excluded   : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""

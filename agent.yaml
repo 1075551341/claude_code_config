@@ -130,8 +130,9 @@ hooks:
     - post-secret-detector
     - post-edit-format
     - post-codegraph-sync
+    - post-edit-verify-tracker
     - pre-compact-state
-    - stop-quality-gate
+    - stop-verification-gate
     - stop-session-summary
     - stop-readme-updater
     - stop-knowledge-graph-sync
@@ -182,8 +183,8 @@ disabled_hooks:
   - pre-task-planner
 
 mcp_loading:
-  always: [codegraph, fetch, git, fs, time] # v10.11: 对齐 .mcp.json 常驻 5（原 memory/thinking 移除）
-  dev: [gh, ctx7, pw, crawl, chrome-devtools] # codebase-memory 永久禁用（v10.10 确认）
+  always: [codegraph, crawl, fetch, git, fs, time] # v10.12: 对齐 .mcp.json 常驻 6；pw/cdt 走插件勿双挂
+  dev: [gh, ctx7, pw, crawl, chrome-devtools] # codebase-memory 永久禁用；pw∥cdt 可同开互补
   ops: [redis, sqlite, docker, postgres]
   search: [exa]
   profile_env: CLAUDE_MCP_PROFILE

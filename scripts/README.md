@@ -8,15 +8,17 @@
 
 ### 已同步的编辑器（按本机实际目录）
 
-| 编辑器   | 用户目录示例                  | 说明             |
-| -------- | ----------------------------- | ---------------- |
-| Cursor   | `%USERPROFILE%\.cursor`       | 若存在则参与同步 |
-| Devin    | `%APPDATA%\devin`             | 若存在则参与同步 |
-| Trae     | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步 |
-| Qoder    | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过   |
-| CodeArts | `%USERPROFILE%\.codeartsdoer` | 若不存在则跳过   |
+| 编辑器    | 用户目录示例                  | 说明                               |
+| --------- | ----------------------------- | ---------------------------------- |
+| Cursor    | `%USERPROFILE%\.cursor`       | 若存在则参与同步；规则走 local plugin |
+| Trae      | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步                   |
+| Qoder     | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过                     |
+| WorkBuddy | `%USERPROFILE%\.workbuddy`    | CLAUDE.md + skills/；无 rules 通道 |
+| CodeArts  | `%USERPROFILE%\.codeartsdoer` | CLAUDE.md + rule/*.mdc             |
 
-### `sync.ps1` — 多编辑器分层同步（v18.1）
+> v18.3 已移除：Devin
+
+### `sync.ps1` — 多编辑器分层同步（v18.3）
 
 **模式**：
 
@@ -55,7 +57,7 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写
 
 - 文件优先符号链接，失败回退 `Copy-Item`；目录管理员用符号链接、非管理员 `mklink /J` Junction、回退递归复制
 - **Cursor 例外**：`rules/*.mdc` 一律实体复制（Settings Rules UI 不索引软链接）
-- 规则扩展名：cursor/qoder/codearts → `.mdc`，devin/trae → `.md`
+- 规则扩展名：cursor/qoder/codearts → `.mdc`，trae → `.md`；workbuddy 无 rules 通道（仅 CLAUDE.md + skills/）
 - **写前去重**：删除目标目录同基底名兄弟文件（任意扩展名/大小写），再写新文件
 - 回归测试：`test-sync-dedup.ps1`
 

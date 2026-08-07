@@ -229,9 +229,10 @@ concerns:
 
   verification:
     owner: skill/verification-before-completion
-    hook: stop-quality-gate
+    hook: [pre-userprompt-verify-gate, post-edit-verify-tracker, stop-verification-gate]
     source: obra/superpowers
     stage: verify
+    note: "v10.14 — 完成验证门升级硬阻断：PostToolUse 追踪器记录编辑/验证/审查状态；Stop 硬门 exit 2 强制核查（变更范围轻量检查+测试证据+预期符合性+eng-reviewer 委派）；配置 SSOT config/quality_gates.json verification_gate 节"
 
   debugging:
     owner: skill/systematic-debugging
@@ -440,13 +441,16 @@ concerns:
     owner: hooks/_lib/gate_messages.md
     source: local
     stage: all
-    note: "v10.13.0 — 三门控文本 SSOT：P0分类门(task-triage Phase0+关联需改≤2+attempt=1，持续处理执行升档；SessionStart) + 完成验证门(UserPromptSubmit/beforeSubmitPrompt) + 变更影响门(首编辑注入，永不deny)；双端 hook 注入，非模型自觉"
+    note: "v10.14.0 — 三门控文本 SSOT：P0分类门 + 完成验证门（软注入+硬阻断）+ 变更影响门；双端 hook 注入，非模型自觉。硬门配置 config/quality_gates.json verification_gate 节"
     hooks:
       [
         session-start-bootstrap,
         pre-userprompt-verify-gate,
+        post-edit-verify-tracker,
+        stop-verification-gate,
         pre-edit-impact-nudge,
         verification_gate,
+        verify_tracker,
         impact_nudge,
       ]
     depends_on:
@@ -455,8 +459,16 @@ concerns:
         skills/task-triage,
         skills/verification-before-completion,
         skills/change-impact-analysis,
+        config/quality_gates.json,
         templates/cursor-guard,
       ]
+
+  code_review_graph:
+    owner: mcp/code-review-graph
+    source: tirth8205/code-review-graph
+    stage: verify
+    note: "v10.14 引入 — 审查/验证专用图谱：TESTED_BY 测试缺口、detect_changes 风险评分、review-delta、pre_merge_check。与 codegraph 互补（codegraph=R17 探索主位；CRG=审查/验证专用）。项目内 code-review-graph build 建图。钉扎 2.3.6（R14）"
+    depends_on: [mcp/codegraph, skills/verification-before-completion]
 
   tmux_reminder:
     owner: hook/pre-tmux-reminder
@@ -514,7 +526,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude Code 常驻 5（codegraph+fetch+git+fs+time）；crawl 已按需化（v10.10，L2/L3 调研时 merge）；ops/optional-dev 见 mcp-configs/
+    note: Claude Code 常驻 6（codegraph+crawl+fetch+git+fs+time）；pw/cdt 走插件勿写入 .mcp.json；ops/optional-dev 见 mcp-configs/；cbm 永久禁用
     depends_on:
       [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
 
@@ -788,21 +800,20 @@ superagent_forge:
     online: [openai, anthropic, deepseek]
     local: [ollama, lm-studio, llama-cpp]
 
-# ── v10.3 sync 声明 ──────────────────────────────────────────
+# ── v18.3 sync 声明 ──────────────────────────────────────────
 sync_targets:
-  editors: [cursor, devin, qoder, qoder-cn, trae, trae-cn, codearts]
+  editors: [cursor, qoder, qoder-cn, trae, trae-cn, workbuddy, codearts]
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]
-  # 全部为用户级配置（非项目级）；devin 使用 %APPDATA%\devin
+  # 全部为用户级配置（非项目级）；workbuddy 仅 CLAUDE.md + skills/
   rules_ext:
     cursor: ".mdc"
-    devin: ".md"
     qoder: ".mdc"
     qoder-cn: ".mdc"
     trae: ".md"
     trae-cn: ".md"
+    workbuddy: null # 无 rules 通道
     codearts: ".mdc"
   root_filename:
-    devin: "AGENTS.md" # Devin CLI 全局 rules 标准
-    default: "CLAUDE.md" # 其余编辑器
+    default: "CLAUDE.md"

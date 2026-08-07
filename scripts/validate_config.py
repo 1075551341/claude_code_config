@@ -418,7 +418,8 @@ def check_v11_hook_exception_propagation():
         "pre-context-injector.py", "pre-manifest-validator.py", "pre-loop-guard.py",
         "pre-suggest-compact.py", "pre-compact-state.py",
         "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",
-        "stop-quality-gate.py", "stop-context-monitor.py",
+        "post-edit-verify-tracker.py",
+        "stop-verification-gate.py", "stop-context-monitor.py",
         "stop-session-summary.py", "stop-readme-updater.py",
         "stop-knowledge-graph-sync.py",
     ]

@@ -98,6 +98,12 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | 函数/类/调用链/符号影响面 | codegraph_explore（blast-radius）  | —（无索引才 Grep 定点） | 跳过 codegraph 直接 Grep/Read       |
 | 语义模糊 / 跨服务 / ADR   | codegraph_explore                  | docs/ADR/ 手写          | 启用/调用 codebase-memory（已禁用） |
 | 为什么/约定/偏好/决策原因 | claude-mem search→get_observations | —                       | 往 codegraph 塞偏好；重复 Read      |
+| 变更后 test-gap / 风险评分 | code-review-graph detect_changes   | —                       | 用 codegraph 做 test-gap（无此能力）|
+
+**codegraph vs code-review-graph 分工（v10.14，防互博）**：
+- **codegraph = R17 探索主位**（符号/调用链/blast-radius/变更前影响面）
+- **code-review-graph = 审查/验证专用**（变更后 test-gap、detect_changes 风险评分、review-delta、pre_merge_check）
+- 禁止用 CRG 替代 R17 日常探索；禁止用 codegraph 做 test-gap（无此能力）。CRG 需项目内 `code-review-graph build` 建图，未建图自动降级跳过。
 
 **索引刷新**：Edit/Stop hook **仅**自动同步 codegraph（`hooks/_lib/knowledge_graph_sync.py`；`KG_SYNC_CBM` 默认 0）。claude-mem / codebase-memory 不在 hook 刷新范围。
 
@@ -129,6 +135,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | 重命名/删除/移动文件     | Grep 全项目残留引用                                        |
 | 改 agent/hook/MCP 定义   | 同步更新 INDEX.md + MANIFEST.yaml                          |
 | 调研/分析任务            | 先 `codegraph_explore` blast-radius 确定范围，再逐文件深读 |
+| 变更后验证 test-gap      | `code-review-graph` detect_changes（有图项目）+ 测试运行    |
 
 ### 反模式（禁止）
 

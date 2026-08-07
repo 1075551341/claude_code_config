@@ -1,7 +1,8 @@
-# 门控注入文本 SSOT（v10.13.0）
+# 门控注入文本 SSOT（v10.14.0）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 修改后无需改 hook 代码；Cursor 侧改动随 deploy-cursor-guard.ps1 生效。
+> v10.14：完成验证门升级硬阻断（Claude Stop hook exit 2）+ 引入 code-review-graph 审查/验证专用层。
 
 ## P0分类门
 
@@ -19,14 +20,24 @@
 
 ## 完成验证门
 
-【门控 · 完成前必做】
+【门控 · 完成前必做 — v10.14 硬阻断】
 检测到你即将声称完成。按配置（verification-before-completion，L2 门控）：
 
 1. Read ~/.claude/skills/verification-before-completion/SKILL.md
 2. 确认 verify_tier（比例 | 全量）；持续处理同一问题则必须全量，且执行已升档非简单
 3. 实际运行验证命令（测试/lint/构建/功能核验），贴出输出证据
-4. 证据齐全后方可声称完成；跳过验证的完成声明视为无效（R1）
+4. 项目已建 code-review-graph（存在 .code-review-graph/ 目录）：调用 detect_changes_tool
+   检查 test-gap 与高风险函数，将受影响文件纳入验证范围
+5. 证据齐全后方可声称完成；跳过验证的完成声明视为无效（R1）
    先证据后断言，禁止"应该没问题"；禁止以「轻量验证」跳过本 skill。
+
+⚠️ 硬门兜底（Claude Code）：Stop 时 stop-verification-gate.py 将强制核查——
+   ① 变更范围轻量自动检查（ruff/tsc，仅变更文件，25s 超时）
+   ② 测试/验证命令证据（最后一次编辑后须有验证命令运行记录）
+   ③ 预期符合性（存在活跃 plan/spec 制品须对照 tasks 清单）
+   ④ 非简单任务（≥3 代码文件）须委派 eng-reviewer 审查
+   未通过 → exit 2 阻止停止并回灌强制补验（上限 3 次，达上限放行标 DONE_WITH_CONCERNS）。
+   Cursor 侧无 Stop 阻断能力，enforce_mode=soft 仅注入提醒，硬门在 Claude Code 兜底。
 
 ## 变更影响门
 

@@ -3,17 +3,32 @@
     "schema_drift": {
       "enabled": true,
       "check_orm_changes": true,
-      "description": "检测ORM变更是否缺少对应migration"
+      "description": "检测ORM变更是否缺少对应migration（stop-verification-gate 启发式提醒：model/ORM 文件变更无 migration → 警告）"
     },
     "security_anchor": {
       "enabled": true,
       "check_auth_bindings": true,
-      "description": "检查验证逻辑是否绑定到威胁模型"
+      "description": "检查验证逻辑是否绑定到威胁模型（auth 相关变更 → 提醒绑定威胁模型）"
     },
     "scope_reduction": {
       "enabled": true,
       "compare_plan_vs_impl": true,
-      "description": "检查planner是否静默丢弃需求"
+      "description": "检查planner是否静默丢弃需求（存在活跃 plan/spec 制品时强制对照 tasks 清单）"
     }
+  },
+  "verification_gate": {
+    "enabled": true,
+    "max_blocks": 3,
+    "auto_check_timeout_sec": 25,
+    "skip_keywords": ["跳过验证", "不用验证", "skip verify"],
+    "verify_command_patterns": [
+      "pytest", "vitest", "jest", "npm test", "pnpm test", "yarn test",
+      "npm run test", "npm run lint", "npm run build", "pnpm lint", "pnpm build",
+      "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
+      "go test", "go vet"
+    ],
+    "reviewer_agents": ["eng-reviewer", "qa", "code-reviewer"],
+    "require_reviewer_min_files": 3,
+    "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"]
   }
 }

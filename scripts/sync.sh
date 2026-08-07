@@ -7,8 +7,15 @@ set -e
 CLAUDE_DIR="$HOME/.claude"
 SYNC_DIRS=("skills" "agents")
 SYNC_FILES=("CLAUDE.md" "CLAUDE-ROUTER.mdc" "SPEC.md" "MANIFEST.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
-EDITORS=("cursor" "devin" "trae" "qoder")
+EDITORS=("cursor" "qoder" "qoder-cn" "trae" "trae-cn" "workbuddy" "codearts")
 FULL_MODE=false
+
+editor_home() {
+    case "$1" in
+        codearts) echo "$HOME/.codeartsdoer" ;;
+        *) echo "$HOME/.$1" ;;
+    esac
+}
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -86,7 +93,8 @@ deploy_router_rules() {
 
 sync_to_editor() {
     local editor="$1"
-    local target_dir="$HOME/.$editor"
+    local target_dir
+    target_dir="$(editor_home "$editor")"
 
     if [ ! -d "$target_dir" ]; then
         log_warn "编辑器目录不存在，跳过: $editor"
@@ -124,7 +132,8 @@ verify_sync() {
     local errors=0
 
     for editor in "${EDITORS[@]}"; do
-        local target_dir="$HOME/.$editor"
+        local target_dir
+        target_dir="$(editor_home "$editor")"
         [ -d "$target_dir" ] || continue
 
         for file in "${SYNC_FILES[@]}"; do
@@ -165,7 +174,8 @@ cleanup_backups() {
     local days=${1:-30}
     log_info "清理超过 $days 天的备份..."
     for editor in "${EDITORS[@]}"; do
-        local target_dir="$HOME/.$editor"
+        local target_dir
+        target_dir="$(editor_home "$editor")"
         if [ -d "$target_dir" ]; then
             find "$target_dir" -name "*.bak.*" -mtime +"$days" -delete 2>/dev/null || true
         fi

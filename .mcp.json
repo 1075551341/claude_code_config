@@ -1,7 +1,18 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v10.10 常驻 5 | crawl/chrome-devtools/exa/cbm(禁用) 见 mcp-configs/optional-dev.json 按需 merge",
+  "_comment": "MCP v10.11 常驻 6 | crawl 已常驻化(v10.11, key 在 Machine env)；chrome-devtools/playwright 走插件；exa 走 user-scope stdio(EXA_API_KEY，不在本文件)；cbm(禁用) 勿 merge",
   "mcpServers": {
+    "crawl": {
+      "_description": "Firecrawl MCP（v10.11 常驻化）。场景：网页抓取、结构化提取、爬虫与搜索（L2/L3 调研）。wrapper 从 Machine/User 环境变量读 FIRECRAWL_API_KEY。",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\firecrawl-mcp.ps1"
+      ]
+    },
     "codegraph": {
       "_description": "代码知识图谱 MCP（R17 首选）。场景：符号探索、调用链、影响面。F1 纠偏(v10.3)：env 启用 codegraph_impact 满足 R6 变更彻底性保障。",
       "command": "npx",
@@ -46,6 +57,11 @@
       "_description": "时间与时区工具。场景：获取当前时间、时区转换（配合禁 new Date() 规范）。",
       "command": "npx",
       "args": ["-y", "time-mcp"]
+    },
+    "code-review-graph": {
+      "_description": "代码审查/验证专用图谱 MCP（v10.14 引入，与 codegraph 互补）。场景：变更后 test-gap 检测、detect_changes 风险评分、受影响执行流、review-delta。分工：codegraph=R17 探索主位（符号/调用链/blast-radius）；CRG=审查/验证专用（test-gap/风险评分）。项目内需 code-review-graph build 建图。钉扎 2.3.6（R14）。",
+      "command": "uvx",
+      "args": ["--with", "code-review-graph==2.3.6", "code-review-graph", "serve"]
     }
   }
 }

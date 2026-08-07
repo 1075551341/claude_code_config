@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+"""
+Stop Hook: 完成验证硬门（v10.14.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
+④非简单任务 eng-reviewer 委派。缺任一 → exit 2 回灌（阻止停止）；上限 max_blocks 次后放行并标
+DONE_WITH_CONCERNS。另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
+配置 SSOT：~/.claude/config/quality_gates.json → verification_gate。
+"""
+import glob as globmod
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+
+STATE_DIR = os.path.expanduser("~/.claude/.state")
+STATE_FILE = os.path.join(STATE_DIR, "verification-gate.json")
+CONFIG_FILE = os.path.expanduser("~/.claude/config/quality_gates.json")
+STALE_SECONDS = 7 * 24 * 3600
+
+DEFAULT_CFG = {
+    "enabled": True,
+    "max_blocks": 3,
+    "auto_check_timeout_sec": 25,
+    "skip_keywords": ["跳过验证", "不用验证", "skip verify"],
+    "require_reviewer_min_files": 3,
+    "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"],
+}
+
+CODE_EXTENSIONS = {
+    ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".vue", ".svelte",
+    ".go", ".rs", ".java", ".kt", ".c", ".cpp", ".h", ".hpp", ".cs", ".rb",
+    ".php", ".swift", ".scala", ".dart", ".sh", ".ps1", ".sql",
+}
+
+
+def load_config() -> dict:
+    cfg = dict(DEFAULT_CFG)
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                user_cfg = json.load(f).get("verification_gate", {})
+            for key in cfg:
+                if key in user_cfg:
+                    cfg[key] = user_cfg[key]
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"stop-verification-gate: config read failed: {e}", file=sys.stderr)
+    return cfg
+
+
+def load_state() -> dict:
+    try:
+        if os.path.exists(STATE_FILE):
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"stop-verification-gate: state read failed: {e}", file=sys.stderr)
+    return {}
+
+
+def save_state(state: dict) -> None:
+    try:
+        os.makedirs(STATE_DIR, exist_ok=True)
+        now = time.time()
+        state = {k: v for k, v in state.items() if now - v.get("ts", 0) < STALE_SECONDS}
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=1)
+    except OSError as e:
+        print(f"stop-verification-gate: state write failed: {e}", file=sys.stderr)
+
+
+def last_user_message(transcript_path: str) -> str:
+    if not transcript_path or not os.path.exists(transcript_path):
+        return ""
+    try:
+        with open(transcript_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+    except OSError as e:
+        print(f"stop-verification-gate: transcript read failed: {e}", file=sys.stderr)
+        return ""
+    for line in reversed(lines[-80:]):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("type") != "user":
+            continue
+        content = (obj.get("message") or {}).get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+            return "\n".join(p for p in parts if p)
+    return ""
+
+
+def unique_code_files(edited_files: list, doc_exts: list) -> list:
+    seen = {}
+    for item in edited_files:
+        path = item.get("path", "")
+        ext = os.path.splitext(path)[1].lower()
+        if ext in doc_exts or ext not in CODE_EXTENSIONS:
+            continue
+        prev = seen.get(path)
+        if prev is None or item.get("ts", 0) > prev.get("ts", 0):
+            seen[path] = item
+    return list(seen.values())
+
+
+def run_auto_checks(code_files: list, cwd: str, timeout_sec: int) -> tuple:
+    failures = []
+    warnings = []
+    py_files = [f["path"] for f in code_files if f["path"].lower().endswith(".py") and os.path.exists(f["path"])]
+    ts_files = [
+        f["path"] for f in code_files
+        if os.path.splitext(f["path"])[1].lower() in (".ts", ".tsx", ".js", ".jsx", ".mts", ".cts")
+        and os.path.exists(f["path"])
+    ]
+
+    if py_files and shutil.which("ruff"):
+        try:
+            proc = subprocess.run(
+                ["ruff", "check", "--no-cache"] + py_files,
+                capture_output=True, text=True, timeout=timeout_sec, cwd=cwd or None,
+            )
+            if proc.returncode != 0:
+                out = (proc.stdout + proc.stderr).strip()[:1500]
+                failures.append(f"ruff check 失败（{len(py_files)} 个变更文件）:\n{out}")
+        except subprocess.TimeoutExpired:
+            warnings.append(f"ruff check 超时（{timeout_sec}s），降级为提醒")
+        except OSError as e:
+            warnings.append(f"ruff 执行失败: {e}")
+
+    if ts_files and cwd:
+        tsc_bin = os.path.join(cwd, "node_modules", ".bin", "tsc")
+        if not os.path.exists(tsc_bin) and shutil.which("tsc"):
+            tsc_bin = "tsc"
+        if os.path.exists(os.path.join(cwd, "tsconfig.json")) and tsc_bin:
+            try:
+                proc = subprocess.run(
+                    [tsc_bin, "--noEmit"], capture_output=True, text=True,
+                    timeout=timeout_sec, cwd=cwd,
+                )
+                if proc.returncode != 0:
+                    out = (proc.stdout + proc.stderr).strip()[:1500]
+                    failures.append(f"tsc --noEmit 失败:\n{out}")
+            except subprocess.TimeoutExpired:
+                warnings.append(f"tsc --noEmit 超时（{timeout_sec}s），降级为提醒")
+            except OSError as e:
+                warnings.append(f"tsc 执行失败: {e}")
+    return failures, warnings
+
+
+def find_project_roots(code_files: list, cwd: str) -> list:
+    roots = set()
+    if cwd:
+        roots.add(cwd)
+    for item in code_files:
+        path = item.get("path", "")
+        if path:
+            roots.add(os.path.dirname(os.path.abspath(path)))
+    return sorted(roots)
+
+
+def crg_refresh_and_flag(roots: list, timeout_sec: int) -> tuple:
+    has_graph = False
+    warnings = []
+    for root in roots:
+        probe = root
+        found = ""
+        for _ in range(6):
+            if os.path.isdir(os.path.join(probe, ".code-review-graph")):
+                found = probe
+                break
+            parent = os.path.dirname(probe)
+            if parent == probe:
+                break
+            probe = parent
+        if not found:
+            continue
+        has_graph = True
+        if shutil.which("code-review-graph"):
+            try:
+                proc = subprocess.run(
+                    ["code-review-graph", "update"], capture_output=True, text=True,
+                    timeout=timeout_sec, cwd=found,
+                )
+                if proc.returncode != 0:
+                    warnings.append(f"CRG update 非零退出（{found}）: {(proc.stderr or proc.stdout).strip()[:300]}")
+            except subprocess.TimeoutExpired:
+                warnings.append(f"CRG update 超时（{timeout_sec}s），图可能过时")
+            except OSError as e:
+                warnings.append(f"CRG update 执行失败: {e}")
+    return has_graph, warnings
+
+
+def plan_artifact_active(cwd: str) -> bool:
+    plan_cache = os.path.expanduser("~/.claude/plan_cache.json")
+    try:
+        if os.path.exists(plan_cache):
+            with open(plan_cache, "r", encoding="utf-8") as f:
+                if json.load(f):
+                    return True
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"stop-verification-gate: plan_cache read failed: {e}", file=sys.stderr)
+    if cwd:
+        for root, dirs, _files in os.walk(os.path.join(cwd, "openspec", "changes")):
+            if "archive" in root:
+                continue
+            if "tasks.md" in _files:
+                return True
+            if len(dirs) > 20:
+                break
+        if os.path.isdir(os.path.join(cwd, ".planning", "phases")):
+            return True
+    return False
+
+
+def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) -> str:
+    lines = [
+        "【门控 · 完成验证硬门（R1）— 已阻止停止】",
+        "本会话存在代码修改，但验证证据不完整：",
+    ]
+    lines.extend(f"  {i}. {r}" for i, r in enumerate(reasons, 1))
+    lines.append("必须执行（全部完成后再次结束）：")
+    lines.append("  ① 实际运行测试/lint/构建/功能核验命令，贴出输出证据（禁止\"应该没问题\"）")
+    if crg:
+        lines.append("  ② 项目已建 code-review-graph：调用 detect_changes_tool 检查 test-gap 与高风险函数")
+    if any("eng-reviewer" in r for r in reasons):
+        lines.append("  ③ 委派 eng-reviewer（只读审查本轮 diff）获取 PASS/NEEDS-CHANGES 结论")
+    if any("预期符合性" in r for r in reasons):
+        lines.append("  ④ 对照 plan/spec 的 tasks 清单逐项确认：无静默缩范围、无遗漏需求")
+    lines.append("跳过验证的完成声明视为无效（R1，先证据后断言）。")
+    lines.append(f"（第 {blocks}/{max_blocks} 次阻断；达上限后放行并标 DONE_WITH_CONCERNS；确需跳过请用户显式说「跳过验证」）")
+    return "\n".join(lines)
+
+
+def check_bare_except() -> list:
+    issues = []
+    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    pattern = re.compile(r"except(?:\s+[A-Za-z]\w*(?:\s*,\s*[A-Za-z]\w*)*)?\s*:\s*pass\s*(?:#.*)?$", re.MULTILINE)
+    for pyfile in globmod.glob(os.path.join(hooks_dir, "*.py")):
+        basename = os.path.basename(pyfile)
+        if pyfile.endswith("__init__.py") or "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
+            continue
+        if basename == "stop-verification-gate.py":
+            continue
+        try:
+            with open(pyfile, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            matches = pattern.findall(content)
+            if matches:
+                issues.append(f"🚫 R16违规 {basename}: 发现{len(matches)}处裸except:pass")
+        except (OSError, UnicodeDecodeError) as e:
+            issues.append(f"⚠️ 扫描{basename}失败: {e}")
+    return issues
+
+
+def check_plan_reminder() -> list:
+    plan_cache = os.path.expanduser("~/.claude/plan_cache.json")
+    try:
+        if os.path.exists(plan_cache):
+            with open(plan_cache, "r", encoding="utf-8") as f:
+                if json.load(f):
+                    return ["ℹ️ 存在活跃计划，建议在ship前执行/verify交叉验证"]
+    except (OSError, json.JSONDecodeError) as e:
+        return [f"⚠️ plan_cache读取失败: {e}"]
+    return []
+
+
+def check_schema_drift(code_files: list) -> list:
+    """启发式：ORM/model 文件变更但无 migration 文件变更 → 警告"""
+    orm_patterns = ("model", "orm", "schema", "entity", "migration", "migrate")
+    has_orm = any(
+        any(p in f.get("path", "").lower() for p in orm_patterns if p not in ("migration", "migrate"))
+        for f in code_files
+    )
+    has_migration = any(
+        "migration" in f.get("path", "").lower() or "migrate" in f.get("path", "").lower()
+        for f in code_files
+    )
+    if has_orm and not has_migration:
+        return ["⚠️ Schema Drift: ORM/model 文件变更但未检测到 migration 文件变更，请确认是否需要生成 migration"]
+    return []
+
+
+def check_security_anchor(code_files: list) -> list:
+    """启发式：auth 相关文件变更 → 提醒绑定威胁模型"""
+    auth_patterns = ("auth", "login", "session", "permission", "token", "password", "credential")
+    has_auth = any(
+        any(p in f.get("path", "").lower() for p in auth_patterns)
+        for f in code_files
+    )
+    if has_auth:
+        return ["⚠️ Security Anchor: 检测到 auth/安全相关文件变更，请确认验证逻辑已绑定威胁模型（STRIDE/OWASP）"]
+    return []
+
+
+def main():
+    try:
+        raw = sys.stdin.buffer.read().decode("utf-8", errors="replace") if hasattr(sys.stdin, "buffer") else sys.stdin.read()
+        data = json.loads(raw) if raw.strip() else {}
+    except json.JSONDecodeError as e:
+        print(f"stop-verification-gate: stdin parse failed: {e}", file=sys.stderr)
+        data = {}
+
+    cfg = load_config()
+    session_id = str(data.get("session_id") or data.get("conversation_id") or "unknown")
+    cwd = str(data.get("cwd") or "")
+    transcript_path = str(data.get("transcript_path") or "")
+    code_files = []
+
+    if cfg["enabled"]:
+        state = load_state()
+        entry = state.get(session_id) or {}
+        edited = entry.get("edited_files", [])
+        code_files = unique_code_files(edited, cfg["doc_only_extensions"])
+
+        if edited and not code_files:
+            print("ℹ️ 本会话仅文档类编辑：请重读修改内容确认无误后再声称完成", file=sys.stderr)
+
+        if code_files:
+            blocks = int(entry.get("blocks", 0))
+            skip_msg = last_user_message(transcript_path).lower()
+            user_skipped = any(k.lower() in skip_msg for k in cfg["skip_keywords"])
+
+            if user_skipped:
+                print("⚠️ 用户显式跳过验证 — 本次放行，完成声明按 DONE_WITH_CONCERNS 处理", file=sys.stderr)
+            elif blocks >= int(cfg["max_blocks"]):
+                print(
+                    f"⚠️ 验证硬门已达上限（{blocks} 次）— 放行并标 DONE_WITH_CONCERNS："
+                    "验证证据仍不完整，请用户人工复核",
+                    file=sys.stderr,
+                )
+            else:
+                project_cwd = entry.get("cwd") or cwd
+                roots = find_project_roots(code_files, project_cwd)
+                crg, crg_warnings = crg_refresh_and_flag(roots, min(15, int(cfg["auto_check_timeout_sec"])))
+                failures, check_warnings = run_auto_checks(code_files, project_cwd, int(cfg["auto_check_timeout_sec"]))
+
+                reasons = list(failures)
+                last_edit_ts = max(f.get("ts", 0) for f in code_files)
+                verified = any(c.get("ts", 0) >= last_edit_ts - 1 for c in entry.get("verify_commands", []))
+                if not verified:
+                    reasons.append("最后一次代码编辑之后未检测到任何测试/lint/构建验证命令运行记录")
+                if len(code_files) >= int(cfg["require_reviewer_min_files"]):
+                    reviewed = any(r.get("ts", 0) >= last_edit_ts - 1 for r in entry.get("reviews", []))
+                    if not reviewed:
+                        reasons.append(
+                            f"非简单任务（{len(code_files)} 个代码文件变更）但无 eng-reviewer 审查委派记录"
+                        )
+                if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
+                    reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
+
+                if reasons:
+                    entry["blocks"] = blocks + 1
+                    entry["scope_nudged"] = True
+                    entry["ts"] = time.time()
+                    state[session_id] = entry
+                    save_state(state)
+                    for w in crg_warnings + check_warnings:
+                        print(f"⚠️ {w}", file=sys.stderr)
+                    print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
+                    sys.exit(2)
+
+    issues = (
+        check_schema_drift(code_files)
+        + check_security_anchor(code_files)
+        + check_plan_reminder()
+        + check_bare_except()
+    )
+    for issue in issues:
+        print(issue, file=sys.stderr)
+    if any("🚫" in i for i in issues):
+        sys.exit(1)
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

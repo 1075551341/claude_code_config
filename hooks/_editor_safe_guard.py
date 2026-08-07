@@ -22,7 +22,8 @@ import sys
 # 编辑器路径特征（用于 CWD 和路径检测）
 _EDITOR_PATH_PATTERNS = (
     ".cursor/", "/.cursor", "cursor/projects", "roaming/cursor",
-    ".windsurf", "/.windsurf", ".devin", "/.devin", "/.trae/", "/qoder/", ".vscode/",
+    ".windsurf", "/.windsurf", ".devin", "/.devin", "/.trae/", "/qoder/",
+    ".workbuddy", "/.workbuddy", ".vscode/",
     ".codex/", "/.opencode/", ".zed/", ".cursor/rules",
     ".windsurf/rules", ".devin/rules", ".trae/rules", ".cc-switch/",
     "agent-transcripts", "workspacestorage", "cursor_version",
@@ -31,7 +32,7 @@ _EDITOR_PATH_PATTERNS = (
 
 # 编辑器可执行文件名
 _EDITOR_EXE_PATTERNS = (
-    "cursor", "windsurf", "devin", "trae", "qoder", "code.exe",
+    "cursor", "windsurf", "devin", "trae", "qoder", "workbuddy", "code.exe",
     "zed", "codex", "opencode", "github-copilot",
 )
 
