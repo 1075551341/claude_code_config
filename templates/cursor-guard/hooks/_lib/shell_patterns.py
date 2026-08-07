@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 
+# Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过；支持空格/等号分隔，对齐 Claude pre-bash-guard）
+_GIT_OPTS = r"(?:(?:-C|-c|--git-dir|--work-tree)(?:\s+|=)\S+(?:\s+|))*"
+
 DENY_PATTERNS: list[tuple[str, str]] = [
     (r"rm\s+.*-[rRfF]{1,4}\s+/$", "禁止删除根目录"),
     (r"rm\s+.*-[rRfF]{1,4}\s+/\*", "禁止删除根目录所有文件"),
@@ -12,8 +15,8 @@ DENY_PATTERNS: list[tuple[str, str]] = [
     (r"rm\s+.*-[rRfF]{1,4}\s+[\"']?C:\\\\?\*", "禁止删除 C 盘所有文件"),
     (r"^format\s+[A-Za-z]:", "禁止格式化磁盘"),
     (r"^mkfs\b", "禁止格式化分区"),
-    (r"git\s+push\s+(?!.*--dry-run).*(?:--force|-f)\s+\S*origin\s+(main|master|release|prod)\b", "禁止强制推送到保护分支"),
-    (r"git\s+push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)", "禁止直接推送到 main/master，请走 PR"),
+    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run).*(?:--force|-f)\s+\S*origin\s+(main|master|release|prod)\b", "禁止强制推送到保护分支"),
+    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)", "禁止直接推送到 main/master，请走 PR"),
     (r"\bDROP\s+DATABASE\b", "禁止删除数据库"),
     (r"\bDROP\s+TABLE\b", "禁止删除数据表"),
     (r"redis-cli\s+.*\bFLUSHALL\b", "禁止 FLUSHALL"),
@@ -28,8 +31,9 @@ WARN_PATTERNS: list[tuple[str, str]] = [
     (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 请确认范围"),
 ]
 
-_GIT_STASH_RE = re.compile(r"\bgit\s+stash\b", re.IGNORECASE)
-_GIT_COMMIT_RE = re.compile(r"\bgit\s+commit\b", re.IGNORECASE)
+# Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过，对齐 Claude pre-bash-guard）
+_GIT_STASH_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"stash\b", re.IGNORECASE)
+_GIT_COMMIT_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"commit\b", re.IGNORECASE)
 
 
 def match_git_stash(command: str) -> bool:

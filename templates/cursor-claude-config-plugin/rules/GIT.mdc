@@ -1,4 +1,4 @@
-﻿---
+---
 trigger: model_decision
 description: Git 版本控制、分支管理、提交规范相关任务时启用
 ---
@@ -83,7 +83,7 @@ main (生产)
 
 **配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash`；Claude Code → `hooks/pre-bash-guard.py`。
 
-> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 仅用户显式指令 + Guard 确认后执行。Pre-bash-guard hook 拦截自动 stash/commit 命令。
+> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 仅用户显式指令 + Guard 确认后执行。Pre-bash-guard hook 拦截自动 stash/commit 命令（v10.14 修复：`_GIT_OPTS` 覆盖 `-C/--git-dir/--work-tree/-c` 变体，防 `git -C <dir> commit` 绕过 settings deny 与词位正则；Cursor shell_patterns.py 同步）。
 
 ## 危险操作防护
 

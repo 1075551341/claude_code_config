@@ -2,7 +2,7 @@
   "name": "claude-config",
   "displayName": "Claude Config Rules",
   "description": "Global AI assistant rules from ~/.claude (SSOT). Refreshed by sync.ps1.",
-  "version": "10.13.0+202608072347",
+  "version": "10.13.0+202608072358",
   "author": {
     "name": "local"
   },

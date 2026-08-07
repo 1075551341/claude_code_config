@@ -3,6 +3,7 @@
 > Claude Code 专用，不同步编辑器。17 注册激活 hooks + `_archive/` 非激活资产库（36）
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
 > **v5.3 变更（v10.14.0）**：① 完成验证门升级硬阻断——新增 `stop-verification-gate.py`（Stop exit 2 回灌，吸收 stop-quality-gate 全部职责并归档之）；新增 `post-edit-verify-tracker.py`（PostToolUse 状态追踪）；`pre-userprompt-verify-gate.py` 加状态触发修复关键词盲区；`config/quality_gates.json` 新增 `verification_gate` 节为硬门配置 SSOT；② 引入 code-review-graph MCP（审查/验证专用层，与 codegraph 互补）；③ Cursor Guard 同步 `verify_tracker.py` + verification_gate.py 状态触发 + guard-config.json 扩展。
+> **TRAE 侧注册（R19 自动 git 禁止）**：TRAE 不加载 `~/.claude/settings.json`。自动 commit/push/stash 防护经 TRAE 全局 hooks 注册：`%userprofile%/.trae-cn/hooks.json` → PreToolUse matcher=`RunCommand` → `hooks_env/pre-bash-guard.py`（副本，输出 `hookSpecificOutput.permissionDecision=deny` 协议）。脚本源为 `hooks/pre-bash-guard.py`，改后需同步副本 + 重启 TRAE 生效。
 
 ## 目录结构
 
@@ -40,7 +41,7 @@
 | `pre-read-before-edit.py`   | Edit/Write/MultiEdit | GSD read-before-edit 强制                                                                                                  | 执行 |
 | `pre-context-injector.py`   | Task/Bash/Write/Edit | 项目 CLAUDE.md 上下文注入（每会话一次）                                                                                    | 骨架 |
 | `pre-rtk-rewrite.py`        | Bash                 | RTK Shell 命令压缩改写                                                                                                     | 横切 |
-| `pre-bash-guard.py`         | Bash                 | 危险命令拦截 + git --no-verify 阻止 + dep check                                                                            | 骨架 |
+| `pre-bash-guard.py`         | Bash                 | 危险命令拦截 + git --no-verify 阻止 + **stash exit2 硬拦截 + commit WARN 注入**（`-C/--git-dir/--work-tree/-c` 变体防绕过）+ dep check | 骨架 |
 | `pre-manifest-validator.py` | Skill/Task           | MANIFEST 归属校验防互博                                                                                                    | 横切 |
 
 ### PostToolUse (4)

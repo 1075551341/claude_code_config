@@ -27,6 +27,9 @@ try:
 except Exception as e:
     print(f"⚠️ {e}", file=sys.stderr)
 
+# ── Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过；支持空格/等号分隔）─
+_GIT_OPTS = r"(?:(?:-C|-c|--git-dir|--work-tree)(?:\s+|=)\S+(?:\s+|))*"
+
 # ── 危险命令模式（阻止，exit 2）──────────────────────────────────────────────
 DANGER_PATTERNS = [
     # 递归删除系统/用户目录
@@ -46,15 +49,12 @@ DANGER_PATTERNS = [
     (r"dd\s+if=.+of=/dev/[sh]d[a-z]",              "禁止 dd 写入块设备"),
     (r"dd\s+if=/dev/zero\s+of=",                    "禁止 dd 零写覆盖"),
     (r"shred\s+.*-[zun].*\s+/dev/",                "禁止 shred 覆盖设备"),
-    # Git 直接推送保护（禁止直接push到保护分支，必须使用PR）
-    (r"git\s+push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)",
-     "禁止直接推送到 main/master 分支，请使用功能分支并创建 PR"),
-    # Git 强制推送保护
-    (r"git\s+push\s+(?!.*--dry-run).*--force(?:-with-lease)?\s*$",  "禁止无目标强制推送"),
-    (r"git\s+push\s+(?!.*--dry-run).*-f\s+\S*origin\s+(main|master|release|prod)\b",
-     "禁止强制推送到保护分支"),
-    (r"git\s+push\s+(?!.*--dry-run).*--force\s+\S*origin\s+(main|master|release|prod)\b",
-     "禁止强制推送到保护分支"),
+    # Git — Agent 禁止自动 commit/push/stash（R19；仅用户手动终端可执行）
+    (r"\bgit\s+" + _GIT_OPTS + r"commit\b",                        "禁止 Agent 自动 git commit（R19）；仅用户本条消息显式要求时由用户手动执行"),
+    (r"\bgit\s+" + _GIT_OPTS + r"push\b(?!.*--dry-run)",           "禁止 Agent 自动 git push（R19）— 自动提交远端的主因；需推送请用户手动执行"),
+    (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
+    # Git 强制推送保护（兜底，含 --dry-run 之外的所有 force 形式）
+    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run).*--force(?:-with-lease)?\b",  "禁止 git push 强制推送"),
     # Git 历史重写
     (r"git\s+filter-branch\b",                      "禁止 filter-branch 重写历史（建议用 git filter-repo）"),
     (r"git\s+rebase\s+.*--root\b",                  "禁止 rebase --root 重写全部历史"),
@@ -79,7 +79,7 @@ DANGER_PATTERNS = [
     (r"eval\s+[\"'`]\$\(curl",                      "禁止 eval 执行 curl 下载内容"),
     (r"eval\s+[\"'`]\$\(wget",                      "禁止 eval 执行 wget 下载内容"),
     # Git — Agent 禁止 stash；commit 仅用户显式要求（见 rules/GIT.md）
-    (r"\bgit\s+stash\b",                            "禁止 Agent 执行 git stash（请本地手动处理）"),
+    (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
 ]
 
 # ── 警告模式（不阻断，注入上下文提示）──────────────────────────────────────────
@@ -92,7 +92,6 @@ WARN_PATTERNS = [
     (r"\bdropdb\b",                                  "dropdb 将永久删除整个数据库，请确认"),
     (r"mongo.*--eval.*db\.dropDatabase",            "dropDatabase 将清除整个数据库"),
     (r"git\s+stash\s+(?:drop|clear)\b",            "stash drop/clear 将永久删除暂存内容"),
-    (r"\bgit\s+commit\b",                           "Agent 禁止自动 git commit；仅用户本条消息显式要求「提交」时执行"),
     (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 将删除未使用的资源，请确认"),
 ]
 
@@ -113,6 +112,26 @@ SENSITIVE_WRITE_PATTERNS = [
 WRITE_INDICATORS = [">", ">>", "tee ", " write ", "truncate "]
 
 
+def _block(msg: str, is_trae: bool = False) -> None:
+    """拦截输出：TRAE 用 hookSpecificOutput.permissionDecision=deny（stdout + exit 0），Claude Code 用 stderr + exit 2。"""
+    if is_trae:
+        # TRAE PreToolUse 协议：permissionDecision=deny 拒绝本次工具调用，原因附加给模型
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": msg,
+                "additionalContext": msg,
+            }
+        }
+        sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+        sys.exit(0)
+    sys.stderr.write(msg + "\n")
+    sys.stderr.flush()
+    sys.exit(2)
+
+
 def main():
     try:
         # ── 读取 stdin ────────────────────────────────────────────────────
@@ -125,10 +144,13 @@ def main():
         tool_name  = data.get("tool_name", "")
         tool_input = data.get("tool_input", {})
 
-        if tool_name != "Bash":
+        # 兼容 Claude Code（Bash）与 TraeCode（RunCommand）工具名
+        if tool_name not in ("Bash", "RunCommand"):
             sys.exit(0)
 
         command = tool_input.get("command", "").strip()
+        if not command:
+            command = tool_input.get("shell_command", "").strip()
         if not command:
             sys.exit(0)
 
@@ -137,9 +159,7 @@ def main():
             try:
                 if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
                     msg = f"[安全拦截] {reason}\n命令: {command[:300]}"
-                    sys.stderr.write(msg + "\n")
-                    sys.stderr.flush()
-                    sys.exit(2)
+                    _block(msg, is_trae=(tool_name == "RunCommand"))
             except re.error:
                 continue
 
@@ -149,9 +169,7 @@ def main():
                 try:
                     if re.search(pat, command, re.IGNORECASE):
                         msg = f"[安全拦截] 禁止覆写敏感文件\n命令: {command[:300]}"
-                        sys.stderr.write(msg + "\n")
-                        sys.stderr.flush()
-                        sys.exit(2)
+                        _block(msg, is_trae=(tool_name == "RunCommand"))
                 except re.error:
                     continue
 
