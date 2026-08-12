@@ -1,0 +1,13 @@
+{
+  "toolset": "debug",
+  "description": "浏览器调试 — chrome-devtools（v10.17 从常驻降级为按需）。Cursor 侧优先用内置 cursor-ide-browser，不必 merge。",
+  "servers": ["chrome-devtools"],
+  "enable": "将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code；任务完成后移除并重启（恢复常驻 9）",
+  "mcpServers": {
+    "chrome-devtools": {
+      "_description": "Debugging：性能/Lighthouse/网络/附着现有 Chrome。@latest 系用户显式决策（R14 例外，2026-08-12）；必须 --isolated，禁止共享非隔离 Chrome profile。",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated"]
+    }
+  }
+}

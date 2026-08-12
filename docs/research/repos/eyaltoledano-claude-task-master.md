@@ -2,11 +2,12 @@
 
 > 层: 工具/集成 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub CHANGELOG + npm 双源
 
-
 ## v10.5.1 delta (2026-07-17)
+
 - **最新元数据**：27,863★；Release **task-master-ai@0.43.1**；`pushed_at` 2026-04-28。
 - **本地映射**：L4 optional；与 writing-plans **互斥**。
 - **来源**：GitHub API（Tier-2）。
+
 ## 核心价值
 
 - PRD → 任务分解 MCP
@@ -17,15 +18,15 @@
 ## 证据
 
 - [GitHub eyaltoledano/claude-task-master](https://github.com/eyaltoledano/claude-task-master)
-- `docs/research/archive/task-master-integration.md`（v10.6.0 归档）
+- 集成评估结论：不引入（v10.6.0 判定，原归档文档于 v10.17 清理）
 
 ## 本地映射
 
-| MANIFEST concern | 路径 |
-|------------------|------|
-| task_master | `MANIFEST.yaml` L4 optional |
-| MCP | `.mcp.json` optional 分组 |
-| 互斥 | excludes `[task_master_mcp, writing-plans]` 上下文 |
+| MANIFEST concern | 路径                                               |
+| ---------------- | -------------------------------------------------- |
+| task_master      | `MANIFEST.yaml` L4 optional                        |
+| MCP              | `.mcp.json` optional 分组                          |
+| 互斥             | excludes `[task_master_mcp, writing-plans]` 上下文 |
 
 ## 吸收决策
 

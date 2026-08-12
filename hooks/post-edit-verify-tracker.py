@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-PostToolUse Hook: 完成验证追踪器（v10.14.0）
+PostToolUse Hook: 完成验证追踪器（v10.17.0）
 按 session_id 记录本会话编辑文件/验证命令/审查委派，供 stop-verification-gate 硬门核查。
+v10.17: 编辑工具识别与路径解析移交 `_lib/tool_paths.py`，覆盖 serena/fs 等 MCP 写工具
+（此前 MCP 写文件不进 edited_files，Stop 门会误判「本会话未改代码」直接放行回归）。
 状态 ~/.claude/.state/verification-gate.json（7 天自动清理）；永不阻断（exit 0）。
 """
 import json
@@ -11,7 +13,12 @@ import os
 import re
 import time
 
-STATE_DIR = os.path.expanduser("~/.claude/.state")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
+
+from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
+from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
+
+STATE_DIR = os.path.join(str(claude_home()), ".state")
 STATE_FILE = os.path.join(STATE_DIR, "verification-gate.json")
 CONFIG_FILE = os.path.expanduser("~/.claude/config/quality_gates.json")
 STALE_SECONDS = 7 * 24 * 3600
@@ -23,8 +30,6 @@ DEFAULT_VERIFY_PATTERNS = [
     "go test", "go vet",
 ]
 DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
-
-EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 
 
 def load_config() -> dict:
@@ -98,16 +103,17 @@ def main():
     now = time.time()
     state = load_state()
     entry = state.setdefault(session_id, {
-        "ts": now, "cwd": cwd, "edited_files": [], "verify_commands": [], "reviews": [], "blocks": 0,
+        "ts": now, "started_ts": now, "cwd": cwd,
+        "edited_files": [], "verify_commands": [], "reviews": [], "blocks": 0,
     })
     entry["ts"] = now
+    entry.setdefault("started_ts", now)
     if cwd:
         entry["cwd"] = cwd
 
     changed = False
-    if tool_name in EDIT_TOOLS:
-        path = str(tool_input.get("file_path") or tool_input.get("notebook_path") or "")
-        if path:
+    if is_edit_tool(tool_name):
+        for path in extract_edit_paths(tool_input, cwd):
             entry["edited_files"].append({"path": path, "ts": now})
             changed = True
     elif tool_name == "Bash":

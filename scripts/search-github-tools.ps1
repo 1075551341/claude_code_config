@@ -1,14 +1,25 @@
-﻿#Requires -Version 5.1
-<#
+﻿<#
 .SYNOPSIS
     GitHub 热门开发工具搜索与推荐脚本
 .DESCRIPTION
     搜索 GitHub 上热门的开发工具仓库，与本地工具库对比，
     推荐可引入的新工具。支持按分类搜索和安全评估。
+.PARAMETER Category
+    搜索分类，默认 all。可选：前端框架 | 后端框架 | 数据库工具 | 测试工具 | DevOps | 开发效率 | 安全工具 | AI开发
+
+.PARAMETER SaveReport
+    保留参数，当前无实际作用 — 报告始终写入 logs/（见下方 `if ($SaveReport -or $true)`）。
+
+.EXAMPLE
+    # 全部命令
+    powershell -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1                    # 搜全部 8 个分类
+    powershell -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1 -Category AI开发   # 只搜单个分类
+
 .NOTES
-    用法：powershell -ExecutionPolicy Bypass -File search-github-tools.ps1
-    需要网络连接，可选配置 GITHUB_TOKEN 环境变量提高 API 限额
+    需要网络连接；可选配置 GITHUB_TOKEN 环境变量提高 API 限额。
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
+#Requires -Version 5.1
 
 param(
     [string]$Category = "all",

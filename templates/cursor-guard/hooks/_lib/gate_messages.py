@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""门控注入文本共享读取器（v10.13.0）。
+"""门控注入文本共享读取器（v10.15.0）。
 SSOT: <claude_home>/hooks/_lib/gate_messages.md，Claude Code 与 Cursor Guard 双端共读。"""
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ FALLBACKS = {
         "实际运行验证命令并贴出证据后方可声称完成（R1）。"
     ),
     "impact": (
-        "【门控 · 本会话首次编辑前必做】\n"
+        "【门控 · 每个文件首次编辑前必做】\n"
         "1. codegraph_explore 目标 blast-radius；2. Grep 全项目引用；"
         "3. 配置类改动查 MANIFEST depends_on。范围不明不修改。"
     ),

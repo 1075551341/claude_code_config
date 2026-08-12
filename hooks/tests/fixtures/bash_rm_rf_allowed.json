@@ -1,0 +1,7 @@
+{
+  "_note": "回归夹具：rm -rf 作用于项目内目录属正常开发操作，pre-bash-guard 按设计放行。用于防止有人为了让 bash_rm_rf_blocked 通过而把 rm -rf 整体拉黑。",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "rm -rf node_modules"
+  }
+}

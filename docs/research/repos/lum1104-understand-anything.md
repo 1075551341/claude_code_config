@@ -19,7 +19,7 @@
 ## 决策引用
 
 - 30-repo-deep-research-v10.md v10.5 delta（Q4: UA removed）
-- spec/claude-config-integration/design-v10.5.md P13（不重新集成）
+- v10.5 设计 P13 判定：不重新集成（设计文档已清理，结论见 `SPEC.md` 变更日志）
 - COVERAGE.md 冗余/互博 #1：codegraph vs UA
 
 ## 跟踪

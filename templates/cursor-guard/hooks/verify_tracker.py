@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""postToolUse: 完成验证追踪器（v10.14.0）— Cursor 侧。
+"""postToolUse: 完成验证追踪器（v10.17.0）— Cursor 侧。
 记录本会话编辑文件/验证命令/审查委派到 ~/.claude/.state/verification-gate.json，
 供 verification_gate.py 状态触发与 Claude Code 侧 stop-verification-gate.py 硬门核查。
-永不阻断；与 Claude 侧 post-edit-verify-tracker.py 共用 JSON schema。"""
+永不阻断；与 Claude 侧 post-edit-verify-tracker.py 共用 JSON schema。
+v10.17: 编辑工具识别与路径解析改用共享 `_lib/tool_paths.py`，覆盖 serena/fs 等 MCP 写工具。"""
 from __future__ import annotations
 
 import json
@@ -19,6 +20,7 @@ from hook_io import (
     ensure_lib_path,
     extract_file_path,
     extract_tool_name,
+    import_claude_lib,
     read_stdin,
     setup_stdio,
 )
@@ -35,7 +37,8 @@ DEFAULT_VERIFY_PATTERNS = [
     "go test", "go vet",
 ]
 DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
-EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
+# tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
+FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
 STALE_SECONDS = 7 * 24 * 3600
 
 
@@ -97,17 +100,34 @@ def main() -> None:
         patterns = cfg.get("verification", {}).get("verify_command_patterns", DEFAULT_VERIFY_PATTERNS)
         reviewers = cfg.get("verification", {}).get("reviewer_agents", DEFAULT_REVIEWER_AGENTS)
 
+        cwd = str(data.get("cwd") or "")
         now = time.time()
         state = load_state(state_path)
         entry = state.setdefault(session_id, {
-            "ts": now, "cwd": "", "edited_files": [], "verify_commands": [], "reviews": [], "blocks": 0,
+            "ts": now, "started_ts": now, "cwd": cwd,
+            "edited_files": [], "verify_commands": [], "reviews": [], "blocks": 0,
         })
         entry["ts"] = now
+        entry.setdefault("started_ts", now)
+        if cwd:
+            entry["cwd"] = cwd
+
+        tool_paths = None
+        try:
+            tool_paths = import_claude_lib(claude_home, "tool_paths")
+        except Exception as e:
+            print(f"verify_tracker: tool_paths unavailable: {e}", file=sys.stderr)
+
+        is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
 
         changed = False
-        if tool_name in EDIT_TOOLS:
-            path = extract_file_path(data)
-            if path:
+        if is_edit:
+            tool_input = data.get("tool_input") or data.get("input") or {}
+            paths = tool_paths.extract_edit_paths(tool_input, cwd) if tool_paths else []
+            if not paths:
+                single = extract_file_path(data)
+                paths = [single] if single else []
+            for path in paths:
                 entry["edited_files"].append({"path": path, "ts": now})
                 changed = True
         elif tool_name in ("Shell", "Bash"):

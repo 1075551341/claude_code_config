@@ -1,0 +1,11 @@
+{
+  "_note": "v10.17：serena 等 MCP 写工具此前不进 verify-tracker 的 edited_files，Stop 门因此误判「本会话没改过代码」直接放行。本夹具验证 _lib/tool_paths.py 能识别 mcp__ 前缀写工具并从 relative_path 解析出文件。",
+  "session_id": "fixture-mcp-edit",
+  "cwd": "C:\\Users\\DELL\\.claude",
+  "tool_name": "mcp__serena__replace_symbol_body",
+  "tool_input": {
+    "relative_path": "hooks/_lib/tool_paths.py",
+    "name_path": "extract_edit_paths",
+    "body": "def extract_edit_paths(tool_input, cwd=''): ..."
+  }
+}

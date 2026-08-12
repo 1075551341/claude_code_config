@@ -1,5 +1,4 @@
-﻿#Requires -Version 5.1
-<#
+﻿<#
 .SYNOPSIS
     Claude Code 编辑器 Hook 修复脚本 v5.0
 
@@ -47,10 +46,18 @@
     从 settings.json 中移除 launcher，Hook 命令恢复为直接 python xxx.py
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File fix.ps1
-    powershell -ExecutionPolicy Bypass -File fix.ps1 -Fix
-    powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore
+    # 全部命令（三选一）
+    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1           # 只诊断，不改动
+    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1 -Fix      # 应用修复：部署 launcher + 改写 settings.json
+    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1 -Restore  # 回滚：移除 launcher，恢复直调 python
+
+.NOTES
+    修复后核对：
+      python scripts/audit_hooks.py       # 确认每个 hook 都经 launcher 调用
+      powershell -File scripts/check.ps1  # S4 段落检查 hook 安全
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
+#Requires -Version 5.1
 
 param(
     [switch]$Fix,

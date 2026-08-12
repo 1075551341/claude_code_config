@@ -14,12 +14,11 @@ alwaysApply: true
 - **包管理器**: {{PACKAGE_MANAGER}} <!-- pnpm / npm / yarn -->
 - **初始化日期**: {{DATE}}
 
-## 代码探索（双引擎，v10.4）
+## 代码探索（R17 单引擎 — cbm 已禁用 v10.10+）
 
-1. **codegraph（R17 常驻）**：`codegraph init` → `codegraph index` — 日常符号/调用链
-2. **codebase-memory（L4 按需）**：`npx -y codebase-memory-mcp@0.8.1` → `scripts/cbm-index.ps1` → merge `mcp-configs/optional-dev.json` — 架构/ADR/变更影响
+1. **codegraph（R17 常驻）**：`codegraph init` → `codegraph index` — 日常符号/调用链/架构/ADR/变更影响
 
-启用 cbm 条件见全局 `rules/CONTEXT.md`（满足 ≥2：大 monorepo / ADR / 跨服务 / 变更风险）。
+> codebase-memory 已永久禁用（全盘索引爆 CPU/内存）；架构/ADR/变更影响一律用 codegraph_explore。
 
 ## 项目约定
 
@@ -58,8 +57,8 @@ tests/          # 测试文件
 - 五柱×五阶段×三横切骨架
 - 铁律 R1–R19
 - 上下文三级阈值（70%/90%/100%）
-- 变更彻底性保障（codegraph_explore + codebase-memory L4 + Grep）
-- 工具路由优先级（codegraph > cbm L4 架构/ADR > Grep > Read）
+- 变更彻底性保障（codegraph_explore + Grep）
+- 工具路由优先级（codegraph > Grep > Read；cbm 已禁用）
 - L0–L3 加载等级
 
 ## 覆盖声明

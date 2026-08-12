@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""beforeSubmitPrompt: 完成验证门（v10.14.0）。
+"""beforeSubmitPrompt: 完成验证门（v10.15.0）。
 prompt 命中完成类关键词 **或** 状态显示本轮有未验证编辑时，注入 verification-before-completion 强制指令。
 修复关键词盲区（模型连续工具调用后自行声称完成）。幂等无状态；永不阻断（Cursor 无 Stop 阻断能力，
 enforce_mode 显式标注 soft；硬门在 Claude Code 侧 stop-verification-gate.py 兜底）。"""

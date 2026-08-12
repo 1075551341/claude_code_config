@@ -1,6 +1,6 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v10.13.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md` | 运行时: `docs/RUNTIME_PLAYBOOK.md`
+> 五柱 × 五阶段 × 三横切 | **v10.17.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md` | 运行时: `docs/RUNTIME_PLAYBOOK.md`
 
 ## 快速导航
 
@@ -8,7 +8,7 @@
 | ------------------- | -------------------------------------------- |
 | `CLAUDE.md`         | 入口 — 优先级链 + 铁律 R1-R19 + 路由         |
 | `CLAUDE-ROUTER.mdc` | Tool-First 路由 — P0 路由集 + L0–L3 加载等级 |
-| `SPEC.md`           | 配置法典（v10.13.0）                         |
+| `SPEC.md`           | 配置法典（v10.17.0）                         |
 | `MANIFEST.yaml`     | 组件唯一归属 + 防互博                        |
 | `.mcp.json`         | MCP 常驻配置；ops/optional 见 `mcp-configs/` |
 | `settings.json`     | 运行时配置                                   |
@@ -25,7 +25,7 @@
 | `docs/`      | RUNTIME_PLAYBOOK + SYNC_GUIDE + research/（调研 SSOT）+ ADR/         |
 | `scripts/`   | sync.ps1、validate_config.py、check.ps1                              |
 | `templates/` | OpenSpec/GSD/DESIGN 模板                                             |
-| `catalog/`   | 按需技能/智能体/规则库                                               |
+| `catalog/`   | 按需变体库 101+43+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
 
 ## 五柱骨架
 
@@ -54,6 +54,6 @@ powershell scripts/check.ps1      # 一致性体检
 
 ## 版本
 
-- 当前：**v10.13.0**（2026-08-01）— Phase0 前置盘点 + 持续处理执行升档非简单 + 一次改完 + 模型档映射
+- 当前：**v10.17.0**（2026-08-12）— MCP 收敛 9 项三层（chrome-devtools/fs 降级按需）+ 判定逻辑单源化 + 执行层硬化（重复处理/遗漏/回归三门机械化）+ 同步链修复
 - 变更史：`SPEC.md` 末尾 changelog 链
 - 调研 SSOT：`docs/research/44-repo-deep-research-v10.11.md` + `COVERAGE.md`

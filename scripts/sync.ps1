@@ -1,7 +1,6 @@
-﻿#Requires -Version 5.1
-<#
+﻿<#
 .SYNOPSIS
-    Claude Code multi-editor layered sync script v18.3
+    Claude Code multi-editor layered sync script v18.4
     Modes: default (all rules + Cursor claude-config) | -Skills (+ skills/) | -All (+ agents)
     Project: -Lint (prettier+eslint) | -InitProject (CLAUDE.md+MANIFEST+.env+.gitignore)
 
@@ -16,7 +15,9 @@
     Sync method: symbolic link preferred, Copy-Item fallback
     Cursor: sync ONLY to personal ~/.cursor (rules/skills/agents) — never into
       business project trees unless -ProjectRules / -ProjectRulesPath is explicit.
-    Cursor rules bridge: prefer symlink into ~/.cursor/rules.
+    Cursor rules channel: local plugin ONLY. ~/.cursor/rules is actively deduped
+      against the plugin (same basename removed) — Cursor would otherwise load
+      Always-Apply rules twice. Do not expect global rules to land there.
     Cursor Settings visibility: every run refreshes plugins/local/claude-config
       (real .mdc copies from SSOT — plugin forbids external symlinks).
     -ProjectRules: OPTIONAL opt-in for <CWD>/.cursor/rules (default OFF).
@@ -55,16 +56,41 @@
     Deploy project-init templates to current working directory.
     Copies CLAUDE.md, MANIFEST.yaml, .env.example, .gitignore (skip if exists).
 
+.PARAMETER Scope
+    Cursor Guard 契约参数（sync_runner.py 调用）：rules | indexes | all
+    all=等价 -All；rules=默认 L0 模式；indexes=仅入口文件，跳过全量 rules。
+
+.PARAMETER Force
+    配合 -Scope 使用，跳过变更检测强制重写。
+
 .EXAMPLE
-    pwsh -ExecutionPolicy Bypass -File sync.ps1
-    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All
-    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun
-    pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules
+    # ---- 日常同步 ----
+    pwsh -ExecutionPolicy Bypass -File sync.ps1                    # 默认：8 个根索引 + 全量 rules + Cursor 插件
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -Skills            # 追加 skills/
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All               # 全量：rules + skills + agents
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun       # 预演，不落盘
+
+    # ---- 项目级投放（默认关闭，需显式开启）----
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules      # 投放到当前目录 .cursor/rules
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -ProjectRules
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -ProjectRulesPath "D:\apdms\pdms\pdms-teoms2"
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -InitProject
+
+    # ---- 项目脚手架 ----
+    powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint        # 投放 prettier + eslint 模板
+    powershell -ExecutionPolicy Bypass -File sync.ps1 -InitProject # 投放 CLAUDE.md/MANIFEST/.env/.gitignore
+
+    # ---- Cursor Guard 自动调用（一般不手敲）----
+    pwsh -File sync.ps1 -Scope indexes
+    pwsh -File sync.ps1 -Scope all -Force
+
+.NOTES
+    验证与回归：
+      powershell -File scripts/check.ps1              # 同步结果健康检查
+      powershell -File scripts/test-sync-dedup.ps1    # 去重逻辑回归
+    Linux/macOS 等价物：bash scripts/sync.sh full
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
+#Requires -Version 5.1
 
 param(
     [switch]$DryRun,
@@ -138,9 +164,25 @@ $L0_RULE_ITEMS = @(
 )
 
 # L0 root files: deployed to editor root directory (name preserved)
+# v18.4: IndexFile items are the router's Tool-First chain (总纲 -> 归属矩阵 -> 三索引).
+# Agents Read them by editor-relative path, so every editor with a rules channel needs them —
+# v18.3 shipped them to Cursor only, which left qoder/trae/codearts unable to resolve the chain.
+# Kept identical across sync.ps1 / sync.sh / check.ps1 / impact_sync.SYNC_FILES.
 $L0_ROOT_ITEMS = @(
-    @{ SrcRel = "CLAUDE.md"; DstName = "CLAUDE.md" }
+    @{ SrcRel = "CLAUDE.md";         DstName = "CLAUDE.md";         PerEditorName = $true }
+    @{ SrcRel = "CLAUDE-ROUTER.mdc"; DstName = "CLAUDE-ROUTER.mdc"; IndexFile = $true }
+    @{ SrcRel = "SPEC.md";           DstName = "SPEC.md";           IndexFile = $true }
+    @{ SrcRel = "MANIFEST.yaml";     DstName = "MANIFEST.yaml";     IndexFile = $true }
+    @{ SrcRel = "agent.yaml";        DstName = "agent.yaml";        IndexFile = $true }
+    @{ SrcRel = "skills-INDEX.md";   DstName = "skills-INDEX.md";   IndexFile = $true }
+    @{ SrcRel = "agents-INDEX.md";   DstName = "agents-INDEX.md";   IndexFile = $true }
+    @{ SrcRel = "rules-INDEX.md";    DstName = "rules-INDEX.md";    IndexFile = $true }
 )
+
+# Editors that receive CLAUDE.md only (no index root files).
+# workbuddy has no rules channel and owns its root namespace (SOUL/USER/IDENTITY/BOOTSTRAP);
+# dropping 7 more files there would collide with its own bootstrap contract.
+$ROOT_INDEX_SKIP_EDITORS = @("workbuddy")
 
 # L0 root file destination name per editor (override DstName when needed)
 $L0_ROOT_DSTNAME = [ordered]@{
@@ -675,7 +717,7 @@ function Deploy-Templates {
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
-Write-Host "  Claude Code Multi-Editor Layered Sync v18.3" -ForegroundColor Cyan
+Write-Host "  Claude Code Multi-Editor Layered Sync v18.4" -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Source       : $CLAUDE_DIR" -ForegroundColor DarkGray
@@ -719,16 +761,21 @@ foreach ($editor in ($TARGETS.Keys | Sort-Object)) {
 
     # ---- 1. L0 root files (CLAUDE.md / AGENTS.md) ----
     foreach ($item in $L0_ROOT_ITEMS) {
+        if ($item.IndexFile -and $ROOT_INDEX_SKIP_EDITORS -contains $editor) { continue }
+
         $srcPath = Join-Path $CLAUDE_DIR $item.SrcRel
-        $dstName = $L0_ROOT_DSTNAME[$editor]
+        $dstName = if ($item.PerEditorName) { $L0_ROOT_DSTNAME[$editor] } else { $item.DstName }
         $dstPath = Join-Path $targetBase $dstName
         Sync-File -SrcPath $srcPath -DstPath $dstPath -Label "$dstName -> $editor"
 
-        # Purge misplaced same-basename copies under rules/ (e.g. rules/CLAUDE.md)
-        $rootBase = [System.IO.Path]::GetFileNameWithoutExtension($dstName)
-        if (Test-Path $rulesDir) {
-            Remove-SameBasenameVariants -Directory $rulesDir -BaseName $rootBase `
-                -LabelPrefix "rules(misplaced)"
+        # Purge misplaced same-basename copies under rules/ (e.g. rules/CLAUDE.md).
+        # Only for the per-editor entry file; index files never had rules/ variants.
+        if ($item.PerEditorName) {
+            $rootBase = [System.IO.Path]::GetFileNameWithoutExtension($dstName)
+            if (Test-Path $rulesDir) {
+                Remove-SameBasenameVariants -Directory $rulesDir -BaseName $rootBase `
+                    -LabelPrefix "rules(misplaced)"
+            }
         }
     }
 
@@ -916,6 +963,7 @@ Write-Host "  Mode       : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Extensions : cursor/qoder/qoder-cn/codearts=.mdc, trae/trae-cn=.md; workbuddy=CLAUDE.md+skills (no rules)" -ForegroundColor DarkGray
 Write-Host "  Method     : symlink preferred; Copy-Item fallback" -ForegroundColor DarkGray
 Write-Host "  Cursor     : personal ~/.cursor (claude-config plugin refresh every run); -ProjectRules opt-in" -ForegroundColor DarkGray
+Write-Host "  RootIndex  : CLAUDE.md + ROUTER/SPEC/MANIFEST/agent.yaml/3 INDEX -> all editors except $($ROOT_INDEX_SKIP_EDITORS -join ', ')" -ForegroundColor DarkGray
 Write-Host "  WorkBuddy  : ~/.workbuddy CLAUDE.md + skills/ junction (SOUL/USER untouched)" -ForegroundColor DarkGray
 Write-Host "  CodeArts   : ~/.codeartsdoer (CLAUDE.md + rule/*.mdc)" -ForegroundColor DarkGray
 Write-Host "  Dedup      : delete same-basename variants (any ext/case) then write" -ForegroundColor DarkGray

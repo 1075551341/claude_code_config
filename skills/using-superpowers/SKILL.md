@@ -50,7 +50,8 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
   → 持续处理(attempt≥2/首轮未解决)? → 执行升档非简单 + verify_tier=全量
   → 非简单(需改>2/黑名单/六维含中高/模型不足/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
        → Bug类(多文件/根因不明/执行升档) → L3 triage → L2 debugging → 全量验证
-       → 功能/架构/配置/删除类 → L1 brainstorming → …五阶段全链 → 全量验证
+         （例外：用户已给可验证成功标准的升档 Bug 可跳过 grill，见 task-triage「Grill」节）
+       → 功能/架构/配置/删除类 → grill(必经) → L1 brainstorming → …五阶段全链 → 全量验证
        → 调研类 → L3 deep-research
 ```
 
@@ -61,7 +62,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 | 等级 | Skill                          | 触发                                                     |
 | ---- | ------------------------------ | -------------------------------------------------------- |
 | L1   | using-superpowers              | 会话开始                                                 |
-| L1   | task-triage                    | 会话开始分类、新任务（Phase0；简单=关联需改≤2+attempt=1；持续处理执行升档） |
+| L1   | task-triage                    | 会话开始分类、新任务（判定条件 SSOT；简单需同时满足 Phase0+≤2+白名单+六维全低+模型匹配低+attempt=1） |
 | L1   | change-impact-analysis         | 任何修改                                                 |
 | L1   | brainstorming                  | 非简单、方案、架构                                       |
 | L2   | verification-before-completion | 完成、验收                                               |
@@ -72,7 +73,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 | 阶段 | Read                                          |
 | ---- | --------------------------------------------- |
 | ②    | writing-plans → spec-validation（门控）       |
-| ③    | executing-plans + subagent-driven-development |
+| ③    | executing-plans(默认) + subagent-driven-development(用户显式要求时) |
 | ④    | verification-before-completion                |
 
 ## 规格三轨（自动判定，互斥）
@@ -105,7 +106,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | 信号     | Skill                                 |
 | -------- | ------------------------------------- |
 | 写计划   | writing-plans                         |
-| TDD      | test-driven-development               |
+| TDD      | test-driven-development (默认关闭,用户显式要求时触发) |
 | 代码审查 | requesting-code-review → eng-reviewer |
 | 架构决策 | adr-management                        |
 | 长时自主 | claude-to-deerflow（/deer-flow）      |

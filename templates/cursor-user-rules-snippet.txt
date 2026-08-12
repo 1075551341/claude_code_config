@@ -1,0 +1,4 @@
+代码探索/本地修改 → codegraph_explore / codegraph_impact 优先于 Grep/Read（R17）
+Git 提交 → Read skills/git-workflow/SKILL.md
+开 PR → Read skills/pr-workflow/SKILL.md
+claude-mem → Read skills/claude-mem-maintenance/SKILL.md

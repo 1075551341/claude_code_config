@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Cursor Guard hook 本地模拟测试（stdin → hook，校验 JSON + 行为断言）。"""
+"""Cursor Guard hook 本地模拟测试（stdin → hook，校验 JSON + 行为断言）。
+
+命令：
+    python scripts/test-cursor-guard-hooks.py                                     # 跑全部用例，结果打屏
+    python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json  # 同时写 JSON 报告
+    python scripts/test-cursor-guard-hooks.py -o <路径>                            # --output 短写法
+
+被测对象是 ~/.cursor/hooks 下的已部署副本，不是仓库模板；改了 templates/cursor-guard/
+必须先 deploy 再跑：powershell -File scripts/deploy-cursor-guard.ps1
+一般不直接调本脚本，用上层封装：scripts/test-cursor-guard-regression.ps1（自动清状态 + 设 UTF-8）。
+退出码：0 = 全部通过；非 0 = 有用例失败。
+"""
 from __future__ import annotations
 
 import argparse

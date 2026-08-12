@@ -10,7 +10,7 @@ source: bytedance/deer-flow
 
 # Claude → Deer-Flow 桥接
 
-> **L3 only**：`/deer-flow` 或 >30min 自主任务。常规非简单开发走 subagent-driven；GSD 并行走 workstream-management。**不互替**。
+> **L3 only**：`/deer-flow` 或 >30min 自主任务。常规非简单开发走 executing-plans(主会话内联)；GSD 并行走 workstream-management。**不互替**。
 
 ## 何时用
 

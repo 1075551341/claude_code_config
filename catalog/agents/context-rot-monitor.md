@@ -25,4 +25,4 @@
 ## 相关技能
 - `context-rot-guard` skill
 - `quality-gate` skill
-- `subagent-driven-development` skill
+- `subagent-driven-development` skill（v10.15 默认关闭，用户显式要求时触发）

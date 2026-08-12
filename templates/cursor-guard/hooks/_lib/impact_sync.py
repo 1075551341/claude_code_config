@@ -120,7 +120,10 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
 
     if rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
         plan.merge(SyncScope.RULES)
-        plan.messages.append(f"{rel}: 刷新 rules → ~/.cursor/rules/*.mdc + .cursor/rules/*.mdc")
+        plan.messages.append(
+            f"{rel}: 刷新 rules → ~/.cursor/plugins/local/claude-config/rules/*.mdc"
+            "（唯一生效通道）+ 项目内 .cursor/rules/*.mdc"
+        )
         return plan
 
     if rel in SYNC_FILES:
@@ -157,21 +160,33 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
     return plan
 
 
+# Cursor 规则的唯一生效通道是 local plugin 实体副本（~/.cursor/rules 不生效，
+# sync.ps1 也只往 plugin 目录写）。v10.16 之前这里查 ~/.cursor/rules，
+# 结果每个会话都报「过期规则 AGENTS, BESTPRACTICE, CORE...」的假警报。
+CURSOR_PLUGIN_RULES = Path.home() / ".cursor" / "plugins" / "local" / "claude-config" / "rules"
+
+
 def rules_out_of_sync(claude_home: Path) -> tuple[bool, str]:
-    """比较 rules 源 .md 与 Cursor .mdc 是否过期。"""
+    """比较 rules 源 .md 与 Cursor plugin 副本 .mdc 是否漂移。
+
+    以**内容**为准而非 mtime：sync.ps1 是拷贝部署，mtime 天然晚于源文件，
+    但重装/回滚等场景 mtime 也可能倒挂，只有内容比对才能给出可信结论。
+    """
     rules_src = claude_home / "rules"
-    cursor_rules = Path.home() / ".cursor" / "rules"
-    if not rules_src.is_dir() or not cursor_rules.is_dir():
+    if not rules_src.is_dir() or not CURSOR_PLUGIN_RULES.is_dir():
         return False, "rules 目录缺失，跳过检测"
     stale: list[str] = []
     for md in rules_src.glob("*.md"):
         if md.name == "README.md":
             continue
-        mdc = cursor_rules / f"{md.stem}.mdc"
+        mdc = CURSOR_PLUGIN_RULES / f"{md.stem}.mdc"
         if not mdc.exists():
             stale.append(md.stem)
             continue
-        if md.stat().st_mtime > mdc.stat().st_mtime + 1:
+        try:
+            if md.read_text(encoding="utf-8") != mdc.read_text(encoding="utf-8"):
+                stale.append(md.stem)
+        except OSError:
             stale.append(md.stem)
     if stale:
         tail = "..." if len(stale) > 8 else ""

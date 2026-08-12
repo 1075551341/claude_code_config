@@ -29,7 +29,7 @@ __pycache__/
 /security/
 context_cache.json
 plan_cache.json
-config.json
+/config.json
 .claude.json
 settings.json
 settings.local.json
@@ -42,6 +42,7 @@ mcp-needs-auth-cache.json
 plugins/cache/
 plugins/marketplaces/
 plugins/.last_inuse_sweep
+plugins/*/config.json
 plugins/*/config-cache/
 plugins/*/context-cache/
 plugins/*/transcript-cache/
@@ -63,11 +64,18 @@ history.jsonl
 .devin
 .qoder
 .trae
-.cursor
 
-# Misc generated
-*.txt
-*.html
+# Workspace-local Cursor assets: OpenSpec commands/skills are配置（跟踪），
+# 其余（hooks 状态等）是运行时。整目录忽略会连带吞掉 opsx 命令与 openspec 技能。
+/.cursor/*
+!/.cursor/commands/
+!/.cursor/skills/
+
+# Misc generated —— 仅根级运行时 txt/html；
+# skills/*/LICENSE.txt 与 templates/*.txt 属配置资产，不得忽略
+/*.txt
+/*.html
+skills/UserSkillStatus.txt
 
 # v10.14: runtime state, secrets, temp & non-config artifacts
 .credentials.json
@@ -87,3 +95,8 @@ scripts/test-guard-result.json
 /.claude/
 openspec/changes/
 .planning/
+
+# v10.17: 过程制品（计划/设计/执行记录）不入版本库 —— 只保留最近一次在本地。
+# 配置真源是 SPEC.md 变更日志 + MANIFEST.yaml；调研（docs/research/）是配置决策依据，仍跟踪。
+/spec/
+/docs/superpowers/plans/

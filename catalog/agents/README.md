@@ -2,13 +2,20 @@
 
 > 此目录提供领域专用 agent 定义，按需复制到项目 `.claude/agents/` 使用。
 > 全局 agents 在 `~/.claude/agents/`，始终可用，无需从此目录复制。
+> 清单见 [../INDEX.md](../INDEX.md)。
 
 ## 使用策略
 
 ```
-全局 agents/ (24) → 五柱核心 + gstack 审查，会话始终可用
-catalog/agents/ (27) → 领域专用，按需复制到项目
+全局 agents/ (25) → 五柱核心 + gstack 审查，会话始终可用
+catalog/agents/ (43) → 领域专用，按需复制到项目
 ```
+
+## 同名项消歧（v10.17）
+
+`ceo-reviewer`、`designer`、`eng-reviewer`、`qa`、`security-reviewer` 在顶层
+`~/.claude/agents/` 也存在。**顶层为权威实现**（`agents-INDEX.md` 与 MANIFEST 均指向它），
+本目录同名项是变体副本，仅在复制到项目时使用，不要在全局会话中委派。
 
 ## 复制命令
 

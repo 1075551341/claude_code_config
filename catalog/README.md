@@ -1,14 +1,20 @@
 # Catalog — 领域能力库
 
 > 不全局加载；按需 `migrate-from-legacy.py --skill|--agent|--rule` 复制到项目 `.claude/`
+> 逐项清单见 [INDEX.md](INDEX.md)（含同名项消歧表）
 
 ## 规模
 
 | 目录 | 数量 | 策略 |
 |------|------|------|
-| skills/ | 97 | 全栈 + 办公 + 移动端/3D 保留 |
+| skills/ | 101 | 全栈 + 办公 + 移动端/3D 保留 |
 | agents/ | 43 | 领域专家 + 语言 reviewer + gstack 5 角色 |
 | rules/ | 15 | 语言/领域 lazy-load |
+
+## 权威 vs 变体（v10.17）
+
+顶层 `skills/` `agents/` `rules/` 为**权威实现**，参与路由加载；本目录为**变体库**，
+同名项一律以顶层为准。7 个同名项见 [INDEX.md](INDEX.md) 消歧表。
 
 ## 分层
 

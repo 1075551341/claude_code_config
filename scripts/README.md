@@ -8,17 +8,17 @@
 
 ### 已同步的编辑器（按本机实际目录）
 
-| 编辑器    | 用户目录示例                  | 说明                               |
-| --------- | ----------------------------- | ---------------------------------- |
+| 编辑器    | 用户目录示例                  | 说明                                  |
+| --------- | ----------------------------- | ------------------------------------- |
 | Cursor    | `%USERPROFILE%\.cursor`       | 若存在则参与同步；规则走 local plugin |
-| Trae      | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步                   |
-| Qoder     | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过                     |
-| WorkBuddy | `%USERPROFILE%\.workbuddy`    | CLAUDE.md + skills/；无 rules 通道 |
-| CodeArts  | `%USERPROFILE%\.codeartsdoer` | CLAUDE.md + rule/*.mdc             |
+| Trae      | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步                      |
+| Qoder     | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过                        |
+| WorkBuddy | `%USERPROFILE%\.workbuddy`    | CLAUDE.md + skills/；无 rules 通道    |
+| CodeArts  | `%USERPROFILE%\.codeartsdoer` | CLAUDE.md + rule/\*.mdc               |
 
 > v18.3 已移除：Devin
 
-### `sync.ps1` — 多编辑器分层同步（v18.3）
+### `sync.ps1` — 多编辑器分层同步（v18.4）
 
 **模式**：
 
@@ -58,6 +58,7 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写
 - 文件优先符号链接，失败回退 `Copy-Item`；目录管理员用符号链接、非管理员 `mklink /J` Junction、回退递归复制
 - **Cursor 例外**：`rules/*.mdc` 一律实体复制（Settings Rules UI 不索引软链接）
 - 规则扩展名：cursor/qoder/codearts → `.mdc`，trae → `.md`；workbuddy 无 rules 通道（仅 CLAUDE.md + skills/）
+- **总纲/索引根文件（8 项，v18.4）**：`CLAUDE.md` + `CLAUDE-ROUTER.mdc` + `SPEC.md` + `MANIFEST.yaml` + `agent.yaml` + 三个 `*-INDEX.md`，部署到除 workbuddy 外的所有编辑器（`$ROOT_INDEX_SKIP_EDITORS`）。该集合在 `sync.ps1` / `sync.sh` / `check.ps1` / `templates/cursor-guard/hooks/_lib/impact_sync.py` 四处必须一致，改一处要同步四处
 - **写前去重**：删除目标目录同基底名兄弟文件（任意扩展名/大小写），再写新文件
 - 回归测试：`test-sync-dedup.ps1`
 
@@ -108,11 +109,13 @@ powershell -ExecutionPolicy Bypass -File check.ps1
 powershell -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
-### `validate_config.py` — 配置校验（V1–V18）
+### `validate_config.py` — 配置校验（V1–V19）
 
 ```powershell
 python scripts/validate_config.py    # 含 R16 裸 except 扫描、核心 hooks 存在性、loading_tier 等
 ```
+
+V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
 
 ### `fix.ps1` — 修复编辑器内 Hook 超时/僵死
 
@@ -134,11 +137,13 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 
 ### 测试与辅助
 
-- `tests/_test_functional.py`、`tests/_simtest.py` — 功能/模拟测试资产
-- `test-cursor-guard-hooks.py`、`test-cursor-guard-regression.ps1`、`test-sync-dedup.ps1` — 回归测试
-- `cbm-index.ps1` — codebase-memory 索引辅助
+- `test-cursor-guard-regression.ps1` — Cursor Guard 一键回归（上层入口，自动清状态 + 设 UTF-8）；底层实调 `test-cursor-guard-hooks.py`
+- `test-sync-dedup.ps1` — sync.ps1 去重逻辑回归，覆盖三处落点：plugin rules、模板副本 rules、`~/.cursor/rules` 不得遮蔽 plugin
+- `audit_hooks.py` — 只读审计 settings.json 的 hook 注册（launcher 覆盖率 + 超时）
+- `cbm-index.ps1` — codebase-memory 索引辅助；**cbm 自 v10.10 永久禁用**，仅留作手工排查，日常勿用
 - `hooks/_lib/knowledge_graph_sync.py` — codegraph + cbm 双引擎同步（PostToolUse debounce / Stop force / sync.ps1）
 - `sync_mcp.py`、`sync-compact-window.py` — MCP/压缩窗口同步
+- `gen-catalog-index.py` — 重新生成 `catalog/INDEX.md`（含与顶层同名项的权威/变体消歧表）；新增或删除 `catalog/` 条目后必跑
 
 ---
 
@@ -158,10 +163,26 @@ powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 2. 发现编辑器异常先运行 `fix.ps1` 诊断
 3. 定期 `check.ps1` 体检
 
+### 重装后恢复 hook 注册
+
+`settings.json` 含 API token，被 `.gitignore` 排除，因此 **hook 注册与 matcher 无法随仓库克隆恢复**（`agent.yaml` 只登记 hook 名，不含 matcher/timeout）。可跟踪快照在 `templates/claude-settings/hooks.snippet.json`：
+
+```powershell
+$snippet = Get-Content templates\claude-settings\hooks.snippet.json -Raw `
+    | ForEach-Object { $_ -replace '\{\{CLAUDE_HOME\}\}', 'C:/Users/<你>/.claude' } `
+    | ConvertFrom-Json
+$settings = Get-Content settings.json -Raw | ConvertFrom-Json
+$settings | Add-Member -NotePropertyName hooks -NotePropertyValue $snippet.hooks -Force
+$settings | ConvertTo-Json -Depth 12 | Set-Content settings.json -Encoding UTF8
+python scripts\audit_hooks.py    # 核对 23 个注册项与 matcher（含 mcp__serena__.* 两组）
+```
+
+⚠️ 反向也要维护：**改动 `settings.json` 的 hooks 段后，须同步刷新该快照**，否则重装会退回旧注册（MCP 写工具将绕过验证追踪链）。
+
 ---
 
 ## 说明
 
 - 脚本内注释与界面文案以中文为主；部分技术字段名保持英文。
 - `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文。
-- **文档与脚本版本对齐（v10.6.0）**：`sync.ps1` **v18.2**，`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。
+- **文档与脚本版本对齐（v10.17.0）**：`sync.ps1` **v18.4**（`sync.sh` v2.3），`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。

@@ -1,4 +1,3 @@
-#Requires -Version 5.1
 <#
 .SYNOPSIS
     快速诊断（<5秒）— 检查关键文件和目录存在性
@@ -19,10 +18,19 @@
     跳过 MCP 连通性测试（更快完成）
 
 .EXAMPLE
-     powershell -ExecutionPolicy Bypass -File C:\Users\dell\.claude\scripts\fix.ps1 -Fix
-     powershell -ExecutionPolicy Bypass -File C:\Users\dell\.claude\scripts\sync.ps1
-     powershell -ExecutionPolicy Bypass -File C:\Users\dell\.claude\scripts\check.ps1 -Quick
+    # 全部命令（本脚本仅一个开关）
+    powershell -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性
+    powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick    # 跳过 MCP 探测，最快
+
+.NOTES
+    配套命令（本脚本不代跑，按需单独执行）：
+      python scripts/validate_config.py            # 深度校验 V1-V19
+      powershell -File scripts/sync.ps1            # 修同步/软链问题
+      powershell -File scripts/fix.ps1 -Fix        # 修 hook launcher 问题
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 PowerShell 不会把上面的块识别为
+# comment-based help，Get-Help 将读不到这些命令示例。
+#Requires -Version 5.1
 
 param([switch]$Quick)
 
@@ -32,7 +40,9 @@ $ErrorActionPreference = "SilentlyContinue"
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 $EDITORS    = @("cursor", "qoder", "qoder-cn", "trae", "trae-cn", "workbuddy", "codearts")
 $LINK_DIRS  = @("skills", "agents", "rules")
-$SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+# 与 sync.ps1 $L0_ROOT_ITEMS / sync.sh SYNC_FILES / impact_sync.SYNC_FILES 保持同一集合（8 项）
+$SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "agent.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+$ROOT_INDEX_SKIP_EDITORS = @("workbuddy")
 $ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
 $CLAUDE_RULE_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
 $STALE_LINKS = @("hooks", "scripts")
@@ -235,8 +245,9 @@ foreach ($editor in $EDITORS) {
     $syncMode = Get-SyncMode -EditorDir $editorDir
 
     foreach ($file in $SYNC_FILES) {
-        # v18.2 对齐：非 cursor 编辑器仅部署 CLAUDE.md 根文件（路由入口经 rules/ 内 00-CLAUDE-ROUTER 检查，见 S3 router）
-        if ($editor -ne "cursor" -and $file -ne "CLAUDE.md") { continue }
+        # v18.4 对齐 sync.ps1 $ROOT_INDEX_SKIP_EDITORS：总纲/索引根文件部署到除 workbuddy 外的所有编辑器
+        # （workbuddy 无 rules 通道且根目录归其 BOOTSTRAP 契约所有，仅 CLAUDE.md）
+        if ($ROOT_INDEX_SKIP_EDITORS -contains $editor -and $file -ne "CLAUDE.md") { continue }
         $fp = Join-Path $editorDir $file
         $expected = Join-Path $CLAUDE_DIR $file
         if (-not (Test-Path $fp)) {

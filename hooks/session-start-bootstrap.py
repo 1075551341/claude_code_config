@@ -77,7 +77,7 @@ def load_previous_context(cwd: str) -> dict:
 
 
 def load_p0_gate() -> str | None:
-    """读取门控 SSOT 的 P0 分类门段（v10.13.0）。"""
+    """读取门控 SSOT 的 P0 分类门段（v10.15.0）。"""
     fallback = (
         "【门控 · 会话开始必做】\n"
         "第一轮回复前必须按 task-triage 分类：Phase0 盘点 → "

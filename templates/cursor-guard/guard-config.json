@@ -1,5 +1,5 @@
 {
-  "version": "1.1.7",
+  "version": "1.1.9",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -67,6 +67,13 @@
     "prompt_keywords": ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
   },
   "impact": {
-    "enabled": true
+    "enabled": true,
+    "_note": "v1.1.9: 由「每会话首次编辑」改为「每个文件首次编辑」注入，仍不阻断"
+  },
+  "issue_tracker": {
+    "enabled": true,
+    "max_age_days": 30,
+    "min_interval_sec": 120,
+    "min_prompt_len": 10
   }
 }

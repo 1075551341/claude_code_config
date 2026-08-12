@@ -1,0 +1,6 @@
+{
+  "_note": "v10.17：模拟「MCP/Shell 写入绕过追踪器」。前置条件是仓库工作树里存在会话开始后修改的代码文件，而 verification-gate.json 的该 session 无对应 edited_files。cwd 需按实测仓库调整。",
+  "session_id": "fixture-untracked-change",
+  "cwd": "C:\\Users\\DELL\\.claude",
+  "transcript_path": ""
+}

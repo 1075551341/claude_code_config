@@ -20,7 +20,9 @@ source: internal
 
 ```
 ① codegraph_explore(target) blast-radius 或 codegraph_impact（env 启用）
-   └ git diff 变更风险场景（L4）：codebase-memory detect_changes
+   └ 先确认 codegraph 无 staleness ⚠️ banner；有则 Read 文件直接获取最新内容
+   └ git diff 变更风险场景：code-review-graph detect_changes（项目已建图时）
+   └ 无 .codegraph/ 索引 → 标注 DONE_WITH_CONCERNS + Grep 全扫 + 提示 codegraph init
 
 ② Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
@@ -42,7 +44,7 @@ source: internal
   中途发现新关联: 追加到清单末尾
 ```
 
-### 阶段 3: 残留检测
+### 阶段 3: 残留检测 + 回归保持（v10.15）
 
 ```
 ① Grep 旧引用模式
@@ -53,7 +55,12 @@ source: internal
 ② 构建/类型/Lint 验证
    → npm run build / pnpm run typecheck / pnpm run lint
 
-③ MANIFEST 一致性
+③ 回归保持核验（非功能变更必须）
+   → 重构/格式/配置/重命名类非功能变更：核验原功能行为不变
+   → 运行既有测试或冒烟核验核心路径；禁止"应该没影响"式断言
+   → 保留必要注释；仅更新失真描述，不做顺手"改进"
+
+④ MANIFEST 一致性
    → python hooks/_editor_hook_launcher.py hooks/pre-manifest-validator.py
 ```
 
@@ -63,7 +70,7 @@ source: internal
 |----------|----------|
 | 改函数名/签名 | codegraph blast-radius/impact + Grep 全项目函数名 |
 | 改类型/接口 | codegraph blast-radius/impact + Grep import 引用 |
-| git diff 变更风险（L4 cbm 已启用） | detect_changes + Grep 残留 |
+| git diff 变更风险 | code-review-graph detect_changes（有图项目）+ Grep 残留 |
 | 改配置文件 | MANIFEST depends_on 遍历 |
 | 重命名/移动文件 | Grep 全项目路径引用 |
 | 改 rule/skill/agent | 同步更新 INDEX.md + MANIFEST.yaml |
@@ -76,7 +83,7 @@ source: internal
 |------|----------|
 | 只改指定文件 | Grep 找到所有关联文件一并修改 |
 | "应该只有这些" | codegraph 验证，不靠直觉 |
-| 手动估计范围 | codegraph_explore +（L4）detect_changes + Grep 实证 |
+| 手动估计范围 | codegraph_explore + code-review-graph detect_changes + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 | 跳过阶段 1 直接改 | 范围不明 = 盲改 = 必遗漏 |
 

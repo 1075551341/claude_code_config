@@ -1,7 +1,7 @@
-# ECC harness manifest — 全局启用组件清单 v10.13.0
-# 权威: MANIFEST.yaml v10.13.0 | 五柱×五阶段×三横切
+# ECC harness manifest — 全局启用组件清单 v10.17.0
+# 权威: MANIFEST.yaml v10.17.0 | 五柱×五阶段×三横切
 
-version: "10.13.0"
+version: "10.17.0"
 harness: claude-code-primary
 
 phases:
@@ -32,8 +32,8 @@ skills:
     enabled:
       - writing-plans
       - executing-plans
-      - test-driven-development
-      - subagent-driven-development
+      - test-driven-development # v10.15: 默认关闭，用户显式要求时触发
+      - subagent-driven-development # v10.15: 默认关闭，用户显式要求时触发
       - using-git-worktrees
       - receiving-code-review
       - requesting-code-review
@@ -66,7 +66,7 @@ skills:
       - improve-codebase-architecture
   insight:
     enabled: []
-    note: "architecture guidance uses codegraph + cbm"
+    note: "architecture guidance uses codegraph (cbm 已禁用)"
   bridge:
     enabled:
       - claude-to-deerflow
@@ -117,9 +117,10 @@ agents:
 hooks:
   profile_env: ECC_HOOK_PROFILE
   default: standard
-  # settings.json 已注册（v10.7.0 对齐：三门控 + 补注册 5 个历史遗漏）
+  # settings.json 已注册（v10.17 对齐：三门控 + 补注册 issue-tracker）
   core:
     - session-start-bootstrap
+    - pre-userprompt-issue-tracker
     - pre-userprompt-verify-gate
     - pre-bash-guard
     - pre-rtk-rewrite
@@ -172,6 +173,7 @@ commands:
     - propose
     - apply
     - archive
+    - sync # commands/sync.md（/opsx:sync delta 合并），此前漏登记
 
 catalog:
   skills: catalog/skills/
@@ -183,10 +185,10 @@ disabled_hooks:
   - pre-task-planner
 
 mcp_loading:
-  always: [codegraph, crawl, fetch, git, fs, time] # v10.12: 对齐 .mcp.json 常驻 6；pw/cdt 走插件勿双挂
-  dev: [gh, ctx7, pw, crawl, chrome-devtools] # codebase-memory 永久禁用；pw∥cdt 可同开互补
+  always: [codegraph, code-review-graph, aider-repo-map, serena, github, grep, exa, context7, firecrawl] # v10.17: .mcp.json 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；pw 走插件勿双挂
+  debug: [chrome-devtools] # v10.17 降级按需：mcp-configs/debug.json
+  fsaccess: [fs] # v10.17 降级按需：mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
   ops: [redis, sqlite, docker, postgres]
-  search: [exa]
   profile_env: CLAUDE_MCP_PROFILE
 
 limits:

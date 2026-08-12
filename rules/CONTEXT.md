@@ -1,4 +1,4 @@
-﻿---
+---
 trigger: model_decision
 description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE.md）
 ---
@@ -93,7 +93,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 **四执行模式**: flash(快速) / standard(标准) / pro(规划) / ultra(子Agent并行fan-out)
 **集成方式**: `claude-to-deerflow` skill → `npx skills add https://github.com/bytedance/deer-flow --skill claude-to-deerflow`
 
-**不启用时**: 使用本地 subagent-driven-development + agentic-orchestrator 实现类似效果。
+**不启用时**: 使用本地 subagent-driven-development（v10.15 默认关闭，用户显式要求时触发）+ agentic-orchestrator 实现类似效果。
 
 ## codebase-memory MCP（**已禁用** 2026-07-31）
 

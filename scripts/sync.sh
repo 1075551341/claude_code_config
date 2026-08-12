@@ -1,13 +1,25 @@
 #!/bin/bash
-# sync.sh v2.2 - Linux/macOS 同步脚本（v14.5 仅L0入口 + 个人级单落点）
-# 全量格式转换（rules/skills-native）请使用 Windows sync.ps1 -Full
+# sync.sh v2.3 - Linux/macOS 同步脚本（v14.5 仅L0入口 + 个人级单落点）
+# v2.3: 根文件集合补 agent.yaml 并与 sync.ps1/check.ps1 统一；workbuddy 仅接收 CLAUDE.md
+#
+# 全部命令：
+#   bash scripts/sync.sh sync           # 8 个总纲根文件软链 + skills/agents/rules 目录联接 + 路由规则部署
+#   bash scripts/sync.sh verify         # 只读验证同步状态，不写盘
+#   bash scripts/sync.sh cleanup [days] # 清理旧备份，默认 30 天
+#   bash scripts/sync.sh full           # 提示信息：全量格式转换须在 Windows 用 sync.ps1 -All
+#
+# 平台差异：本脚本不做 rules 扩展名转换（.md/.mdc）与 Cursor 插件副本刷新，
+#           这两项仅 Windows sync.ps1 具备。健康检查同样只有 check.ps1（Windows）。
 
 set -e
 
 CLAUDE_DIR="$HOME/.claude"
 SYNC_DIRS=("skills" "agents")
-SYNC_FILES=("CLAUDE.md" "CLAUDE-ROUTER.mdc" "SPEC.md" "MANIFEST.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
+# 与 sync.ps1 $L0_ROOT_ITEMS / check.ps1 $SYNC_FILES / impact_sync.SYNC_FILES 保持同一集合（8 项）
+SYNC_FILES=("CLAUDE.md" "CLAUDE-ROUTER.mdc" "SPEC.md" "MANIFEST.yaml" "agent.yaml" "skills-INDEX.md" "agents-INDEX.md" "rules-INDEX.md")
 EDITORS=("cursor" "qoder" "qoder-cn" "trae" "trae-cn" "workbuddy" "codearts")
+# workbuddy 无 rules 通道且根目录归其 BOOTSTRAP 契约所有，仅接收 CLAUDE.md
+ROOT_INDEX_SKIP_EDITORS=("workbuddy")
 FULL_MODE=false
 
 editor_home() {
@@ -15,6 +27,15 @@ editor_home() {
         codearts) echo "$HOME/.codeartsdoer" ;;
         *) echo "$HOME/.$1" ;;
     esac
+}
+
+skips_root_index() {
+    local editor="$1"
+    local skip
+    for skip in "${ROOT_INDEX_SKIP_EDITORS[@]}"; do
+        [ "$editor" = "$skip" ] && return 0
+    done
+    return 1
 }
 
 RED='\033[0;31m'
@@ -28,8 +49,8 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 usage() {
     echo "用法: $0 {sync|verify|cleanup|full} [days]"
-    echo "  sync    - 索引模式：7总纲软链接 + skills/agents/rules 目录联接 + 路由规则部署"
-    echo "  full    - 提示：Full 格式转换请用 sync.ps1 -Full（Windows）"
+    echo "  sync    - 索引模式：8 个总纲根文件软链接 + skills/agents/rules 目录联接 + 路由规则部署"
+    echo "  full    - 提示：Full 格式转换请用 sync.ps1 -All（Windows）"
     echo "  verify  - 验证同步状态"
     echo "  cleanup - 清理旧备份（默认30天）"
 }
@@ -104,6 +125,9 @@ sync_to_editor() {
     log_info "同步到 $editor（索引模式）..."
 
     for file in "${SYNC_FILES[@]}"; do
+        if [ "$file" != "CLAUDE.md" ] && skips_root_index "$editor"; then
+            continue
+        fi
         local src_path="$CLAUDE_DIR/$file"
         local target_path="$target_dir/$file"
         if [ -f "$src_path" ]; then
@@ -124,7 +148,7 @@ sync_to_editor() {
 
 full_mode_notice() {
     log_warn "Full 模式（rules/skills 格式转换）需在 Windows 运行:"
-    log_warn "  powershell -ExecutionPolicy Bypass -File ~/.claude/scripts/sync.ps1 -Full -Force"
+    log_warn "  powershell -ExecutionPolicy Bypass -File ~/.claude/scripts/sync.ps1 -All"
 }
 
 verify_sync() {
@@ -137,6 +161,9 @@ verify_sync() {
         [ -d "$target_dir" ] || continue
 
         for file in "${SYNC_FILES[@]}"; do
+            if [ "$file" != "CLAUDE.md" ] && skips_root_index "$editor"; then
+                continue
+            fi
             local link_path="$target_dir/$file"
             if [ ! -L "$link_path" ]; then
                 log_error "$editor/$file 不是软连接"

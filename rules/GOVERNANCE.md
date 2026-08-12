@@ -7,7 +7,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v10.14.0 — 配置驱动三门 + 完成验证硬阻断）
+## 门控强度（v10.15.0 — 配置驱动三门 + 完成验证硬阻断）
 
 > 原则：不依赖模型自觉。三门文本 SSOT = `hooks/_lib/gate_messages.md`（改文本不改代码）；双端 hook 注入 `additionalContext`/`additional_context`。
 > v10.14：完成验证门升级硬阻断（Claude Stop hook exit 2 回灌强制补验）；新增 PostToolUse 追踪器记录编辑/验证/审查状态；引入 code-review-graph 审查/验证专用层。
@@ -83,7 +83,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 | Rust   | chrono / time crate |
 | C#     | NodaTime            |
 
-Claude Code 可用 `time` MCP 获取当前时间。
+获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v10.17 常驻 9 项，见 `rules/MCP.md`）。
 
 ## 变更彻底性三阶段流程（R3/R4 详情）
 
@@ -116,7 +116,9 @@ Claude Code 可用 `time` MCP 获取当前时间。
 
 ## codegraph F1 默认工具集（v10.3 纠偏）
 
-codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。**v10.3 起 `.mcp.json` 已通过 `CODEGRAPH_MCP_TOOLS` env 显式启用 `codegraph_impact`**（满足 R6 变更彻底性保障）。如需 `codegraph_callees`/`codegraph_files`/`codegraph_status`，追加到同一 env，或用 CLI `codegraph impact`。
+codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。
+
+**当前 `.mcp.json` 未配置 `CODEGRAPH_MCP_TOOLS`**（v10.17 核对纠正：此前文档误称已启用）。R3/R4 的变更前影响分析以 `codegraph_explore` 的 blast-radius 段为准，已满足要求。确需独立 `codegraph_impact` 时二选一：给 `.mcp.json` 的 codegraph 条目加 `"env": {"CODEGRAPH_MCP_TOOLS": "explore,node,search,callers,impact"}` 后重启，或直接用 CLI `codegraph impact`。
 
 ## /learn ↔ claude-mem 管道（v10.2）
 

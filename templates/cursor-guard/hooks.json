@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "guard_version": "1.1.7",
+  "guard_version": "1.1.9",
   "hooks": {
     "sessionStart": [
       {
@@ -37,6 +37,11 @@
         "timeout": 5
       },
       {
+        "command": "python hooks/issue_tracker.py",
+        "matcher": "UserPromptSubmit",
+        "timeout": 5
+      },
+      {
         "command": "python hooks/verification_gate.py",
         "matcher": "UserPromptSubmit",
         "timeout": 5
@@ -61,7 +66,7 @@
       },
       {
         "command": "python hooks/impact_nudge.py",
-        "matcher": "Write|StrReplace",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       }
     ],
@@ -73,7 +78,7 @@
       },
       {
         "command": "python hooks/verify_tracker.py",
-        "matcher": "Write|StrReplace|Shell|Task",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|Shell|Task|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       },
       {

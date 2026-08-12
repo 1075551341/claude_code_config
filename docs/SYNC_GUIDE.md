@@ -1,10 +1,10 @@
 ---
-description: 跨编辑器配置同步指南 v18.2
+description: 跨编辑器配置同步指南 v18.4
 ---
 
 # Claude 配置跨编辑器同步指南
 
-> **版本**: v18.3 | **日期**: 2026-08-06 | **脚本**: `scripts/sync.ps1` | **推荐**: **默认 L0**（省 token）| `-Skills` / `-All` 按需
+> **版本**: v18.4 | **日期**: 2026-08-12 | **脚本**: `scripts/sync.ps1`（Linux/macOS: `sync.sh` v2.3）| **推荐**: **默认 L0**（省 token）| `-Skills` / `-All` 按需
 >
 > **v10.4 推荐**：日常 Cursor 使用 **默认模式（L0）** — 仅 CORE + ROUTER + CURSOR-EDITOR；lazy rules 经 `CLAUDE-ROUTER → Read rules/<name>.md` 按需加载。首次离线或需全量 rules 时用 `-All`。
 
@@ -14,7 +14,7 @@ description: 跨编辑器配置同步指南 v18.2
 | ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------- |
 | **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用                |
 | **同步源（只读）**                   | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件                             | `sync.ps1` 读取并链接/复制到编辑器       |
-| **同步目标（仅编辑器）**             | `~/.cursor/`、`~/.trae(-cn)/`、`~/.qoder(-cn)/`、`~/.workbuddy/`、`~/.codeartsdoer/` | 软链接、联接、原生副本、路由部署均写在此 |
+| **同步目标（仅编辑器）**             | `~/.cursor/`、`~/.trae(-cn)/`、`~/.qoder(-cn)/`、`~/.workbuddy/`、`~/.codeartsdoer/`  | 软链接、联接、原生副本、路由部署均写在此 |
 
 **`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`。
 **`fix.ps1 -Fix`** 单独处理 Hook launcher 与编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
@@ -57,9 +57,12 @@ description: 跨编辑器配置同步指南 v18.2
 
 > **Cursor 规则通道 = local plugin（永久方案）**：`~/.cursor/rules` 实测不生效（UI 不枚举、Agent 不加载），不做其他通道尝试；全局规则仅经 `~/.cursor/plugins/local/claude-config/rules/` 实体 .mdc 由 Cursor 加载（`sync.ps1` 每次刷新实体副本 + 去重）。
 
+> **总纲/索引根文件（8 项，v18.4）**：`CLAUDE.md` + `CLAUDE-ROUTER.mdc` + `SPEC.md` + `MANIFEST.yaml` + `agent.yaml` + 三个 `*-INDEX.md`。路由链要求 Agent 按编辑器相对路径 Read 这些文件，因此**除 workbuddy 外的全部编辑器**都部署（v18.3 曾仅给 Cursor，导致 qoder/trae/codearts 无法解析总纲链）。集合在 `sync.ps1 $L0_ROOT_ITEMS`、`sync.sh SYNC_FILES`、`check.ps1 $SYNC_FILES`、`impact_sync.SYNC_FILES` 四处保持一致。
+
 ```
-~/.cursor/  （Cursor 个人级；Trae/Qoder 同理）
+~/.cursor/  （Cursor 个人级；Trae/Qoder/CodeArts 同理，同样 8 个根文件）
 ├── CLAUDE.md, CLAUDE-ROUTER.mdc, SPEC.md, MANIFEST.yaml  (软链接)
+├── agent.yaml                                            (软链接)
 ├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md      (软链接)
 ├── skills/  → ~/.claude/skills/        (目录联接)
 ├── agents/  → ~/.claude/agents/        (目录联接)
@@ -90,12 +93,12 @@ description: 跨编辑器配置同步指南 v18.2
 ~/.workbuddy/skills/       → ~/.claude/skills/     (目录联接；默认模式也会同步)
 ```
 
-> WorkBuddy 无 `rules/` 通道；不覆盖 `SOUL.md` / `USER.md` / `IDENTITY.md`。
+> WorkBuddy 无 `rules/` 通道；不覆盖 `SOUL.md` / `USER.md` / `IDENTITY.md`。**唯一不接收总纲/索引根文件的编辑器**（`sync.ps1 $ROOT_INDEX_SKIP_EDITORS`）：其根目录归 BOOTSTRAP 契约所有，塞 7 个文件会与之冲突。
 
 **CodeArts 码道**：
 
 ```
-~/.codeartsdoer/CLAUDE.md     L0 根入口
+~/.codeartsdoer/CLAUDE.md     L0 根入口（+ 其余 7 个总纲/索引根文件）
 ~/.codeartsdoer/rule/*.mdc    个人级（ROUTER/CORE 等）
 ```
 
@@ -197,8 +200,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 - **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 - **运行时**：[RUNTIME_PLAYBOOK.md](RUNTIME_PLAYBOOK.md)
-- **当前设计**：[design-v10.5.1.md](../spec/claude-config-integration/design-v10.5.1.md)（历史设计；现行计划见下）
-- **当前计划**：[2026-07-31-v10.10-optimization.md](superpowers/plans/2026-07-31-v10.10-optimization.md) + [2026-08-01-v10.11-44repo.md](superpowers/plans/2026-08-01-v10.11-44repo.md)
+- **当前计划**：[2026-08-01-v10.11-44repo.md](superpowers/plans/2026-08-01-v10.11-44repo.md)（v10.17 起计划/设计为本地制品，不入版本库）
 
 ## 真源→适配→链接映射表（v10.6.0）
 
@@ -235,6 +237,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 从 v14 升级
 
+- **v18.4**：总纲/索引根文件（8 项，含新增的 `agent.yaml`）部署到除 workbuddy 外的所有编辑器——v18.3 曾收窄为仅 Cursor，qoder/trae/codearts 的总纲链因此断链；`sync.ps1` / `sync.sh` / `check.ps1` / `impact_sync` 四处集合统一
 - **v18.3**：目标 = cursor / qoder(+cn) / trae(+cn) / workbuddy / codearts；移除 devin；WorkBuddy 同步 CLAUDE.md + skills/
 - **v17.0**：扩展至 7 编辑器（+qoder-cn, +trae-cn）；-cn 变体独立配置目录；devin 目标改为 `%APPDATA%\devin`（已于 v18.3 移除）
 - **v16.0**：模式参数化（`-Skills`/`-All`/`-DryRun`），弃用 `sync-mode.json`/`-Full`/`-Force`/`-Scope`；符号链接优先 + Copy-Item 兜底；rules 扩展名按编辑器区分（.mdc / .md）

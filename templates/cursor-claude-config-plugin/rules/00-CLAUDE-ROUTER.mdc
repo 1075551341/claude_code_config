@@ -17,14 +17,16 @@ layer: router
 
 ## P0 路由集（6）= L1×4 + L2 门控×2
 
-| Skill                          | 等级 | 触发                                                     |
-| ------------------------------ | ---- | -------------------------------------------------------- |
-| using-superpowers              | L1   | 会话开始、分类路由                                       |
-| task-triage                    | L1   | 会话开始分类、新任务（Phase0盘点；简单=关联需改≤2+attempt=1；持续处理执行升档） |
-| change-impact-analysis         | L1   | 任何修改意图                                             |
-| brainstorming                  | L1   | 非简单 ①规划（grill→HARD-GATE）                          |
-| verification-before-completion | L2   | ④验收                                                    |
-| systematic-debugging           | L2   | Bug/调试                                                 |
+| Skill                          | 等级 | 触发                                                      |
+| ------------------------------ | ---- | --------------------------------------------------------- |
+| using-superpowers              | L1   | 会话开始、分类路由                                        |
+| task-triage                    | L1   | 会话开始分类、新任务（判定条件 SSOT，禁止凭本表缩写自判） |
+| change-impact-analysis         | L1   | 任何修改意图                                              |
+| brainstorming                  | L1   | 非简单 ①规划（grill→HARD-GATE）                           |
+| verification-before-completion | L2   | ④验收                                                     |
+| systematic-debugging           | L2   | Bug/调试                                                  |
+
+**简单 = Phase0 已盘点 + 关联需改≤2 + 白名单 + 六维全低 + 模型匹配低 + attempt=1（缺一不可）**；持续处理（attempt≥2/首轮未解决）→ 执行升档非简单 + verify_tier=全量。六维矩阵与黑白名单正文只在 `skills/task-triage/SKILL.md`，**禁止在别处复制**。
 
 ## 加载等级 L0–L3
 
@@ -47,4 +49,4 @@ layer: router
 | Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
 | 输出压缩               | caveman             | 原生输出            | 上下文>70%                |
 
-**同步模式**：软连接 L0 入口到各编辑器（`scripts/sync.ps1`）；Cursor 规则经 local plugin 实体副本加载（唯一通道，`~/.cursor/rules` 不生效）；skills/agents/rules 通过本路由按需 Read，不复制。
+**同步模式**：软连接 L0 入口到各编辑器（`scripts/sync.ps1`）——本链条的 8 个根文件（CLAUDE.md / CLAUDE-ROUTER.mdc / SPEC.md / MANIFEST.yaml / agent.yaml / 三个 INDEX）除 workbuddy 外全编辑器可按相对路径 Read；Cursor 规则经 local plugin 实体副本加载（唯一通道，`~/.cursor/rules` 不生效）；skills/agents/rules 通过本路由按需 Read，不复制。

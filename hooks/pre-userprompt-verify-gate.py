@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-UserPromptSubmit Hook: 完成验证门（v10.14.0）
+UserPromptSubmit Hook: 完成验证门（v10.15.0）
 prompt 命中完成类关键词 **或** 状态显示本轮有未验证编辑时，注入 verification-before-completion 强制指令。
 修复关键词盲区（模型连续工具调用后自行声称完成，UserPromptSubmit 未命中关键词）。
 幂等无状态；永不阻断（exit 0）。硬门在 stop-verification-gate.py 兜底。

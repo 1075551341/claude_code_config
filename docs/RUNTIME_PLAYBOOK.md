@@ -2,7 +2,7 @@
 description: 运行时 SSOT — 五阶段加载、调研三档、上下文治理、R16
 ---
 
-# Runtime Playbook（v10.13.0）
+# Runtime Playbook（v10.17.0）
 
 > 加载等级详图 → [CLAUDE.md](../CLAUDE.md) L0–L3 | 路由 → [using-superpowers/SKILL.md](../skills/using-superpowers/SKILL.md)
 
@@ -16,11 +16,16 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 用户输入
   → R18: claude-mem search?（相关则先查）
   → L1 using-superpowers + task-triage（Phase0 前置盘点）
-  → 简单(关联需改≤2+attempt=1)? → L1 change-impact → 一次改齐 → ④验证(比例)
+  → 简单? → L1 change-impact → 一次改齐 → ④验证(比例)
+      简单 = Phase0 已盘点 + 关联需改≤2 + 白名单 + 六维全低 + 模型匹配低 + attempt=1（缺一不可）
   → 持续处理(attempt≥2/首轮未解决)? → 执行升档非简单 + verify_tier=全量
-  → Bug? → L3 triage → L2 systematic-debugging
-  → 非简单 → L1 brainstorming → 五阶段全链
+  → 非简单 Bug(多文件/根因不明) → L3 triage → L2 systematic-debugging → 全量验证
+  → 非简单 功能/架构/配置/删除 → grill 访谈(一次一问+推荐答案，≤5问)
+        → L1 brainstorming(HARD-GATE) → 五阶段全链 → 全量验证
+  → 非简单 调研 → deep-research（L3 双源）
 ```
+
+> 判定条件与六维矩阵的唯一 SSOT 是 [skills/task-triage/SKILL.md](../skills/task-triage/SKILL.md)，本文件只做流程速查，**不复制矩阵正文**。
 
 **简单旁路**：仅 attempt=1；不 Read `executing-plans` / `subagent-driven-development`；完成前仍须 verification（比例）。
 
@@ -28,11 +33,13 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 
 | 阶段   | 命令     | 强制 Read                         | 规划内嵌（①）              |
 | ------ | -------- | --------------------------------- | -------------------------- |
-| ① 规划 | /discuss | brainstorming (L1)                | codegraph；调研 L1–L3；adr |
+| ① 规划 | /discuss | grill 访谈 → brainstorming (L1)   | codegraph；调研 L1–L3；adr |
 | ② 规格 | /plan    | writing-plans → spec-validation   | 三轨判定                   |
-| ③ 执行 | /execute | executing-plans + subagent-driven | —                          |
+| ③ 执行 | /execute | executing-plans                   | subagent-driven **仅用户显式要求**（v10.15 默认关） |
 | ④ 验证 | /verify  | verification-before-completion    | —                          |
 | ⑤ 学习 | /compact | —                                 | claude-mem pattern         |
+
+> **TDD/SDD 默认关闭（v10.15）**：仅用户显式要求（TDD/测试先行/子Agent派发）才 Read `test-driven-development` / `subagent-driven-development`；否则非简单任务由主会话按五阶段骨架直接执行。
 
 ### brainstorming 纪律
 
@@ -51,7 +58,7 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 
 ## 调研三档（① 内嵌或显式）
 
-**前置**：claude-mem search → 项目内代码：codegraph（R17）→ cbm L4（架构/ADR/变更，已启用时）→ Grep。禁止先用 Firecrawl 探本地代码。
+**前置**：claude-mem search → 项目内代码：codegraph（R17）→ Grep。禁止先用 Firecrawl 探本地代码。（cbm 已禁用 v10.10+）
 
 | 档  | 场景                 | 工具                                            | 验证                    |
 | --- | -------------------- | ----------------------------------------------- | ----------------------- |
@@ -61,12 +68,11 @@ Agent **禁止** `git stash`；**禁止自动** `git commit`（仅用户显式�
 
 **升级**：L1 不足 → L2 → L3。禁止无因跳级（除非用户 `/deep-research`）。
 
-## 代码探索（R17 + L4 双引擎）
+## 代码探索（R17 单引擎 — cbm 已禁用 v10.10+）
 
 ```
 codegraph init（首次/新项目）
   → codegraph_explore / blast-radius / impact
-  →（L4 已 merge）codebase-memory: get_architecture / detect_changes / manage_adr
   → Grep 精确定位
   → Read 补洞
 ```
@@ -135,13 +141,17 @@ BLOCKED | 原因 | 已尝试 | 建议下一步
 
 ## 双平台工具
 
-| 能力           | Claude Code              | Cursor                       |
-| -------------- | ------------------------ | ---------------------------- |
-| 代码探索       | codegraph MCP            | user-codegraph               |
-| 架构/ADR（L4） | codebase-memory optional | merge optional-dev 后        |
-| 网页调研       | crawl MCP                | firecrawl skill / user-crawl |
-| 搜索           | —                        | plugin Exa                   |
-| 文档           | —                        | plugin Context7              |
-| GitHub         | git MCP                  | user-gh                      |
+| 能力           | Claude Code                    | Cursor                             |
+| -------------- | ------------------------------ | ---------------------------------- |
+| 代码探索       | codegraph MCP                  | user-codegraph                     |
+| 架构/ADR       | codegraph_explore              | 同左（cbm 已禁用）                 |
+| 变更后审查     | code-review-graph MCP          | user-code-review-graph             |
+| 符号级编辑     | serena MCP                     | user-serena                        |
+| 网页调研       | firecrawl MCP                  | user-firecrawl / firecrawl skill   |
+| 搜索           | exa MCP                        | Exa **plugin**（勿双挂 mcp 条目）  |
+| 文档           | context7 MCP                   | user-context7                      |
+| 跨仓代码搜索   | grep MCP                       | user-grep                          |
+| GitHub         | github MCP（官方远端）/ `gh`   | user-github                        |
+| 浏览器         | playwright **插件**            | 内置 `cursor-ide-browser`          |
 
 详见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)、[TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md)。

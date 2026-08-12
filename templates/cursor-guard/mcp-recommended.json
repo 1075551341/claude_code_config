@@ -1,6 +1,6 @@
 {
-  "_comment": "参考清单 — deploy 不写入用户 MCP。codebase-memory 已禁用（全盘索引爆内存）。",
-  "priority_p0": [
+  "_comment": "参考清单 — deploy 不写入用户 MCP。v10.17：与 ~/.claude/.mcp.json 常驻 9 项三层架构对齐；chrome-devtools/fs 已降级按需。codebase-memory 已禁用（全盘索引爆内存）。",
+  "priority_p0_local_code": [
     {
       "name": "codegraph",
       "intent": "代码结构/调用链/影响面探索（R17 强制优先）",
@@ -10,34 +10,50 @@
       "name": "code-review-graph",
       "intent": "审查/验证专用图谱：test-gap 检测、变更风险评分、受影响执行流（v10.14 引入，与 codegraph 互补）",
       "setup": "pipx install code-review-graph==2.3.6 && code-review-graph build"
-    }
-  ],
-  "priority_p1": [
-    {
-      "name": "crawl",
-      "intent": "Firecrawl 网页抓取/调研"
     },
     {
-      "name": "gh",
-      "intent": "GitHub PR/Issue"
+      "name": "aider-repo-map",
+      "intent": "仓库级结构概览；codegraph 无索引时的首选降级（本地代码层）"
+    },
+    {
+      "name": "serena",
+      "intent": "符号级精确编辑 + LSP 诊断；只读探索仍走 codegraph（本地代码层）"
+    }
+  ],
+  "priority_p1_remote_web": [
+    {
+      "name": "github",
+      "intent": "GitHub PR/Issue（官方远端 MCP，Bearer GITHUB_TOKEN）"
+    },
+    {
+      "name": "grep",
+      "intent": "grep.app 远端代码搜索"
+    },
+    {
+      "name": "exa",
+      "intent": "语义搜索/调研双源（EXA_API_KEY）"
     },
     {
       "name": "context7",
       "intent": "库/API 文档"
     },
     {
-      "name": "exa",
-      "intent": "语义搜索/调研双源"
+      "name": "firecrawl",
+      "intent": "网页抓取/调研（FIRECRAWL_API_KEY）"
     }
   ],
-  "priority_p2_on_demand": [
-    {
-      "name": "playwright",
-      "intent": "浏览器 E2E"
-    },
+  "on_demand_not_resident": [
     {
       "name": "chrome-devtools",
-      "intent": "页面调试/性能"
+      "intent": "页面调试/性能（v10.17 降级按需，mcp-configs/debug.json；@latest 为 R14 例外；须 --isolated）。Cursor 优先用内置 cursor-ide-browser"
+    },
+    {
+      "name": "fs",
+      "intent": "跨路径文件（v10.17 降级按需，mcp-configs/fsaccess.json）。降级原因：全盘可写会绕过 Edit/Write 验证追踪链"
+    },
+    {
+      "name": "playwright",
+      "intent": "浏览器 E2E（Driving）。Claude 走插件；Cursor 用内置 cursor-ide-browser"
     }
   ],
   "disabled": [

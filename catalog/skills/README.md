@@ -1,14 +1,20 @@
 # Catalog Skills — 按需复制
 
 > 此目录提供领域专用 skill 定义，按需复制到项目 `.claude/skills/` 使用。
-> 全局 skills 在 `~/.claude/skills/`，30 个始终可用。
+> 全局 skills 在 `~/.claude/skills/`。清单见 [../INDEX.md](../INDEX.md)。
 
 ## 使用策略
 
 ```
-全局 skills/ (30) → 五柱核心，会话自动匹配触发
-catalog/skills/ (97) → 领域专用，按需复制到项目
+全局 skills/ (48) → 五柱核心，会话自动匹配触发
+catalog/skills/ (101) → 领域专用，按需复制到项目
 ```
+
+## 同名项消歧（v10.17）
+
+`deep-research`、`git-workflow` 在顶层 `~/.claude/skills/` 也存在。**顶层为权威实现**
+（INDEX 与 `commands/` 均指向它），本目录同名项是变体副本，仅在复制到项目时使用，
+不要在全局会话中加载或引用。
 
 ## 复制命令
 

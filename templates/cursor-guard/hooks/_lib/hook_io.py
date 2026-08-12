@@ -27,6 +27,20 @@ def ensure_lib_path() -> None:
         sys.path.insert(0, str(lib))
 
 
+def import_claude_lib(claude_home, module_name):
+    """载入 Claude 侧共享库（`<claude_home>/hooks/_lib/<module>.py`）。
+
+    指纹算法、写工具路径解析等逻辑双端共用一份实现，避免 Cursor 与 Claude Code
+    行为漂移；调用方负责 try/except 并在不可用时降级（R16 不静默）。
+    """
+    import importlib
+
+    lib = Path(claude_home) / "hooks" / "_lib"
+    if str(lib) not in sys.path:
+        sys.path.insert(0, str(lib))
+    return importlib.import_module(module_name)
+
+
 def read_stdin() -> dict:
     """读取 Cursor 传入的单行 JSON；用 readline 避免 stdin 未关闭时 read() 阻塞至超时。
     显式 UTF-8 解码：Windows 默认 cp936 会把中文 prompt 读成乱码。"""

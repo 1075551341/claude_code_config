@@ -1,0 +1,6 @@
+{
+  "session_id": "fixture-issue-first",
+  "prompt": "修复登录接口报错 error 500 auth token 失效的问题",
+  "cwd": "C:\\fixture-proj",
+  "_expect": "首次出现：stdout 无注入 JSON，exit 0；状态写入 issue-tracker.json count=1"
+}

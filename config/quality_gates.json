@@ -30,5 +30,12 @@
     "reviewer_agents": ["eng-reviewer", "qa", "code-reviewer"],
     "require_reviewer_min_files": 3,
     "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"]
+  },
+  "issue_tracker": {
+    "enabled": true,
+    "max_age_days": 30,
+    "min_interval_sec": 120,
+    "min_prompt_len": 10,
+    "description": "问题指纹追踪（v10.15）：同问题重复出现时注入「先查上轮结论禁止重做」提醒；仅注入不阻断；状态 ~/.claude/.state/issue-tracker.json"
   }
 }

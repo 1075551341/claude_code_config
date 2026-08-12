@@ -38,6 +38,6 @@ description: L3 深度调研（Firecrawl+Exa+交叉验证，Read skills/deep-res
 | 类型               | 路由                                |
 | ------------------ | ----------------------------------- |
 | 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa              |
-| 代码库结构探索     | codegraph（+ cbm L4 架构场景）      |
+| 代码库结构探索     | codegraph（R17 主位；cbm 已禁用）  |
 | 功能实现           | /plan → /execute（非本命令）        |
 | >30min 自主编排    | L3 `claude-to-deerflow`（非本命令） |

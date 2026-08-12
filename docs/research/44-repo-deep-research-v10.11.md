@@ -3,7 +3,7 @@
 > 日期: 2026-06-24…v10.10.0 → **2026-08-01 v10.11.0** | 方法: 分层 delta（Tier-1 gh+Firecrawl/Exa；Tier-2 gh）+ 主 agent 网络核实快照（2026-08-01）
 > 状态: **v10.11.0 已完成** | 运行配置目标: **v10.11.0** | 历史版本已清理（仅保留本文件为调研全量 SSOT；原 30-repo 文件已并入本文件）
 > Per-repo 卡片: [`repos/`](repos/)（44） | 覆盖矩阵: [`COVERAGE.md`](COVERAGE.md)
-> 计划/设计: [`../superpowers/plans/2026-07-31-v10.10-optimization.md`](../superpowers/plans/2026-07-31-v10.10-optimization.md) · [`../../spec/claude-config-integration/design-v10.5.1.md`](../../spec/claude-config-integration/design-v10.5.1.md)
+> 计划/设计: [`../superpowers/plans/2026-08-01-v10.11-44repo.md`](../superpowers/plans/2026-08-01-v10.11-44repo.md)（本地制品，不入库；v10.5 系列设计已于 v10.17 清理，结论见 `SPEC.md` 变更日志）
 
 ---
 
@@ -147,7 +147,7 @@ RUNTIME = Superpowers(方法论) + GSD(上下文) + OpenSpec(规格) + gstack(�
 
 > **codegraph 指标补全（v10.2.1）**：官方 current-build 均值（7 仓库/Opus 4.8/2026-06-02）= **~16% 更便宜 · ~47% 更少 token · ~58% 更少工具调用 · ~22% 更快**。旧文「~47% token」**正确但片面**，补全四元组即可。MCP 默认仅 4 工具，`codegraph_impact` 需 `CODEGRAPH_MCP_TOOLS` 显式启用（见 [codegraph 卡 F1/F2](repos/colbymchenry-codegraph.md)）。
 
-**v10.1 访谈共识**（15 项锁定）：已并入 [design-v10.5.md](../../spec/claude-config-integration/design-v10.5.md) / 历史计划已清理。
+**v10.1 访谈共识**（15 项锁定）：已并入 v10.5 设计并落地为当前配置；设计与历史计划已清理，结论见 `SPEC.md` 变更日志。
 
 ---
 
@@ -321,7 +321,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ## v10.1 → v10.2 变更日志
 
-> 设计文档: 已并入 [`design-v10.5.md`](../../spec/claude-config-integration/design-v10.5.md)（旧 v10.2 design 已清理）
+> 设计文档: 已并入 v10.5 设计并落地为当前配置（design 文档于 v10.17 清理，结论见 `SPEC.md` 变更日志）
 > 访谈轮次: 8 项决策逐一确认 | 状态: **设计已批准**
 
 | 项          | v10.1                  | v10.2                                     | 决策理由                                                                          |
@@ -441,7 +441,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### 计划依据
 
-5 轮访谈 20 问（历史计划已清理；现行见 [v10.5 计划](../superpowers/plans/2026-07-17-v10.5-optimization.md)）
+5 轮访谈 20 问（历史计划已清理；结论已落地为当前配置，见 SPEC.md 变更日志）
 
 ---
 
@@ -481,7 +481,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### 计划依据
 
-3 轮访谈 22 问（历史计划已清理；现行见 [v10.5 计划](../superpowers/plans/2026-07-17-v10.5-optimization.md)）
+3 轮访谈 22 问（历史计划已清理；结论已落地为当前配置，见 SPEC.md 变更日志）
 
 ---
 
@@ -519,7 +519,7 @@ brainstorming (HARD-GATE) → using-git-worktrees → writing-plans
 
 ### 计划依据
 
-2 轮访谈 10 问（历史计划已清理；现行见 [v10.5 计划](../superpowers/plans/2026-07-17-v10.5-optimization.md)）
+2 轮访谈 10 问（历史计划已清理；结论已落地为当前配置，见 SPEC.md 变更日志）
 
 ---
 

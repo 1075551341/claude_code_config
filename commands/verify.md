@@ -42,6 +42,9 @@ description: 交叉验证与质量门检查（④验证阶段）
 □ 项目已建 code-review-graph → 调用 detect_changes_tool 检查 test-gap 与高风险函数
 ```
 
+> 「≥3 个」是 Stop 门按**会话累计编辑数**触发的代理规则，与 task-triage 六维分类不是同一维度：
+> 2 文件的非简单任务不触发本项，但 verify_tier 仍为全量。分类 SSOT → `skills/task-triage/SKILL.md`。
+
 > **硬门兜底**：Stop 时 stop-verification-gate.py 自动核查上述项，未通过 exit 2 阻止停止。
 
 ## 输出格式

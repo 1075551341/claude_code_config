@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""按当前模型同步 settings.json autoCompactWindow（不超出模型最大上下文）。"""
+"""按当前模型同步 settings.json autoCompactWindow（不超出模型最大上下文）。
+
+命令：
+    python scripts/sync-compact-window.py             # 计算并写入 settings.json
+    python scripts/sync-compact-window.py --dry-run   # 只打印结果，不写盘
+
+模型上下文表在 config/model-context-windows.json；新模型未登记会走后缀兜底，
+出现 validate_config 的 V17 告警时先补该表再跑本脚本。
+"""
 from __future__ import annotations
 
 import json

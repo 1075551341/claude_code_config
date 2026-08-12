@@ -1,14 +1,26 @@
-#Requires -Version 5.1
 <#
 .SYNOPSIS
     Deploy Cursor Guard to ~/.cursor/ (isolated from Claude Code hooks)
 
+.DESCRIPTION
+    把 templates/cursor-guard/ 下的 hooks.json + hooks/ + guard-config.json 部署到 ~/.cursor/。
+    默认增量合并 guard-config.json：模板新增键补齐，用户已有值保留，version 始终跟随模板。
+
 .PARAMETER Force
-    Overwrite guard-config.json entirely
+    Overwrite guard-config.json entirely（放弃用户本地改动，整体覆盖）
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+    # 全部命令（本脚本仅一个开关）
+    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1          # 增量合并部署
+    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1 -Force   # 整体覆盖配置
+
+.NOTES
+    部署后回归（必须全绿）：
+      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
+#Requires -Version 5.1
 
 param([switch]$Force)
 
@@ -100,50 +112,29 @@ if (-not (Test-Path $cfgDst) -or $Force) {
     try {
         $tpl = Get-Content $cfgSrc -Raw -Encoding utf8 | ConvertFrom-Json
         $usr = Get-Content $cfgDst -Raw -Encoding utf8 | ConvertFrom-Json
+        # v18.3 通用嵌套合并：模板中任何对象型键都逐字段补齐，用户已有值一律保留。
+        # 原先 explore / verification / knowledge_graph 是同一段逻辑的三份拷贝，
+        # 新增 impact / issue_tracker 等键时会被漏掉。
         foreach ($prop in $tpl.PSObject.Properties) {
-            if (-not $usr.PSObject.Properties.Match($prop.Name).Count) {
-                $usr | Add-Member -NotePropertyName $prop.Name -NotePropertyValue $prop.Value -Force
+            $name = $prop.Name
+            if (-not $usr.PSObject.Properties.Match($name).Count) {
+                $usr | Add-Member -NotePropertyName $name -NotePropertyValue $prop.Value -Force
+                continue
             }
-        }
-        # Nested merge: explore.enforce_mode (v10.5 soft_block)
-        if ($tpl.explore) {
-            if (-not $usr.explore) {
-                $usr | Add-Member -NotePropertyName explore -NotePropertyValue $tpl.explore -Force
-            } else {
-                foreach ($ep in $tpl.explore.PSObject.Properties) {
-                    if (-not $usr.explore.PSObject.Properties.Match($ep.Name).Count) {
-                        $usr.explore | Add-Member -NotePropertyName $ep.Name -NotePropertyValue $ep.Value -Force
+            if ($prop.Value -is [PSCustomObject] -and $usr.$name -is [PSCustomObject]) {
+                foreach ($sub in $prop.Value.PSObject.Properties) {
+                    if (-not $usr.$name.PSObject.Properties.Match($sub.Name).Count) {
+                        $usr.$name | Add-Member -NotePropertyName $sub.Name -NotePropertyValue $sub.Value -Force
                     }
                 }
             }
         }
-        # Nested merge: verification (v10.14 enforce_mode/unverified_reminder)
-        if ($tpl.verification) {
-            if (-not $usr.verification) {
-                $usr | Add-Member -NotePropertyName verification -NotePropertyValue $tpl.verification -Force
-            } else {
-                foreach ($vp in $tpl.verification.PSObject.Properties) {
-                    if (-not $usr.verification.PSObject.Properties.Match($vp.Name).Count) {
-                        $usr.verification | Add-Member -NotePropertyName $vp.Name -NotePropertyValue $vp.Value -Force
-                    }
-                }
-            }
-        }
-        # Nested merge: knowledge_graph (force codebase_memory=false — cbm disabled)
-        if ($tpl.knowledge_graph) {
-            if (-not $usr.knowledge_graph) {
-                $usr | Add-Member -NotePropertyName knowledge_graph -NotePropertyValue $tpl.knowledge_graph -Force
-            } else {
-                foreach ($kp in $tpl.knowledge_graph.PSObject.Properties) {
-                    if (-not $usr.knowledge_graph.PSObject.Properties.Match($kp.Name).Count) {
-                        $usr.knowledge_graph | Add-Member -NotePropertyName $kp.Name -NotePropertyValue $kp.Value -Force
-                    }
-                }
-            }
-            # Always pin off — indexing user home exhausted RAM
-            $usr.knowledge_graph.codebase_memory = $false
-        }
-        if (-not $usr.version) { $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force }
+        # Always pin off — indexing user home exhausted RAM
+        if ($usr.knowledge_graph) { $usr.knowledge_graph.codebase_memory = $false }
+        # version 是部署标记而非用户偏好：必须始终跟随模板。原先只在缺失时写入，
+        # 导致模板升版后部署副本永远停留在旧版本（test-cursor-guard-hooks 的
+        # deploy_config 用例长期不过就是这个原因）。
+        $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force
         Write-Utf8NoBom -Path $cfgDst -Content ($usr | ConvertTo-Json -Depth 8)
         Write-Ok "guard-config.json merged new keys"
     } catch {

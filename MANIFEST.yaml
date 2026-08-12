@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v10.13.0
+# 组件唯一归属源 — 防左右手互博 — v10.17.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.13.0"
-updated: "2026-08-01"
+version: "10.17.0"
+updated: "2026-08-12"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -163,7 +163,7 @@ loading_tiers:
     ]
   L2_gate:
     spec: [skill/writing-plans, skill/spec-validation]
-    execute: [skill/executing-plans, skill/subagent-driven-development]
+    execute: [skill/executing-plans] # v10.15: subagent-driven-development 默认关闭（用户显式要求时触发）
     verify: [skill/verification-before-completion]
     debug: [skill/systematic-debugging]
   L3_signal:
@@ -205,6 +205,7 @@ concerns:
     command: plan
     source: obra/superpowers
     stage: spec
+    # pre-task-planner 已移除（见 agent.yaml disabled_hooks），保留于 excludes 防重新引入
     excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
     depends_on: [skill/brainstorming]
 
@@ -218,18 +219,25 @@ concerns:
     skill: skill/subagent-driven-development
     source: affaan-m/ECC
     stage: execute
+    note: v10.15 默认关闭；仅用户显式要求子Agent派发时启用
     excludes: [agent/planner]
 
   execution:
     owner: skill/executing-plans
     source: obra/superpowers
     stage: execute
-    note: 仅 NON_SIMPLE 路径；简单任务(task-triage判定=关联需改≤2)旁路 executing-plans/subagent-driven
-    depends_on: [skill/writing-plans, skill/subagent-driven-development]
+    note: 仅 NON_SIMPLE 路径；简单任务(task-triage判定=关联需改≤2)旁路 executing-plans/subagent-driven（v10.15 默认关闭）
+    depends_on: [skill/writing-plans]
+    optional_skills: [skill/subagent-driven-development] # v10.15: 用户显式要求时启用
 
   verification:
     owner: skill/verification-before-completion
-    hook: [pre-userprompt-verify-gate, post-edit-verify-tracker, stop-verification-gate]
+    hook:
+      [
+        pre-userprompt-verify-gate,
+        post-edit-verify-tracker,
+        stop-verification-gate,
+      ]
     source: obra/superpowers
     stage: verify
     note: "v10.14 — 完成验证门升级硬阻断：PostToolUse 追踪器记录编辑/验证/审查状态；Stop 硬门 exit 2 强制核查（变更范围轻量检查+测试证据+预期符合性+eng-reviewer 委派）；配置 SSOT config/quality_gates.json verification_gate 节"
@@ -274,6 +282,7 @@ concerns:
     skill: skill/memory-compression
     source: thedotmack/claude-mem
     stage: learn
+    # context-manager 已合并进 claude-mem 并删除，保留于 excludes 防重新引入
     excludes: [agent/context-manager, tool/Read重复文件]
     depends_on: [skill/memory-compression]
     note: "v10.5.2: R18记忆优先 — 重复Read相同文件前必须先 claude-mem search"
@@ -434,6 +443,8 @@ concerns:
     source: local
     stage: execute
     note: "Cursor Guard v1.1 — sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 仍存在，
+    # 此处表示 Cursor Guard 不得重复挂载该 Claude 侧 hook
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
     depends_on: [scripts/sync.ps1]
 
@@ -441,7 +452,7 @@ concerns:
     owner: hooks/_lib/gate_messages.md
     source: local
     stage: all
-    note: "v10.14.0 — 三门控文本 SSOT：P0分类门 + 完成验证门（软注入+硬阻断）+ 变更影响门；双端 hook 注入，非模型自觉。硬门配置 config/quality_gates.json verification_gate 节"
+    note: "v10.15.0 — 三门控文本 SSOT：P0分类门 + 完成验证门（软注入+硬阻断）+ 变更影响门；双端 hook 注入，非模型自觉。v10.15：分类门新增 TDD/SDD 默认关闭、疑难禁直接改、重复问题去重；完成验证门新增残留引用+回归保持。硬门配置 config/quality_gates.json verification_gate 节"
     hooks:
       [
         session-start-bootstrap,
@@ -460,7 +471,28 @@ concerns:
         skills/verification-before-completion,
         skills/change-impact-analysis,
         config/quality_gates.json,
+        hooks/_lib/tool_paths.py,
         templates/cursor-guard,
+      ]
+
+  issue_tracker:
+    owner: hooks/pre-userprompt-issue-tracker.py
+    source: local
+    stage: plan
+    note: "v10.17.0 — 问题指纹追踪：同问题重复出现时注入「先查上轮结论禁止重做」；推翻 v10.13『不做 hook 计数器』决策（用户 2026-08-12 重新决策）。仅注入不阻断。v10.17 起指纹算法与状态双端共用 hooks/_lib/issue_state.py（单一状态 ~/.claude/.state/issue-tracker.json），stop-verification-gate 验证通过时置 resolved=true 激活轻提示分支；Cursor 端 templates/cursor-guard/hooks/issue_tracker.py（guard 1.1.9）"
+    # 单一 depends_on：v10.17 一度写成两个同名键，YAML 后者覆盖前者，
+    # issue_state.py / stop-verification-gate.py 等依赖会被静默丢弃
+    depends_on:
+      [
+        hooks/_lib/issue_state.py,
+        hooks/stop-verification-gate.py,
+        templates/cursor-guard/hooks/issue_tracker.py,
+        config/quality_gates.json,
+        skills/task-triage,
+        skills/verification-before-completion,
+        hooks/_lib/gate_messages.md,
+        templates/cursor-guard,
+        plugin/thedotmack,
       ]
 
   code_review_graph:
@@ -492,11 +524,17 @@ concerns:
 
   deep_research:
     owner: skill/deep-research
-    source: catalog/skills/deep-research
+    source: local
     stage: plan
     loading_tier: L3
-    excludes: [firecrawl:firecrawl-agent, tool/WebFetch, tool/WebSearch]
-    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。"
+    excludes:
+      [
+        firecrawl:firecrawl-agent,
+        tool/WebFetch,
+        tool/WebSearch,
+        catalog/skills/deep-research,
+      ]
+    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
 
   git_workflow:
     owner: skill/git-workflow
@@ -526,9 +564,31 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude Code 常驻 6（codegraph+crawl+fetch+git+fs+time）；pw/cdt 走插件勿写入 .mcp.json；ops/optional-dev 见 mcp-configs/；cbm 永久禁用
+    note: Claude Code 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；v10.17 起 chrome-devtools→mcp-configs/debug.json、fs→mcp-configs/fsaccess.json 按需；pw 走插件勿写入 .mcp.json；cbm 永久禁用
     depends_on:
-      [docs/CURSOR_MCP_PROFILE.md, docs/TOOL_MATCHING_GUIDE.md, rules/MCP.md]
+      [
+        docs/CURSOR_MCP_PROFILE.md,
+        docs/TOOL_MATCHING_GUIDE.md,
+        rules/MCP.md,
+        mcp/servers.json,
+        mcp/README.md,
+        agent.yaml,
+      ]
+
+  mcp_local_code_split:
+    owner: rules/MCP.md
+    note: 本地代码四工具分工防互博 — codegraph=R17 探索主位；aider-repo-map=仓库结构概览兼 codegraph 无索引降级；serena=符号级精确编辑+LSP 诊断；code-review-graph=变更后 test-gap/风险评分
+    depends_on: [docs/TOOL_MATCHING_GUIDE.md, rules/CORE.md]
+    excludes:
+      [
+        用 serena/aider-repo-map 替代 codegraph 做 R17 探索,
+        用 codegraph 做 test-gap,
+      ]
+
+  mcp_remote_explore:
+    owner: config/.mcp.json
+    note: github（官方远端 HTTP，Bearer GITHUB_TOKEN）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
 
   gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
   gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
@@ -800,13 +860,28 @@ superagent_forge:
     online: [openai, anthropic, deepseek]
     local: [ollama, lm-studio, llama-cpp]
 
-# ── v18.3 sync 声明 ──────────────────────────────────────────
+# ── v18.4 sync 声明 ──────────────────────────────────────────
 sync_targets:
   editors: [cursor, qoder, qoder-cn, trae, trae-cn, workbuddy, codearts]
   method: symlink_first_copy_fallback
-  script: scripts/sync.ps1
+  script: scripts/sync.ps1 # Linux/macOS: scripts/sync.sh
   modes: [default, -Skills, -All, -DryRun]
   # 全部为用户级配置（非项目级）；workbuddy 仅 CLAUDE.md + skills/
+  # v18.4：总纲/索引根文件部署到除 workbuddy 外的所有编辑器；集合须与
+  # sync.ps1 $L0_ROOT_ITEMS / sync.sh SYNC_FILES / check.ps1 $SYNC_FILES /
+  # templates/cursor-guard/hooks/_lib/impact_sync.py SYNC_FILES 一致
+  root_index_files:
+    [
+      CLAUDE.md,
+      CLAUDE-ROUTER.mdc,
+      SPEC.md,
+      MANIFEST.yaml,
+      agent.yaml,
+      skills-INDEX.md,
+      agents-INDEX.md,
+      rules-INDEX.md,
+    ]
+  root_index_skip_editors: [workbuddy]
   rules_ext:
     cursor: ".mdc"
     qoder: ".mdc"

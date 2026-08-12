@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-"""Audit hooks safety in settings.json"""
+"""审计 settings.json 中 hook 注册的安全性（是否全部经 launcher + 超时是否过长）。
+
+命令：
+    python scripts/audit_hooks.py       # 唯一用法，无参数；只读，不修改任何文件
+
+输出两段：逐 hook 的 OK/UNSAFE 清单，以及潜在问题（timeout>30s、单 matcher 挂载>4 个 hook）。
+修复未经 launcher 的 hook：powershell -File scripts/fix.ps1 -Fix
+"""
 import json, os
 
-base = r'C:\Users\DELL\.claude'
+base = os.path.join(os.environ.get('USERPROFILE') or os.path.expanduser('~'), '.claude')
 settings_path = os.path.join(base, 'settings.json')
 
 with open(settings_path, 'r', encoding='utf-8') as f:

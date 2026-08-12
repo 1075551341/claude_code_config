@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Copy domain skills/agents/rules from catalog/ to project .claude/."""
+"""把 catalog/ 里的领域 skill / agent / rule 复制到某个项目的 .claude/ 下。
+
+命令：
+    python scripts/migrate-from-legacy.py --project <项目根> --skill <名字>
+    python scripts/migrate-from-legacy.py --project <项目根> --agent <名字> --rule <名字>
+    python scripts/migrate-from-legacy.py --project <项目根> --skill a --skill b   # 可重复叠加
+    python scripts/migrate-from-legacy.py --project <项目根> --skill a --dry-run   # 预演
+
+--project 必填，其余可选可重复；目标写入 <项目根>/.claude/{skills,agents,rules}/。
+可选项清单见 catalog/INDEX.md（由 scripts/gen-catalog-index.py 生成）。
+"""
 import argparse
 import shutil
 from pathlib import Path

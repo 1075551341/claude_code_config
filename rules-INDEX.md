@@ -1,6 +1,6 @@
 # Rules 索引
 
-> 自动生成 | 源：`rules/` | v10.13.0
+> 自动生成 | 源：`rules/` | v10.17.0
 
 ## alwaysApply — 骨架层
 

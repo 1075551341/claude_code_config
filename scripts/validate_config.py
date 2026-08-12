@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Validate ~/.claude configuration against v9 design (12 checks V1-V12)."""
+"""配置一致性校验 — V1-V19 共 19 项静态检查（结构/铁律/hook/MCP/INDEX 一致性）。
+
+命令：
+    python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
+    powershell -File scripts/check.ps1       # 上层健康检查，内部会调用本脚本
+
+检查项：V1 触发词冲突 / V2 agent 职责重叠 / V3 CORE.md / V4 铁律一致 /
+V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
+V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
+V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
+V19 三大 INDEX 与磁盘双向一致。
+
+退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
+"""
 import json
 import os
 import re
@@ -345,6 +358,7 @@ def main():
     check_v17_bare_except_extended()
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
+    check_v19_index_disk_sync()
 
     report(
         agents=len(agent_names),
@@ -356,7 +370,7 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v10 VALIDATION (18 checks) ===")
+    print("=== .claude v10 VALIDATION (19 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
@@ -790,6 +804,67 @@ def check_v18_codebase_memory_optional():
     if "codebase-memory" not in disabled and not archived:
         WARNINGS.append("V18: codebase-memory disabled/archive note missing in optional-dev.json")
     print("  V18: codebase-memory permanently disabled (CPU/RAM) OK")
+
+
+def check_v19_index_disk_sync():
+    """V19: 三大 INDEX 与磁盘双向一致（INDEX 不引用不存在项，磁盘项不漏登记）。
+
+    原属 scripts/tests/_simtest.py，v10.17 该脚本删除后移植至此，
+    避免 agents-INDEX 漏登记无人发现（V15 只覆盖 skills 的 loading_tier）。
+    """
+    def indexed(index_name, pattern, group):
+        path = os.path.join(BASE, index_name)
+        if not os.path.isfile(path):
+            ERRORS.append(f"V19: {index_name} missing")
+            return None
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        return {m.group(group) for m in re.finditer(pattern, text)}
+
+    def compare(label, index_name, idx, disk):
+        if idx is None:
+            return
+        ghost = idx - disk
+        unlisted = disk - idx
+        if ghost:
+            ERRORS.append(f"V19: {index_name} 引用了不存在的{label}: {sorted(ghost)}")
+        if unlisted:
+            ERRORS.append(f"V19: {label} 未登记进 {index_name}: {sorted(unlisted)}")
+        if not ghost and not unlisted:
+            print(f"  V19: {index_name} == disk ({len(disk)} {label}) ✓")
+
+    skills_dir = os.path.join(BASE, "skills")
+    disk_skills = {
+        d for d in os.listdir(skills_dir)
+        if os.path.isfile(os.path.join(skills_dir, d, "SKILL.md"))
+    } if os.path.isdir(skills_dir) else set()
+    compare(
+        "skill", "skills-INDEX.md",
+        indexed("skills-INDEX.md", r"\[([^\]]+)\]\(skills/([^/]+)/SKILL\.md\)", 2),
+        disk_skills,
+    )
+
+    agents_dir = os.path.join(BASE, "agents")
+    disk_agents = {
+        f[:-3] for f in os.listdir(agents_dir)
+        if f.endswith(".md") and f != "README.md"
+    } if os.path.isdir(agents_dir) else set()
+    compare(
+        "agent", "agents-INDEX.md",
+        indexed("agents-INDEX.md", r"\[[^\]]+\]\(agents/([^)/]+)\.md\)", 1),
+        disk_agents,
+    )
+
+    rules_dir = os.path.join(BASE, "rules")
+    disk_rules = {
+        f for f in os.listdir(rules_dir)
+        if f.endswith(".md") and f != "README.md"
+    } if os.path.isdir(rules_dir) else set()
+    compare(
+        "rule", "rules-INDEX.md",
+        indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
+        disk_rules,
+    )
 
 
 if __name__ == "__main__":

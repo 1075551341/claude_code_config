@@ -5,14 +5,14 @@
 
 ## 覆盖率
 
-| 指标         | 值                                                             |
-| ------------ | -------------------------------------------------------------- |
-| 目标仓库     | 46（44 + 2 v10.14 新增）                                       |
-| Active       | **30**（28 active + 1 removed + CRG 新增 integrated）          |
-| Removed      | **1**（Lum1104/Understand-Anything）                           |
-| 新增卡片     | **17**（15 + CRG + CGC）                                       |
-| 独立卡片     | 46                                                             |
-| 运行配置目标 | **v10.14.0**（+code-review-graph MCP 审查/验证专用层）         |
+| 指标         | 值                                                     |
+| ------------ | ------------------------------------------------------ |
+| 目标仓库     | 46（44 + 2 v10.14 新增）                               |
+| Active       | **30**（28 active + 1 removed + CRG 新增 integrated）  |
+| Removed      | **1**（Lum1104/Understand-Anything）                   |
+| 新增卡片     | **17**（15 + CRG + CGC）                               |
+| 独立卡片     | 46                                                     |
+| 运行配置目标 | **v10.14.0**（+code-review-graph MCP 审查/验证专用层） |
 
 ## 五柱
 
@@ -41,13 +41,13 @@
 
 ## L3 洞察
 
-| 仓库                         | 卡片                                                                  | 最新                             | 状态                                |
-| ---------------------------- | --------------------------------------------------------------------- | -------------------------------- | ----------------------------------- |
-| colbymchenry/codegraph       | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | **MCP 1.5.0 / CLI 0.9.7** / 60K★ | mandate R17 常驻                    |
-| tirth8205/code-review-graph  | [tirth8205-code-review-graph](repos/tirth8205-code-review-graph.md)   | **v2.3.6** / 8.5K★               | **v10.14 integrated**（审查/验证专用层，与 codegraph 互补） |
-| CodeGraphContext/CodeGraphContext | [codegraphcontext-cgc](repos/codegraphcontext-cgc.md)            | v0.5.5 / 3.2K★                   | 评估未引入（与 codegraph 重叠；备选） |
-| DeusData/codebase-memory-mcp | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | 上游 **v0.9.0** / 32K★           | **永久禁用**（全盘索引爆 CPU/内存） |
-| Firecrawl + Exa              | deep-research                                                         | —                                | L3 调研双源                         |
+| 仓库                              | 卡片                                                                  | 最新                             | 状态                                                        |
+| --------------------------------- | --------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------- |
+| colbymchenry/codegraph            | [colbymchenry-codegraph](repos/colbymchenry-codegraph.md)             | **MCP 1.5.0 / CLI 0.9.7** / 60K★ | mandate R17 常驻                                            |
+| tirth8205/code-review-graph       | [tirth8205-code-review-graph](repos/tirth8205-code-review-graph.md)   | **v2.3.6** / 8.5K★               | **v10.14 integrated**（审查/验证专用层，与 codegraph 互补） |
+| CodeGraphContext/CodeGraphContext | [codegraphcontext-cgc](repos/codegraphcontext-cgc.md)                 | v0.5.5 / 3.2K★                   | 评估未引入（与 codegraph 重叠；备选）                       |
+| DeusData/codebase-memory-mcp      | [deusdata-codebase-memory-mcp](repos/deusdata-codebase-memory-mcp.md) | 上游 **v0.9.0** / 32K★           | **永久禁用**（全盘索引爆 CPU/内存）                         |
+| Firecrawl + Exa                   | deep-research                                                         | —                                | L3 调研双源                                                 |
 
 ## 技能 / 最佳实践（catalog）
 
@@ -164,6 +164,6 @@
 
 ```
 repos/*.md → 44-repo-deep-research-v10.11.md（唯一全量）→ COVERAGE.md（含原 REPO_ANALYSIS 评分/互博）→ MANIFEST.yaml → SPEC.md
-计划: plans/2026-07-31-v10.10-optimization.md（最新执行记录）+ plans/2026-08-01-v10.11-44repo.md
+计划: plans/2026-08-01-v10.11-44repo.md（最近一次执行记录；计划为本地制品，不入版本库）
 诊断: docs/diagnostic-v10.5.2.md（已删除 v10.11；内容并入 CLAUDE.md 工具调用门控）
 ```

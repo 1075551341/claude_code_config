@@ -12,7 +12,8 @@ def hint_for_path(rel: str) -> list[str]:
     elif rel.startswith("skills/") and rel.endswith("/SKILL.md"):
         hints.append("检查 skills-INDEX.md 是否需更新条目")
     elif rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
-        hints.append("rules 将自动 sync 到 ~/.cursor/rules 与当前工作区 .cursor/rules；检查 rules-INDEX.md")
+        # Cursor 规则唯一通道是 local plugin 实体副本；~/.cursor/rules 实测不生效，应保持空
+        hints.append("rules 经 sync.ps1 刷新到 ~/.cursor/plugins/local/claude-config/rules；检查 rules-INDEX.md")
     elif rel == "MANIFEST.yaml":
         hints.append("检查 concern 归属与 *-INDEX.md 一致性")
     elif rel.startswith("hooks/") or rel.startswith("templates/cursor-guard/"):

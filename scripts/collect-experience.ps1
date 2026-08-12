@@ -1,13 +1,22 @@
-﻿#Requires -Version 5.1
-<#
+﻿<#
 .SYNOPSIS
     开发经验收集与总结脚本
 .DESCRIPTION
     从日常开发日志、Git 历史、任务计划中提取经验教训，
     整理成结构化的经验库，方便后续开发参考。
+.PARAMETER ProjectPath
+    要收集的项目根目录，默认当前工作目录。
+
+.EXAMPLE
+    # 全部命令（唯一位置参数）
+    powershell -ExecutionPolicy Bypass -File scripts/collect-experience.ps1              # 收集当前目录
+    powershell -ExecutionPolicy Bypass -File scripts/collect-experience.ps1 D:\apdms     # 指定项目
+
 .NOTES
-    用法：powershell -ExecutionPolicy Bypass -File collect-experience.ps1 [项目路径]
+    产物写入 ~/.claude/experiences/experience-<日期>.md，同日重跑会覆盖当天文件。
 #>
+# 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
+#Requires -Version 5.1
 
 param(
     [string]$ProjectPath = (Get-Location).Path

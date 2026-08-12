@@ -1,26 +1,34 @@
 {
   "$schema": "https://modelcontextprotocol.io/schema/2024-11-05/servers",
-  "_comment": "MCP 分组视图 v10.12 | 权威源: .mcp.json（常驻6）| 按需/声明分组与 mcp-configs/ 文件一一对应；codebase-memory 已永久禁用（仅 optional-dev.json disabled/archive 记录）",
+  "_comment": "MCP 分组视图 v10.17 | 权威源: .mcp.json（常驻 9，三层架构）| 按需/声明分组与 mcp-configs/ 文件一一对应；chrome-devtools 与 fs 于 v10.17 降级为按需；codebase-memory 已永久禁用（仅 optional-dev.json 归档记录）",
   "toolsets": {
-    "always": ["codegraph", "crawl", "fetch", "git", "fs", "time"],
+    "always_local_code": ["codegraph", "code-review-graph", "aider-repo-map", "serena"],
+    "always_remote_explore": ["github", "grep"],
+    "always_web_docs": ["exa", "context7", "firecrawl"],
+    "debug": ["chrome-devtools"],
+    "fsaccess": ["fs"],
     "ops": ["redis", "sqlite", "docker", "postgres"],
-    "optional-dev": ["chrome-devtools", "exa"],
-    "collab": ["figma", "linear", "notion", "slack"],
-    "search": ["exa"]
+    "collab": ["figma", "linear", "notion", "slack"]
   },
   "on_demand_profiles": {
+    "debug": "mcp-configs/debug.json",
+    "fsaccess": "mcp-configs/fsaccess.json",
     "ops": "mcp-configs/ops.json",
-    "optional-dev": "mcp-configs/optional-dev.json",
-    "collab": "mcp-configs/collab.json",
-    "search": "mcp-configs/search.json"
+    "collab": "mcp-configs/collab.json"
+  },
+  "views": {
+    "core": "mcp-configs/core.json",
+    "dev": "mcp-configs/dev.json",
+    "search": "mcp-configs/search.json",
+    "optional-dev": "mcp-configs/optional-dev.json"
   },
   "loading": {
     "default": "always",
     "env": "CLAUDE_MCP_PROFILE",
     "profiles": {
+      "debug": "always + merge debug profile",
       "ops": "always + merge ops profile",
-      "optional-dev": "always + merge optional-dev profile",
-      "full": "always + ops + optional-dev"
+      "full": "always + debug + ops"
     }
   }
 }

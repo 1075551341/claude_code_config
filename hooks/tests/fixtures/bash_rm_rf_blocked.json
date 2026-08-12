@@ -1,6 +1,7 @@
 {
+  "_note": "v10.17 修正：原内容为 rm -rf node_modules，按 pre-bash-guard 设计属放行范围（exit 0），与夹具名和 README 期望的 exit 2 矛盾。改为真正命中 DANGEROUS_PATTERNS 的删根目录命令。",
   "tool_name": "Bash",
   "tool_input": {
-    "command": "rm -rf node_modules"
+    "command": "rm -rf /"
   }
 }

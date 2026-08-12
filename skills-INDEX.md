@@ -1,13 +1,13 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.13.0（45 全量）
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v10.17.0（45 全量）
 
 ## L1 — 会话常驻 (4)
 
 - [using-superpowers](skills/using-superpowers/SKILL.md) — 技能发现与 Tool-First 路由
 - [change-impact-analysis](skills/change-impact-analysis/SKILL.md) — 变更影响分析，改前必执行
 - [brainstorming](skills/brainstorming/SKILL.md) — HARD-GATE 方案设计（非简单任务必加载）
-- [task-triage](skills/task-triage/SKILL.md) — Phase0盘点；简单=关联需改≤2+六维+模型匹配+attempt=1；持续处理执行升档；非简单先 grill；完成前均须验证
+- [task-triage](skills/task-triage/SKILL.md) — 判定 SSOT：Phase0盘点；简单=关联需改≤2+白名单+六维全低+模型匹配低+attempt=1（缺一不可）；持续处理执行升档；非简单先 grill；完成前均须验证
 
 ## L2 — 阶段门控 (7)
 
@@ -16,10 +16,10 @@
 | 2规格 | [writing-plans](skills/writing-plans/SKILL.md)                                   | 原子级实施计划     |
 | 2规格 | [spec-validation](skills/spec-validation/SKILL.md)                               | spec可验证验收标准 |
 | 3执行 | [executing-plans](skills/executing-plans/SKILL.md)                               | 按计划逐步执行     |
-| 3执行 | [subagent-driven-development](skills/subagent-driven-development/SKILL.md)       | 子Agent两阶段审查  |
+| 3执行 | [subagent-driven-development](skills/subagent-driven-development/SKILL.md)       | 子Agent两阶段审查（默认关闭，显式触发）  |
 | 3调试 | [systematic-debugging](skills/systematic-debugging/SKILL.md)                     | 根因分析/5Why      |
 | 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 完成前交叉验证     |
-| 3执行 | [test-driven-development](skills/test-driven-development/SKILL.md)               | RED-GREEN-REFACTOR |
+| 3执行 | [test-driven-development](skills/test-driven-development/SKILL.md)               | RED-GREEN-REFACTOR（默认关闭，显式触发） |
 
 ## L3 — 信号触发 (34)
 

@@ -19,8 +19,8 @@
 | ------------------------------ | ------------------------------------------------ | ----- |
 | writing-plans                  | 设计方案后/需任务分解                            | ②规格 |
 | executing-plans                | 计划批准后                                       | ③执行 |
-| test-driven-development        | 新功能/实现                                      | ③执行 |
-| subagent-driven-development    | 复杂任务需并行（含 dispatching-parallel-agents） | ③执行 |
+| test-driven-development        | 用户显式要求 TDD/测试先行时（默认不启用）      | ③执行 |
+| subagent-driven-development    | 用户显式要求子Agent派发/复杂任务并行时（默认不启用） | ③执行 |
 | using-git-worktrees            | 多分支并行开发                                   | ③执行 |
 | receiving-code-review          | 收到 PR 审查                                     | ④验证 |
 | requesting-code-review         | 提交 PR 审查请求                                 | ④验证 |

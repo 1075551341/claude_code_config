@@ -85,7 +85,8 @@ loading_tier: L2
 
 ```
 writing-plans 输出计划后:
-├─ 选择一: 派发给 subagent-driven-development（推荐，复杂计划）
+├─ 默认: 内联执行（主会话直接按顺序执行）
+├─ 选择一: 派发给 subagent-driven-development（仅用户显式要求子Agent派发时）
 │   └─ 子Agent 按波次执行，两阶段审查
 └─ 选择二: 内联执行（简单计划，≤3原子任务）
     └─ 主会话直接按顺序执行

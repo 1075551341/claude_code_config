@@ -1,6 +1,6 @@
 {
   "toolset": "core",
-  "description": "常驻基础：文件系统 + 时间（与 .mcp.json 同步）",
-  "servers": ["fs", "time"],
-  "note": "完整常驻集 = core + dev（见 dev.json）；均在 .mcp.json 中启用"
+  "description": "常驻基础分组视图（v10.17）— 常驻集恰 9 项，全部属于 dev 分组；本文件不再声明独立服务器",
+  "servers": [],
+  "note": "完整常驻集 9 项见 .mcp.json 三层架构（本地代码 4 + 远端探索 2 + Web&文档 3）。fs 已降级为按需，见 mcp-configs/fsaccess.json"
 }

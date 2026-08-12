@@ -3,7 +3,7 @@ name: agentic-orchestrator
 description: 多 Agent 并行编排。触发词：并行 Agent、子代理、任务编排、orchestrator。
 tools: [Read, Write, Grep, Glob, Bash]
 skills:
-  - subagent-driven-development
+  - subagent-driven-development  # v10.15: 仅用户显式要求子Agent派发时启用（默认关闭）
 layer: supplement
 source: affaan-m/ECC
 ---

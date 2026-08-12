@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.13.0**
+> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.17.0**
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.12.4(记忆)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -38,7 +38,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
 
 **状态机**：DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
-**SDD+TDD**：spec→writing-plans(原子)→subagent(两阶段审查)→verify | RED→GREEN→REFACTOR
+**显式触发（v10.15）**：TDD(RED→GREEN→REFACTOR) 与 SDD(subagent-driven-development 子Agent派发) **仅用户明确要求时启用**；默认非简单走 ①-⑤ 骨架由主会话直接执行，不强制写测试先行、不强制子Agent派发。
 
 ```
 门控:
@@ -145,7 +145,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | ----------------- | ------------------------------------------------------- |
 | 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
 | 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.13.0)                                      |
+| 法典/架构         | SPEC.md (v10.17.0)                                      |
 | 铁律/编码/阈值    | rules/CORE.md                                           |
 | 工作流/DAG        | rules/WORKFLOW.md                                       |
 | Agent 协作        | rules/AGENTS.md                                         |
@@ -156,7 +156,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | 记忆搜索          | claude-mem (R18)                                        |
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1`（v18.2）— 软链 L0 入口 + Cursor local plugin 实体规则（唯一规则通道）；skills/agents/rules 按需 Read，不复制。
+**同步**：`scripts/sync.ps1`（v18.4）— 软链 L0 入口（8 个总纲/索引根文件，除 workbuddy 外全编辑器）+ Cursor local plugin 实体规则（唯一规则通道）；skills/agents/rules 按需 Read，不复制。
 **业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；探索一律 codegraph_explore（R17），索引缺失→`scripts/cbm-index.ps1` 已弃用，改 `codegraph init`；codebase-memory 已禁用。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。
 
