@@ -2,23 +2,39 @@
 """MANIFEST 影响图 → Cursor 同步计划（不重复 junction 逻辑）。"""
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
-SYNC_FILES = frozenset(
+# v11 常量单源：~/.claude/config/sync-manifest.json（与 sync.ps1 / check.ps1 共用）；
+# 读取失败时回退内置默认（内容须与 manifest 一致）。
+_DEFAULT_SYNC_FILES = frozenset(
     {
         "CLAUDE.md",
-        "CLAUDE-ROUTER.mdc",
         "SPEC.md",
         "MANIFEST.yaml",
         "skills-INDEX.md",
         "agents-INDEX.md",
         "rules-INDEX.md",
-        "agent.yaml",
     }
 )
+
+
+def _load_sync_files() -> frozenset[str]:
+    manifest = Path.home() / ".claude" / "config" / "sync-manifest.json"
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        files = data.get("root_files")
+        if isinstance(files, list) and files:
+            return frozenset(str(f) for f in files)
+    except (OSError, ValueError):
+        pass
+    return _DEFAULT_SYNC_FILES
+
+
+SYNC_FILES = _load_sync_files()
 JUNCTION_PREFIXES = ("skills/", "agents/")
 NO_SYNC_PREFIXES = ("hooks/", "scripts/", "plugins/", "commands/", ".git/")
 NO_SYNC_EXACT = frozenset({"settings.json", ".mcp.json"})
@@ -121,8 +137,8 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
     if rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
         plan.merge(SyncScope.RULES)
         plan.messages.append(
-            f"{rel}: 刷新 rules → ~/.cursor/plugins/local/claude-config/rules/*.mdc"
-            "（唯一生效通道）+ 项目内 .cursor/rules/*.mdc"
+            f"{rel}: 刷新 rules → Cursor plugin *.mdc（唯一生效通道）"
+            " + qoder-cn rules/*.mdc + trae-cn user_rules/*.md（v11.1 多编辑器）"
         )
         return plan
 
@@ -155,7 +171,7 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
         plan.merge(s)
 
     if plan.scope == SyncScope.NONE and not plan.messages:
-        plan.messages.append(f"{rel}: 无 Cursor 同步目标")
+        plan.messages.append(f"{rel}: 无编辑器同步目标")
 
     return plan
 
@@ -166,8 +182,39 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
 CURSOR_PLUGIN_RULES = Path.home() / ".cursor" / "plugins" / "local" / "claude-config" / "rules"
 
 
+def _editor_rule_channels() -> list[tuple[str, Path, str]]:
+    """v11.1 多编辑器规则落点：[(编辑器名, 通道目录, 扩展名)]。
+
+    清单单源 sync-manifest.json editors 段；cursor 走 plugin 常量，此处只列其余
+    编辑器中「已启用 + home 在装 + 有规则通道」者。读取失败回退内置默认。
+    """
+    defaults = [
+        ("qoder-cn", Path.home() / ".qoder-cn" / "rules", ".mdc"),
+        ("trae-cn", Path.home() / ".trae-cn" / "user_rules", ".md"),
+    ]
+    manifest = Path.home() / ".claude" / "config" / "sync-manifest.json"
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        editors = data.get("editors")
+        if not isinstance(editors, dict):
+            return [(n, d, e) for n, d, e in defaults if d.parent.is_dir()]
+        out: list[tuple[str, Path, str]] = []
+        for name, cfg in editors.items():
+            if name in ("_comment", "cursor") or not isinstance(cfg, dict):
+                continue
+            if cfg.get("enabled") is False or not cfg.get("rules_channel"):
+                continue
+            home = Path(str(cfg.get("home", "")).replace("~", str(Path.home()), 1))
+            if not home.is_dir():
+                continue
+            out.append((name, home / str(cfg["rules_channel"]), str(cfg.get("rules_ext") or ".md")))
+        return out
+    except (OSError, ValueError):
+        return [(n, d, e) for n, d, e in defaults if d.parent.is_dir()]
+
+
 def rules_out_of_sync(claude_home: Path) -> tuple[bool, str]:
-    """比较 rules 源 .md 与 Cursor plugin 副本 .mdc 是否漂移。
+    """比较 rules 源 .md 与各编辑器落点副本是否漂移（Cursor plugin + qoder/trae 等）。
 
     以**内容**为准而非 mtime：sync.ps1 是拷贝部署，mtime 天然晚于源文件，
     但重装/回滚等场景 mtime 也可能倒挂，只有内容比对才能给出可信结论。
@@ -175,20 +222,32 @@ def rules_out_of_sync(claude_home: Path) -> tuple[bool, str]:
     rules_src = claude_home / "rules"
     if not rules_src.is_dir() or not CURSOR_PLUGIN_RULES.is_dir():
         return False, "rules 目录缺失，跳过检测"
-    stale: list[str] = []
-    for md in rules_src.glob("*.md"):
-        if md.name == "README.md":
+    src_rules = [md for md in rules_src.glob("*.md") if md.name != "README.md"]
+
+    def _stale_in(target_dir: Path, ext: str) -> list[str]:
+        found: list[str] = []
+        for md in src_rules:
+            dst = target_dir / f"{md.stem}{ext}"
+            try:
+                if not dst.exists() or md.read_text(encoding="utf-8") != dst.read_text(encoding="utf-8"):
+                    found.append(md.stem)
+            except OSError:
+                found.append(md.stem)
+        return found
+
+    parts: list[str] = []
+    stale_cursor = _stale_in(CURSOR_PLUGIN_RULES, ".mdc")
+    if stale_cursor:
+        tail = "..." if len(stale_cursor) > 8 else ""
+        parts.append(f"cursor: {', '.join(stale_cursor[:8])}{tail}")
+    for ed_name, chan_dir, ext in _editor_rule_channels():
+        if not chan_dir.is_dir():
+            parts.append(f"{ed_name}: 通道缺失（跑 sync.ps1）")
             continue
-        mdc = CURSOR_PLUGIN_RULES / f"{md.stem}.mdc"
-        if not mdc.exists():
-            stale.append(md.stem)
-            continue
-        try:
-            if md.read_text(encoding="utf-8") != mdc.read_text(encoding="utf-8"):
-                stale.append(md.stem)
-        except OSError:
-            stale.append(md.stem)
-    if stale:
-        tail = "..." if len(stale) > 8 else ""
-        return True, f"过期规则: {', '.join(stale[:8])}{tail}"
+        stale = _stale_in(chan_dir, ext)
+        if stale:
+            tail = "..." if len(stale) > 8 else ""
+            parts.append(f"{ed_name}: {', '.join(stale[:8])}{tail}")
+    if parts:
+        return True, f"过期规则 — {'; '.join(parts)}"
     return False, "rules 已同步"

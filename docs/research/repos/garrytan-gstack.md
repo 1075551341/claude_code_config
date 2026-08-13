@@ -83,22 +83,22 @@ iOS → +ios-specialist (QA/fix/design-review/clean/sync)
 
 | MANIFEST concern | 路径 | 状态 |
 |------------------|------|------|
-| gstack_review | `rules/AGENTS.md`, `agents/` (25 agents) | ✅ 已落地 |
+| gstack_review | `rules/AGENTS.md`, `agents/` (v11：16 agents) | ✅ 已落地 |
 | gstack_dx | `agents/dx-reviewer.md` | ✅ |
 | gstack_eng/ceo/designer/qa/security | `agents/*.md` | ✅ |
 | gstack_codex | `agents/codex-reviewer.md` | ✅ |
-| gstack_ios | `agents/ios-specialist.md` | ✅ |
-| gstack_cso | `agents/cso.md` | ✅ |
+| gstack_ios | `catalog/agents/ios-specialist.md`（v11 降级） | ✅ |
+| gstack_cso | `agents/security-reviewer.md` 深度模式（v11 并入） | ✅ |
 | 审查路由 | `CLAUDE.md` + `rules/AGENTS.md` | ✅ |
-| taste-memory | claude-mem observation + `skills/taste-memory/` | ✅ 指针 |
-| design-shotgun | `agents/design-shotgun.md` | ✅ agent |
-| land-and-deploy | `agents/land-and-deploy.md` | ✅ agent |
-| pair-agent | `agents/pair-agent.md` | ✅ agent |
+| taste-memory | claude-mem observation + `catalog/skills/taste-memory/`（v11 降级） | ✅ 指针 |
+| design-shotgun | `catalog/agents/design-shotgun.md`（v11 降级） | ✅ agent |
+| land-and-deploy | `catalog/agents/land-and-deploy.md`（v11 降级） | ✅ agent |
+| pair-agent | `catalog/agents/pair-agent.md`（v11 降级） | ✅ agent |
 | autoplan | `skills/autoplan/` | ✅ |
 | ship | `skills/ship/` | ✅ |
 | ML defense | `rules/SECURITY.md` §15 | 🟡 仅文档了 3 层，需更新到 6 层 |
 | gstack_learn | `rules/WORKFLOW.md` §Learn | ✅ |
-| office-hours | `skills/office-hours/` | ✅ |
+| office-hours | `catalog/skills/office-hours/`（v11 降级） | ✅ |
 
 ## 吸收优先级
 

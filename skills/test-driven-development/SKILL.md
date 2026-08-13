@@ -81,13 +81,6 @@ Claude: /test-driven-development → 设计测试 → 编写失败测试 → 实
 - 复杂条件 → 策略模式
 
 ---
-name: test-driven-development
-description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
-triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
 
 ## 测试命名规范
 
@@ -108,13 +101,6 @@ describe('Calculator', () => {
 ```
 
 ---
-name: test-driven-development
-description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
-triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
 
 ## 测试框架选择
 
@@ -127,16 +113,9 @@ disable-model-invocation: true
 | Rust | cargo test |
 
 ---
-name: test-driven-development
-description: 遵循TDD流程开发功能，RED-GREEN-REFACTOR循环
-triggers: [TDD, 测试驱动, 测试先行, RED-GREEN-REFACTOR, 先写测试, 单元测试]
-layer: supplement
-source: obra/superpowers
-disable-model-invocation: true
----
 
 ## 相关技能
 
-- `testing-standards` - 测试规范详情
+- 测试规范 → `rules/CORE.md` 代码规范·测试节
 - `systematic-debugging` - 调试流程
-- `code-refactor` - 重构技巧
+- `code-refactoring` - 重构技巧

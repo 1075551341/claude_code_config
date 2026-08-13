@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v10.17.0
+# 组件唯一归属源 — 防左右手互博 — v11.1.1
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "10.17.0"
-updated: "2026-08-12"
+version: "11.1.1"
+updated: "2026-08-13"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -52,8 +52,8 @@ module_resolver:
     - [feature-dev:code-explorer, code-explorer]
     - [feature-dev:code-reviewer, code-reviewer]
     - [deep_research, firecrawl_agent]
-    - [land_and_deploy, release_engineer]
-    - [agentic_orchestrator, pair_agent]
+    - [land_and_deploy, release_engineer] # v11: release-engineer 已并入 skill/ship；互斥仅防历史回潮
+    - [agentic_orchestrator, pair_agent] # v11: pair-agent 已降级 catalog；启用时仍受此互斥约束
     - [codebase_memory:search_graph, codegraph_explore]
     - [codebase_memory:semantic_query, claude_context_mcp]
   hook_profile:
@@ -82,10 +82,11 @@ pillars:
       version: "1.4.1",
       capabilities: [proposal-spec-tasks, spec-validation],
     }
-  gstack:
-    {
+  gstack: {
       source: garrytan/gstack,
       version: "0.19",
+      # v11: ios-specialist/pair-agent/land-and-deploy/design-shotgun 为 catalog/agents/ 按需变体；
+      # cso 全量审计并入 security-review（security-reviewer 深度模式）；taste-learning 走 catalog/skills/taste-memory
       capabilities:
         [
           eng-review,
@@ -104,7 +105,7 @@ pillars:
     }
   claude_mem: {
       source: thedotmack/claude-mem,
-      version: "13.12.4", # v10.11: 插件运行态对齐（原钉 13.8.1）
+      version: "13.13.1", # v11: 运行态对齐；钉扎上限 <13.14（13.14+ 推 CMEM Pro 订阅，见疑难项#7）
       capabilities: [cross-session-memory, pattern-extraction],
     }
 
@@ -140,20 +141,13 @@ horizontal_layers:
           [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
       - source: DeusData/codebase-memory-mcp
         version: "0.8.1"
-        concerns:
-          [
-            architecture-overview,
-            adr-management,
-            change-detection,
-            semantic-query,
-            cross-service,
-          ]
-        loading: L4_on_demand
+        concerns: [] # 历史 concern（架构导览/语义检索等）已由 codegraph 全权承接
+        loading: disabled # v10.10 永久禁用（全盘索引爆 CPU/内存）；v11 复评维持禁用（上游 0.9 重写但与 codegraph 重叠）
       - source: Firecrawl/Exa
         concerns: [web-scraping, external-search]
 
 loading_tiers:
-  L0: [CLAUDE-ROUTER, CLAUDE.md, rules/CORE.md]
+  L0: [CLAUDE.md, rules/CORE.md] # v11: CLAUDE-ROUTER 已并入 CLAUDE.md
   L1:
     [
       skill/using-superpowers,
@@ -170,7 +164,6 @@ loading_tiers:
     - skill/deep-research
     - skill/adr-management
     - skill/workstream-management
-    - skill/claude-to-deerflow
     - skill/git-workflow
     - skill/pr-workflow
     - skill/claude-mem-maintenance
@@ -205,7 +198,7 @@ concerns:
     command: plan
     source: obra/superpowers
     stage: spec
-    # pre-task-planner 已移除（见 agent.yaml disabled_hooks），保留于 excludes 防重新引入
+    # pre-task-planner 已移除（见本文件 harness.hooks.disabled），保留于 excludes 防重新引入
     excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
     depends_on: [skill/brainstorming]
 
@@ -331,7 +324,7 @@ concerns:
     stage: spec
 
   ui_token:
-    owner: rules/DESIGN.md
+    owner: rules/FRONTEND.md # v11: rules/DESIGN.md 并入 FRONTEND「设计系统」节
     skill: catalog/skills/ui-ux-pro-max
     source: VoltAgent/awesome-design-md
     stage: spec
@@ -408,7 +401,7 @@ concerns:
     depends_on: [skill/brainstorming]
 
   onboarding:
-    owner: skill/onboarding-guide
+    owner: catalog/skills/onboarding-guide # v11 降级 catalog（低频，按需复制）
     source: Fission-AI/OpenSpec
     stage: plan
     depends_on: [mcp/codegraph]
@@ -430,8 +423,7 @@ concerns:
     owner: mcp/codegraph
     source: colbymchenry/codegraph
     stage: execute
-    note: R17 — 代码探索首选，先于 Grep
-    hooks: [post-codegraph-sync]
+    note: "R17 — 代码探索首选，先于 Grep；v1.5 起 MCP server 自带 watcher 自动同步（300ms 静默窗 + connect-time catch-up），post-codegraph-sync hook 已于 v11 退役"
 
   context_monitor:
     owner: rules/CORE.md # 未注册 hook：stop-context-monitor 文件保留，由 Cursor Guard 阈值/原生机制覆盖（v10.10 对齐运行态）
@@ -442,9 +434,9 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.1 — sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
-    # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 仍存在，
-    # 此处表示 Cursor Guard 不得重复挂载该 Claude 侧 hook
+    note: "Cursor Guard v1.2 — sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
+    # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
     depends_on: [scripts/sync.ps1]
 
@@ -479,7 +471,7 @@ concerns:
     owner: hooks/pre-userprompt-issue-tracker.py
     source: local
     stage: plan
-    note: "v10.17.0 — 问题指纹追踪：同问题重复出现时注入「先查上轮结论禁止重做」；推翻 v10.13『不做 hook 计数器』决策（用户 2026-08-12 重新决策）。仅注入不阻断。v10.17 起指纹算法与状态双端共用 hooks/_lib/issue_state.py（单一状态 ~/.claude/.state/issue-tracker.json），stop-verification-gate 验证通过时置 resolved=true 激活轻提示分支；Cursor 端 templates/cursor-guard/hooks/issue_tracker.py（guard 1.1.9）"
+    note: "v10.17.0 — 问题指纹追踪：同问题重复出现时注入「先查上轮结论禁止重做」；推翻 v10.13『不做 hook 计数器』决策（用户 2026-08-12 重新决策）。仅注入不阻断。v10.17 起指纹算法与状态双端共用 hooks/_lib/issue_state.py（单一状态 ~/.claude/.state/issue-tracker.json），stop-verification-gate 验证通过时置 resolved=true 激活轻提示分支；Cursor 端 templates/cursor-guard/hooks/issue_tracker.py（guard 1.2.0）"
     # 单一 depends_on：v10.17 一度写成两个同名键，YAML 后者覆盖前者，
     # issue_state.py / stop-verification-gate.py 等依赖会被静默丢弃
     depends_on:
@@ -508,17 +500,17 @@ concerns:
     note: ECC pre:bash:tmux-reminder — 长运行命令非tmux环境警告
 
   taste_memory:
-    owner: skill/taste-memory
+    owner: catalog/skills/taste-memory # v11 降级 catalog（design-pipeline 内保留指针）
     source: garrytan/gstack
     stage: learn
     depends_on: [plugin/thedotmack]
     note: 通过 claude-mem observation 存设计偏好，不修改插件
 
   deer_flow_bridge:
-    owner: skill/claude-to-deerflow
+    owner: catalog/skills/claude-to-deerflow # v11 降级 catalog（deer-flow 编排低频）
     source: bytedance/deer-flow
     stage: execute
-    loading_tier: L3
+    loading_tier: on_demand
     depends_on: [rules/WORKFLOW.md]
     excludes: [agent/planner, skill/workstream-management]
 
@@ -565,15 +557,13 @@ concerns:
   mcp_tiering:
     owner: config/.mcp.json
     note: Claude Code 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；v10.17 起 chrome-devtools→mcp-configs/debug.json、fs→mcp-configs/fsaccess.json 按需；pw 走插件勿写入 .mcp.json；cbm 永久禁用
-    depends_on:
-      [
+    depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,
         rules/MCP.md,
         mcp/servers.json,
         mcp/README.md,
-        agent.yaml,
-      ]
+      ] # v11: agent.yaml 已并入本文件 harness.mcp_loading
 
   mcp_local_code_split:
     owner: rules/MCP.md
@@ -598,8 +588,8 @@ concerns:
     { owner: agent/security-reviewer, layer: skeleton, stage: verify }
 
   bestpractice:
-    owner: rules/BESTPRACTICE.md
-    layer: skeleton
+    owner: rules/GOVERNANCE.md # v11: BESTPRACTICE.md 并入 GOVERNANCE「最佳实践详参」章
+    layer: supplement
     source: shanraisshan/best-practice
 
   governance:
@@ -621,8 +611,7 @@ concerns:
     source: obra/superpowers
 
   office_hours:
-    owner: skill/office-hours
-    delegates: [agent/product-manager]
+    owner: catalog/skills/office-hours # v11 降级 catalog；agent/product-manager 已删（六问框架正文并入该技能）
     source: garrytan/gstack
     stage: plan
 
@@ -635,14 +624,12 @@ concerns:
     note: "autoplan 仅用于审查后自动优化（CEO→Design→Eng→DX），不替代 brainstorming HARD-GATE。先 brainstorming 人机对话确定方向，autoplan 在 verify 阶段自动串联。"
 
   ship_pipeline:
-    owner: skill/ship
-    delegates: [agent/release-engineer]
+    owner: skill/ship # v11: agent/release-engineer 已并入本技能（管线正文含 CI 模板引用）
     source: garrytan/gstack
     excludes: [skill/finishing-a-development-branch]
 
   context_engineering:
-    owner: rules/CONTEXT.md
-    skill: skill/context-engineering
+    owner: rules/CONTEXT.md # v11: skill/context-engineering 已删（与 CORE/CONTEXT 重复+cbm/UA 残留），规则为唯一正文
     source: open-gsd/gsd-core
     depends_on: [rules/CORE.md, rules/WORKFLOW.md]
 
@@ -674,7 +661,7 @@ concerns:
     stage: execute
 
   instinct_v2:
-    owner: skill/instinct-learning
+    owner: catalog/skills/instinct-learning # v11 降级 catalog（学习产物统一 claude-mem，本能提取按需）
     source: affaan-m/ECC
     stage: learn
 
@@ -712,7 +699,7 @@ concerns:
     status: reference_only
 
   gstack_ios:
-    owner: agent/ios-specialist
+    owner: catalog/agents/ios-specialist # v11 降级 catalog（iOS 项目按需复制启用）
     source: garrytan/gstack
     version: "0.19"
     stage: verify
@@ -771,24 +758,24 @@ concerns:
     note: 跨会话学习管理，与 claude-mem 互补（项目级 vs 会话级）
 
   gstack_cso:
-    owner: agent/cso
+    owner: agent/security-reviewer # v11: cso 并入 security-reviewer「深度模式」（全量审计）
     source: garrytan/gstack
     stage: verify
-    note: OWASP Top 10 + STRIDE 威胁模型，17 误报排除
+    note: OWASP Top 10 + STRIDE 威胁模型，17 误报排除；增量审查与全量审计同一 agent 承接
 
   land_and_deploy:
-    owner: agent/land-and-deploy
+    owner: catalog/agents/land-and-deploy # v11 降级 catalog（完整部署闭环按需复制启用）
     source: garrytan/gstack
     stage: ship
-    excludes: [agent/release-engineer]
-    note: "land-and-deploy = 完整部署流程(approved PR→verified production)；release-engineer = 轻量发布。land-and-deploy 主。"
+    excludes: [agent/release-engineer] # 已删（并入 skill/ship），保留防回潮
+    note: "land-and-deploy = 完整部署流程(approved PR→verified production)；轻量发布走 skill/ship。"
 
   agentic_orchestrator:
     owner: agent/agentic-orchestrator
     source: local
     stage: execute
-    excludes: [agent/pair-agent]
-    note: "agentic-orchestrator = 通用多Agent编排；pair-agent = 仅浏览器协作场景。agentic-orchestrator 主。"
+    excludes: [agent/pair-agent] # v11: pair-agent 降级 catalog，按需启用时仍受互斥约束
+    note: "agentic-orchestrator = 通用多Agent编排；pair-agent（catalog）= 仅浏览器协作场景。agentic-orchestrator 主。"
 
   deer_dag:
     owner: rules/WORKFLOW.md
@@ -829,66 +816,105 @@ p0_skills:
   - systematic-debugging
   - task-triage
 
-global_skills_max: 45 # v10.10: 对齐实际 45（零触发技能保持观察）
-global_agents_max: 25
+global_skills_max: 36 # v11: 45→36（6 降级 catalog + context-engineering 删除 + frontend-refactor-proposer/writing-skills 并入）
+global_agents_max: 16 # v11: 25→16（4 并入 agent/skill + 5 降级 catalog）
+global_rules_max: 10 # v11: 12→10（DESIGN 并入 FRONTEND；BESTPRACTICE 并入 GOVERNANCE）
 
-# ═══════════════════════════════════════════════════════════════
-# SuperAgent Forge — 动态知识库智能体锻造系统 (v1.0)
-# 归属: .codeartsdoer/specs/superagent-forge/spec.md
-# 文档: spec.md → design.md → tasks.md | Schema ×4 + 示例 ×2
-# 引擎: .codeartsdoer/agents/superagent_forge/ (Python 12 模块)
-# ═══════════════════════════════════════════════════════════════
-superagent_forge:
-  owner: specs/superagent-forge
-  engine: agents/superagent_forge
-  source: local
-  stage: execute
-  concerns:
-    agent_definition: { owner: schema/agent-definition.yaml, source: local }
-    knowledge_base: { owner: schema/knowledge-base.yaml, source: local }
-    model_adapter: { owner: model_provider.py, source: local }
-    tool_registry: { owner: tool_registry.py, source: local }
-    dynamic_generation: { owner: agent_factory.py, source: local }
-  examples:
-    - ecommerce-cs-v1: "电商客服智能体"
-    - industrial-kb-v1: "工业知识库智能体"
-  platforms:
-    - web: "FastAPI + Streamlit"
-    - api: "REST API / SSE"
-    - chrome-extension: "Chrome Extension (框架)"
-  models:
-    online: [openai, anthropic, deepseek]
-    local: [ollama, lm-studio, llama-cpp]
+# superagent_forge 幽灵登记已于 v11 删除（引用的 .codeartsdoer/specs 与 agents/superagent_forge 路径均不存在，codearts 编辑器未安装）
 
-# ── v18.4 sync 声明 ──────────────────────────────────────────
+# ── harness 清单（v11 吸收原 agent.yaml；该文件已删除）──────────
+# skills/agents 启用清单不再双写：以 loading_tiers + skills-INDEX/agents-INDEX 为准。
+# 五阶段 phase→command→gate 以 CLAUDE.md「五阶段流程」为准。
+harness:
+  name: claude-code-primary
+  hooks:
+    profile_env: ECC_HOOK_PROFILE
+    default: standard
+    # settings.json 已注册（v11 对齐：三门控 + issue-tracker；
+    # post-codegraph-sync / stop-knowledge-graph-sync 已退役 — codegraph v1.5 MCP 自动同步）
+    core:
+      - session-start-bootstrap
+      - pre-userprompt-issue-tracker
+      - pre-userprompt-verify-gate
+      - pre-bash-guard
+      - pre-rtk-rewrite
+      - pre-read-before-edit
+      - pre-context-injector
+      - pre-manifest-validator
+      - pre-edit-impact-nudge
+      - post-secret-detector
+      - post-edit-format
+      - post-edit-verify-tracker
+      - pre-compact-state
+      - stop-verification-gate
+      - stop-session-summary
+      - stop-readme-updater
+    # 文件在 hooks/ 但未注册：Claude Code 原生机制或 Cursor Guard 已覆盖，保留备用
+    unregistered:
+      - pre-tmux-reminder
+      - pre-loop-guard
+      - pre-suggest-compact
+      - stop-context-monitor
+    disabled:
+      - pre-task-planner
+  commands:
+    workflow:
+      [
+        discuss,
+        plan,
+        execute,
+        verify,
+        ship,
+        review,
+        compact,
+        clear,
+        status,
+        office-hours,
+        autoplan,
+        workstream,
+        adr,
+        deep-research,
+      ]
+    openspec: [propose, apply, archive, sync] # sync = /opsx:sync delta 合并
+  mcp_loading:
+    always: [
+        codegraph,
+        code-review-graph,
+        aider-repo-map,
+        serena,
+        github,
+        grep,
+        exa,
+        context7,
+        firecrawl,
+      ] # 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；pw 走插件勿双挂
+    debug: [chrome-devtools] # mcp-configs/debug.json
+    fsaccess: [fs] # mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
+    ops: [redis, sqlite, docker, postgres]
+    profile_env: CLAUDE_MCP_PROFILE
+
+# ── v11.1 sync 声明（多编辑器 1+N）──────────────────────────
 sync_targets:
-  editors: [cursor, qoder, qoder-cn, trae, trae-cn, workbuddy, codearts]
+  # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
+  # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
+  # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts]
   method: symlink_first_copy_fallback
-  script: scripts/sync.ps1 # Linux/macOS: scripts/sync.sh
+  script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]
-  # 全部为用户级配置（非项目级）；workbuddy 仅 CLAUDE.md + skills/
-  # v18.4：总纲/索引根文件部署到除 workbuddy 外的所有编辑器；集合须与
-  # sync.ps1 $L0_ROOT_ITEMS / sync.sh SYNC_FILES / check.ps1 $SYNC_FILES /
-  # templates/cursor-guard/hooks/_lib/impact_sync.py SYNC_FILES 一致
+  # v11：ROUTER 并入 CLAUDE.md、agent.yaml 并入本文件 harness 节，根文件 8→6；
+  # 常量单源 = config/sync-manifest.json（sync.ps1 / check.ps1 / impact_sync.py 共同消费），
+  # 本节 root_index_files 仅为声明镜像，改集合以 sync-manifest.json 为准。
   root_index_files:
     [
       CLAUDE.md,
-      CLAUDE-ROUTER.mdc,
       SPEC.md,
       MANIFEST.yaml,
-      agent.yaml,
       skills-INDEX.md,
       agents-INDEX.md,
       rules-INDEX.md,
     ]
-  root_index_skip_editors: [workbuddy]
   rules_ext:
-    cursor: ".mdc"
-    qoder: ".mdc"
-    qoder-cn: ".mdc"
-    trae: ".md"
-    trae-cn: ".md"
-    workbuddy: null # 无 rules 通道
-    codearts: ".mdc"
+    cursor: ".mdc" # 经 local plugin claude-config（唯一规则通道）
   root_filename:
     default: "CLAUDE.md"

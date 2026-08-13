@@ -4,24 +4,10 @@ description: 创建 OpenSpec 规格提案（②规格阶段）
 
 # /propose（别名: /spec）— 创建规格提案
 
-> **core CLI**：优先 `openspec` `/opsx:propose`；无 CLI 时按下列手动手册。
+> **core CLI**：优先 `openspec` `/opsx:propose`；无 CLI 时按 `rules/OPENSPEC.md`（四大制品/命令链/约束 SSOT）手动创建 `openspec/changes/<id>/`（v11.1 薄壳化：目录结构不复写）。
 > 安装：`npm i -g @fission-ai/openspec@latest` → `openspec init --tools cursor`（v1.4.1 无 expanded preset）
 
-基于 OpenSpec 模式，为新功能/变更创建规格提案。
-
-## 输出
-
-在 `openspec/changes/CHANGE_NAME/` 下创建：
-
-```
-openspec/changes/CHANGE_NAME/
-├── proposal.md   # 为什么要做、改什么、影响范围
-├── specs/        # 需求规格与场景
-├── design.md     # 技术方案（可选）
-└── tasks.md      # 实现任务清单
-```
-
-## proposal.md 模板
+## proposal.md 模板（本命令独有内容）
 
 ```markdown
 # [变更名称]

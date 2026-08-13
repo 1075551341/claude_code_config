@@ -22,7 +22,7 @@
 
 | MANIFEST concern | 路径 |
 |------------------|------|
-| best_practice | `rules/BESTPRACTICE.md` |
+| best_practice | `rules/GOVERNANCE.md` 最佳实践详参章（v11：原 rules/BESTPRACTICE.md 并入） |
 | 加载策略 | `SPEC.md` L0–L4；sync L0 only |
 
 ## 吸收决策

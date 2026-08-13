@@ -13,13 +13,15 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 > 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
 
-## gstack 审查 6 + 补全 7
+## gstack 审查 6 + 补全 2 + 跨模型 1（v11 收敛）
 
 审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
 
-补全（supplement）：cso | sre | release-engineer | product-manager | design-engineer | performance-engineer | doc-writer
+补全（supplement）：sre | doc-writer；跨模型（cross-model）：codex-reviewer
 
-位置：`agents/` + `catalog/agents/`（按需复制）
+> v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline Phase 2；product-manager 删除（与 office-hours 重叠）；pair-agent / ios-specialist / land-and-deploy / design-shotgun / performance-engineer 降级 `catalog/agents/`（按需复制）。
+
+位置：`agents/`（全局 16）+ `catalog/agents/`（按需复制）
 
 ## 何时委派
 
@@ -35,12 +37,9 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | UI/UX 审查 | designer + dx-reviewer |
 | DX 体验审查 | dx-reviewer |
 | 测试审查 | qa |
-| 安全审计 | security |
-| 设计探索(多方案) | design-shotgun（gstack v0.19） |
-| 一键部署 | land-and-deploy（gstack v0.19） |
-| 多Agent浏览器 | pair-agent（gstack v0.19） |
+| 安全审计（增量/全量） | security-reviewer（深度模式=原 cso） |
 | 跨模型验证 | codex-reviewer（gstack /codex） |
-| iOS 变更 | ios-specialist（gstack v0.19） |
+| 设计探索/部署/浏览器协作/iOS | catalog/agents/（design-shotgun、land-and-deploy、pair-agent、ios-specialist，按需复制） |
 | 外部编排 | deer-flow (flash/standard/pro/ultra) |
 | 任务追踪 | task-master MCP（按需） |
 
@@ -49,13 +48,13 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 ```
 所有变更        → eng-reviewer (必须)
 产品/新功能     → + ceo-reviewer
-UI/UX 变更      → + designer + dx-reviewer + design-shotgun(多方案探索,gstack v0.19)
+UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）
 DX体验变更      → + dx-reviewer
-安全敏感变更    → + security-reviewer + cso(OWASP+STRIDE)
-iOS 变更        → + ios-specialist (gstack v0.19)
+安全敏感变更    → + security-reviewer（全量审计走其深度模式=原cso OWASP+STRIDE）
 infra/配置      → CEO Review 可跳过
 跨模型验证      → + codex-reviewer (gstack /codex)
-部署/发布       → + land-and-deploy (gstack v0.19)
+部署/发布       → skill/ship（完整闭环按需启用 catalog/land-and-deploy）
+iOS 变更        → 按需启用 catalog/ios-specialist
 ```
 
 ## 禁止（防互博）
@@ -75,7 +74,7 @@ infra/配置      → CEO Review 可跳过
 
 ## 持续学习
 
-失败模式 → `experiences/rejected/` | 成功模式 → `experiences/patterns/` | hook/stop-pattern-extraction
+失败/成功模式 → claude-mem observation（R18 记忆柱统一承接；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
 
 ## 委派原则（ruflo 吸收）
 

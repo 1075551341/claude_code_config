@@ -59,7 +59,6 @@ def load_guard_config() -> dict:
     explore = cfg.get("explore", {})
     shell = cfg.get("shell", {})
     secrets = cfg.get("secrets", {})
-    knowledge_graph = cfg.get("knowledge_graph", {})
 
     claude_home = _expand(
         os.environ.get("CLAUDE_HOME", sync.get("claude_home", str(DEFAULT_CLAUDE_HOME)))
@@ -142,15 +141,7 @@ def load_guard_config() -> dict:
             "enabled": os.environ.get("CURSOR_GUARD_IMPACT_GATE", "1") != "0"
             and cfg.get("impact", {}).get("enabled", True),
         },
-        "knowledge_graph": {
-            "enabled": os.environ.get("CURSOR_GUARD_KG_SYNC", "1") != "0"
-            and knowledge_graph.get("enabled", True),
-            "codegraph": knowledge_graph.get("codegraph", True),
-            # codebase-memory 默认关闭（全盘索引会爆内存）；需显式 true 或 CURSOR_GUARD_CBM=1
-            "codebase_memory": os.environ.get("CURSOR_GUARD_CBM", "0") == "1"
-            and knowledge_graph.get("codebase_memory", False),
-            "cbm_mode": knowledge_graph.get("cbm_mode", "fast"),
-        },
+        # v11: knowledge_graph 配置节已移除 — kg sync hook 退役（codegraph v1.5 MCP 自动同步）
         "git": _load_git_config(cfg.get("git", {})),
     }
 

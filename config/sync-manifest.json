@@ -1,0 +1,69 @@
+{
+  "_comment": "同步链常量单源（v11.1 多编辑器 1+N）。消费方：scripts/sync.ps1、scripts/check.ps1、templates/cursor-guard/hooks/_lib/impact_sync.py（Guard 部署副本经 deploy-cursor-guard.ps1 刷新）。改根文件集合或编辑器目标只改本文件。",
+  "root_files": [
+    "CLAUDE.md",
+    "SPEC.md",
+    "MANIFEST.yaml",
+    "skills-INDEX.md",
+    "agents-INDEX.md",
+    "rules-INDEX.md"
+  ],
+  "plugin_rule_sources": {
+    "_comment": "Cursor local plugin claude-config 的规则来源：rules/*.md（除 README）全量 + 下列特殊映射",
+    "00-CLAUDE": "CLAUDE.md",
+    "CURSOR-EDITOR": "templates/cursor-guard/rules/CURSOR-EDITOR.mdc"
+  },
+  "editors": {
+    "_comment": "v11.1 恢复多编辑器：Claude Code 原生读 ~/.claude 零同步；home 目录缺席自动跳过（enabled=false 显式停用）。rules_channel: plugin=Cursor local plugin 专用通道；其余为 home 下实体复制目录名；null=无规则通道。special=claude_md_plus_skills 表示仅 CLAUDE.md 副本 + skills/ 联接（workbuddy 的 SOUL/USER/IDENTITY/BOOTSTRAP 为其自有命名空间禁触，root_index=false）。",
+    "cursor": {
+      "home": "~/.cursor",
+      "enabled": true,
+      "rules_channel": "plugin",
+      "rules_ext": ".mdc",
+      "root_index": true
+    },
+    "qoder-cn": {
+      "home": "~/.qoder-cn",
+      "enabled": true,
+      "rules_channel": "rules",
+      "rules_ext": ".mdc",
+      "root_index": true
+    },
+    "trae-cn": {
+      "home": "~/.trae-cn",
+      "enabled": true,
+      "rules_channel": "user_rules",
+      "rules_ext": ".md",
+      "root_index": true
+    },
+    "workbuddy": {
+      "home": "~/.workbuddy",
+      "enabled": true,
+      "rules_channel": null,
+      "rules_ext": null,
+      "root_index": false,
+      "special": "claude_md_plus_skills"
+    },
+    "qoder": {
+      "home": "~/.qoder",
+      "enabled": true,
+      "rules_channel": "rules",
+      "rules_ext": ".mdc",
+      "root_index": true
+    },
+    "trae": {
+      "home": "~/.trae",
+      "enabled": true,
+      "rules_channel": "user_rules",
+      "rules_ext": ".md",
+      "root_index": true
+    },
+    "codearts": {
+      "home": "~/.codeartsdoer",
+      "enabled": true,
+      "rules_channel": "rule",
+      "rules_ext": ".mdc",
+      "root_index": true
+    }
+  }
+}

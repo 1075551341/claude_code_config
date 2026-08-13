@@ -48,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps
 
 1. 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`
 2. Cursor Settings → MCP 启用 codegraph
-3. 编辑后/会话结束 hook **仅刷新 codegraph**（`knowledge_graph_sync_hook`；cbm 默认关）；也可手跑 `python ~/.claude/hooks/_lib/knowledge_graph_sync.py --force <project>`
+3. 索引自动保鲜：codegraph v1.5 MCP server 原生监听文件变更自动同步（300ms 静默窗 + 连接时追赶）；v11 起 Guard 不再挂 kg sync hook，也无需手动 `codegraph sync`
 
 参考：[`templates/cursor-guard/mcp-recommended.json`](../templates/cursor-guard/mcp-recommended.json)
 
@@ -130,7 +130,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | 资产                | Claude 权威源   | Cursor 目标（plugin 通道）                                         | 同步方式                               |
 | ------------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------- |
 | 铁律 R17 / CORE     | `rules/CORE.md` | `~/.cursor/plugins/local/claude-config/rules/CORE.mdc`             | `sync.ps1`（实体副本）                 |
-| 路由 CLAUDE         | `CLAUDE.md`     | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE-ROUTER.mdc` | `sync.ps1`（实体副本）                 |
+| 路由 CLAUDE         | `CLAUDE.md`     | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE.mdc`（v11） | `sync.ps1`（实体副本）                 |
 | 编辑器专有规则      | Guard 模板      | `~/.cursor/plugins/local/claude-config/rules/CURSOR-EDITOR.mdc`    | `deploy-cursor-guard.ps1` + `sync.ps1` |
 | MCP 文档            | `rules/MCP.md`  | plugin 规则集内（`sync.ps1` 全量复制 rules/\*.md → .mdc）          | `sync.ps1`                             |
 | codegraph MCP 服务  | `.mcp.json`     | `~/.cursor/mcp.json`                                               | **手工对照**（仅启用项）               |

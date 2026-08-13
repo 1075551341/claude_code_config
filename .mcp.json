@@ -1,6 +1,6 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v10.17 常驻 9 | 三层架构：本地代码(codegraph/code-review-graph/aider-repo-map/serena) + 远端探索(github+grep) + Web&文档(exa/context7/firecrawl)。chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（全盘可写会绕过验证门）。cbm(禁用) 勿 merge。GITHUB_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 Machine env；npx 包按 R14 钉扎版本",
+  "_comment": "MCP v11 常驻 9（v10.17 定型沿用）| 三层架构：本地代码(codegraph/code-review-graph/aider-repo-map/serena) + 远端探索(github+grep) + Web&文档(exa/context7/firecrawl)。chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（全盘可写会绕过验证门）。cbm(禁用) 勿 merge。GITHUB_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 Machine env；npx 包按 R14 钉扎版本",
   "mcpServers": {
     "aider-repo-map": {
       "_description": "Aider 风格 Repo Map（pdavis68/RepoMapper）。原 uvx aider-mcp-server 在 PyPI 不存在且安装失败。工具 repo_map 需传绝对路径 project_root。",

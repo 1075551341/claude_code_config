@@ -1,6 +1,13 @@
-# colbymchenry/codegraph v1.0.1
+# colbymchenry/codegraph v1.5.0
 
-> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub Releases + npm + 官网 双源交叉
+> 层: L3 洞察 | 置信度: 高 | 刷新: 2026-08-12 | 来源: GitHub Releases + npm + 官网 双源交叉
+
+## v11 delta (2026-08-12)
+
+- **v1.5.0（2026-07-21）"Rust engine release"**：原生 Rust 解析内核；**自动同步默认开启**——三层保鲜：① 原生 OS 文件监听（FSEvents/inotify/ReadDirectoryChangesW，单文件保存 300ms 静默窗即同步，突发合并入 `CODEGRAPH_WATCH_DEBOUNCE_MS` 上限）② 同步窗口期陈旧文件在工具响应中加 ⚠️ banner 提示 agent 直接 Read ③ **connect-time catch-up**：MCP (重)连接时先做 (size,mtime)+内容哈希对账，吸收无 server 期间的外部改动（git pull/他端编辑）。图谱与全量重建 byte-identical。
+- **本地吸收（v11 Phase 5）**：`.mcp.json` 与 `~/.cursor/mcp.json` 双端钉扎 `@1.5.0`；**双侧 sync hook 退役**——CC `post-codegraph-sync`/`stop-knowledge-graph-sync` + Guard `knowledge_graph_sync_hook` + `_lib/knowledge_graph_sync.py` 删除，索引保鲜全权交 MCP server 原生机制（唯一 R14 升级例外：上游直接替代本地自制件）。
+- **实测（2026-08-12，退役当天）**：批量删除 4 个 hook 文件后，长驻 server 会话内 watcher 未即时清边（删除文件的符号仍在 blast-radius，但源码段始终实读磁盘无脏数据）；`codegraph sync` 一次即对账清净（Modified 6 / Removed 4 / 77 nodes / 638ms），与 connect-time catch-up 同一通路。结论：**改动靠 watcher 实时；删除以重连对账为准**——大规模删除后如需当场查询，可手跑一次 `codegraph sync`，新会话无需任何操作。
+- **双源**：GitHub Release v1.5.0 + README（2026-08-12 fetch）。
 
 ## v10.5 delta (2026-07-17)
 
@@ -47,7 +54,7 @@ v1.0.0 起 MCP 默认工具列表收敛为 **4 个**：`codegraph_explore` · `c
 | codegraph | `MANIFEST.yaml` → `policy: mandate_init` | ✅ |
 | R17 探索优先 | `rules/CORE.md`, `rules/CURSOR-EDITOR.mdc` | ✅ |
 | MCP | `.mcp.json` user-codegraph | ✅ |
-| playbook | `docs/RUNTIME_PLAYBOOK.md` | ✅ |
+| playbook | `CLAUDE.md` 场景-工具映射（v11：RUNTIME_PLAYBOOK 已并入） | ✅ |
 | 默认工具集 (F1) | CORE 变更彻底性 / R17 反模式 | 🟡 需纠偏（impact 默认不可用） |
 | 指标文案 (F2) | 全库 `~47% token` | 🟢 47% **是官方数字**（current build），仅需补全为四元组 |
 
@@ -55,7 +62,7 @@ v1.0.0 起 MCP 默认工具列表收敛为 **4 个**：`codegraph_explore` · `c
 
 - vs UA：codegraph 主（符号级低 token）；UA L3 按需（`/understand-*` 拓扑/业务流）
 - vs Grep：codegraph 首选，Grep fallback
-- vs codebase-memory-mcp（v10.4）：**双引擎互补** — codegraph=R17 日常符号/blast-radius；cbm=架构全景/ADR/`detect_changes`/跨服务（L4 按需）。日常探索不重复调用 cbm `search_graph`
+- vs codebase-memory-mcp（v10.4 历史口径）：曾定位"双引擎互补"；**现行（v11）**：cbm 已于 v10.10 永久禁用，codegraph 单引擎承接全部结构探索职责（审查/test-gap 走 code-review-graph）
 
 ## 吸收优先级
 

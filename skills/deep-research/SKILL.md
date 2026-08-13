@@ -17,8 +17,8 @@ source: catalog/skills/deep-research
 
 | 步骤 | 工具 |
 |------|------|
-| 广度/抓取 | Firecrawl MCP（`user-crawl`） |
-| 语义搜索 | Exa MCP（`mcp-configs/optional-dev.json` 按需 merge） |
+| 广度/抓取 | Firecrawl MCP（`.mcp.json` 常驻键 `firecrawl`） |
+| 语义搜索 | Exa MCP（`.mcp.json` 常驻键 `exa`；Cursor 侧由 Exa plugin 提供） |
 | 库/API 验证 | Context7 MCP |
 | 项目代码 | codegraph_explore（非网页调研） |
 

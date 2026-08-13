@@ -6,6 +6,8 @@ description: 自动 CEO→Design→Eng 审查流水线，仅暴露品味决策
 
 一条命令，完全审查的计划。自动运行 CEO → Design → Eng 审查，仅暴露品味决策。
 
+**正文 SSOT**：Read `skills/autoplan/SKILL.md`（流程 + 审查适用性检测 + 决策点暴露规则）。
+
 使用方式：
 1. 确保有 design doc（来自 /office-hours 或 /brainstorming）
 2. 运行 /autoplan

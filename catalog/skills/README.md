@@ -6,9 +6,13 @@
 ## 使用策略
 
 ```
-全局 skills/ (48) → 五柱核心，会话自动匹配触发
-catalog/skills/ (101) → 领域专用，按需复制到项目
+全局 skills/ → 五柱核心，会话自动匹配触发（清单见 ~/.claude/skills-INDEX.md）
+catalog/skills/ (107) → 领域专用 + v11 降级变体，按需复制到项目
 ```
+
+## v11 新入 catalog（原全局降级）
+
+`browser-qa` · `claude-to-deerflow` · `instinct-learning` · `office-hours`（并入原 product-manager 六问框架）· `onboarding-guide` · `taste-memory`
 
 ## 同名项消歧（v10.17）
 

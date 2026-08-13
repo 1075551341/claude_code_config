@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "guard_version": "1.1.9",
+  "guard_version": "1.2.0",
   "hooks": {
     "sessionStart": [
       {
@@ -91,10 +91,6 @@
       {
         "command": "python hooks/sync_on_edit.py",
         "timeout": 130
-      },
-      {
-        "command": "python hooks/knowledge_graph_sync_hook.py",
-        "timeout": 330
       }
     ],
     "afterAgentResponse": [
@@ -107,11 +103,6 @@
       {
         "command": "python hooks/context_stop.py",
         "timeout": 8,
-        "loop_limit": 1
-      },
-      {
-        "command": "python hooks/knowledge_graph_sync_hook.py --force",
-        "timeout": 330,
         "loop_limit": 1
       }
     ]

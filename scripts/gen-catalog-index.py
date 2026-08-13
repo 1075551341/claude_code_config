@@ -100,7 +100,7 @@ for title, items, dups in (
 
 lines.append("---")
 lines.append("")
-lines.append("v10.17.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本")
+lines.append("v11.0.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本")
 open(os.path.join(base, "catalog", "INDEX.md"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 print("skills", len(skills), "agents", len(agents), "rules", len(rules))
 print("dups skills:", dup_s)

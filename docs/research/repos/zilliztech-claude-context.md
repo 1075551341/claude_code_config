@@ -2,6 +2,7 @@
 
 > 层: 工具/集成 | 置信度: 中 | 刷新: 2026-07-31 | 来源: GitHub + andrew.ooo + milvus.io 三源交叉
 > **status: archived_redirect** | successor: [DeusData/codebase-memory-mcp](deusdata-codebase-memory-mcp.md)
+> ⚠️ **现行口径（v11.0.0）**：后继 cbm 已于 v10.10 永久禁用；语义搜索位现由 codegraph（R17）承接，本卡重定向链仅作历史记录。
 
 
 ## v10.5.1 delta (2026-07-17)

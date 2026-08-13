@@ -12,4 +12,6 @@ description: 六问产品框架，挑战前提并生成实现方案
 3. 获得重新定义的问题 + 3个方案 + 推荐
 4. 设计文档自动传递给下游 /plan
 
+正文：`catalog/skills/office-hours/SKILL.md`（v11 降级 catalog，触发本命令时按需 Read；原 agent/product-manager 六问框架已并入该技能）
+
 来源：gstack /office-hours

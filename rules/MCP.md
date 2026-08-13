@@ -34,9 +34,9 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 | debug      | chrome-devtools（`@latest` + `--isolated`，R14 例外，用户决策） | `mcp-configs/debug.json`（按需 merge） |
 | fsaccess   | fs（默认仅配置仓路径）                                | `mcp-configs/fsaccess.json`（按需 merge） |
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json`（按需 merge） |
-| collab     | figma, linear, notion, slack                         | `mcp-configs/collab.json`（声明） |
+| collab     | figma, linear, notion, slack                         | `mcp-configs/collab.json`（**仅声明清单，无 `mcpServers` merge 体**——启用时需自行按官方文档补齐服务器定义） |
 
-按需 profile 中的 `mcpServers` 块 **手动 merge** 到 `.mcp.json` 后重启 Claude Code。
+按需 profile 中的 `mcpServers` 块 **手动 merge** 到 `.mcp.json` 后重启 Claude Code（collab 除外，见上）。
 
 > **v10.17 降级说明**：`chrome-devtools` 与 `fs` 由常驻降为按需。`fs` 的降级是安全性决策——全盘可写会绕过 Edit/Write 验证追踪链，导致 Stop 硬门误判「本会话未改代码」而放行回归。确需 merge 时，`settings.json` 的 `mcp__fs__.*` matcher 会把写操作纳入追踪。
 
@@ -70,7 +70,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 修改常驻 MCP
   → 编辑 .mcp.json（常驻 9）
   → 同步 mcp/servers.json toolsets.always_* 与 mcp-configs/dev.json
-  → 同步 rules/MCP.md + docs/CURSOR_MCP_PROFILE.md + docs/TOOL_MATCHING_GUIDE.md 的计数与表格
+  → 同步本文件计数与表格（v11 起 CURSOR_MCP_PROFILE 仅 Cursor 差异、TOOL_MATCHING_GUIDE 仅匹配矩阵，通常无需改）
   → 验证 always_* ⊆ .mcp.json；按需 profile 仅在 mcp-configs/ 声明
   → 重启 Claude Code
 ```
@@ -102,6 +102,21 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 **playwright / chrome-devtools** — 互补（Driving vs Debugging）；Claude 用插件 / `mcp-configs/debug.json` 按需；Cursor 优先内置 `cursor-ide-browser`
 
 **架构替代链** — 统一 `codegraph`（R17）
+
+## 双平台工具对照（v11 自 RUNTIME_PLAYBOOK 并入）
+
+| 能力           | Claude Code                    | Cursor                             |
+| -------------- | ------------------------------ | ---------------------------------- |
+| 代码探索       | codegraph MCP                  | user-codegraph                     |
+| 架构/ADR       | codegraph_explore              | 同左（cbm 已禁用）                 |
+| 变更后审查     | code-review-graph MCP          | user-code-review-graph             |
+| 符号级编辑     | serena MCP                     | user-serena                        |
+| 网页调研       | firecrawl MCP                  | user-firecrawl / firecrawl skill   |
+| 搜索           | exa MCP                        | Exa **plugin**（勿双挂 mcp 条目）  |
+| 文档           | context7 MCP                   | user-context7                      |
+| 跨仓代码搜索   | grep MCP                       | user-grep                          |
+| GitHub         | github MCP（官方远端）/ `gh`   | user-github                        |
+| 浏览器         | playwright **插件**            | 内置 `cursor-ide-browser`          |
 
 ## 验证清单
 

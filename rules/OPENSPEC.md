@@ -35,7 +35,7 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 | `/opsx:sync` | 将 delta specs 同步到主 spec |
 | `/opsx:archive` | 归档到 `archive/` |
 | `/opsx:bulk-archive` | 批量归档（检测冲突） |
-| `/opsx:onboard` | CLI 引导（11 阶段）；Cursor 用 `skill/onboarding-guide` |
+| `/opsx:onboard` | CLI 引导（11 阶段）；Cursor 用 `catalog/skills/onboarding-guide`（v11 降级 catalog） |
 
 ## 触发条件
 
@@ -44,7 +44,7 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 | 新功能 ≥3 文件变更 | OpenSpec |
 | 小修复 <3 文件 | 轻量 `spec/<project>/` |
 | 多阶段大功能 | GSD + workstreams |
-| 新人引导 | skill/onboarding-guide |
+| 新人引导 | catalog/skills/onboarding-guide（按需复制） |
 
 ## CLI 安装（v1.4.1 core profile，含 sync）
 
@@ -54,7 +54,7 @@ openspec init --tools cursor --force         # 项目内生成 .cursor/skills + 
 openspec update                              # 刷新 agent skills
 ```
 
-> v1.4.1 仅 `core` preset；`sync` 已默认包含。`verify`/`bulk-archive`/`onboard` 见本地 commands + onboarding-guide。
+> v1.4.1 仅 `core` preset；`sync` 已默认包含。`verify`/`bulk-archive`/`onboard` 见本地 commands + catalog/skills/onboarding-guide。
 
 ## 门控
 

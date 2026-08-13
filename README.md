@@ -1,46 +1,47 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v10.17.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md` | 运行时: `docs/RUNTIME_PLAYBOOK.md`
+> 五柱 × 五阶段 × 三横切 | **v11.1.1** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
-| 文件                | 用途                                         |
-| ------------------- | -------------------------------------------- |
-| `CLAUDE.md`         | 入口 — 优先级链 + 铁律 R1-R19 + 路由         |
-| `CLAUDE-ROUTER.mdc` | Tool-First 路由 — P0 路由集 + L0–L3 加载等级 |
-| `SPEC.md`           | 配置法典（v10.17.0）                         |
-| `MANIFEST.yaml`     | 组件唯一归属 + 防互博                        |
-| `.mcp.json`         | MCP 常驻配置；ops/optional 见 `mcp-configs/` |
-| `settings.json`     | 运行时配置                                   |
+| 文件            | 用途                                                                                |
+| --------------- | ----------------------------------------------------------------------------------- |
+| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R19（v11 并入 ROUTER） |
+| `SPEC.md`       | 配置法典（v11.1.1）                                                                 |
+| `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
+| `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
+| `settings.json` | 运行时配置                                                                          |
 
 ## 目录
 
-| 目录         | 内容                                                                 |
-| ------------ | -------------------------------------------------------------------- |
-| `skills/`    | 45 技能（→ [skills-INDEX.md](skills-INDEX.md)）                      |
-| `agents/`    | 25 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                    |
-| `rules/`     | 12 规则（→ [rules-INDEX.md](rules-INDEX.md)）                        |
-| `hooks/`     | 生命周期钩子（激活核心 + `_archive/` 非激活资产库 + `_deprecated/`） |
-| `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                    |
-| `docs/`      | RUNTIME_PLAYBOOK + SYNC_GUIDE + research/（调研 SSOT）+ ADR/         |
-| `scripts/`   | sync.ps1、validate_config.py、check.ps1                              |
-| `templates/` | OpenSpec/GSD/DESIGN 模板                                             |
+| 目录         | 内容                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `skills/`    | 36 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
+| `agents/`    | 16 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
+| `rules/`     | 10 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
+| `hooks/`     | 生命周期钩子（16 注册激活 + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
+| `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
+| `docs/`      | SYNC_GUIDE + research/（调研 SSOT）+ ADR/（RUNTIME_PLAYBOOK 已并入 CLAUDE.md/rules） |
+| `scripts/`   | sync.ps1、validate_config.py、check.ps1                                              |
+| `templates/` | OpenSpec/GSD/DESIGN 模板                                                             |
 | `catalog/`   | 按需变体库 101+43+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
 
 ## 五柱骨架
 
 Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
 
-## 同步到编辑器
+## 同步（v11.1 多编辑器 1+N）
+
+Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（home 缺席自动跳过）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # L0 入口（推荐）
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
 powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + 全部 rules + agents
+powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
 ```
 
-- L0：CLAUDE.md + CORE + ROUTER 链接/复制到各编辑器全局目录（Cursor 规则为实体副本）
-- **去重策略**：同类型同名先删后写；回归 `scripts/test-sync-dedup.ps1`
+- 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
+- **常量单源**：`config/sync-manifest.json`（root_files + editors）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
 - 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md)
 
 hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
@@ -48,12 +49,14 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 ## 验证
 
 ```powershell
-python _validate_config.py        # 配置校验（含 R16 裸 except 扫描）
-powershell scripts/check.ps1      # 一致性体检
+python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
+powershell scripts/check.ps1        # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v10.17.0**（2026-08-12）— MCP 收敛 9 项三层（chrome-devtools/fs 降级按需）+ 判定逻辑单源化 + 执行层硬化（重复处理/遗漏/回归三门机械化）+ 同步链修复
-- 变更史：`SPEC.md` 末尾 changelog 链
+- 当前：**v11.1.1**（2026-08-13）— 问题指纹判定重构（相似匹配 + 中文 bigram + 泛化追问续接 + resolved 回归升级，单测 21 用例）
+- 前版：v11.1.0（2026-08-13）— 多编辑器同步恢复 1+N（sync v20.0：Cursor + qoder-cn/trae-cn/workbuddy，清单单源 sync-manifest editors 段）+ 全局去重（计数/分级漂移、断链、四命令薄壳化）
+- 前版：v11.0.0（2026-08-12，深度重构）— 治理文档 8→6 根文件 + skills 45→36 / agents 25→16 / rules 12→10 + codegraph v1.5 自动同步接管 + 变更史外置 CHANGELOG.md
+- 变更史：`CHANGELOG.md`
 - 调研 SSOT：`docs/research/44-repo-deep-research-v10.11.md` + `COVERAGE.md`

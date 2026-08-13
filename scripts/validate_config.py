@@ -42,12 +42,13 @@ CORE_AGENTS = {
 GSTACK_REVIEW_AGENTS = {
     "eng-reviewer", "ceo-reviewer", "designer", "dx-reviewer", "qa", "security-reviewer",
 }
+# v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
+# product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "cso", "sre", "release-engineer", "product-manager",
-    "design-engineer", "performance-engineer", "doc-writer",
+    "sre", "doc-writer", "codex-reviewer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 25
+GLOBAL_AGENTS_MAX = 16  # v11: 7 核心 + 6 审查 + 3 补全
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
@@ -56,30 +57,30 @@ P0_SKILLS = {
 WORKFLOW_SKILLS = {
     "writing-plans", "executing-plans", "test-driven-development",
     "subagent-driven-development", "using-git-worktrees", "receiving-code-review",
-    "requesting-code-review", "finishing-a-development-branch", "writing-skills",
-}
+    "requesting-code-review", "finishing-a-development-branch",
+}  # v11: writing-skills 并入 skill-creator 前言
 META_SKILLS = {
     "memory-compression", "spec-validation", "karpathy-guidelines", "caveman-compress",
 }
+# v11: office-hours/browser-qa/instinct-learning/onboarding-guide/claude-to-deerflow/taste-memory 降级 catalog/skills/；
+# context-engineering 删除（rules/CONTEXT.md 为唯一正文）；frontend-refactor-proposer 并入 code-refactoring
 EXTENSION_SKILLS = {
-    "autoplan", "browser-qa", "design-pipeline", "ship", "office-hours",
-    "context-engineering", "structured-artifacts", "instinct-learning",
+    "autoplan", "design-pipeline", "ship", "structured-artifacts",
 }
 MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
 V9_SKILLS = {
-    # architecture guidance uses codegraph + codebase-memory
     "workstream-management", "adr-management",
-    "onboarding-guide", "claude-to-deerflow", "taste-memory",
 }
 REQUIRED_SKILLS = (
     P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
     | MATTPOCOCK_SKILLS | V9_SKILLS
 )
-GLOBAL_SKILLS_MAX = 45  # v10.10: 对齐实际 45（零触发技能保持观察）
+GLOBAL_SKILLS_MAX = 36  # v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
 
+# v11: DESIGN.md 并入 FRONTEND.md（设计系统节）；BESTPRACTICE.md 并入 GOVERNANCE.md（最佳实践详参章）
 GLOBAL_RULES = {
-    "CORE.md", "BESTPRACTICE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
-    "AGENTS.md", "MCP.md", "DESIGN.md", "CONTEXT.md", "OPENSPEC.md",
+    "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
+    "AGENTS.md", "MCP.md", "CONTEXT.md", "OPENSPEC.md",
     "FRONTEND.md", "GOVERNANCE.md",
 }
 
@@ -370,7 +371,7 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v10 VALIDATION (19 checks) ===")
+    print("=== .claude v11 VALIDATION (19 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
@@ -425,27 +426,43 @@ def check_v10_bare_except():
 
 def check_v11_hook_exception_propagation():
     """V11: Hook异常传播率100%（核心hooks无静默吞异常）"""
+    # v11: post-codegraph-sync / stop-knowledge-graph-sync 已退役（codegraph v1.5 MCP 自动同步接管）
+    # v11.1: 补漏登记 pre-userprompt-issue-tracker（settings.json 已注册）；
+    #        pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor
+    #        为「保留未注册」（原生机制或 Cursor Guard 已覆盖），仅做存在性检查
     core_hooks = [
         "session-start-bootstrap.py", "pre-userprompt-verify-gate.py",
-        "pre-bash-guard.py", "pre-rtk-rewrite.py", "pre-tmux-reminder.py",
+        "pre-userprompt-issue-tracker.py",
+        "pre-bash-guard.py", "pre-rtk-rewrite.py",
         "pre-read-before-edit.py", "pre-edit-impact-nudge.py",
-        "pre-context-injector.py", "pre-manifest-validator.py", "pre-loop-guard.py",
-        "pre-suggest-compact.py", "pre-compact-state.py",
-        "post-secret-detector.py", "post-edit-format.py", "post-codegraph-sync.py",
+        "pre-context-injector.py", "pre-manifest-validator.py",
+        "pre-compact-state.py",
+        "post-secret-detector.py", "post-edit-format.py",
         "post-edit-verify-tracker.py",
-        "stop-verification-gate.py", "stop-context-monitor.py",
+        "stop-verification-gate.py",
         "stop-session-summary.py", "stop-readme-updater.py",
-        "stop-knowledge-graph-sync.py",
+    ]
+    optional_hooks = [
+        "pre-tmux-reminder.py", "pre-loop-guard.py",
+        "pre-suggest-compact.py", "stop-context-monitor.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")
     missing = []
     for h in core_hooks:
         if not os.path.exists(os.path.join(hooks_dir, h)):
             missing.append(h)
+    missing_optional = [
+        h for h in optional_hooks
+        if not os.path.exists(os.path.join(hooks_dir, h))
+    ]
     if missing:
         WARNINGS.append(f"V11: 缺少核心hooks: {', '.join(missing)}")
     else:
-        print(f"  V11: {len(core_hooks)}核心hooks存在 ✓")
+        print(f"  V11: {len(core_hooks)}核心hooks(已注册)存在 ✓")
+    if missing_optional:
+        WARNINGS.append(f"V11: 缺少保留未注册hooks: {', '.join(missing_optional)}")
+    else:
+        print(f"  V11: {len(optional_hooks)}保留未注册hooks存在 ✓")
 
 def check_v12_r16_in_core():
     """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
@@ -491,11 +508,16 @@ def check_v13_cursor_guard():
         print(f"  V13: Cursor Guard 模板 {len(required_hooks)} hooks ✓")
 
 
-SKILL_TIER_L1 = {"using-superpowers", "change-impact-analysis", "task-triage"}
+# v11: 对齐 MANIFEST loading_tiers（SSOT）——brainstorming 属 L1（P0 路由集常驻）；
+# subagent-driven-development 自 v10.15 默认关闭改 L3（显式触发），随 TDD 一并落 L3 默认档
+SKILL_TIER_L1 = {"using-superpowers", "change-impact-analysis", "task-triage", "brainstorming"}
 SKILL_TIER_L2 = {
-    "brainstorming", "writing-plans", "spec-validation", "executing-plans",
-    "subagent-driven-development", "verification-before-completion", "systematic-debugging",
+    "writing-plans", "spec-validation", "executing-plans",
+    "verification-before-completion", "systematic-debugging",
 }
+# L1 中唯一带 HARD-GATE 的技能：保留 disable-model-invocation，防 Cursor 触发词自动激活，
+# 仅经 ROUTER/门控显式 Read（MANIFEST note: Cursor 用 disable + 显式 Read）
+L1_DISABLE_EXEMPT = {"brainstorming"}
 
 
 def _parse_skill_frontmatter(skill_path):
@@ -545,7 +567,7 @@ def check_v15_loading_tiers():
                 f"V15: skills/{name}/SKILL.md loading_tier={actual!r} expected {expected}"
             )
         has_disable = fm.get("disable-model-invocation") == "true"
-        if expected == "L1" and has_disable:
+        if expected == "L1" and has_disable and name not in L1_DISABLE_EXEMPT:
             ERRORS.append(f"V15: L1 skill {name} must not have disable-model-invocation")
         if expected in ("L2", "L3") and not has_disable:
             ERRORS.append(f"V15: {expected} skill {name} missing disable-model-invocation: true")
@@ -594,7 +616,7 @@ def check_v14_cursor_guard_v11():
     if not os.path.isfile(rule):
         ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
-        print(f"  V14: Cursor Guard v1.1 ({len(v11_hooks)} hooks + docs) ✓")
+        print(f"  V14: Cursor Guard v1.2 ({len(v11_hooks)} hooks + docs) ✓")
 
 
 def check_v17_auto_compact_window():

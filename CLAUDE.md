@@ -1,16 +1,23 @@
 ---
-description:
+description: Claude 配置总纲 — Tool-First 路由 + 五阶段 + 铁律（多端 L0 必加载）
 alwaysApply: true
+layer: router
 ---
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 路由→`CLAUDE-ROUTER.mdc` | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v10.17.0**
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.1.1**（ROUTER/agent.yaml/RUNTIME_PLAYBOOK 已并入；同步 1+N 多编辑器）
 
-**五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.12.4(记忆)
+**五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
 
----
+## 总纲链（Tool-First Read，禁止凭记忆执行）
+
+1. **路由入口** — 本文件（编辑器目录 `CLAUDE.md` 软链 → `~/.claude/CLAUDE.md`）
+2. **归属矩阵** — `MANIFEST.yaml`（含 harness 清单：hooks 注册/命令/MCP profile，v11 吸收原 agent.yaml）
+3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
+4. **法典** — `SPEC.md`（变更史 → `CHANGELOG.md`）
+5. **按需加载**（任务触发后再 Read，禁止全量扫描）：`skills/<name>/SKILL.md` | `agents/<name>.md` | `rules/<name>.md`（治理详情+最佳实践 → `rules/GOVERNANCE.md`）
 
 ## 优先级链
 
@@ -19,21 +26,44 @@ alwaysApply: true
 工具路由: codegraph → Grep（codebase-memory 已禁用）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
 ```
 
----
+## P0 路由集（6）= L1×4 + L2 门控×2
+
+| Skill                          | 等级 | 触发                                                      |
+| ------------------------------ | ---- | --------------------------------------------------------- |
+| using-superpowers              | L1   | 会话开始、分类路由                                        |
+| task-triage                    | L1   | 会话开始分类、新任务（判定条件 SSOT，禁止凭本表缩写自判） |
+| change-impact-analysis         | L1   | 任何修改意图                                              |
+| brainstorming                  | L1   | 非简单 ①规划（grill→HARD-GATE）                           |
+| verification-before-completion | L2   | ④验收                                                     |
+| systematic-debugging           | L2   | Bug/调试                                                  |
+
+**简单 = Phase0 已盘点 + 关联需改≤2 + 白名单 + 六维全低 + 模型匹配低 + attempt=1（缺一不可）**；持续处理（attempt≥2/首轮未解决）→ 执行升档非简单 + verify_tier=全量。六维矩阵与黑白名单正文只在 `skills/task-triage/SKILL.md`，**禁止在别处复制**。
+
+## 加载等级 L0–L3
+
+| 等级 | 内容                                                                              | 机制                                       |
+| ---- | --------------------------------------------------------------------------------- | ------------------------------------------ |
+| L0   | 本文件 + rules/CORE.md                                                            | alwaysApply (~6K tokens)                   |
+| L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming（会话常驻） | L1 按需全文 Read                           |
+| L2   | writing-plans / executing-plans / verification / debugging                        | 阶段触发 Read 全文                         |
+| L3   | 所有其他 skills/rules/agents/MCP/Firecrawl/Exa                                    | description 触发词 + slash 路由，按需 Read |
 
 ## 五阶段流程（SSOT）
+
+> 任务入口前置：疑似重复/相关历史 → 先 `claude-mem search`（R18）→ L1 using-superpowers + task-triage（Phase0 盘点）。
 
 ```
 简单(Phase0盘点+关联需改≤2+白名单+六维全低+模型匹配+attempt=1) → L1 change-impact → 一次改齐 → ④验证(比例)
 Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-debugging(根因分析) → ④全量验证
-非简单 → ①grill访谈(一次一问+推荐答案) → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
+非简单 → ①grill访谈(一次一问+推荐答案，≤5问) → ①规划(Read skills/brainstorming/SKILL.md HARD-GATE)
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
        → ⑤学习
+非简单 调研 → deep-research（L3 双源）
 ```
 
-> 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理（attempt≥2/首轮未解决）→ **执行升档非简单** + verify_tier=全量。
+> 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理（attempt≥2/首轮未解决）→ **执行升档非简单** + verify_tier=全量。简单旁路不 Read executing-plans/subagent-driven-development。
 
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
 
@@ -41,15 +71,13 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 **显式触发（v10.15）**：TDD(RED→GREEN→REFACTOR) 与 SDD(subagent-driven-development 子Agent派发) **仅用户明确要求时启用**；默认非简单走 ①-⑤ 骨架由主会话直接执行，不强制写测试先行、不强制子Agent派发。
 
 ```
-门控:
-  ① 规划: HARD-GATE 用户批准设计 ✓
-  ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope
-  ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)
-  ④ 验证: 质量门全通过 + 交叉验证通过
-  ⑤ 学习: 模式提取完成
+门控（失败转移）:
+  ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
+  ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
+  ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
+  ④ 验证: 质量门全通过 + 交叉验证通过（未全绿 → DONE_WITH_CONCERNS 需说明）
+  ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
-
----
 
 ## 铁律 R1–R19
 
@@ -75,28 +103,24 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem        | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit                 | CORE.md |
 
----
-
-## Tool-First 路由
+## Tool-First 路由与场景-工具映射
 
 ```
 MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 ```
 
-> **代码探索（R17 铁律）** → SSOT `rules/CORE.md`：codegraph_explore 首选（禁止直接 Grep/Read）；codebase-memory 已禁用（全盘索引爆 CPU/内存）；为什么/偏好 → claude-mem。
+| 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
+| ---------------------- | ------------------- | ------------------- | ------------------------- |
+| 结构/调用链/局部影响面 | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
+| 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |
+| 网页深度调研           | `Firecrawl+Exa`     | WebFetch            | /deep-research 或调研意图 |
+| Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
+| 输出压缩               | caveman             | 原生输出            | 上下文>70%                |
 
-**五轨**：codegraph(R17) | Firecrawl+Exa | claude-mem(R18) | Context7
-**Token**：RTK(shell) + caveman(输出) + codegraph(探索)
-**阈值**：见 CORE.md 三级阈值 | GSD **70%逻辑断点**（任务边界） | ⛔100%
-**压缩**：Cursor→`/summarize`；Claude Code→`/compact`
+**阈值**：见 CORE.md 三级阈值 | GSD **70%逻辑断点**（任务边界） | ⛔100% | **压缩**：Cursor→`/summarize`；Claude Code→`/compact`（auto-compact 配置 → `rules/CONTEXT.md`）
+**调研三档**（L1→L2→L3决策标准） → `skills/deep-research/SKILL.md` | **规格三轨**（OpenSpec/GSD/轻量，互斥） → `rules/OPENSPEC.md`
 
-**P0路由集** → `CLAUDE-ROUTER.mdc` | **加载等级 L0–L3** → `CLAUDE-ROUTER.mdc`
-**调研三档**（L1→L2→L3决策标准） → `skills/deep-research/SKILL.md`
-**规格三轨**（OpenSpec/GSD/轻量，互斥） → `rules/OPENSPEC.md`
-
----
-
-## 工具调用门控（v10.5.2新增）
+## 工具调用门控
 
 **禁止场景**（违反即阻断）：
 
@@ -107,21 +131,18 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 **强制场景**（HARD-GATE）：
 
-- 任务分类：必须 Read `skills/task-triage/SKILL.md`（Phase0 盘点；简单=关联需改≤2+白名单+六维全低+模型匹配+attempt=1；持续处理→执行升档非简单；非简单先 grill；完成前均须验证）
+- 任务分类：必须 Read `skills/task-triage/SKILL.md`（Phase0 盘点；持续处理→执行升档非简单；非简单先 grill；完成前均须验证）
 - ①规划阶段：必须 Read `skills/brainstorming/SKILL.md`（用户批准设计前禁止实现）
 - ④验证阶段：必须 Read `skills/verification-before-completion/SKILL.md`
 - Bug修复：必须 Read `skills/systematic-debugging/SKILL.md`
-
----
 
 ## 审查路由
 
 ```
 所有变更→eng-reviewer | 产品→+ceo | UI/UX→+designer+dx-reviewer
-安全→+security-reviewer | iOS→+ios-specialist | 跨模型→+codex-reviewer
+安全→+security-reviewer(全量审计=深度模式) | 跨模型→+codex-reviewer
+iOS/部署/多方案设计→catalog/agents/ 按需启用
 ```
-
----
 
 ## 命令速查
 
@@ -133,31 +154,25 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | /adr                                  | ①        | 架构决策                   |
 | /opsx:sync                            | ②        | OpenSpec delta 同步主 spec |
 
-> 命令全集 → `commands/`（18 个）；deer-flow 外部编排经 `skills/claude-to-deerflow` 触发（无独立命令）。
-
-**OpenSpec OPSX**：`/opsx:propose` → `continue|ff` → `apply` → `verify` → `sync` → `archive` | CLI: `openspec init --tools cursor`（profile: core）
-
----
+> 命令全集 → `commands/`（18 个，命令为薄壳，正文在对应 skill）；deer-flow 编排经 `catalog/skills/claude-to-deerflow` 按需复制启用。
+> **OpenSpec OPSX**：`/opsx:propose` → `continue|ff` → `apply` → `verify` → `sync` → `archive` | CLI: `openspec init --tools cursor`（profile: core）
 
 ## 指针
 
-| 内容              | 位置                                                    |
-| ----------------- | ------------------------------------------------------- |
-| 路由入口/加载等级 | CLAUDE-ROUTER.mdc                                       |
-| 归属矩阵          | MANIFEST.yaml                                           |
-| 法典/架构         | SPEC.md (v10.17.0)                                      |
-| 铁律/编码/阈值    | rules/CORE.md                                           |
-| 工作流/DAG        | rules/WORKFLOW.md                                       |
-| Agent 协作        | rules/AGENTS.md                                         |
-| 调研 SSOT         | docs/research/44-repo-deep-research-v10.11.md + repos/  |
-| 同步指南          | docs/SYNC_GUIDE.md                                      |
-| MCP 规范          | docs/TOOL_MATCHING_GUIDE.md, docs/CURSOR_MCP_PROFILE.md |
-| Git/PR 流程       | skills/git-workflow, skills/pr-workflow                 |
-| 记忆搜索          | claude-mem (R18)                                        |
+| 内容             | 位置                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| 归属矩阵/harness | MANIFEST.yaml                                                                            |
+| 法典/架构        | SPEC.md (v11.1.1) + CHANGELOG.md                                                         |
+| 铁律/编码/阈值   | rules/CORE.md                                                                            |
+| 工作流/DAG       | rules/WORKFLOW.md                                                                        |
+| Agent 协作       | rules/AGENTS.md                                                                          |
+| MCP 规范 SSOT    | rules/MCP.md（矩阵→docs/TOOL_MATCHING_GUIDE.md；Cursor 差异→docs/CURSOR_MCP_PROFILE.md） |
+| 调研 SSOT        | docs/research/44-repo-deep-research-v10.11.md + repos/                                   |
+| 同步指南         | docs/SYNC_GUIDE.md                                                                       |
+| Git/PR 流程      | skills/git-workflow, skills/pr-workflow                                                  |
+| 记忆搜索         | claude-mem (R18)                                                                         |
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1`（v18.4）— 软链 L0 入口（8 个总纲/索引根文件，除 workbuddy 外全编辑器）+ Cursor local plugin 实体规则（唯一规则通道）；skills/agents/rules 按需 Read，不复制。
-**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init`；探索一律 codegraph_explore（R17），索引缺失→`scripts/cbm-index.ps1` 已弃用，改 `codegraph init`；codebase-memory 已禁用。
-**Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。
-
-**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`（按需 Read，不常驻全文）。
+**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
+**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init && codegraph index`；探索一律 codegraph_explore（R17）；codebase-memory 已永久禁用（相关索引脚本已删除）。
+**Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`。

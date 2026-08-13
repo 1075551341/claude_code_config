@@ -40,7 +40,7 @@ Claude Code（主）| Cursor | Codex CLI | Warp | Neovim
 
 ## α/Ω 元技能
 
-- **α-提示词（生成器）**：唯一职责是生成其他提示词或技能 → 对应 skill/writing-skills
+- **α-提示词（生成器）**：唯一职责是生成其他提示词或技能 → 对应 skill/skill-creator（v11：writing-skills 已并入其前言）
 - **Ω-提示词（优化器）**：唯一职责是优化其他提示词或技能 → 对应 skill/instinct-learning
 
 ## 五步协作流程

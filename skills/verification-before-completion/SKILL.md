@@ -166,6 +166,24 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 □ 破坏性变更已标注迁移指南
 ```
 
+### 质量门（v11 自 /verify 并入；stop-verification-gate.py 消费 config/quality_gates.json）
+
+```
+□ Schema Drift: ORM/model 变更缺 migration → 启发式提醒（model/ORM 文件变更无 migration）
+□ Security Anchor: auth 相关变更 → 提醒绑定威胁模型
+□ Scope Reduction: 存在活跃 plan/spec 制品 → 强制对照 tasks 清单确认无静默缩范围
+```
+
+### 审查委派（非简单任务必须；v11 自 /verify 并入）
+
+```
+□ 代码文件变更 ≥3 个 → 委派 eng-reviewer（只读审查 diff）获取 PASS/NEEDS-CHANGES
+□ 项目已建 code-review-graph → 调用 detect_changes_tool 检查 test-gap 与高风险函数
+```
+
+> 「≥3 个」是 Stop 门按**会话累计编辑数**触发的代理规则，与 task-triage 六维分类不是同一维度：
+> 2 文件的非简单任务不触发本项，但 verify_tier 仍为全量。分类 SSOT → `skills/task-triage/SKILL.md`。
+
 ## 失败与升级
 
 - 验证失败 → **不声称完成**；输出失败项 + 修复方案

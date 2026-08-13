@@ -70,7 +70,9 @@ $ErrorActionPreference = "SilentlyContinue"
 $CLAUDE_DIR   = Join-Path $env:USERPROFILE ".claude"
 $HOOKS_DIR    = Join-Path $CLAUDE_DIR "hooks"
 $SETTINGS     = Join-Path $CLAUDE_DIR "settings.json"
-$ALL_EDITORS  = @("cursor", "trae", "qoder", "workbuddy", "codearts")
+# v11.1 多编辑器（1+N）：managed 清单与 sync-manifest.json editors 段对齐；
+# 目录缺席自动跳过（launcher 内嵌的 trae/qoder/windsurf 探测串是运行时防御，独立于此表）
+$ALL_EDITORS  = @("cursor", "qoder-cn", "trae-cn", "workbuddy", "qoder", "trae", "codeartsdoer")
 $LAUNCHER_NAME = "_editor_hook_launcher.py"
 $LAUNCHER_PATH = Join-Path $HOOKS_DIR $LAUNCHER_NAME
 
@@ -588,7 +590,7 @@ foreach ($editor in $ALL_EDITORS) {
     $editorDir = Join-Path $env:USERPROFILE ".$editor"
     if (-not (Test-Path $editorDir)) { continue }
     $ign = Join-Path $editorDir ".${editor}ignore"
-    "# Claude Code internal dirs`nhooks/`nplugins/`nbackups/`nlogs/`nexperiences/`nplans/" |
+    "# Claude Code internal dirs`nhooks/`nplugins/`nbackups/`nlogs/`nplans/" |
         Out-File -FilePath $ign -Encoding utf8
     Write-Fix "已更新 .${editor}ignore"
 }

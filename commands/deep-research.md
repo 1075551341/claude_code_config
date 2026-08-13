@@ -4,40 +4,14 @@ description: L3 深度调研（Firecrawl+Exa+交叉验证，Read skills/deep-res
 
 # /deep-research — 深度调研
 
-系统化深度研究：广度探索 → 深度下钻 → 多样性验证 → 综合检查。
+L3 调研入口：**Read `skills/deep-research/SKILL.md`**（工具链、L1→L2→L3 三档升级决策、验证协议 SSOT；v11.1 薄壳化，分级表不复写）。
 
-## 调研分级（using-superpowers SSOT）
+前置：claude-mem search（R18）；项目内代码用 codegraph_explore（非本链）。
 
-| 档位   | 场景                           | 加载                                 |
-| ------ | ------------------------------ | ------------------------------------ |
-| L1     | 单点事实、API 签名             | Context7 或 Exa 单次                 |
-| L2     | 方案对比、最佳实践             | Exa + Firecrawl 单页                 |
-| **L3** | 本命令、技术选型、竞品全面分析 | Read `skills/deep-research/SKILL.md` |
+输出要求：关键结论 ≥2 个独立来源交叉验证；标注时效性与可信度；矛盾信息显式列出；禁止仅凭训练数据断言。
 
-**升级**：L1 不足 → L2；L2 不足或用户 `/deep-research` → L3。禁止无因跳级。
-
-**前置**：claude-mem search（R18）→ 项目内代码用 codegraph（非 Firecrawl）。
-
-## L3 执行链
-
-1. Read `skills/deep-research/SKILL.md`
-2. **Firecrawl**（`user-crawl` MCP）抓取网页
-3. **Exa** 语义搜索补充来源
-4. **Context7** 验证库/API 声明
-5. **codegraph** 仅项目内结构（非网页调研）
-
-## 输出要求
-
-- 关键结论至少 **2 个独立来源** 交叉验证
-- 标注信息时效性与可信度
-- 矛盾信息显式列出，不掩盖不确定性
-- 禁止仅凭训练数据断言
-
-## 与执行区分
-
-| 类型               | 路由                                |
-| ------------------ | ----------------------------------- |
-| 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa              |
-| 代码库结构探索     | codegraph（R17 主位；cbm 已禁用）  |
-| 功能实现           | /plan → /execute（非本命令）        |
-| >30min 自主编排    | L3 `claude-to-deerflow`（非本命令） |
+| 类型               | 路由                   |
+| ------------------ | ---------------------- |
+| 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa |
+| 项目内代码结构     | codegraph_explore      |
+| 库/API 文档        | Context7               |

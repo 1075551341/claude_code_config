@@ -4,7 +4,7 @@
 > 本目录是**变体库**，不参与全局加载，只在 `migrate-from-legacy.py --skill|--agent|--rule`
 > 复制到项目 `.claude/` 时使用。同名项一律以顶层权威版为准。
 
-规模：skills 101 / agents 43 / rules 15
+规模：skills 107 / agents 48 / rules 15
 
 ## 同名项消歧（权威在顶层，此处为变体，勿加载）
 
@@ -14,7 +14,7 @@
 | agents | `ceo-reviewer`, `designer`, `eng-reviewer`, `qa`, `security-reviewer` |
 | rules | （无） |
 
-## Skills（101）
+## Skills（107）
 
 | 名称 | 说明 |
 | ---- | ---- |
@@ -27,11 +27,13 @@
 | `api-testing` | 测试API接口、执行接口测试、验证API响应 |
 | `article-extractor` | 从网页提取完整文章内容和元数据 |
 | `aws-cloud` | 部署AWS云服务、配置AWS资源、编写CloudFormation/IAM策略、使用AWS CLI/SDK |
+| `browser-qa` | 浏览器QA测试，真实浏览器点击验证，发现bug并原子提交修复。 |
 | `caching-strategy` | 设计缓存策略、使用Redis缓存、配置CDN缓存、解决缓存穿透/雪崩/击穿问题 |
 | `capacitor-app` | 开发混合移动应用、使用Capacitor/Ionic框架、将Web应用打包为移动应用 |
 | `changelog-generator` | 生成变更日志 |
 | `cicd-pipeline` | 配置CI/CD流水线、设置GitHub Actions/GitLab CI、实现自动化构建部署 |
 | `claude-api` | Claude API / Anthropic SDK 开发指南。触发：使用 Claude API、Anthropic SDK、构建 AI 应用、Managed Agents |
+| `claude-to-deerflow` | deer-flow 外部编排引擎桥接。触发词：deer-flow | 外部编排 | LangGraph | 长时任务 | /deer-flow |
 | `code-refactor` | 重构代码 |
 | `code-standards` | 制定代码规范 |
 | `command-reference` | 常用CLI命令速查表 |
@@ -64,6 +66,7 @@
 | `handoff` | 将当前会话压缩为 handoff 文档，供新会话或子 agent 续作。触发：/clear 前、子 agent 切换、长任务断点。excludes claude-mem SSO |
 | `i18n-support` | 实现前端国际化 |
 | `incremental-arch` | 增量架构同步，基于 AST 感知分块和 Merkle DAG 实现高效上下文更新 |
+| `instinct-learning` | 本能学习（Ω-提示词优化器）。触发词：instinct learning | 本能学习 | 提示词优化 | 自我改进 |
 | `internal-communication` | 编写内部沟通邮件 |
 | `invoice-organizer` | 整理发票 |
 | `ios-native-dev` | 开发iOS原生应用、使用Swift/Objective-C开发iPhone/iPad应用、实现iOS UI界面 |
@@ -88,6 +91,8 @@
 | `nodejs-backend` | 开发Node.js后端应用、使用Express/Koa/NestJS框架、编写后端API服务 |
 | `notion-integration` | 使用Notion API |
 | `office-docs` | 办公文档处理。触发：写报告 |
+| `office-hours` | 六问产品框架。触发词：office hours | 六问框架 | 产品分析 | 需求深挖 | /office-hours |
+| `onboarding-guide` | 新人 onboarding 引导。触发词：onboarding | 新人引导 | 项目入门 | 快速上手 |
 | `pdf` | 处理PDF文件、提取PDF文本、合并拆分PDF、填写PDF表单 |
 | `performance-optimization` | 优化系统性能 |
 | `pptx` | 创建PPT演示文稿、编辑pptx文件，制作幻灯片 |
@@ -108,6 +113,7 @@
 | `sql-database` | 编写SQL查询、优化数据库性能、设计SQL索引、使用MySQL/PostgreSQL |
 | `state-management` | 管理前端状态、使用Redux/Pinia/Zustand、设计全局状态存储 |
 | `supabase-backend` | 使用 Supabase 构建 BaaS 后端服务 |
+| `taste-memory` | 品味记忆学习（UI 偏好跨会话）。触发词：taste memory | 品味记忆 | UI偏好 | 设计偏好学习 |
 | `theme-config` | 配置主题样式、设计暗色模式、配置Ant Design/Element Plus主题 |
 | `typescript` | 编写TypeScript类型、解决类型错误、使用泛型/高级类型、实现类型安全 |
 | `ui-ux-pro-max` | UI/UX设计知识库，67风格+161色板+99UX指南，CSV数据驱动设计决策。触发词：UI设计、UX、设计系统、landing、dashboard。 |
@@ -120,7 +126,7 @@
 | `websocket-server` | WebSocket 服务端开发与实时通信 |
 | `xlsx` | 处理Excel表格、操作xlsx文件、处理CSV数据 |
 
-## Agents（43）
+## Agents（48）
 
 | 名称 | 说明 |
 | ---- | ---- |
@@ -136,6 +142,7 @@
 | `csharp-reviewer` | C# / .NET 代码审查专家。触发：C# 代码审查、.NET 项目质量检查、ASP.NET Core 审查 |
 | `data-engineer` | 负责数据工程相关任务。当需要构建ETL数据管道、设计数据仓库、处理数据清洗转换、实现数据同步方案、构建数据报表系统、处理大数据任务、设计数据湖方案、实现实时流数据处理时调用此A |
 | `database-expert` | 数据库全栈专家，覆盖架构设计、审查优化、SQL编写与数据迁移。触发词：数据库设计、数据库架构、表设计、索引设计、数据建模、分库分表、数据迁移、数据库选型、PostgreSQL、 |
+| `design-shotgun` | 设计探索器，生成 4-6 个 AI mockup 变体，浏览器比较板，品味记忆学习。触发词：设计方案、多方案对比、mockup、UI探索、shotgun。 |
 | `designer` ⚠️变体 | UI/UX 审查（UI/交互变更时启用）。触发词：设计审查、UI审查、交互审查、design review。 |
 | `devops-engineer` | DevOps/运维专家，覆盖 CI/CD、容器化、Terraform/IaC、监控告警与自动化部署。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、 |
 | `docs-expert` | 文档专家，覆盖文档生成和文档查找。当需要生成API文档、编写README文件、添加代码注释、生成JSDoc/docstring、编写接口文档、创建技术说明文档、编写开发指南、生 |
@@ -145,14 +152,18 @@
 | `git-expert` | Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践、Git Worktree并行开发。触发词：Git、合并冲突、分支策 |
 | `go-reviewer` | Go代码审查专家。专注于Go语言特性、并发安全、错误处理和性能优化。当需要审查Go代码、goroutine使用、channel操作时调用此Agent。触发词：Go审查、Go代码 |
 | `incident-responder` | 负责生产故障响应和处理任务。当生产环境发生故障、服务宕机、性能严重下降、数据异常、安全事件需要紧急处理时调用此Agent。触发词：生产故障、服务宕机、系统崩溃、紧急故障、P0故 |
+| `ios-specialist` | iOS 专用审查 — QA测试/fix修复/design-review设计审查/clean清理/sync同步（gstack v0.19） |
 | `java-reviewer` | Java/Spring代码审查专家。专注于Java语言特性、Spring Boot约定、并发安全和性能优化。触发词：Java审查、Spring审查、Java代码、Spring  |
 | `kotlin-reviewer` | Kotlin 代码审查专家。当需要审查 Kotlin 代码、检查 Kotlin 惯用法、评估 Android/KMP 代码、审查协程使用、检查空安全时调用此 Agent。触发词 |
+| `land-and-deploy` | 一键部署 — 从 approved PR 到 verified in production。触发词：部署、上线、land、deploy、发布到生产。 |
 | `mcp-builder` | MCP 服务器开发专家。当需要开发 MCP 服务器、构建 Claude 集成工具、创建 MCP 协议服务时调用此 Agent。提供 MCP 协议实现、工具定义、资源管理和服务器 |
 | `ml-engineer` | 负责机器学习模型开发与部署。触发词：ML、机器学习、深度学习、TensorFlow、PyTorch、模型训练、神经网络、推荐系统、NLP、计算机视觉。 |
 | `mobile-developer` | 负责移动端开发任务。当需要开发React Native应用、Flutter应用、UniApp跨平台应用、微信小程序、H5移动页面、处理移动端适配问题、实现原生功能调用、处理移动 |
 | `nodejs-reviewer` | 负责 Node.js 与 TypeScript 后端代码审查任务。当需要审查 Node.js 代码、审查 TypeScript 后端代码、检查 Express/Koa/Fast |
 | `observability-engineer` | 负责系统监控和可观测性相关任务。当需要配置监控告警、搭建Prometheus+Grafana监控体系、实现分布式链路追踪、配置日志采集与分析、设计SLI/SLO指标体系、排查监 |
+| `pair-agent` | 多 AI Agent 浏览器共享协作。触发词：多 Agent 协作、共享浏览器、pair、agent 互联。 |
 | `performance-analyzer` | 负责代码性能分析和优化任务。当需要分析性能瓶颈、排查内存泄漏、优化数据库查询、解决页面卡顿、优化接口响应时间、分析CPU占用过高、优化前端渲染性能、解决N+1查询问题、优化缓存 |
+| `performance-engineer` | 性能工程师，基准页面加载、Core Web Vitals、资源大小，PR前后对比 |
 | `python-pro` | Python全栈开发专家，负责Python通用开发任务。当需要编写Python脚本、实现Python算法、开发CLI工具、处理文件操作、数据处理、爬虫开发、自动化脚本、Pyth |
 | `python-reviewer` | 负责 Python 后端代码审查任务。当需要审查 Python 代码、审查 FastAPI/Flask/Django 代码、检查 Python 代码质量、评审异步 Python |
 | `qa-engineer` | 负责测试相关任务，含E2E端到端测试(Playwright/Cypress)。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、E2E端到端测试、搭建测 |
@@ -190,4 +201,4 @@
 
 ---
 
-v10.17.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本
+v11.0.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本

@@ -2,6 +2,8 @@
 
 > 层: 技能/实践 | 置信度: 高 | 刷新: 2026-07-31 | 来源: GitHub + WebSearch 双源
 
+> ⚠️ 现行口径（v11.0.0）：`rules/DESIGN.md` 已并入 `rules/FRONTEND.md`「设计系统」节；`design-engineer` agent 已并入 `skills/design-pipeline`。下文历史映射不再逐条改写。
+
 
 ## v10.5.1 delta (2026-07-17)
 - **最新元数据**：102,445★；`pushed_at` 2026-06-16。

@@ -46,6 +46,19 @@ Elevation      → RBAC + pre-bash-guard + 最小权限
 3. 标注漏洞（附修复代码示例）
 4. 输出 SECURE / VULNERABILITIES-FOUND
 
+## 深度模式（全量审计，v11 并入原 cso agent）
+
+> 来源: garrytan/gstack CSO（Chief Security Officer）。触发词：全量安全审计、威胁建模、OWASP 审计。
+
+增量审查不够时（新系统上线/重大重构/合规要求），切换全量审计流程：
+
+1. 识别攻击面（API 端点、输入源、认证边界）
+2. OWASP Top 10 逐项检查（全量，非仅变更）
+3. STRIDE 威胁建模逐项过（欺骗/篡改/抵赖/信息泄露/拒绝服务/权限提升）
+4. 零噪音过滤：8/10+ 置信度门控，17 类误报排除
+5. 每个发现必须包含具体利用场景
+6. 输出：优先级排序的安全发现清单
+
 ## 输出格式
 
 ```
@@ -59,4 +72,5 @@ Elevation      → RBAC + pre-bash-guard + 最小权限
 
 ## 边界
 
-不负责：工程质量（→ eng-reviewer）、产品scope（→ ceo-reviewer）
+不负责：工程质量（→ eng-reviewer）、产品scope（→ ceo-reviewer）。
+增量审查（默认）与全量审计（深度模式）均由本 agent 承接（原 cso agent 已于 v11 并入）。

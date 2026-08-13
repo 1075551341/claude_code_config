@@ -39,9 +39,9 @@ description: 阶段式工作流规则，定义从讨论到发布的完整开发�
 > **来源**: garrytan/gstack | 跨会话学习管理
 
 - 目标：提取可复用模式，跨会话积累项目知识
-- 产出：`experiences/patterns/` + `experiences/rejected/`
+- 产出：claude-mem observations（模式/反模式；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
 - `/learn`：查看/搜索/修剪跨会话学习内容
-- 与 claude-mem 互补：/learn 管项目级经验，claude-mem 管会话级记忆
+- 项目级经验与会话级记忆统一由 claude-mem 承接（R18）
 - 学习内容：项目特定模式、陷阱、偏好决策
 
 ## 质量门
@@ -96,7 +96,7 @@ Phase 4: Optimization — 性能、监控
 
 > **deer-flow 2.0**: bytedance/deer-flow | LangGraph-based ground-up rewrite | Python 73.5%
 > **执行模式**: flash（快速）/ standard（标准）/ pro（planning）/ ultra（sub-agents 并行 fan-out）
-> **桥接**: claude-to-deerflow skill (`npx skills add`) | 环境变量 `DEERFLOW_URL` 自定义端点
+> **桥接**: `catalog/skills/claude-to-deerflow`（v11 降级 catalog，按需复制；`npx skills add`）| 环境变量 `DEERFLOW_URL` 自定义端点
 > **状态机** (→ `rules/CORE.md`): DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
 
 ### DAG 依赖图规则

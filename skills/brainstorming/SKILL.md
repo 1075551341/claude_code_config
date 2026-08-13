@@ -4,7 +4,7 @@ description: 设计头脑风暴，HARD-GATE：批准前禁止实现。触发词�
 triggers: [头脑风暴, 方案设计, 设计验证, brainstorming, 方案讨论, 新功能, 架构设计, 需求分析]
 layer: skeleton
 disable-model-invocation: true
-loading_tier: L2
+loading_tier: L1
 source: obra/superpowers
 ---
 

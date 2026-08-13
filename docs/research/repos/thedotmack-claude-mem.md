@@ -311,8 +311,8 @@ ContextBuilder.ts 的 generateContext 函数在三种场景触发：
 
 **决策**：
 - **claude-mem SSOT** -- 跨会话记忆唯一权威源
-- **codebase-memory L4 按需** -- 架构/ADR/变更；替代 claude-context 语义搜索位
-- **两者不冲突** -- claude-mem 管"做了什么"，cbm 管"代码结构在哪"
+- **codebase-memory L4 按需**（历史口径；v10.10 起 cbm 永久禁用，结构职责由 codegraph 单引擎承接）
+- **边界不变** -- claude-mem 管"做了什么"，代码结构归 codegraph
 
 ### vs agent/context-manager
 

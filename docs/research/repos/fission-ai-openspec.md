@@ -130,7 +130,7 @@ openspec update                              # 刷新 agent skills
 |------------------|------|------|
 | change_spec | `commands/propose.md` | ✅ |
 | openspec_rules | `rules/OPENSPEC.md` | ✅ |
-| onboarding | `skills/onboarding-guide/` | ✅ |
+| onboarding | `catalog/skills/onboarding-guide/`（v11 降级） | ✅ |
 | spec_review | `skills/spec-validation/` | ✅ |
 | OPSX 全链 | `commands/{propose,apply,verify,sync,archive}.md` | ✅ |
 

@@ -24,13 +24,34 @@ loading_tier: L3
 - 逻辑断点（子目标完成）→ 摘要后释放
 - 会话结束 → claude-mem plugin 持久化
 
+## 压缩策略（v11 自 /compact 并入）
+
+1. 保留：关键决策、当前任务状态、用户偏好、未解决问题
+2. 丢弃：已完成子任务细节、中间错误重试日志、冗余文件内容
+3. 摘要：当前进度、下一步计划、已知风险
+
+## 摘要输出格式（v11 自 /compact 并入）
+
+```
+## 当前状态
+- 已完成: [子目标列表]
+- 进行中: [当前任务 + 进度]
+- 待处理: [剩余任务列表]
+
+## 关键决策
+- [决策 1] — [原因]
+
+## 下一步
+1. [立即执行的任务]
+```
+
 ## 压缩格式
 
 ```json
 { "category": "决策|偏好|架构|错误", "key": "...", "value": "...", "confidence": 0.9 }
 ```
 
-高置信度模式 → `experiences/patterns/`；拒绝模式 → `experiences/rejected/`
+高置信度模式/拒绝模式 → claude-mem observation（R18；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
 
 ## 来源
 

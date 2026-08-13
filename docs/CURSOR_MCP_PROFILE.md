@@ -1,42 +1,13 @@
 ---
-description: Cursor MCP 常驻/按需 + Plugins 边界 — v10.17
+description: Cursor MCP 常驻/按需 + Plugins 边界 — v11（仅 Cursor 差异；Claude 侧 SSOT 在 rules/MCP.md）
 ---
 
 # Cursor MCP Profile
 
-> 与 [TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md) 互补。Claude Code 权威源：`~/.claude/.mcp.json`（常驻 9，三层架构 v10.17）+ `mcp-configs/` 按需。
+> **本文只保留 Cursor 侧差异**（常驻 8 / 禁用清单 / Plugins）。
+> Claude Code 常驻 9 + 按需 profile + 四工具分工 + 禁止项 SSOT → [rules/MCP.md](../rules/MCP.md)；匹配矩阵 → [TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md)（v11 三文档去重）。
 
-## Claude Code 常驻（`.mcp.json`，9 项）
-
-| 层 | MCP | 用途 |
-|----|-----|------|
-| 本地代码 | codegraph | R17 探索主位（符号/调用链/blast-radius），钉 1.5.0 |
-| 本地代码 | code-review-graph | 审查/验证专用图谱（test-gap/风险评分，钉 2.3.6） |
-| 本地代码 | aider-repo-map | 仓库级结构概览；codegraph 无索引时的首选降级 |
-| 本地代码 | serena | 符号级精确编辑 + LSP 诊断 |
-| 远端探索 | github | 官方远端 MCP（`https://api.githubcopilot.com/mcp/`，Bearer `GITHUB_TOKEN`） |
-| 远端探索 | grep | grep.app 跨公开仓代码搜索 |
-| Web & 文档 | exa | 语义搜索（`EXA_API_KEY`），钉 3.4.0 |
-| Web & 文档 | context7 | 库/API 文档 |
-| Web & 文档 | firecrawl | 网页抓取（`FIRECRAWL_API_KEY`），钉 3.23.9 |
-
-四工具分工矩阵（何时用 codegraph / aider-repo-map / serena / code-review-graph）→ [rules/MCP.md](../rules/MCP.md) §4。
-
-**浏览器 E2E（Claude）**：`playwright` 走 **Plugins**（`settings.json` enabledPlugins）。**勿**再 merge 进 `.mcp.json`（禁止同端双挂）。
-
-**搜索（Claude）**：exa 已常驻 `.mcp.json`（`EXA_API_KEY` 走 Machine env）。`exa@claude-plugins-official` **保持禁用**（禁与 mcp 双挂）。
-
-**按需 profile**（手动 merge 后重启）：
-
-| Profile | 服务器 | 文件 |
-|---------|--------|------|
-| debug | chrome-devtools（`@latest` + `--isolated`） | `mcp-configs/debug.json` |
-| fsaccess | fs（默认仅配置仓路径） | `mcp-configs/fsaccess.json` |
-| ops | redis, sqlite, docker, postgres | `mcp-configs/ops.json` |
-
-> **v10.17 降级**：chrome-devtools 与 fs 退出常驻。fs 是安全性降级——全盘可写会绕过 Edit/Write 验证追踪链，Stop 硬门会误判「本会话未改代码」而放行回归；merge 后由 `mcp__fs__.*` matcher 兜底追踪。
-
-> **codebase-memory 已禁用（2026-07-31）**：根因是 `index_repository` 易对 `C:\Users\<user>` 全盘索引，单进程 >6GB RAM。架构/ADR 场景用 `codegraph_explore`；勿再 merge cbm。
+> Claude 侧速记：exa 常驻 `.mcp.json`（插件版保持禁用）；playwright 走 Plugins 勿进 `.mcp.json`；chrome-devtools / fs / cbm 状态与理由 → `rules/MCP.md` §2 降级说明。
 
 ## Cursor 常驻 MCP（`~/.cursor/mcp.json`，恰 8 键）
 

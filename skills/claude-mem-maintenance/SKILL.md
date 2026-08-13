@@ -10,7 +10,7 @@ source: user-rules-migration
 
 # Claude-Mem 使用与维护
 
-> **L3**：记忆查询或维护任务时 Read。⑤学习默认 claude-mem pattern 提取；`instinct-learning` 仅显式「提取模式」信号。
+> **L3**：记忆查询或维护任务时 Read。⑤学习默认 claude-mem pattern 提取；`catalog/skills/instinct-learning`（v11 降级 catalog）仅显式「提取模式」信号时按需复制启用。
 
 ## Endless Mode（P1 评估，默认关闭）
 
@@ -37,12 +37,12 @@ source: user-rules-migration
 
 ## /learn ↔ mem 写入管道（供给侧）
 
-R18 的另一半：学习产物**写入** observation 由 [`instinct-learning`](../instinct-learning/SKILL.md) §⑤ 持久化 定义。
+R18 的另一半：学习产物**写入** observation 规范由 [`instinct-learning`](../../catalog/skills/instinct-learning/SKILL.md)（v11 降级 catalog）§⑤ 持久化 定义；日常写入直接按下述规范执行，无需先复制该技能。
 
 - 写入规范：title ≤60 字 / tags 领域+类型 / body ≤200 字 / 高置信度才入库
 - **写入前先 search 去重**：命中则更新 evidence，不新建（防记忆库膨胀）
-- 来源：brainstorming 决策 · design-shotgun 品味 · bug 修复模式 · /learn 项目模式
-- 闭环：写入（instinct-learning）→ 检索（本 skill R18）→ 复用 → 跳过重复分析
+- 来源：brainstorming 决策 · 设计品味（design-pipeline）· bug 修复模式 · /learn 项目模式
+- 闭环：写入（本规范）→ 检索（本 skill R18）→ 复用 → 跳过重复分析
 
 ## 隐私
 

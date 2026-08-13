@@ -4,7 +4,8 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 # MCP 工具语义匹配指南
 
-> 与 `mcp-configs/` 分组一致。权威源：`.mcp.json`（Claude）+ `docs/CURSOR_MCP_PROFILE.md`（Cursor）
+> **本文只保留匹配矩阵**（场景→工具 / 决策树 / 调研三档 / 前置条件）。
+> 服务器清单/分组/四工具分工/禁止项 SSOT → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`（v11 三文档去重）。
 
 ## 原则
 
@@ -26,27 +27,11 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 常驻键名为 `firecrawl`，读 Machine env `FIRECRAWL_API_KEY`。未配置时 L3 降级为 Exa + Context7。
 
-## 分组速查（v10.17，常驻 9）
+## 分组与四工具分工（指针）
 
-| 分组             | 服务器                                                       | 加载                        | 典型场景                |
-| ---------------- | ------------------------------------------------------------ | --------------------------- | ----------------------- |
-| 本地代码         | codegraph, code-review-graph, aider-repo-map, serena         | `.mcp.json` 常驻            | 结构探索、符号编辑、审查 |
-| 远端探索         | github（官方远端+`GITHUB_TOKEN`）, grep                       | `.mcp.json` 常驻            | PR/Issue、跨仓代码搜索  |
-| Web & 文档       | exa（`EXA_API_KEY`）, context7, firecrawl（`FIRECRAWL_API_KEY`） | `.mcp.json` 常驻        | L1–L3 调研              |
-| debug            | chrome-devtools（`@latest` + `--isolated`）                   | `mcp-configs/debug.json` 按需 | 性能/Lighthouse/网络  |
-| fsaccess         | fs（默认仅配置仓路径）                                        | `mcp-configs/fsaccess.json` 按需 | 跨仓批量文件操作   |
-| ops              | redis, sqlite, docker, postgres                              | `mcp-configs/ops.json` 按需 | 缓存、DB、容器          |
-| 跨会话记忆       | claude-mem                                                   | **仅** plugin               | R18                     |
-| 浏览器 E2E       | playwright                                                   | Claude=插件；Cursor=内置 cursor-ide-browser | Driving |
-
-## 本地代码四工具分工
-
-| 工具              | 定位                        | 何时用                                                    | 何时不用                          |
-| ----------------- | --------------------------- | --------------------------------------------------------- | --------------------------------- |
-| codegraph         | **R17 探索主位**            | 符号/调用链/依赖/blast-radius/变更前影响面                  | test-gap（无此能力）              |
-| aider-repo-map    | 仓库级结构概览              | 陌生仓首屏全局印象；**codegraph 无索引时的首选降级**        | 已有索引时的符号级查询            |
-| serena            | 符号级精确编辑 + LSP 诊断   | 跨文件重命名/替换符号体、`get_diagnostics_for_file`         | 只读探索（走 codegraph）          |
-| code-review-graph | 审查/验证专用（变更后）     | test-gap、`detect_changes` 风险评分、review-delta、pre-merge | 变更前探索（走 codegraph）        |
+- 常驻 9 三层架构 + 按需 profile（debug/fsaccess/ops）→ `rules/MCP.md` §2–§3
+- 本地代码四工具分工（codegraph / aider-repo-map / serena / code-review-graph 何时用）→ `rules/MCP.md` §4
+- 跨会话记忆仅 claude-mem plugin（R18）；浏览器 Claude=playwright 插件、Cursor=内置 `cursor-ide-browser`
 
 ## 场景 → 工具
 
@@ -92,33 +77,10 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 └─ 跨会话回忆 → claude-mem（非 memory MCP）
 ```
 
-## 跨编辑器 MCP 映射
+## 跨编辑器 MCP 映射（指针）
 
-### Claude Code 常驻（`.mcp.json`，恰 9，三层架构）
-
-本地代码：codegraph | code-review-graph | aider-repo-map | serena
-远端探索：github | grep
-Web & 文档：exa | context7 | firecrawl
-
-浏览器 E2E：playwright **插件**（勿写入 `.mcp.json`，禁双挂）
-
-### Claude Code 按需（`mcp-configs/`）
-
-| Profile      | 服务器                          |
-| ------------ | ------------------------------- |
-| debug        | chrome-devtools                 |
-| fsaccess     | fs                              |
-| ops          | redis, sqlite, docker, postgres |
-
-### Cursor 常驻（`mcp.json`，恰 8）
-
-codegraph | code-review-graph | aider-repo-map | serena | github | grep | firecrawl | context7
-
-exa 走 **Exa plugin**（禁与 mcp 条目双挂）；Plugins：Exa、claude-mem、Firecrawl skill、Superpowers
-
-### 已禁用 / 已按需化
-
-memory、thinking、mcp 条目 claude-mem/exa、postgres 默认、puppeteer、codebase-memory（禁用）；chrome-devtools、fs（v10.17 按需化）— 见 [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+- Claude Code 常驻 9 + 按需 profile → `rules/MCP.md` §2–§3；双平台工具对照 → `rules/MCP.md` §双平台
+- Cursor 常驻 8（减 exa，走 plugin）+ 禁用清单 + Plugins → [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 
 ## Shell / Agent Token
 

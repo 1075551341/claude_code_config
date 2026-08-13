@@ -1,5 +1,5 @@
 {
-  "_comment": "settings.json 的 hooks 段快照（v10.17.0）。settings.json 本体含 API token 故被 .gitignore 排除，导致 hook 注册与 matcher 无法从仓库复现；本文件只保留 hooks 段，不含任何密钥。恢复步骤见 scripts/README.md「重装后恢复 hook 注册」。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
+  "_comment": "settings.json 的 hooks 段快照（v11.0.0：post-codegraph-sync ×2 与 stop-knowledge-graph-sync 已退役，codegraph v1.5 MCP 自动同步接管，注册 23→20）。settings.json 本体含 API token 故被 .gitignore 排除，导致 hook 注册与 matcher 无法从仓库复现；本文件只保留 hooks 段，不含任何密钥。恢复步骤见 scripts/README.md「重装后恢复 hook 注册」。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
   "hooks": {
     "PostToolUse": [
       {
@@ -12,11 +12,6 @@
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-secret-detector.py",
             "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-codegraph-sync.py",
-            "timeout": 330000,
             "type": "command"
           },
           {
@@ -33,11 +28,6 @@
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-secret-detector.py",
             "timeout": 10000,
-            "type": "command"
-          },
-          {
-            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-codegraph-sync.py",
-            "timeout": 330000,
             "type": "command"
           },
           {
@@ -162,11 +152,6 @@
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/stop-readme-updater.py",
             "timeout": 30000,
-            "type": "command"
-          },
-          {
-            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/stop-knowledge-graph-sync.py",
-            "timeout": 330000,
             "type": "command"
           }
         ],

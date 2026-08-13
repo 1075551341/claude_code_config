@@ -8,7 +8,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 # CORE — 机器执行层骨架
 
 > SSOT: 三横切、阈值、编码规范、铁律R12-R19、变更彻底性门控
-> 引用: P0路由集/加载等级 → `CLAUDE-ROUTER.mdc` | 五阶段流程 → `CLAUDE.md` | 治理详情(R14/R15/R16适用范围/注释模板/变更三阶段) → `rules/GOVERNANCE.md`
+> 引用: P0路由集/加载等级/五阶段流程 → `CLAUDE.md`（v11: ROUTER 已并入） | 治理详情(R14/R15/R16适用范围/注释模板/变更三阶段/最佳实践详参) → `rules/GOVERNANCE.md`
 
 ## 三横切基础设施
 
@@ -105,7 +105,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 - **code-review-graph = 审查/验证专用**（变更后 test-gap、detect_changes 风险评分、review-delta、pre_merge_check）
 - 禁止用 CRG 替代 R17 日常探索；禁止用 codegraph 做 test-gap（无此能力）。CRG 需项目内 `code-review-graph build` 建图，未建图自动降级跳过。
 
-**索引刷新**：Edit/Stop hook **仅**自动同步 codegraph（`hooks/_lib/knowledge_graph_sync.py`；`KG_SYNC_CBM` 默认 0）。claude-mem / codebase-memory 不在 hook 刷新范围。
+**索引刷新**：codegraph v1.5 起由 MCP server **自动同步**（原生文件监听 + 连接时追赶，无需 hook/脚本触发；v11 已退役双侧 sync hook）。claude-mem / codebase-memory 不在自动刷新范围。
 
 ### R17 反模式检测
 

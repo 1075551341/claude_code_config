@@ -18,7 +18,7 @@ alwaysApply: true
 - 结构、调用链、影响面：必须先 MCP `codegraph_explore`
 - Grep 仅 codegraph 不可用时的定点 fallback（非跳级捷径）
 - 禁止未探索就大范围 Read 扫目录
-- Edit/Stop 由 Cursor Guard `knowledge_graph_sync_hook` **仅刷新 codegraph**（cbm 已关）
+- codegraph 索引由 MCP server 自动同步（v1.5 原生监听；v11 起 Guard 不再挂 kg sync hook；cbm 已关）
 
 ## 编辑与引用
 

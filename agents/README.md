@@ -1,6 +1,6 @@
 # Agents 智能体库
 
-> **全局 25 个**（7 核心 + 6 gstack 审查 + 7 gstack 补全 + 5 gstack v0.19）+ **catalog/agents/** 领域库
+> **全局 16 个**（7 核心 + 6 gstack 审查 + 2 补全 + 1 跨模型）+ **catalog/agents/** 领域库（v11 精简：25→16）
 
 完整索引 → [agents-INDEX.md](../agents-INDEX.md)
 
@@ -12,15 +12,17 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 ## gstack 审查 6（skeleton）
 
-eng-reviewer | ceo-reviewer | designer | **dx-reviewer** | qa | security-reviewer
+eng-reviewer | ceo-reviewer | designer | **dx-reviewer** | qa | security-reviewer（含原 cso 深度模式）
 
-## gstack 补全 7
+## 补全 2
 
-cso | sre | release-engineer | product-manager | design-engineer | performance-engineer | doc-writer
+sre | doc-writer
 
-## gstack v0.19（5）
+## 跨模型 1
 
-codex-reviewer | ios-specialist | design-shotgun | pair-agent | land-and-deploy
+codex-reviewer
+
+> v11 去向：cso→security-reviewer 深度模式；release-engineer→skills/ship；product-manager→catalog office-hours；design-engineer→skills/design-pipeline；design-shotgun/pair-agent/ios-specialist/land-and-deploy/performance-engineer→`catalog/agents/`（按需复制）。
 
 ---
 

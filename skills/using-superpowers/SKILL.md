@@ -27,7 +27,7 @@ L2/L3 设 `disable-model-invocation: true` → 不会自动注入上下文；**�
 
 | 等级 | 机制                                                            |
 | ---- | --------------------------------------------------------------- |
-| L0   | CLAUDE-ROUTER + CLAUDE + CORE alwaysApply                       |
+| L0   | CLAUDE.md（含路由，v11 并入 ROUTER）+ CORE alwaysApply          |
 | L1   | 本 skill + change-impact-analysis 常驻                          |
 | L2   | 进入阶段 Read 全文（见下表）                                    |
 | L3   | slash/关键词后 Read supplement skill / agent / MCP / claude-mem |
@@ -109,7 +109,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | TDD      | test-driven-development (默认关闭,用户显式要求时触发) |
 | 代码审查 | requesting-code-review → eng-reviewer |
 | 架构决策 | adr-management                        |
-| 长时自主 | claude-to-deerflow（/deer-flow）      |
+| 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
 | Git 提交 | git-workflow                          |
 | 开 PR    | pr-workflow                           |
 | 输出冗长 | caveman-compress                      |

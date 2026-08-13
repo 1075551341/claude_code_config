@@ -4,47 +4,12 @@ description: 按 gstack 路由规则执行多角色审查
 
 # /review — gstack 多角色审查
 
-按变更类型自动路由到对应审查角色。
+按变更类型自动路由审查角色。**路由规则 SSOT → `rules/AGENTS.md`（审查路由 + 何时委派），本命令不复写**（v11.1 薄壳化）。
 
-## 路由规则
+执行：
 
-1. **所有变更** → `eng-reviewer`（必须）
-2. **产品/新功能/scope 变更** → + `ceo-reviewer`
-3. **UI/UX 变更** → + `designer`
-4. **安全敏感变更** → + `security`
-5. **infra/配置/cleanup** → CEO Review 可跳过
+1. `git diff --name-only HEAD~1`（或指定 base）获取变更文件清单
+2. Read `rules/AGENTS.md` → 按审查路由委派全局 agents（所有变更 eng-reviewer 必审；产品→+ceo-reviewer；UI/UX→+designer+dx-reviewer；安全→+security-reviewer；infra/cleanup 可跳 CEO）
+3. 汇总输出：各角色结论（PASS/NEEDS-CHANGES、GO/RETHINK、APPROVED/NEEDS-POLISH、SAFE/RISKS-FOUND）+ 最终建议（可合并 / 需修改）
 
-## 执行步骤
-
-1. 运行 `git diff --name-only HEAD~1`（或指定 base）获取变更文件列表
-2. 根据文件类型和变更内容判断路由：
-   - 含 `.tsx/.css/.scss/components/` → 触发 designer
-   - 含 `auth/security/crypto/payment/` → 触发 security
-   - 新功能 / spec 变更 → 触发 ceo-reviewer
-3. 依次执行对应 catalog agent 审查
-4. 汇总输出审查结果
-
-## 输出
-
-```
-## 审查汇总: [变更名]
-
-### Eng Review: PASS/NEEDS-CHANGES
-[摘要]
-
-### CEO Review: GO/RETHINK/REJECT (如触发)
-[摘要]
-
-### Design Review: APPROVED/NEEDS-POLISH (如触发)
-[摘要]
-
-### Security Review: SAFE/RISKS-FOUND (如触发)
-[摘要]
-
-### 总结
-[最终建议：可合并 / 需修改]
-```
-
-## 角色 Agents 位置
-
-`~/.claude/catalog/agents/`：eng-reviewer、ceo-reviewer、designer、qa、security
+全局权威：`~/.claude/agents/`；`catalog/agents/` 仅为按需变体库。

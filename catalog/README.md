@@ -31,4 +31,4 @@ mini-program, uniapp-development, capacitor-app, ios-simulator, android-developm
 
 ## 已删记录
 
-见 `experiences/rejected/deletion-candidates.md`
+见 `docs/archive/experiences/rejected/deletion-candidates.md`（已归档）

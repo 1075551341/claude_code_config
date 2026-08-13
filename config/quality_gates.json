@@ -20,22 +20,52 @@
     "enabled": true,
     "max_blocks": 3,
     "auto_check_timeout_sec": 25,
-    "skip_keywords": ["跳过验证", "不用验证", "skip verify"],
-    "verify_command_patterns": [
-      "pytest", "vitest", "jest", "npm test", "pnpm test", "yarn test",
-      "npm run test", "npm run lint", "npm run build", "pnpm lint", "pnpm build",
-      "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
-      "go test", "go vet"
+    "skip_keywords": [
+      "跳过验证",
+      "不用验证",
+      "skip verify"
     ],
-    "reviewer_agents": ["eng-reviewer", "qa", "code-reviewer"],
+    "verify_command_patterns": [
+      "pytest",
+      "vitest",
+      "jest",
+      "npm test",
+      "pnpm test",
+      "yarn test",
+      "npm run test",
+      "npm run lint",
+      "npm run build",
+      "pnpm lint",
+      "pnpm build",
+      "tsc",
+      "mypy",
+      "ruff",
+      "eslint",
+      "clippy",
+      "cargo test",
+      "cargo check",
+      "go test",
+      "go vet"
+    ],
+    "reviewer_agents": [
+      "eng-reviewer",
+      "qa",
+      "code-reviewer"
+    ],
     "require_reviewer_min_files": 3,
-    "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"]
+    "doc_only_extensions": [
+      ".md",
+      ".txt",
+      ".rst",
+      ".markdown"
+    ]
   },
   "issue_tracker": {
     "enabled": true,
     "max_age_days": 30,
     "min_interval_sec": 120,
     "min_prompt_len": 10,
-    "description": "问题指纹追踪（v10.15）：同问题重复出现时注入「先查上轮结论禁止重做」提醒；仅注入不阻断；状态 ~/.claude/.state/issue-tracker.json"
+    "description": "问题指纹追踪（v11.1.1 相似匹配重构）：分层特征（strong=路径/错误码/符号，weak=英文词+中文bigram）+ 加权相似度阈值；泛化追问续接不建桶；resolved 回归自动升级硬提醒；仅注入不阻断；状态 ~/.claude/.state/issue-tracker.json（双端共用）",
+    "similarity_threshold": 0.5
   }
 }

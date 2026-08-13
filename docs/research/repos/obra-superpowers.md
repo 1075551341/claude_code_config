@@ -235,8 +235,8 @@ Superpowers 自有: 先 add marketplace obra/superpowers-marketplace，再 insta
 | receiving-code-review | skills/receiving-code-review/SKILL.md (L3) | 已部署 |
 | using-git-worktrees | skills/using-git-worktrees/SKILL.md (L3) | 已部署 |
 | finishing-a-development-branch | skills/finishing-a-development-branch/SKILL.md (L3) | 已部署 |
-| dispatching-parallel-agents | skills/dispatching-parallel-agents/SKILL.md (L3) | 已部署 |
-| writing-skills | skills/writing-skills/SKILL.md (L3) | 已部署 |
+| dispatching-parallel-agents | 插件版承接（本地由 agents/agentic-orchestrator + rules/AGENTS.md 覆盖） | v11 现行 |
+| writing-skills | skills/skill-creator/SKILL.md 前言（v11 并入） | v11 现行 |
 
 ### P0 路由集 (5 skills)
 

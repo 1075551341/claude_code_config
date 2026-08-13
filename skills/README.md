@@ -1,6 +1,6 @@
 # Skills 技能库
 
-> **全局 39 个**（L1×4 + L2 门控×6 + L3×29）+ **catalog/** 领域库（按需复制）
+> **全局 36 个**（L1×4 + L2 门控×7 + L3×25）+ **catalog/** 领域库（按需复制）｜v11 精简：45→36
 
 完整索引 → [skills-INDEX.md](../skills-INDEX.md)
 
@@ -11,33 +11,38 @@
 L1: using-superpowers, task-triage, change-impact-analysis, brainstorming  
 L2 门控: verification-before-completion, systematic-debugging
 
-## v9.1 新增（4）
+## Superpowers Workflow（12，本地深度定制版）
 
-deep-research | git-workflow | pr-workflow | claude-mem-maintenance
+writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | brainstorming | systematic-debugging | verification-before-completion | using-superpowers
 
-## Superpowers Workflow（9）
+> 与插件 superpowers v6.2.0 同名但**非副本**：本地版为中文重写 + 五阶段/门控/verify_tier 集成（相似度 <10%），本地为权威。
 
-writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | writing-skills
+## 调研 / Git / 记忆
 
-## Meta（4）
+deep-research | git-workflow | pr-workflow | claude-mem-maintenance | memory-compression
 
-memory-compression | spec-validation | karpathy-guidelines | caveman-compress
+## Meta
 
-## 扩展（8）
+spec-validation | karpathy-guidelines | caveman-compress | skill-creator | skill-reviewer
 
-autoplan | browser-qa | design-pipeline | ship | office-hours | context-engineering | structured-artifacts | instinct-learning
+## 扩展
 
-## Mattpocock（2）
+autoplan | design-pipeline（含原 design-engineer Phase 2）| ship（含原 release-engineer）| structured-artifacts
 
-triage | improve-codebase-architecture
+## 重构与前端
 
-## 项目洞察
+code-refactoring（含前端提案模式）| frontend-library-advisor | frontend-design-pattern-applier | test-edge-case-analyzer
 
+## 其他
 
-## v9 新增（5）
-
-workstream-management | adr-management | onboarding-guide | claude-to-deerflow | taste-memory
+triage | improve-codebase-architecture | workstream-management | adr-management | change-impact-analysis | task-triage
 
 ---
+
+## v11 变更
+
+- 降级 catalog：office-hours / instinct-learning / onboarding-guide / claude-to-deerflow / browser-qa / taste-memory
+- 删除：context-engineering（正文并入 rules/CONTEXT.md）
+- 并入：frontend-refactor-proposer → code-refactoring 子文档；writing-skills → skill-creator 前言
 
 Catalog 复制：`python ~/.claude/scripts/migrate-from-legacy.py --project <path> --skill <name>`

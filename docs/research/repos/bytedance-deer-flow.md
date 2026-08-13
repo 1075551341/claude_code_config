@@ -37,7 +37,7 @@
 
 | MANIFEST concern | 路径 |
 |------------------|------|
-| deer-flow bridge | `skills/claude-to-deerflow/SKILL.md` (L3) |
+| deer-flow bridge | `catalog/skills/claude-to-deerflow/SKILL.md`（v11 降级 catalog，按需复制） |
 | 互斥 | MANIFEST excludes `[deer_flow, workstream_management]` |
 | 触发 | `CLAUDE.md` → `/deer-flow` L3 |
 

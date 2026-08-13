@@ -4,6 +4,7 @@
 > 状态: **v10.11.0 已完成** | 运行配置目标: **v10.11.0** | 历史版本已清理（仅保留本文件为调研全量 SSOT；原 30-repo 文件已并入本文件）
 > Per-repo 卡片: [`repos/`](repos/)（44） | 覆盖矩阵: [`COVERAGE.md`](COVERAGE.md)
 > 计划/设计: [`../superpowers/plans/2026-08-01-v10.11-44repo.md`](../superpowers/plans/2026-08-01-v10.11-44repo.md)（本地制品，不入库；v10.5 系列设计已于 v10.17 清理，结论见 `SPEC.md` 变更日志）
+> ⚠️ **现行口径（v11.0.0）**：本报告为 v10.11 历史快照。其中 UA「双引擎」相关历史结论已随 cbm v10.10 永久禁用而作废（现行单引擎 codegraph）；claude-mem 运行态已至 13.13.1（钉扎 <13.14）；get-shit-done 上游已归档、后继 open-gsd/gsd-core。v11 增量调研结论见 `COVERAGE.md` 与 SPEC 变更日志。
 
 ---
 

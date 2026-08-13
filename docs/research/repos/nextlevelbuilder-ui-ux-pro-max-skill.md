@@ -27,7 +27,7 @@
 | MANIFEST concern | 路径 |
 |------------------|------|
 | ui_token | `catalog/skills/ui-ux-pro-max/` |
-| design-shotgun | `agents/design-shotgun.md` |
+| design-shotgun | `catalog/agents/design-shotgun.md`（v11 降级） |
 
 ## 吸收决策
 

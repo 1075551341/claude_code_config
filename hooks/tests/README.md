@@ -8,7 +8,9 @@
 Get-Content hooks/tests/fixtures/bash_rm_rf_blocked.json | python hooks/pre-bash-guard.py
 # 预期: exit 2
 
-Get-Content hooks/tests/fixtures/secret_paste_blocked.json | python hooks/_archive/pre-userprompt-secret-scan.py
+# strict 扩展扫描脚本（pre-userprompt-secret-scan.py）v11 起随 _archive/ 删除，
+# 如需测试请先从 git 历史恢复该脚本，再:
+# Get-Content hooks/tests/fixtures/secret_paste_blocked.json | python <恢复路径>/pre-userprompt-secret-scan.py
 # 预期: exit 2 (strict profile)
 ```
 
@@ -19,7 +21,7 @@ Get-Content hooks/tests/fixtures/secret_paste_blocked.json | python hooks/_archi
 | bash_rm_rf_blocked.json | pre-bash-guard | exit 2（`rm -rf /` 命中危险模式） | trailofbits |
 | bash_rm_rf_allowed.json | pre-bash-guard | exit 0（`rm -rf node_modules` 按设计放行） | v10.17 |
 | bash_git_push_main_blocked.json | pre-bash-guard | exit 2 | trailofbits |
-| secret_paste_blocked.json | pre-userprompt-secret-scan | exit 2（strict profile） | dwarvesf |
+| secret_paste_blocked.json | pre-userprompt-secret-scan（脚本已随 \_archive/ 删除，git 历史可恢复） | exit 2（strict profile） | dwarvesf |
 | issue_first_no_inject.json | pre-userprompt-issue-tracker（首次无注入） | exit 0 无输出 | v10.15 |
 | issue_repeat_inject.json | pre-userprompt-issue-tracker（重复有注入） | exit 0 有注入 | v10.15 |
 | mcp_serena_edit_tracked.json | post-edit-verify-tracker（MCP 写工具被追踪） | 状态文件记录该文件 | v10.17 |

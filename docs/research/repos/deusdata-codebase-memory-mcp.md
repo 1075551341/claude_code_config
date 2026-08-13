@@ -1,5 +1,7 @@
 # DeusData/codebase-memory-mcp v0.8.1
 
+> ⚠️ **现行口径（v11.0.0）**：codebase-memory 已于 v10.10 **永久禁用**（全盘索引爆 CPU/内存）。本卡「双引擎 / L4 按需 / cbm 承接」等表述为历史记录，现行为**单引擎 codegraph**（R17），cbm 全部 concern 由 codegraph 承接；`scripts/cbm-index.ps1` 已删除。勿按本卡启用。
+
 > 层: L3 洞察 | 置信度: 高 | 刷新: 2026-07-31 | 来源: Exa + 官方站 + GitHub Releases v0.8.1 双源交叉
 > 仓库: github.com/DeusData/codebase-memory-mcp | 许可证: Apache-2.0 | Stars: 3.3K+
 
@@ -95,4 +97,4 @@
 
 - **新增卡片**：填补 29/29 仓库覆盖缺口
 - **决策**：双引擎互补；L4 按需；claude-context archived_redirect
-- **安装**：`npx -y codebase-memory-mcp@0.8.1`（Windows 友好）；索引 `scripts/cbm-index.ps1`；merge optional MCP 或 `.mcp.json`
+- **安装**（历史指引，勿执行）：`npx -y codebase-memory-mcp@0.8.1`；原索引脚本 `scripts/cbm-index.ps1` 已于 v11 删除

@@ -40,15 +40,15 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/deep-research": "deep_research",
     "skill/adr-management": "adr",
     "skill/workstream-management": "workstreams",
-    "skill/claude-to-deerflow": "deer_flow_bridge",
+    "skill/claude-to-deerflow": "deer_flow_bridge",  # v11 降级 catalog，映射保留
+
     "skill/git-workflow": "git_workflow",
     "skill/pr-workflow": "pr_workflow",
     "skill/claude-mem-maintenance": "claude_mem_maintenance",
     "skill/autoplan": "autoplan",
     "skill/ship": "ship_pipeline",
-    "skill/office-hours": "office_hours",
-    # Supplement (14)
-    "skill/context-engineering": "context_engineering",
+    "skill/office-hours": "office_hours",  # v11 降级 catalog，映射保留
+    # Supplement（v11: context-engineering 已删；catalog 降级技能保留映射——项目内复制启用时仍受归属校验）
     "skill/memory-compression": "context_rot",
     "skill/caveman-compress": "output_token",
     "skill/instinct-learning": "instinct_v2",
@@ -60,7 +60,7 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/karpathy-guidelines": "coding_philosophy",
     "skill/finishing-a-development-branch": "ship_pipeline",
     "skill/using-git-worktrees": "workstreams",
-    "skill/writing-skills": "planning",
+    "skill/skill-creator": "planning",  # v11: writing-skills 并入 skill-creator
     "skill/structured-artifacts": "gsd_context",
     # Agents — 核心 7
     "agent/planner": "planning",
@@ -77,19 +77,16 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/dx-reviewer": "gstack_dx",
     "agent/qa": "gstack_qa",
     "agent/security-reviewer": "gstack_security",
-    # Agents — gstack 补全 + v0.19 (9)
-    "agent/cso": "gstack_cso",
+    # Agents — gstack 补全 3 + catalog 变体（v11: cso/release-engineer/product-manager/design-engineer
+    # 已删或并入；catalog 降级 agent 保留映射——项目内复制启用时仍受归属校验）
     "agent/sre": "gstack_sre",
-    "agent/release-engineer": "land_and_deploy",
-    "agent/product-manager": "office_hours",
-    "agent/design-engineer": "gstack_designer",
-    "agent/performance-engineer": "gstack_eng",
     "agent/doc-writer": "gstack_eng",
+    "agent/codex-reviewer": "gstack_codex",
+    "agent/performance-engineer": "gstack_eng",
     "agent/design-shotgun": "design_pipeline",
     "agent/pair-agent": "agentic_orchestrator",
     "agent/land-and-deploy": "land_and_deploy",
     "agent/ios-specialist": "gstack_ios",
-    "agent/codex-reviewer": "gstack_codex",
     # MCP
     "mcp/codegraph": "code_exploration",
 }

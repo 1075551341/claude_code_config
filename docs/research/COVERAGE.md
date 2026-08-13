@@ -1,7 +1,8 @@
-# 仓库覆盖矩阵（v10.14.0）
+# 仓库覆盖矩阵（v11.0.0）
 
-> 日期: 2026-08-07 | SSOT: 46（29 已集成 + 15 新卡 + 2 v10.14 新增）↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
-> 前版: v10.11.0（2026-08-01）→ **v10.14.0** 新增 code-review-graph（integrated）+ CodeGraphContext（评估未引入）
+> 日期: 2026-08-12 | SSOT: 46（29 已集成 + 15 新卡 + 2 v10.14 新增）↔ 卡片 ↔ MANIFEST concern ↔ 集成决策
+> 前版: v10.14.0（2026-08-07）→ **v11.0.0** 深度重构：集成仓清单不变；codegraph v1.5 自动同步接管（退役双侧 kg sync hook，卡片已记 delta）；低频集成物降级 `catalog/`（能力保留）；变更明细 → `CHANGELOG.md`
+> 前前版: v10.11.0（2026-08-01）→ v10.14.0 新增 code-review-graph（integrated）+ CodeGraphContext（评估未引入）
 
 ## 覆盖率
 
@@ -22,7 +23,7 @@
 | open-gsd/gsd-core     | [open-gsd-gsd-core](repos/open-gsd-gsd-core.md)         | 上游 v1.7.0 / 6.7K★             | integrated（钉 1.4.5；1.7 待评估）           |
 | Fission-AI/OpenSpec   | [fission-ai-openspec](repos/fission-ai-openspec.md)     | 上游 v1.6.0 / 61K★              | integrated（钉 1.4.1；1.6 待评估）           |
 | garrytan/gstack       | [garrytan-gstack](repos/garrytan-gstack.md)             | v0.19 / 122K★                   | integrated                                   |
-| thedotmack/claude-mem | [thedotmack-claude-mem](repos/thedotmack-claude-mem.md) | **13.12.4**（插件运行态）/ 87K★ | integrated（对齐运行态）                     |
+| thedotmack/claude-mem | [thedotmack-claude-mem](repos/thedotmack-claude-mem.md) | **13.13.1**（插件运行态，钉扎 <13.14）/ 87K★ | integrated（对齐运行态）                     |
 
 ## L1 治理
 
@@ -102,15 +103,15 @@
 | 柱                    | 评分       | 核心价值                                     | 本地                               |
 | --------------------- | ---------- | -------------------------------------------- | ---------------------------------- |
 | obra/superpowers      | ⭐⭐⭐⭐⭐ | SDD+TDD、HARD-GATE、两阶段审查、原子任务     | P0 路由集 6；插件+本地优先         |
-| open-gsd/gsd-core     | ⭐⭐⭐⭐⭐ | 制品优先、DAG、Trust-But-Verify、workstreams | workstream/adr/context-engineering |
+| open-gsd/gsd-core     | ⭐⭐⭐⭐⭐ | 制品优先、DAG、Trust-But-Verify、workstreams | workstream/adr/rules-CONTEXT（v11：context-engineering 技能已删） |
 | Fission-AI/OpenSpec   | ⭐⭐⭐⭐   | OPSX、delta specs、brownfield                | core CLI；verify 走本地 commands   |
 | garrytan/gstack       | ⭐⭐⭐⭐⭐ | 25 agents、审查路由、品味记忆、ML 防御       | dx-reviewer、taste-memory 等       |
 | thedotmack/claude-mem | ⭐⭐⭐⭐⭐ | 渐进式披露、Chroma、平台隔离                 | R18；Endless 默认关                |
 
 ## 冗余/互博（已解决）
 
-1. codegraph vs UA — **UA removed v10.5**；双引擎 = codegraph + cbm（cbm 已禁用 v10.10）
-2. codegraph vs codebase-memory — 互补（R17 符号级 vs L4 架构/ADR/变更）→ **v10.10 永久禁用 cbm**（全盘索引爆 CPU/内存）
+1. codegraph vs UA — **UA removed v10.5**；现行为**单引擎 codegraph**（历史"双引擎 codegraph+cbm"口径随 cbm v10.10 永久禁用而作废）
+2. codegraph vs codebase-memory — 历史定位互补（R17 符号级 vs L4 架构/ADR/变更）→ **v10.10 永久禁用 cbm**（全盘索引爆 CPU/内存），其 concern 全部由 codegraph 承接
 3. claude-context vs codebase-memory — context archived_redirect → cbm
 4. deer-flow vs workstream — MANIFEST excludes
 5. gstack vs compound-engineering — 插件禁用
@@ -124,7 +125,7 @@
 | 仓库                        | 卡片                                                                | 说明                                         |
 | --------------------------- | ------------------------------------------------------------------- | -------------------------------------------- |
 | gsd-build/get-shit-done     | [open-gsd…](repos/open-gsd-gsd-core.md)                             | archived；后继 open-gsd/gsd-core             |
-| Lum1104/Understand-Anything | [lum1104-understand-anything](repos/lum1104-understand-anything.md) | removed v10.5.1 Q4；codegraph+cbm 双引擎替代 |
+| Lum1104/Understand-Anything | [lum1104-understand-anything](repos/lum1104-understand-anything.md) | removed v10.5.1 Q4；由 codegraph 替代（历史口径"双引擎"已随 cbm 禁用作废） |
 
 ## v10.5.1 决策（访谈锁定 Q1–Q8）
 
@@ -143,7 +144,7 @@
 | #   | 决策       | 结论                                                                                               |
 | --- | ---------- | -------------------------------------------------------------------------------------------------- |
 | D1  | 新增集成   | **0 新增** skill/agent/MCP/plugin；全部 44 仓库走卡片/文档级记录                                   |
-| D2  | 版本口径   | 插件随上游自动更新（superpowers 6.2.0 / claude-mem 13.12.4 / codegraph MCP 1.5.0），文档对齐运行态 |
+| D2  | 版本口径   | 插件随上游自动更新（superpowers 6.2.0 / claude-mem 13.13.1 钉扎 <13.14 / codegraph MCP 1.5.0），文档对齐运行态 |
 | D3  | 维持钉扎   | OpenSpec 1.4.1 / GSD 1.4.5 / ECC 2.0 cherry_pick（R14，评估记录见下）                              |
 | D4  | 不集成评估 | CCR（常驻进程）、codex-plugin-cc（双倍计费）、claude-code-best/SuperClaude（架构重叠）             |
 | D5  | 清理       | 删旧计划 v10.6/v10.7 + diagnostic-v10.5.2 + 7 空 backups；保留 v10.10 计划 + 44-repo SSOT          |

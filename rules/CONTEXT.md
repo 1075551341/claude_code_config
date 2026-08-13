@@ -91,7 +91,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 - 需要子 Agent 并发（max 3, 15min timeout）
 
 **四执行模式**: flash(快速) / standard(标准) / pro(规划) / ultra(子Agent并行fan-out)
-**集成方式**: `claude-to-deerflow` skill → `npx skills add https://github.com/bytedance/deer-flow --skill claude-to-deerflow`
+**集成方式**: `catalog/skills/claude-to-deerflow`（v11 降级 catalog，按需复制启用）→ `npx skills add https://github.com/bytedance/deer-flow --skill claude-to-deerflow`
 
 **不启用时**: 使用本地 subagent-driven-development（v10.15 默认关闭，用户显式要求时触发）+ agentic-orchestrator 实现类似效果。
 
@@ -101,7 +101,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 **替代**：一律 `codegraph_explore`；决策原因用 claude-mem；ADR 手写 `docs/ADR/`。
 
-历史配置见 `mcp-configs/optional-dev.json` → `_archive_codebase_memory`（勿启用除非显式限定业务仓路径 + `KG_SYNC_CBM=1`）。
+历史配置见 `mcp-configs/optional-dev.json` → `_archive_codebase_memory`（勿启用；原 `KG_SYNC_CBM` hook 通路已随 v11 kg sync hook 退役删除，如确需 cbm 须显式限定业务仓路径并手动运行）。
 
 ## 外部搜索策略（Firecrawl / Exa）
 
@@ -174,6 +174,24 @@ get_observations（完整详情, ~500-1000 tokens/条）
 
 > **source**: [kumaran-is/claude-code-guide](https://github.com/kumaran-is/claude-code-guide)
 
-- 错误恢复：失败模式写入 `experiences/rejected/`，成功模式写入 `experiences/patterns/`
+- 错误恢复：失败/成功模式经 claude-mem observation 记录（原 `experiences/` 文件体系已归档）
 - 会话切换：优先加载制品（Cursor：`@session-digest.md` + handoff）；先「提取上下文」再压缩，避免丢失决策
 - 长任务：每子目标完成后输出状态摘要，便于 stop-pattern-extraction 提取
+
+## Claude Code auto-compact 配置（v11 自 RUNTIME_PLAYBOOK 并入）
+
+模型感知，不写死窗口：
+
+| 键                                          | 说明                                                                    |
+| ------------------------------------------- | ----------------------------------------------------------------------- |
+| `config/model-context-windows.json`         | 模型/后缀 → token 映射 SSOT；可扩展新模型                               |
+| `autoCompactWindow`                         | 由 `scripts/sync-compact-window.py` 或 SessionStart 按当前 `model` 同步 |
+| `env.CLAUDE_CODE_MAX_CONTEXT_TOKENS`        | 可选：强制覆盖模型最大窗口（路由非标准模型时）                          |
+| `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`       | `"70"` — 70% 触发原生自动 `/compact`（提质；hook 仍 90% 强制提醒）      |
+| `env.CLAUDE_COMPACT_WARN_PCT` / `FORCE_PCT` | hook 70% / 90%                                                          |
+
+- ⛔ 勿在 `env` 写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`；勿设 `autoCompactWindow` 超过模型支持值
+- Hook SSOT：`hooks/_lib/context_thresholds.py`；换模型后 `python scripts/sync-compact-window.py` 或重启会话
+- Cursor 侧独立：`templates/cursor-guard/guard-config.json`（`window_tokens` 默认 200K）
+- 修改后需**完全重启** Claude Code；HUD 与 `until auto-compact` 应基于同一解析窗口
+- 制品跨会话：`session-digest.md`、`.planning/`、`openspec/changes/` — 新会话 `@` 引用

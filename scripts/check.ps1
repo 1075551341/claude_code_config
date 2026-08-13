@@ -38,29 +38,40 @@ Set-StrictMode -Off
 $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
-$EDITORS    = @("cursor", "qoder", "qoder-cn", "trae", "trae-cn", "workbuddy", "codearts")
-$LINK_DIRS  = @("skills", "agents", "rules")
-# 与 sync.ps1 $L0_ROOT_ITEMS / sync.sh SYNC_FILES / impact_sync.SYNC_FILES 保持同一集合（8 项）
-$SYNC_FILES = @("CLAUDE.md", "CLAUDE-ROUTER.mdc", "SPEC.md", "MANIFEST.yaml", "agent.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
-$ROOT_INDEX_SKIP_EDITORS = @("workbuddy")
-$ROUTER_DEPLOY_BASENAME = "00-CLAUDE-ROUTER"
-$CLAUDE_RULE_NAMES = @("CLAUDE.mdc", "CLAUDE.md")
+# 根文件集合与编辑器清单单源：config/sync-manifest.json（与 sync.ps1 / impact_sync.py 共用）；读取失败回退内置默认
+$SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
+# v11.1 多编辑器（1+N）：managed 编辑器白名单（cursor 走专用校验块；下表为其余编辑器）
+$MANAGED_EDITORS = [ordered]@{
+    "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
+    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+}
+$syncManifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
+if (Test-Path $syncManifestPath) {
+    try {
+        $syncMf = Get-Content $syncManifestPath -Raw -Encoding utf8 | ConvertFrom-Json
+        if ($syncMf.root_files) { $SYNC_FILES = @($syncMf.root_files) }
+        if ($syncMf.editors) {
+            $MANAGED_EDITORS = [ordered]@{}
+            foreach ($e in $syncMf.editors.PSObject.Properties) {
+                if ($e.Name -eq "_comment" -or $e.Name -eq "cursor") { continue }
+                $v = $e.Value
+                $MANAGED_EDITORS[$e.Name] = @{
+                    Home         = ("$($v.home)" -replace '^~', $env:USERPROFILE -replace '/', '\')
+                    Enabled      = ($v.enabled -ne $false)
+                    RulesChannel = "$(if ($v.rules_channel) { $v.rules_channel } else { '' })"
+                    RulesExt     = "$(if ($v.rules_ext) { $v.rules_ext } else { '' })"
+                    RootIndex    = ($v.root_index -eq $true)
+                    Special      = "$(if ($v.special) { $v.special } else { '' })"
+                }
+            }
+        }
+    } catch { }
+}
 $STALE_LINKS = @("hooks", "scripts")
-$NATIVE_RULES = @{
-    "cursor"   = @{ Dir = (Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"); Ext = ".mdc" }
-    "qoder"    = @{ Dir = (Join-Path $env:USERPROFILE ".qoder\rules"); Ext = ".mdc" }
-    "qoder-cn" = @{ Dir = (Join-Path $env:USERPROFILE ".qoder-cn\rules"); Ext = ".mdc" }
-    "trae"     = @{ Dir = (Join-Path $env:USERPROFILE ".trae\user_rules"); Ext = ".md" }
-    "trae-cn"  = @{ Dir = (Join-Path $env:USERPROFILE ".trae-cn\user_rules"); Ext = ".md" }
-    "codearts" = @{ Dir = (Join-Path $env:USERPROFILE ".codeartsdoer\rule"); Ext = ".mdc" }
-    # workbuddy: no native rules channel — CLAUDE.md + skills only
-}
-$NATIVE_SKILLS = @{
-    "cursor" = Join-Path $env:USERPROFILE ".cursor\skills-native"
-    "trae"   = Join-Path $env:USERPROFILE ".trae\skills-native"
-    "qoder"  = Join-Path $env:USERPROFILE ".qoder\skills-native"
-    # workbuddy uses skills/ junction (not skills-native)
-}
 
 $results   = [System.Collections.Generic.List[hashtable]]::new()
 $passCount = 0
@@ -80,43 +91,8 @@ function Add-Check {
 
 function Write-Section { param($n, $t) Write-Host ""; Write-Host "  S$n  $t" -ForegroundColor Green; Write-Host "  $('='*50)" -ForegroundColor DarkGray }
 
-function Get-EditorSettingsPath {
-    param([string]$Editor)
-
-    $candidates = switch ($Editor.ToLower()) {
-        "cursor" {
-            @(
-                (Join-Path $env:APPDATA "Cursor\User\settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".cursor") "settings.json")
-            )
-        }
-        "trae" {
-            @(
-                (Join-Path $env:APPDATA "Trae\User\settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".trae") "settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".trae-cn") "settings.json")
-            )
-        }
-        "qoder" {
-            @(
-                (Join-Path $env:APPDATA "Qoder\User\settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".qoder") "settings.json"),
-                (Join-Path (Join-Path $env:USERPROFILE ".qoder-cn") "settings.json")
-            )
-        }
-        "workbuddy" {
-            @((Join-Path (Join-Path $env:USERPROFILE ".workbuddy") "settings.json"))
-        }
-        default {
-            @((Join-Path (Join-Path $env:USERPROFILE ".$Editor") "settings.json"))
-        }
-    }
-
-    foreach ($candidate in $candidates) {
-        if ($candidate -and (Test-Path $candidate)) { return $candidate }
-    }
-    return $candidates[0]
-}
+# v11 曾移除 Get-EditorSettingsPath；v11.1 S3 改为 manifest 驱动的 managed 白名单循环，
+# 落点校验直接用 home 路径拼接，无需该函数。
 
 Write-Host ""
 Write-Host "======================================================" -ForegroundColor Cyan
@@ -138,8 +114,8 @@ $requiredDirs = @(
     @{ P = "hooks";       D = "Hook scripts" }
     @{ P = "scripts";     D = "Tool scripts" }
     @{ P = "logs";        D = "Logs" }
-    @{ P = "experiences"; D = "Experiences" }
-    @{ P = "plans";       D = "Plans" }
+    # experiences/ 已于 v11 归档至 docs/archive/experiences/（学习产物统一 claude-mem）
+    # plans/ 已于 v10.17 移出版本库（计划/设计为本地制品，见 .gitignore），不再作为必备目录
     @{ P = "backups";     D = "Backups" }
 )
 
@@ -209,9 +185,9 @@ if (Test-Path $mcpPath) {
 }
 
 # =============================================================
-# S3: Symlink sync status (v14 dual mode)
+# S3: Sync status (v11.1 multi-editor: 1+N)
 # =============================================================
-Write-Section 3 "Symlink Sync Status (v14)"
+Write-Section 3 "Sync Status (v11.1 multi-editor: 1+N)"
 
 function Test-IsReparseLink {
     param([string]$Path)
@@ -219,36 +195,15 @@ function Test-IsReparseLink {
     return [bool]((Get-Item $Path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
 
-function Get-SyncMode {
-    param([string]$EditorDir)
-    $modePath = Join-Path $EditorDir "sync-mode.json"
-    if (-not (Test-Path $modePath)) { return "unknown" }
-    try {
-        $obj = Get-Content $modePath -Raw -Encoding utf8 | ConvertFrom-Json
-        return [string]$obj.mode
-    } catch { return "unknown" }
-}
-
-foreach ($editor in $EDITORS) {
-    $editorDir = if ($editor -eq "codearts") {
-        Join-Path $env:USERPROFILE ".codeartsdoer"
-    } else {
-        Join-Path $env:USERPROFILE ".$editor"
-    }
-    if (-not (Test-Path $editorDir)) {
-        Add-Check "Symlink" ".$editor" "pass" "editor not installed -- sync.ps1 skips by design"
-        continue
-    }
-
+$cursorDir = Join-Path $env:USERPROFILE ".cursor"
+if (-not (Test-Path $cursorDir)) {
+    Add-Check "Symlink" ".cursor" "warn" "~/.cursor not found -- Cursor not installed?"
+} else {
     $issues = @()
     $passes = 0
-    $syncMode = Get-SyncMode -EditorDir $editorDir
 
     foreach ($file in $SYNC_FILES) {
-        # v18.4 对齐 sync.ps1 $ROOT_INDEX_SKIP_EDITORS：总纲/索引根文件部署到除 workbuddy 外的所有编辑器
-        # （workbuddy 无 rules 通道且根目录归其 BOOTSTRAP 契约所有，仅 CLAUDE.md）
-        if ($ROOT_INDEX_SKIP_EDITORS -contains $editor -and $file -ne "CLAUDE.md") { continue }
-        $fp = Join-Path $editorDir $file
+        $fp = Join-Path $cursorDir $file
         $expected = Join-Path $CLAUDE_DIR $file
         if (-not (Test-Path $fp)) {
             $issues += "$file(missing)"
@@ -257,7 +212,7 @@ foreach ($editor in $EDITORS) {
             if ($actual -is [array]) { $actual = $actual[0] }
             if ($actual -eq $expected) { $passes++ } else { $issues += "$file(wrong target)" }
         } else {
-            # sync v18: symlink 不可用时回退 Copy-Item — 内容一致视为通过
+            # symlink 不可用时回退 Copy-Item — 内容一致视为通过
             try {
                 $h1 = (Get-FileHash $fp -Algorithm SHA256).Hash
                 $h2 = (Get-FileHash $expected -Algorithm SHA256).Hash
@@ -266,145 +221,112 @@ foreach ($editor in $EDITORS) {
         }
     }
 
-    $routerExt = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Ext } else { ".mdc" }
-    $routerRulesDir = if ($NATIVE_RULES.ContainsKey($editor)) { $NATIVE_RULES[$editor].Dir } else { $null }
-    if ($routerRulesDir) {
-        $routerPath = Join-Path $routerRulesDir "${ROUTER_DEPLOY_BASENAME}$routerExt"
-        if (Test-Path $routerPath) { $passes++ } else { $issues += "router(missing)" }
-    } elseif ($editor -eq "workbuddy") {
-        $passes++  # no rules channel by design
-    }
-
-    $agentsPath = Join-Path $editorDir "agents"
-    $agentsExpected = Join-Path $CLAUDE_DIR "agents"
-    if ($editor -eq "workbuddy") {
-        # agents optional for workbuddy (only with -All)
-        if ((-not (Test-Path $agentsPath)) -or (Test-IsReparseLink $agentsPath)) { $passes++ }
-        else { $issues += "agents(entity dir)" }
-    } elseif (Test-IsReparseLink $agentsPath) {
-        $actual = (Get-Item $agentsPath -Force).Target
-        if ($actual -is [array]) { $actual = $actual[0] }
-        if ($actual -eq $agentsExpected) { $passes++ } else { $issues += "agents(wrong target)" }
-    } else { $issues += "agents(not a link)" }
-
-    if ($syncMode -eq "full") {
-        $skillsPath = Join-Path $editorDir "skills"
-        if (Test-Path $skillsPath) {
-            if (Test-IsReparseLink $skillsPath) { $issues += "skills(should not be link in full)" }
-            else { $issues += "skills(entity dir in full)" }
-        } else { $passes++ }
-
-        $rulesPath = Join-Path $editorDir "rules"
-        if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in full)" }
-        elseif (Test-Path $rulesPath) { $passes++ }
-        else { $issues += "rules(native missing)" }
-
-        if ($NATIVE_RULES.ContainsKey($editor)) {
-            $native = $NATIVE_RULES[$editor]
-            $rulesSrc = Join-Path $CLAUDE_DIR "rules"
-            $expectedRules = if (Test-Path $rulesSrc) {
-                (Get-ChildItem $rulesSrc -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
-            } else { 0 }
-            $nativeCount = if (Test-Path $native.Dir) {
-                (Get-ChildItem $native.Dir -Filter "*$($native.Ext)" -ErrorAction SilentlyContinue).Count
-            } else { 0 }
-            if ($nativeCount -ge $expectedRules) { $passes++ } else { $issues += "rules-native($nativeCount/$expectedRules)" }
-        }
-
-        if ($NATIVE_SKILLS.ContainsKey($editor)) {
-            $skillsNative = $NATIVE_SKILLS[$editor]
-            $skillsSrc = Join-Path $CLAUDE_DIR "skills"
-            $expectedSkills = if (Test-Path $skillsSrc) {
-                (Get-ChildItem $skillsSrc -Directory | Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") }).Count
-            } else { 0 }
-            $nativeSkillCount = 0
-            if (Test-Path $skillsNative) {
-                $nativeSkillCount = (Get-ChildItem $skillsNative -Directory -ErrorAction SilentlyContinue |
-                    Where-Object { Test-Path (Join-Path $_.FullName "SKILL.md") }).Count
-            }
-            if ($nativeSkillCount -ge [Math]::Min(1, $expectedSkills)) { $passes++ }
-            else { $issues += "skills-native($nativeSkillCount/$expectedSkills)" }
-        }
-    }
-    else {
-        foreach ($dir in @("skills")) {
-            $lp = Join-Path $editorDir $dir
-            $et = Join-Path $CLAUDE_DIR $dir
-            if (Test-IsReparseLink $lp) {
-                $actual = (Get-Item $lp -Force).Target
-                if ($actual -is [array]) { $actual = $actual[0] }
-                if ($actual -eq $et) { $passes++ } else { $issues += "$dir(wrong target)" }
-            } elseif (Test-Path $lp) { $issues += "$dir(not a link)" }
-            else { $issues += "$dir(missing)" }
-        }
-
-        if ($NATIVE_RULES.ContainsKey($editor)) {
-            $native = $NATIVE_RULES[$editor]
-            $rulesPath = $native.Dir
-            if (Test-IsReparseLink $rulesPath) { $issues += "rules(should not be link in index)" }
-            elseif (Test-Path $rulesPath) {
-                $passes++
-                # v18: CLAUDE.md 部署在编辑器根目录，不在 rules/ 内
-                $coreRule = Join-Path $rulesPath "CORE$($native.Ext)"
-                if (Test-Path $coreRule) {
-                    $passes++
-                    try {
-                        $coreText = Get-Content $coreRule -Raw -Encoding utf8
-                        if ($coreText -match '<40%' -or $coreText -match '\|\s*50%\s*\|') {
-                            $issues += "CORE(stale thresholds, run sync.ps1)"
-                        }
-                    } catch {}
-                } else { $issues += "rules/CORE$($native.Ext)(missing)" }
-                $agentsRule = Join-Path $rulesPath "AGENTS$($native.Ext)"
-                if (Test-Path $agentsRule) {
-                    try {
-                        $agentsText = Get-Content $agentsRule -Raw -Encoding utf8
-                        $fmCount = ([regex]::Matches($agentsText, '(?m)^---\s*$')).Count
-                        if ($fmCount -gt 2) {
-                            $issues += "AGENTS(double frontmatter, run sync.ps1)"
-                        }
-                    } catch {}
-                }
-                $staleMd = Join-Path $rulesPath "CORE.md"
-                if ((Test-Path $staleMd) -and $native.Ext -eq ".mdc") {
-                    $issues += "rules/CORE.md(stale .md symlink)"
-                }
-            }
-            else { $issues += "rules(missing)" }
-        }
-
-        if ($NATIVE_SKILLS.ContainsKey($editor)) {
-            $skillsNative = $NATIVE_SKILLS[$editor]
-            if (Test-Path $skillsNative) {
-                $issues += "skills-native(stale from full mode)"
-            } else { $passes++ }
-        }
+    # skills/ agents/ junction（-Skills/-All 部署；存在则校验指向）
+    foreach ($dir in @("skills", "agents")) {
+        $lp = Join-Path $cursorDir $dir
+        $et = Join-Path $CLAUDE_DIR $dir
+        if (Test-IsReparseLink $lp) {
+            $actual = (Get-Item $lp -Force).Target
+            if ($actual -is [array]) { $actual = $actual[0] }
+            if ($actual -eq $et) { $passes++ } else { $issues += "$dir(wrong target)" }
+        } elseif (Test-Path $lp) { $issues += "$dir(not a link)" }
+        # 不存在 = 未用 -Skills/-All 部署，可接受
     }
 
     foreach ($stale in $STALE_LINKS) {
-        $sp = Join-Path $editorDir $stale
-        if (Test-Path $sp) {
-            if (Test-IsReparseLink $sp) { $issues += "$stale(stale link)" }
+        $sp = Join-Path $cursorDir $stale
+        if ((Test-Path $sp) -and (Test-IsReparseLink $sp)) { $issues += "$stale(stale link)" }
+    }
+    # v11 已移除的旧根文件残留
+    foreach ($legacy in @("CLAUDE-ROUTER.mdc", "agent.yaml")) {
+        if (Test-Path (Join-Path $cursorDir $legacy)) { $issues += "$legacy(stale, removed in v11)" }
+    }
+
+    if ($issues.Count -eq 0) {
+        Add-Check "Symlink" ".cursor" "pass" "$passes checks OK"
+    } else {
+        Add-Check "Symlink" ".cursor" "warn" "$($issues -join ', ') -- run sync.ps1"
+    }
+}
+
+# v11.1 managed 编辑器白名单校验：在装编辑器应有预期落点（缺失才告警）；
+# enabled=false 的编辑器反向扫残留链（不应再有 ~/.claude 链接）
+foreach ($edName in @($MANAGED_EDITORS.Keys)) {
+    $ed = $MANAGED_EDITORS[$edName]
+    if (-not (Test-Path $ed.Home)) { continue }  # 未安装 → 跳过
+
+    if (-not $ed.Enabled) {
+        $links = @(Get-ChildItem $ed.Home -Force -ErrorAction SilentlyContinue |
+            Where-Object {
+                ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -and
+                ($_.Target -and ("$($_.Target)" -like "*\.claude\*" -or "$($_.Target)" -like "*\.claude"))
+            })
+        if ($links.Count -eq 0) {
+            Add-Check "Symlink" "$edName (disabled)" "pass" "no residual ~/.claude links"
+        } else {
+            Add-Check "Symlink" "$edName (disabled)" "warn" "$($links.Count) residual link(s) -- editor disabled in sync-manifest, safe to delete"
+        }
+        continue
+    }
+
+    $edIssues = @()
+    $edPasses = 0
+
+    if ($ed.Special -eq "claude_md_plus_skills") {
+        # workbuddy：仅 CLAUDE.md + skills/ 联接；SOUL/USER 等自有命名空间不校验
+        $cm = Join-Path $ed.Home "CLAUDE.md"
+        $cmSrc = Join-Path $CLAUDE_DIR "CLAUDE.md"
+        if (-not (Test-Path $cm)) { $edIssues += "CLAUDE.md(missing)" }
+        elseif (Test-IsReparseLink $cm) { $edPasses++ }
+        else {
+            try {
+                if ((Get-FileHash $cm -Algorithm SHA256).Hash -eq (Get-FileHash $cmSrc -Algorithm SHA256).Hash) { $edPasses++ }
+                else { $edIssues += "CLAUDE.md(stale copy)" }
+            } catch { $edIssues += "CLAUDE.md(unreadable)" }
+        }
+        $sk = Join-Path $ed.Home "skills"
+        if (Test-IsReparseLink $sk) { $edPasses++ }
+        elseif (Test-Path $sk) { $edIssues += "skills(not a link)" }
+        else { $edIssues += "skills(missing)" }
+    } else {
+        if ($ed.RootIndex) {
+            foreach ($file in $SYNC_FILES) {
+                $fp = Join-Path $ed.Home $file
+                $expected = Join-Path $CLAUDE_DIR $file
+                if (-not (Test-Path $fp)) { $edIssues += "$file(missing)" }
+                elseif (Test-IsReparseLink $fp) {
+                    $actual = (Get-Item $fp -Force).Target
+                    if ($actual -is [array]) { $actual = $actual[0] }
+                    if ($actual -eq $expected) { $edPasses++ } else { $edIssues += "$file(wrong target)" }
+                } else {
+                    try {
+                        if ((Get-FileHash $fp -Algorithm SHA256).Hash -eq (Get-FileHash $expected -Algorithm SHA256).Hash) { $edPasses++ }
+                        else { $edIssues += "$file(stale copy)" }
+                    } catch { $edIssues += "$file(not a link)" }
+                }
+            }
+        }
+        if ($ed.RulesChannel) {
+            $chanDir = Join-Path $ed.Home $ed.RulesChannel
+            $srcRules = @(Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -Filter "*.md" -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -ne "README.md" })
+            $ruleOk = 0
+            foreach ($r in $srcRules) {
+                $dst = Join-Path $chanDir "$($r.BaseName)$($ed.RulesExt)"
+                if (-not (Test-Path -LiteralPath $dst)) { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(missing)"; continue }
+                try {
+                    if ((Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash -eq (Get-FileHash -LiteralPath $r.FullName -Algorithm SHA256).Hash) { $ruleOk++ }
+                    else { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(stale)" }
+                } catch { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(unreadable)" }
+            }
+            $edPasses += $ruleOk
         }
     }
 
-    $esPath = Get-EditorSettingsPath $editor
-    if (Test-Path $esPath) {
-        try {
-            $es = Get-Content $esPath -Raw -Encoding utf8 | ConvertFrom-Json
-            if ($es.hooks -and $es.hooks.Stop) { $issues += "settings has Stop hooks" }
-            $termEditor = $es.'terminal.integrated.env.windows'.'CLAUDE_IN_EDITOR'
-            if ($termEditor) { $issues += "terminal CLAUDE_IN_EDITOR pollutes CLI" }
-        } catch {}
-    }
-
-    $modeLabel = if ($syncMode -eq "unknown") { "mode?" } else { $syncMode }
-    if ($issues.Count -eq 0) {
-        Add-Check "Symlink" ".$editor" "pass" "$passes checks OK ($modeLabel)"
-    } elseif ($passes -ge 6) {
-        Add-Check "Symlink" ".$editor" "warn" "${modeLabel}: $($issues -join ', ')"
+    if ($edIssues.Count -eq 0) {
+        Add-Check "Symlink" $edName "pass" "$edPasses checks OK"
     } else {
-        Add-Check "Symlink" ".$editor" "warn" "not synced ($modeLabel) -- run sync.ps1"
+        Add-Check "Symlink" $edName "warn" "$($edIssues -join ', ') -- run sync.ps1"
     }
 }
 
@@ -576,11 +498,12 @@ if (Test-Path $guardEditorRule) {
 $cursorPluginRulesDir = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"
 $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
-$l0Bases = @("00-CLAUDE-ROUTER", "CORE", "CURSOR-EDITOR")
+# v11: ROUTER 并入 CLAUDE.md，插件 L0 承载文件为 00-CLAUDE.mdc
+$l0Bases = @("00-CLAUDE", "CORE", "CURSOR-EDITOR")
 $l0SrcMap = @{
-    "00-CLAUDE-ROUTER" = Join-Path $CLAUDE_DIR "CLAUDE-ROUTER.mdc"
-    "CORE"             = Join-Path $CLAUDE_DIR "rules\CORE.md"
-    "CURSOR-EDITOR"    = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+    "00-CLAUDE"     = Join-Path $CLAUDE_DIR "CLAUDE.md"
+    "CORE"          = Join-Path $CLAUDE_DIR "rules\CORE.md"
+    "CURSOR-EDITOR" = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
 }
 # plugin 三件套：存在 + hash 与真源一致
 $pluginMissing = @()
@@ -616,78 +539,8 @@ if ($projFiles.Count -eq 0) {
     Add-Check "CursorGuard" "project L0 rules" "warn" "files present: $($projFiles.Name -join ', ')"
 }
 
-# S4c: WorkBuddy（CLAUDE.md + skills/；无 rules 通道）
-$wbBase = Join-Path $env:USERPROFILE ".workbuddy"
-$wbClaude = Join-Path $wbBase "CLAUDE.md"
-$wbSkills = Join-Path $wbBase "skills"
-$wbSkillsExpected = Join-Path $CLAUDE_DIR "skills"
-if (-not (Test-Path $wbBase)) {
-    Add-Check "WorkBuddy" "install" "pass" "workbuddy not installed -- sync.ps1 skips by design"
-} else {
-    if (-not (Test-Path $wbClaude)) {
-        Add-Check "WorkBuddy" "CLAUDE.md" "warn" "missing -- run sync.ps1"
-    } elseif (Test-IsReparseLink $wbClaude) {
-        $actual = (Get-Item $wbClaude -Force).Target
-        if ($actual -is [array]) { $actual = $actual[0] }
-        $expected = Join-Path $CLAUDE_DIR "CLAUDE.md"
-        if ($actual -eq $expected) {
-            Add-Check "WorkBuddy" "CLAUDE.md" "pass" "symlink to ~/.claude/CLAUDE.md"
-        } else {
-            Add-Check "WorkBuddy" "CLAUDE.md" "warn" "wrong target -- run sync.ps1"
-        }
-    } else {
-        Add-Check "WorkBuddy" "CLAUDE.md" "pass" "present (copy fallback ok)"
-    }
-    if (Test-IsReparseLink $wbSkills) {
-        $actual = (Get-Item $wbSkills -Force).Target
-        if ($actual -is [array]) { $actual = $actual[0] }
-        if ($actual -eq $wbSkillsExpected) {
-            Add-Check "WorkBuddy" "skills/" "pass" "junction to ~/.claude/skills"
-        } else {
-            Add-Check "WorkBuddy" "skills/" "warn" "wrong target -- run sync.ps1"
-        }
-    } elseif (Test-Path $wbSkills) {
-        Add-Check "WorkBuddy" "skills/" "warn" "entity dir (not junction) -- run sync.ps1"
-    } else {
-        Add-Check "WorkBuddy" "skills/" "warn" "missing -- run sync.ps1"
-    }
-}
-
-# S4f: CodeArts 码道（个人级 ~/.codeartsdoer/rule）
-$codeartsBase = Join-Path $env:USERPROFILE ".codeartsdoer"
-$codeartsPersonal = Join-Path $codeartsBase "rule"
-$codeartsLegacyPersonal = Join-Path $env:USERPROFILE ".config\codeartsdoer\rule"
-$codeartsProject = Join-Path $CLAUDE_DIR ".codeartsdoer\rule"
-$codeartsLegacy = Join-Path $env:APPDATA "codearts-agent\User\rules"
-$codeartsRootL0 = @("CLAUDE")
-$codeartsRuleL0 = @("00-CLAUDE-ROUTER", "CORE")
-$codeartsRootMissing = @($codeartsRootL0 | Where-Object { -not (Test-Path (Join-Path $codeartsBase "$_.md")) })
-$codeartsRuleMissing = @($codeartsRuleL0 | Where-Object { -not (Test-Path (Join-Path $codeartsPersonal "$_.mdc")) })
-$codeartsMissing = @($codeartsRootMissing + $codeartsRuleMissing)
-$codeartsLegacyFiles = @()
-if (Test-Path $codeartsLegacyPersonal) {
-    $codeartsLegacyFiles = @(Get-ChildItem $codeartsLegacyPersonal -File -ErrorAction SilentlyContinue)
-}
-if (-not (Test-Path $codeartsBase)) {
-    Add-Check "CodeArts" "install" "pass" "codearts not installed -- sync.ps1 skips by design"
-} elseif (Test-Path $codeartsLegacy) {
-    Add-Check "CodeArts" "legacy path" "warn" "codearts-agent/User/rules/ stale -- run sync.ps1"
-} elseif ($codeartsLegacyFiles.Count -gt 0) {
-    Add-Check "CodeArts" "legacy personal" "warn" "~/.config/codeartsdoer/rule/ has $($codeartsLegacyFiles.Count) stale file(s) -- run sync.ps1"
-} elseif ($codeartsMissing.Count -eq 0) {
-    Add-Check "CodeArts" "personal rules" "pass" "L0 in ~/.codeartsdoer/ (CLAUDE.md) + rule/ (ROUTER/CORE)"
-} else {
-    Add-Check "CodeArts" "personal rules" "warn" "Missing: $($codeartsMissing -join ', ') -- run sync.ps1"
-}
-$codeartsProjFiles = @()
-if (Test-Path $codeartsProject) {
-    $codeartsProjFiles = @(Get-ChildItem $codeartsProject -File -Force -ErrorAction SilentlyContinue)
-}
-if ($codeartsProjFiles.Count -eq 0) {
-    Add-Check "CodeArts" "project rules" "pass" "empty/absent (personal-only, v14.5)"
-} else {
-    Add-Check "CodeArts" "project rules" "warn" "stale project files present -- personal-only expected"
-}
+# v11.1: WorkBuddy / CodeArts 等编辑器校验已并入 S3 managed 白名单循环
+# （清单单源 sync-manifest.json editors 段），此处不再单设检查段。
 
 # =============================================================
 # S5: Runtime environment

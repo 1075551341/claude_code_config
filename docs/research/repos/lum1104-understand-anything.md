@@ -15,6 +15,7 @@
 - 与 colbymchenry/codegraph（R17 常驻，符号级）功能重叠
 - 与 DeusData/codebase-memory-mcp（L4 架构/ADR/变更）重叠
 - 双引擎替代：codegraph + cbm 覆盖全部场景，UA 冗余；R14 版本克制不重新评估
+- **现行口径（v11）**：cbm 已于 v10.10 永久禁用，替代主体为单引擎 codegraph；UA removed 结论不变
 
 ## 决策引用
 

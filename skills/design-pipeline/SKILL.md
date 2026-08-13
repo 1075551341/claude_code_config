@@ -10,6 +10,7 @@ loading_tier: L3
 # Design Pipeline
 
 > 三阶段：探索(shotgun) → 选定 → 实现(html)。品味记忆跨会话学习。
+> v11: 原 `agents/design-engineer.md`（mockup→生产级 HTML/CSS、框架检测）已并入本技能 Phase 2；探索期多方案 agent 变体见 `catalog/agents/design-shotgun.md`。
 
 ## 触发
 - `/design-shotgun` — 启动探索

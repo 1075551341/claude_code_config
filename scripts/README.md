@@ -4,42 +4,30 @@
 
 ---
 
-## 同步与验证（多编辑器）
+## 同步与验证（v11.1 多编辑器 1+N）
 
-### 已同步的编辑器（按本机实际目录）
+**1+N 模型**：Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.1 恢复，清单单源 `config/sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 
-| 编辑器    | 用户目录示例                  | 说明                                  |
-| --------- | ----------------------------- | ------------------------------------- |
-| Cursor    | `%USERPROFILE%\.cursor`       | 若存在则参与同步；规则走 local plugin |
-| Trae      | `%USERPROFILE%\.trae(.cn)`    | 若存在则参与同步                      |
-| Qoder     | `%USERPROFILE%\.qoder(-cn)`   | 若不存在则跳过                        |
-| WorkBuddy | `%USERPROFILE%\.workbuddy`    | CLAUDE.md + skills/；无 rules 通道    |
-| CodeArts  | `%USERPROFILE%\.codeartsdoer` | CLAUDE.md + rule/\*.mdc               |
+### `sync.ps1` — 多编辑器同步（v20.0）
 
-> v18.3 已移除：Devin
+**Cursor 落点（默认模式全含）**：
 
-### `sync.ps1` — 多编辑器分层同步（v18.4）
-
-**模式**：
-
-| 模式                     | 同步内容                                                                                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 默认                     | **全部** `rules/*.md`（优先软链）+ `CLAUDE.md` + ROUTER；Cursor **每次刷新** `plugins/local/claude-config`（实体 .mdc，Settings 可见）+ `CURSOR-EDITOR` |
-| `-Skills`                | 默认 + `skills/` Junction/同步                                                                                                                          |
-| `-All`                   | 默认 + `skills/` + `agents/`                                                                                                                            |
-| `-ProjectRules`          | 另将 rules 复制到 **当前目录** `.cursor/rules`（显式 opt-in；CWD 为 `~/.claude` 时跳过）                                                                |
-| `-Lint` / `-InitProject` | 仅向当前项目目录部署模板，不同步编辑器                                                                                                                  |
+| 落点 | 方式 | 内容 |
+| ---- | ---- | ---- |
+| `~/.cursor/` 根 | 软链（回退 Copy） | 6 个总纲/索引根文件：`CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX |
+| `~/.cursor/plugins/local/claude-config/rules/` | 实体 `.mdc`（每次刷新+孤儿清除） | `rules/*.md`（除 README）+ `00-CLAUDE`（=CLAUDE.md）+ `CURSOR-EDITOR`；唯一 Always-Apply 规则通道 |
+| `~/.cursor/skills` `~/.cursor/agents` | Junction | `-Skills` / `-All` 时 |
 
 **用法**：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File sync.ps1                 # 日常：全 rules + 刷新 claude-config
-powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills
-powershell -ExecutionPolicy Bypass -File sync.ps1 -All            # + agents
+powershell -ExecutionPolicy Bypass -File sync.ps1                 # 日常：根文件 + 刷新 claude-config 插件
+powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills         # + skills/ Junction
+powershell -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/
 powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写盘
 ```
 
-> 改 `~/.claude/rules` / `CLAUDE-ROUTER` / `CURSOR-EDITOR` 后跑一次 `sync.ps1` 即可；Cursor Settings 中的 Claude Config 插件内容会随之更新。若列表未变，完全退出 Cursor 再开（仅 Reload 有时不重扫插件）。
+> 改 `~/.claude/rules` / `CLAUDE.md` / `CURSOR-EDITOR` 后跑一次 `sync.ps1` 即可；Cursor Settings 中的 Claude Config 插件内容会随之更新。若列表未变，完全退出 Cursor 再开（仅 Reload 有时不重扫插件）。
 
 > **Claude Code 官方安装**（v10.11 更新）：npm 安装已弃用；Windows 推荐 `irm https://claude.ai/install.ps1 | iex`，macOS/Linux `curl -fsSL https://claude.ai/install.sh | bash`，或 `winget install Anthropic.ClaudeCode`。
 > **参数**：
@@ -47,19 +35,19 @@ powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写
 | 参数            | 说明                                  |
 | --------------- | ------------------------------------- |
 | `-Skills`       | 追加同步 skills/                      |
-| `-All`          | 全量（rules+skills+agents+CLAUDE.md） |
+| `-All`          | 全量（根文件+rules+skills+agents）    |
 | `-ProjectRules` | 复制 rules 到当前项目 .cursor/rules   |
 | `-DryRun`       | 仅预览，不写盘                        |
+| `-Force`        | 跳过 hash 比对强制刷新                |
 | `-Lint`         | 部署 lint 模板到当前项目              |
 | `-InitProject`  | 部署项目初始化模板到当前项目          |
 
 **机制**：
 
 - 文件优先符号链接，失败回退 `Copy-Item`；目录管理员用符号链接、非管理员 `mklink /J` Junction、回退递归复制
-- **Cursor 例外**：`rules/*.mdc` 一律实体复制（Settings Rules UI 不索引软链接）
-- 规则扩展名：cursor/qoder/codearts → `.mdc`，trae → `.md`；workbuddy 无 rules 通道（仅 CLAUDE.md + skills/）
-- **总纲/索引根文件（8 项，v18.4）**：`CLAUDE.md` + `CLAUDE-ROUTER.mdc` + `SPEC.md` + `MANIFEST.yaml` + `agent.yaml` + 三个 `*-INDEX.md`，部署到除 workbuddy 外的所有编辑器（`$ROOT_INDEX_SKIP_EDITORS`）。该集合在 `sync.ps1` / `sync.sh` / `check.ps1` / `templates/cursor-guard/hooks/_lib/impact_sync.py` 四处必须一致，改一处要同步四处
-- **写前去重**：删除目标目录同基底名兄弟文件（任意扩展名/大小写），再写新文件
+- **插件规则例外**：一律实体复制（Cursor Settings Rules UI 不索引软链接；插件禁止外链）
+- **常量单源**：根文件集合 + 插件特殊映射定义在 `config/sync-manifest.json`，`sync.ps1` / `check.ps1` / `templates/cursor-guard/hooks/_lib/impact_sync.py` 三个消费方统一读取（impact_sync 读取失败回退内置默认）
+- **写前去重**：删除目标目录同基底名兄弟文件（任意扩展名/大小写），再写新文件；`~/.cursor/rules` 同名项一并清理（防双份 Always-Apply）
 - 回归测试：`test-sync-dedup.ps1`
 
 **永不同步（Claude Code 专用）**：`hooks/`、`scripts/`、`commands/`、`plugins/`、`.mcp.json`、`settings.json`、`~/.claude/.cursor/`（OpenSpec 本地资产）
@@ -80,7 +68,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 | 改动                                            | 必跑                                         |
 | ----------------------------------------------- | -------------------------------------------- |
-| `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步 L0 四件套）  |
+| `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
 | `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor      |
 | `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话） |
 | `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                       |
@@ -91,7 +79,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ### 同步后建议自测
 
-1. 在各编辑器中确认配置可读、无报错
+1. 在 Cursor 中确认配置可读、无报错（Claude Code 直读 `~/.claude`，无需自测同步）
 2. 抽查技能、代理、规则是否生效（重开无关项目验证全局规则加载）
 3. 确认 MCP 配置与本地服务一致
 4. 确认不会在编辑器侧触发过长或循环 Hook
@@ -127,10 +115,6 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Fix     # 应用修复（后�
 powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ```
 
-### `collect-experience.ps1` — 开发经验收集
-
-从 Git 历史抽取信息，在 `experiences/` 下生成当日经验 Markdown 摘要。
-
 ### `search-github-tools.ps1` — GitHub 工具检索
 
 按分类搜索 GitHub 热门仓库并与本地对比；建议配置 `GITHUB_TOKEN`。
@@ -138,10 +122,9 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ### 测试与辅助
 
 - `test-cursor-guard-regression.ps1` — Cursor Guard 一键回归（上层入口，自动清状态 + 设 UTF-8）；底层实调 `test-cursor-guard-hooks.py`
-- `test-sync-dedup.ps1` — sync.ps1 去重逻辑回归，覆盖三处落点：plugin rules、模板副本 rules、`~/.cursor/rules` 不得遮蔽 plugin
+- `test-sync-dedup.ps1` — sync.ps1 去重逻辑回归，覆盖两处落点（v11 删模板镜像层）：plugin rules、`~/.cursor/rules` 不得遮蔽 plugin
 - `audit_hooks.py` — 只读审计 settings.json 的 hook 注册（launcher 覆盖率 + 超时）
-- `cbm-index.ps1` — codebase-memory 索引辅助；**cbm 自 v10.10 永久禁用**，仅留作手工排查，日常勿用
-- `hooks/_lib/knowledge_graph_sync.py` — codegraph + cbm 双引擎同步（PostToolUse debounce / Stop force / sync.ps1）
+- codegraph 索引同步：v11 起由 codegraph v1.5 MCP server 原生监听自动完成（`_lib/knowledge_graph_sync.py` 与双侧 sync hook 已退役；cbm 已永久禁用，`cbm-index.ps1` 已删除）
 - `sync_mcp.py`、`sync-compact-window.py` — MCP/压缩窗口同步
 - `gen-catalog-index.py` — 重新生成 `catalog/INDEX.md`（含与顶层同名项的权威/变体消歧表）；新增或删除 `catalog/` 条目后必跑
 
@@ -165,7 +148,7 @@ powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 
 ### 重装后恢复 hook 注册
 
-`settings.json` 含 API token，被 `.gitignore` 排除，因此 **hook 注册与 matcher 无法随仓库克隆恢复**（`agent.yaml` 只登记 hook 名，不含 matcher/timeout）。可跟踪快照在 `templates/claude-settings/hooks.snippet.json`：
+`settings.json` 含 API token，被 `.gitignore` 排除，因此 **hook 注册与 matcher 无法随仓库克隆恢复**（`MANIFEST.yaml` harness 节只登记 hook 名，不含 matcher/timeout）。可跟踪快照在 `templates/claude-settings/hooks.snippet.json`：
 
 ```powershell
 $snippet = Get-Content templates\claude-settings\hooks.snippet.json -Raw `
@@ -174,7 +157,7 @@ $snippet = Get-Content templates\claude-settings\hooks.snippet.json -Raw `
 $settings = Get-Content settings.json -Raw | ConvertFrom-Json
 $settings | Add-Member -NotePropertyName hooks -NotePropertyValue $snippet.hooks -Force
 $settings | ConvertTo-Json -Depth 12 | Set-Content settings.json -Encoding UTF8
-python scripts\audit_hooks.py    # 核对 23 个注册项与 matcher（含 mcp__serena__.* 两组）
+python scripts\audit_hooks.py    # 核对 20 个注册项与 matcher（含 mcp__serena__.* 两组；v11 退役 kg sync 后 23→20）
 ```
 
 ⚠️ 反向也要维护：**改动 `settings.json` 的 hooks 段后，须同步刷新该快照**，否则重装会退回旧注册（MCP 写工具将绕过验证追踪链）。
@@ -185,4 +168,4 @@ python scripts\audit_hooks.py    # 核对 23 个注册项与 matcher（含 mcp__
 
 - 脚本内注释与界面文案以中文为主；部分技术字段名保持英文。
 - `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文。
-- **文档与脚本版本对齐（v10.17.0）**：`sync.ps1` **v18.4**（`sync.sh` v2.3），`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。
+- **文档与脚本版本对齐（v11.1.0）**：`sync.ps1` **v20.0**（多编辑器 1+N，`sync.sh` 已删除），`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。

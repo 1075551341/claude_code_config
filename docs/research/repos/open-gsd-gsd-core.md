@@ -124,7 +124,7 @@ GSD 设计了但未提供稳定实现的命令：
 | adr | `skills/adr-management/` | ✅ |
 | context_rot | `rules/CORE.md` + `rules/CONTEXT.md` | ✅ |
 | gsd_context | `rules/WORKFLOW.md` | ✅ |
-| context_engineering | `rules/CONTEXT.md` + `skills/context-engineering/` | ✅ |
+| context_engineering | `rules/CONTEXT.md`（v11：skills/context-engineering 已删，规则为唯一正文） | ✅ |
 | GSD 70% 逻辑断点 | `rules/CORE.md` | ✅ |
 | 三态制品 | `rules/CONTEXT.md` | ✅ |
 | 缺口文档 | ~~gsd-gaps-v10.md~~（v10.6.0 删除；forensics/resume 不实现） | ✅ |

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.9",
+  "version": "1.2.0",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -25,12 +25,6 @@
     "codegraph_first": true,
     "nudge_on_grep_read": true,
     "enforce_mode": "soft_block"
-  },
-  "knowledge_graph": {
-    "enabled": true,
-    "codegraph": true,
-    "codebase_memory": false,
-    "cbm_mode": "fast"
   },
   "sync": {
     "auto_on_edit": true,
@@ -64,7 +58,14 @@
     "enabled": true,
     "enforce_mode": "soft",
     "unverified_reminder": true,
-    "prompt_keywords": ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
+    "prompt_keywords": [
+      "完成",
+      "修好",
+      "测试通过",
+      "done",
+      "搞定",
+      "fixed"
+    ]
   },
   "impact": {
     "enabled": true,
@@ -74,6 +75,7 @@
     "enabled": true,
     "max_age_days": 30,
     "min_interval_sec": 120,
-    "min_prompt_len": 10
+    "min_prompt_len": 10,
+    "similarity_threshold": 0.5
   }
 }
