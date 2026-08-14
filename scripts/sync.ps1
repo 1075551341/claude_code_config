@@ -34,12 +34,12 @@
     跳过变更检测（hash/link 对比）强制重写。
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/ junction
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预演
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules   # 投放当前项目 .cursor/rules
-    powershell -ExecutionPolicy Bypass -File sync.ps1 -Lint           # prettier+eslint 模板
-    powershell -File sync.ps1 -Scope all -Force                       # Guard 自动调用
+    pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/ junction
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预演
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules   # 投放当前项目 .cursor/rules
+    pwsh -ExecutionPolicy Bypass -File sync.ps1 -Lint           # prettier+eslint 模板
+    pwsh -File sync.ps1 -Scope all -Force                       # Guard 自动调用
 
 .NOTES
     验证：scripts/check.ps1 | 回归：scripts/test-sync-dedup.ps1

@@ -1,15 +1,23 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v11 常驻 9（v10.17 定型沿用）| 三层架构：本地代码(codegraph/code-review-graph/aider-repo-map/serena) + 远端探索(github+grep) + Web&文档(exa/context7/firecrawl)。chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（全盘可写会绕过验证门）。cbm(禁用) 勿 merge。GITHUB_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 Machine env；npx 包按 R14 钉扎版本",
+  "_comment": "MCP v11 常驻 9（v10.17 定型沿用）| 三层架构：本地代码(codegraph/code-review-graph/aider-repo-map/serena) + 远端探索(github 本地 stdio + grep) + Web&文档(exa/context7/firecrawl)。chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（全盘可写会绕过验证门）。cbm(禁用) 勿 merge。GITHUB_PERSONAL_ACCESS_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 User/Machine env；npx 包按 R14 钉扎版本",
   "mcpServers": {
     "aider-repo-map": {
-      "_description": "Aider 风格 Repo Map（pdavis68/RepoMapper）。原 uvx aider-mcp-server 在 PyPI 不存在且安装失败。工具 repo_map 需传绝对路径 project_root。",
+      "_description": "Aider 风格 Repo Map（pdavis68/RepoMapper）。RepoMapper 要求 Python >=3.13；经 python-mcp.ps1 清 PYTHONHOME 后 uv run --python 3.13。",
       "type": "stdio",
-      "command": "C:\\Users\\DELL\\.local\\bin\\uv.exe",
+      "command": "powershell",
       "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\uv.exe",
         "--directory",
         "C:\\Users\\DELL\\.local\\share\\RepoMapper",
         "run",
+        "--python",
+        "3.13",
         "repomap-mcp"
       ]
     },
@@ -19,9 +27,18 @@
       "args": ["-y", "@colbymchenry/codegraph@1.5.0", "serve", "--mcp"]
     },
     "code-review-graph": {
-      "_description": "代码审查/验证专用图谱 MCP（v10.14 引入，与 codegraph 互补）。场景：变更后 test-gap 检测、detect_changes 风险评分、受影响执行流、review-delta。分工：codegraph=R17 探索主位（符号/调用链/blast-radius）；CRG=审查/验证专用（test-gap/风险评分）。项目内需 code-review-graph build 建图。钉扎 2.3.6（R14）。",
-      "command": "uvx",
+      "_description": "代码审查/验证专用图谱 MCP。钉扎 2.3.6（R14）。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
+      "type": "stdio",
+      "command": "powershell",
       "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\uvx.exe",
+        "--python",
+        "C:\\Python312\\python.exe",
         "--with",
         "code-review-graph==2.3.6",
         "code-review-graph",
@@ -29,10 +46,16 @@
       ]
     },
     "serena": {
-      "_description": "Serena 符号级代码工具（官方安装：uv tool install -p 3.13 serena-agent）。旧配置误写 oranda 仓库且入口 serena-mcp-server/ide-assistant 已废弃。",
+      "_description": "Serena 符号级代码工具（uv tool install --python 3.12 serena-agent）。经 python-mcp.ps1 清 PYTHONHOME。",
       "type": "stdio",
-      "command": "C:\\Users\\DELL\\.local\\bin\\serena.exe",
+      "command": "powershell",
       "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\serena.exe",
         "start-mcp-server",
         "--context",
         "ide",
@@ -64,12 +87,10 @@
       }
     },
     "github": {
-      "_description": "GitHub 官方远端 MCP（v10.15 启用，替换已弃用 @modelcontextprotocol/server-github）。认证走 Machine env GITHUB_TOKEN；远端不可用则回退本地 github-mcp-server。",
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${GITHUB_TOKEN}"
-      }
+      "_description": "GitHub 官方本地 stdio（github-mcp-server）。Cursor/Claude 对 api.githubcopilot.com 走 OAuth 时只暴露 mcp_auth、0 tools；PAT 用 User env GITHUB_PERSONAL_ACCESS_TOKEN 继承，勿把 token 写进 json，也勿在 env 块里写 ${GITHUB_TOKEN}（展开失败会覆盖真实 PAT）。",
+      "type": "stdio",
+      "command": "C:\\Users\\DELL\\.local\\bin\\github-mcp-server.exe",
+      "args": ["stdio"]
     },
     "context7": {
       "_description": "库/框架/API 官方文档（L1 首选）：resolve-library-id → query-docs。",

@@ -19,14 +19,14 @@
 
 .EXAMPLE
     # 全部命令（本脚本仅一个开关）
-    powershell -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性
-    powershell -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick    # 跳过 MCP 探测，最快
+    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick    # 跳过 MCP 探测，最快
 
 .NOTES
     配套命令（本脚本不代跑，按需单独执行）：
       python scripts/validate_config.py            # 深度校验 V1-V19
-      powershell -File scripts/sync.ps1            # 修同步/软链问题
-      powershell -File scripts/fix.ps1 -Fix        # 修 hook launcher 问题
+      pwsh -File scripts/sync.ps1                # 修同步/软链问题
+      pwsh -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 PowerShell 不会把上面的块识别为
 # comment-based help，Get-Help 将读不到这些命令示例。
@@ -588,6 +588,114 @@ if ($dk) {
     Add-Check "Runtime" "Docker" "warn" "Not installed (docker MCP unavailable)"
 }
 
+# Claude CLI: native PE at ~/.local/bin, never a Volta/npm shim (recurring broken claude.exe)
+function Test-PeFile([string]$p) {
+    if (-not (Test-Path -LiteralPath $p)) { return $false }
+    try {
+        $b = [System.IO.File]::ReadAllBytes($p)
+        return ($b.Length -ge 2 -and $b[0] -eq 0x4D -and $b[1] -eq 0x5A)
+    } catch { return $false }
+}
+$nativeClaude = Join-Path $env:USERPROFILE ".local\bin\claude.exe"
+$claudeCmd = Get-Command claude -EA SilentlyContinue
+$claudeSrc = if ($claudeCmd) { [string]$claudeCmd.Source } else { "" }
+if (-not $claudeSrc) {
+    Add-Check "Runtime" "Claude CLI" "fail" "claude not on PATH -- run scripts/fix-claude-cli.ps1"
+} elseif ($claudeSrc -match '(?i)[\\/]volta[\\/]|npm-prefix') {
+    Add-Check "Runtime" "Claude CLI" "fail" "Volta/npm shim $claudeSrc -- run scripts/fix-claude-cli.ps1"
+} elseif (-not (Test-PeFile $claudeSrc)) {
+    Add-Check "Runtime" "Claude CLI" "fail" "not a PE executable: $claudeSrc -- run scripts/fix-claude-cli.ps1"
+} else {
+    $ver = & $claudeSrc --version 2>&1 | Select-Object -First 1
+    Add-Check "Runtime" "Claude CLI" "pass" "$ver ($claudeSrc)"
+}
+if ($claudeSrc -and ($claudeSrc -ne $nativeClaude) -and (Test-PeFile $nativeClaude)) {
+    Add-Check "Runtime" "Claude CLI PATH order" "warn" "native exists at $nativeClaude but PATH hits $claudeSrc first"
+}
+
+$auStatus = if ($settingsObj) { [string]$settingsObj.autoUpdaterStatus } else { "" }
+$auEnv = ""
+if ($settingsObj -and $settingsObj.env) { $auEnv = [string]$settingsObj.env.DISABLE_AUTOUPDATER }
+$auUser = [Environment]::GetEnvironmentVariable("DISABLE_AUTOUPDATER", "User")
+$auOff = ($auStatus -eq "disabled" -or $auStatus -eq "off") -and ($auEnv -eq "1" -or $auEnv -eq "true")
+if ($auOff) {
+    Add-Check "Runtime" "Claude auto-update" "pass" "autoUpdaterStatus=$auStatus DISABLE_AUTOUPDATER=$auEnv"
+} else {
+    Add-Check "Runtime" "Claude auto-update" "fail" "must stay off (native updater renames claude.exe) -- run scripts/fix-claude-cli.ps1 (status=$auStatus env=$auEnv)"
+}
+if ($auUser -eq "1" -or $auUser -eq "true") {
+    Add-Check "Runtime" "DISABLE_AUTOUPDATER User env" "pass" "User=$auUser"
+} else {
+    Add-Check "Runtime" "DISABLE_AUTOUPDATER User env" "warn" "User env unset; Claude CLI still honors settings.json env"
+}
+
+$ghMcpExe = Join-Path $env:USERPROFILE ".local\bin\github-mcp-server.exe"
+if (Test-PeFile $ghMcpExe) {
+    Add-Check "Runtime" "github-mcp-server" "pass" $ghMcpExe
+} else {
+    Add-Check "Runtime" "github-mcp-server" "fail" "missing PE at $ghMcpExe -- run scripts/fix-claude-cli.ps1"
+}
+
+$ghTokenUser = [Environment]::GetEnvironmentVariable("GITHUB_TOKEN", "User")
+$ghPatUser = [Environment]::GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "User")
+if ($ghTokenUser) {
+    Add-Check "Runtime" "GITHUB_TOKEN" "pass" "User present"
+} else {
+    Add-Check "Runtime" "GITHUB_TOKEN" "fail" "User env missing -- GitHub MCP will have 0 tools"
+}
+if ($ghPatUser) {
+    Add-Check "Runtime" "GITHUB_PERSONAL_ACCESS_TOKEN" "pass" $(if ($ghTokenUser -and $ghPatUser -eq $ghTokenUser) { "User present, matches GITHUB_TOKEN" } else { "User present" })
+} else {
+    Add-Check "Runtime" "GITHUB_PERSONAL_ACCESS_TOKEN" "fail" "User env missing -- run scripts/fix-claude-cli.ps1"
+}
+
+function Test-GithubMcpStdio([string]$mcpFile, [string]$label) {
+    if (-not (Test-Path $mcpFile)) {
+        Add-Check "MCP" "$label github transport" "fail" "$mcpFile missing"
+        return
+    }
+    try {
+        $obj = Get-Content $mcpFile -Raw -Encoding utf8 | ConvertFrom-Json
+        $gh = $obj.mcpServers.github
+        if (-not $gh) {
+            Add-Check "MCP" "$label github transport" "fail" "no github server"
+            return
+        }
+        $cmd = [string]$gh.command
+        $url = [string]$gh.url
+        if ($url -match 'githubcopilot\.com') {
+            Add-Check "MCP" "$label github transport" "fail" "HTTP api.githubcopilot.com causes mcp_auth + 0 tools -- use local github-mcp-server.exe"
+        } elseif ($cmd -match 'github-mcp-server') {
+            Add-Check "MCP" "$label github transport" "pass" "stdio $cmd"
+        } else {
+            Add-Check "MCP" "$label github transport" "warn" "unexpected github config"
+        }
+    } catch {
+        Add-Check "MCP" "$label github transport" "fail" $_.Exception.Message
+    }
+}
+Test-GithubMcpStdio (Join-Path $CLAUDE_DIR ".mcp.json") "Claude"
+Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".cursor\mcp.json") "Cursor"
+Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".qoder-cn\mcp.json") "Qoder-cn"
+
+# sync.ps1 永不同步 MCP：manifest 不得列出 mcp.json；脚本不得把 mcp.json 写到编辑器 home
+$syncPs1 = Join-Path $CLAUDE_DIR "scripts\sync.ps1"
+$manifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
+$syncText = if (Test-Path $syncPs1) { Get-Content $syncPs1 -Raw -Encoding utf8 } else { "" }
+$manifestText = if (Test-Path $manifestPath) { Get-Content $manifestPath -Raw -Encoding utf8 } else { "" }
+if ($manifestText -match '"\.?mcp\.json"') {
+    Add-Check "Sync" "manifest excludes MCP" "fail" "sync-manifest.json must not list mcp.json"
+} else {
+    Add-Check "Sync" "manifest excludes MCP" "pass" "root_files has no mcp.json"
+}
+if ($syncText -match 'Copy-Item[^\n]*mcp\.json' -or $syncText -match 'mcp\.json[^\n]*(cursor|qoder|trae|workbuddy)') {
+    Add-Check "Sync" "sync.ps1 does not copy mcp.json" "fail" "sync.ps1 appears to write editor mcp.json"
+} elseif ($syncText -match 'MCP configs' -or $syncText -match 'MCP 配置') {
+    Add-Check "Sync" "sync.ps1 does not copy mcp.json" "pass" "MCP listed in exclusion banner"
+} else {
+    Add-Check "Sync" "sync.ps1 does not copy mcp.json" "warn" "no explicit MCP exclusion banner"
+}
+
 # =============================================================
 # S6: MCP server status
 # =============================================================
@@ -707,6 +815,9 @@ if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*ralph*" }) {
 }
 if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*launcher*" }) {
     $tips += "run fix.ps1 -Fix     -- deploy launcher + route hooks via settings.json"
+}
+if ($fails | Where-Object { $_.Item -match 'Claude CLI|Claude auto-update|github-mcp-server|GITHUB_PERSONAL_ACCESS_TOKEN|github transport' }) {
+    $tips += "run fix-claude-cli.ps1  -- native claude.exe + disable auto-update + github-mcp-server"
 }
 if ($tips.Count -gt 0) {
     Write-Host "  Recommended actions:" -ForegroundColor Cyan

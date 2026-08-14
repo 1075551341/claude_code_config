@@ -55,7 +55,7 @@ tests/          # 测试文件
 
 以下配置从 `~/.claude/` 全局继承，无需重复声明：
 - 五柱×五阶段×三横切骨架
-- 铁律 R1–R19
+- 铁律 R1–R20
 - 上下文三级阈值（70%/90%/100%）
 - 变更彻底性保障（codegraph_explore + Grep）
 - 工具路由优先级（codegraph > Grep > Read；cbm 已禁用）

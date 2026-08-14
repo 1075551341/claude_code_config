@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.1.1
+# 组件唯一归属源 — 防左右手互博 — v11.3.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.1.1"
-updated: "2026-08-13"
+version: "11.3.0"
+updated: "2026-08-14"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -359,7 +359,7 @@ concerns:
 
   coding_philosophy:
     owner: skill/karpathy-guidelines
-    rules_ref: rules/CORE.md
+    rules_ref: rules/CORE.md # v11.2.0: CORE.md 新增工程原则节（第一性原理/YAGNI/依赖克制/删除过时优先）
     source: multica-ai/andrej-karpathy-skills # v10.11: forrestchang 组织迁移（同仓库双名）
 
   gsd_context:
@@ -577,7 +577,7 @@ concerns:
 
   mcp_remote_explore:
     owner: config/.mcp.json
-    note: github（官方远端 HTTP，Bearer GITHUB_TOKEN）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    note: github（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN；勿用 api.githubcopilot.com HTTP，Cursor/Claude 会变成 mcp_auth + 0 tools）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
 
   gstack_eng: { owner: agent/eng-reviewer, layer: skeleton, stage: verify }
@@ -597,7 +597,7 @@ concerns:
     layer: skeleton
     source: local
     depends_on: [rules/CORE.md]
-    note: "v10.6.0: CORE 瘦身迁出详情（R14/R15/R16 适用范围、注释模板、变更三阶段、codegraph F1）"
+    note: "v10.6.0: CORE 瘦身迁出详情（R14/R15/R16 适用范围、注释模板、变更三阶段、codegraph F1）；v11.2.0: 并入 AGENTS.md 工程决策原则详参 + pwsh 7 终端规范"
 
   memory_ssot:
     owner: plugin/thedotmack

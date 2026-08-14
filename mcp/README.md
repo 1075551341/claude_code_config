@@ -14,7 +14,8 @@
 
 四工具分工（谁做探索、谁做编辑、谁做审查）→ `rules/MCP.md` §4。
 
-认证 env（Machine 级，已配置）：`GITHUB_TOKEN` / `EXA_API_KEY` / `FIRECRAWL_API_KEY`。
+认证 env（User 级，已配置）：`GITHUB_TOKEN` + `GITHUB_PERSONAL_ACCESS_TOKEN`（二者同值，后者给 github-mcp-server）/ `EXA_API_KEY` / `FIRECRAWL_API_KEY`。
+github MCP 走本地 stdio `~/.local/bin/github-mcp-server.exe`，不要再用 `https://api.githubcopilot.com/mcp/`（Cursor/Claude 会变成 OAuth `mcp_auth` + 0 tools）。
 
 npx 类服务器按 R14 钉版本：codegraph 1.5.0 / firecrawl-mcp 3.23.9 / exa-mcp-server 3.4.0。
 

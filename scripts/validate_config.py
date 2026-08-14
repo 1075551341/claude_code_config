@@ -170,13 +170,13 @@ def v4_iron_laws_consistency():
         core = fh.read()
     with open(claude_path, "r", encoding="utf-8") as fh:
         claude = fh.read()
-    for i in range(1, 19):
+    for i in range(1, 21):
         if i == 0:
             continue
         tag = f"R{i}"
         if tag not in claude and tag not in core:
             ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
-    for tag in ("R17", "R18"):
+    for tag in ("R17", "R18", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
     if "Karpathy" not in core or "Karpathy" not in claude:

@@ -1,6 +1,6 @@
 # `.claude\scripts` 工具说明
 
-本目录存放 Claude Code 环境维护与辅助脚本（PowerShell）。默认在 **Windows** 下通过 `powershell -ExecutionPolicy Bypass -File <脚本名>` 执行。
+本目录存放 Claude Code 环境维护与辅助脚本（PowerShell）。默认在 **Windows** 下通过 `pwsh -ExecutionPolicy Bypass -File <脚本名>` 执行（优先 PowerShell 7+ 稳定版；PS5.1 环境回退用 `powershell`）。
 
 ---
 
@@ -12,35 +12,35 @@
 
 **Cursor 落点（默认模式全含）**：
 
-| 落点 | 方式 | 内容 |
-| ---- | ---- | ---- |
-| `~/.cursor/` 根 | 软链（回退 Copy） | 6 个总纲/索引根文件：`CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX |
+| 落点                                           | 方式                             | 内容                                                                                              |
+| ---------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `~/.cursor/` 根                                | 软链（回退 Copy）                | 6 个总纲/索引根文件：`CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX                                |
 | `~/.cursor/plugins/local/claude-config/rules/` | 实体 `.mdc`（每次刷新+孤儿清除） | `rules/*.md`（除 README）+ `00-CLAUDE`（=CLAUDE.md）+ `CURSOR-EDITOR`；唯一 Always-Apply 规则通道 |
-| `~/.cursor/skills` `~/.cursor/agents` | Junction | `-Skills` / `-All` 时 |
+| `~/.cursor/skills` `~/.cursor/agents`          | Junction                         | `-Skills` / `-All` 时                                                                             |
 
 **用法**：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File sync.ps1                 # 日常：根文件 + 刷新 claude-config 插件
-powershell -ExecutionPolicy Bypass -File sync.ps1 -Skills         # + skills/ Junction
-powershell -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/
-powershell -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预览不写盘
+pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 日常：根文件 + 刷新 claude-config 插件
+pwsh -ExecutionPolicy Bypass -File sync.ps1 -Skills         # + skills/ Junction
+pwsh -ExecutionPolicy Bypass -File sync.ps1 -All                # + skills/ + agents/
+pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun        # 预览不写盘
 ```
 
 > 改 `~/.claude/rules` / `CLAUDE.md` / `CURSOR-EDITOR` 后跑一次 `sync.ps1` 即可；Cursor Settings 中的 Claude Config 插件内容会随之更新。若列表未变，完全退出 Cursor 再开（仅 Reload 有时不重扫插件）。
 
-> **Claude Code 官方安装**（v10.11 更新）：npm 安装已弃用；Windows 推荐 `irm https://claude.ai/install.ps1 | iex`，macOS/Linux `curl -fsSL https://claude.ai/install.sh | bash`，或 `winget install Anthropic.ClaudeCode`。
+> **Claude Code 官方安装**（v10.11 更新）：npm 安装已弃用；Windows 推荐 `irm https://claude.ai/install.ps1 | iex`，macOS/Linux `curl -fsSL https://claude.ai/install.sh | bash`，或 `winget install Anthropic.ClaudeCode`。Volta/npm 全局安装在 Windows 上会反复把 `claude.exe` 更新成找不到的占位路径，见 `fix-claude-cli.ps1`。
 > **参数**：
 
-| 参数            | 说明                                  |
-| --------------- | ------------------------------------- |
-| `-Skills`       | 追加同步 skills/                      |
-| `-All`          | 全量（根文件+rules+skills+agents）    |
-| `-ProjectRules` | 复制 rules 到当前项目 .cursor/rules   |
-| `-DryRun`       | 仅预览，不写盘                        |
-| `-Force`        | 跳过 hash 比对强制刷新                |
-| `-Lint`         | 部署 lint 模板到当前项目              |
-| `-InitProject`  | 部署项目初始化模板到当前项目          |
+| 参数            | 说明                                |
+| --------------- | ----------------------------------- |
+| `-Skills`       | 追加同步 skills/                    |
+| `-All`          | 全量（根文件+rules+skills+agents）  |
+| `-ProjectRules` | 复制 rules 到当前项目 .cursor/rules |
+| `-DryRun`       | 仅预览，不写盘                      |
+| `-Force`        | 跳过 hash 比对强制刷新              |
+| `-Lint`         | 部署 lint 模板到当前项目            |
+| `-InitProject`  | 部署项目初始化模板到当前项目        |
 
 **机制**：
 
@@ -66,12 +66,12 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ### 同步触发规则（v10.7.0）
 
-| 改动                                            | 必跑                                         |
-| ----------------------------------------------- | -------------------------------------------- |
+| 改动                                            | 必跑                                             |
+| ----------------------------------------------- | ------------------------------------------------ |
 | `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
-| `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor      |
-| `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话） |
-| `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                       |
+| `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor          |
+| `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话）     |
+| `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                           |
 
 > **多项目适配（全局/个人优先）**：默认只同步到 Cursor 个人目录 `~/.cursor/`（rules 软链、skills/agents Junction），**不写入业务项目**。
 >
@@ -104,6 +104,27 @@ python scripts/validate_config.py    # 含 R16 裸 except 扫描、核心 hooks 
 ```
 
 V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
+
+### `python-mcp.ps1` — Python 系 MCP 启动包装
+
+Cursor/编辑器 spawn `uv`/`uvx`/`serena` 前清除 `PYTHONHOME`/`PYTHONPATH`（残缺前缀会导致 `No module named encodings`）。`uv`/`uvx` 未传 `--python` 时钉到 `C:\Python312\python.exe`。RepoMapper 要求 `>=3.13`，调用方须显式 `--python 3.13`。
+
+编辑器 `mcp.json` 各自维护，**禁止经 `sync.ps1` 复制**。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File python-mcp.ps1 C:\Users\DELL\.local\bin\serena.exe --help
+```
+
+### `fix-claude-cli.ps1` — 修复 `claude` 命令反复失效 + GitHub MCP 本地二进制
+
+Windows 上 Volta/npm 全局包的 `bin/claude.exe` 会被自更新改名为 `claude.exe.old.*`，shim 仍指向已消失的 exe，表现为「不是内部或外部命令」。官方已弃用 npm 安装。本脚本幂等：卸 Volta/npm shim、把 `~/.local\bin` 放到 User PATH 最前、安装 native `claude.exe`、**关闭 CLI 自动更新**（`DISABLE_AUTOUPDATER=1` + `autoUpdaterStatus=disabled`；插件仍可用 `FORCE_AUTOUPDATE_PLUGINS=1`）、同步 `GITHUB_PERSONAL_ACCESS_TOKEN`、下载 `github-mcp-server.exe`。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File fix-claude-cli.ps1              # 修复
+powershell -ExecutionPolicy Bypass -File fix-claude-cli.ps1 -DiagnoseOnly # 只诊断
+```
+
+禁止再执行 `npm i -g @anthropic-ai/claude-code`、`volta install @anthropic-ai/claude-code` 或 `claude update`。GitHub MCP 必须用本地 stdio，不要改回 `api.githubcopilot.com`（会变成 `mcp_auth` + 0 tools）。修复后需**完全退出** Cursor / Claude Code 再开。
 
 ### `fix.ps1` — 修复编辑器内 Hook 超时/僵死
 

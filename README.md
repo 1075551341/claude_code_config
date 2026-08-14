@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.1.1** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.3.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R19（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.1.1）                                                                 |
+| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
+| `SPEC.md`       | 配置法典（v11.3.0）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -55,7 +55,9 @@ powershell scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.1.1**（2026-08-13）— 问题指纹判定重构（相似匹配 + 中文 bigram + 泛化追问续接 + resolved 回归升级，单测 21 用例）
+- 当前：**v11.3.0**（2026-08-14）— 铁律 R20 会话终验 + Python 系 MCP 修复（uv CPython 3.13 encodings；mcp.json 手工维护、sync 永不复制）
+- 前版：v11.2.0（2026-08-14）— AGENTS.md 工程原则整合（CORE 工程原则节 + GOVERNANCE 工程决策详参）+ Windows 终端优先 pwsh 7+（R9 升级，Qoder MCP 脚本例外）
+- 前版：v11.1.1（2026-08-13）— 问题指纹判定重构（相似匹配 + 中文 bigram + 泛化追问续接 + resolved 回归升级，单测 21 用例）
 - 前版：v11.1.0（2026-08-13）— 多编辑器同步恢复 1+N（sync v20.0：Cursor + qoder-cn/trae-cn/workbuddy，清单单源 sync-manifest editors 段）+ 全局去重（计数/分级漂移、断链、四命令薄壳化）
 - 前版：v11.0.0（2026-08-12，深度重构）— 治理文档 8→6 根文件 + skills 45→36 / agents 25→16 / rules 12→10 + codegraph v1.5 自动同步接管 + 变更史外置 CHANGELOG.md
 - 变更史：`CHANGELOG.md`

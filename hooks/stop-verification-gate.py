@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v10.17.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+Stop Hook: 完成验证硬门（v11.3.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
 本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
-④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查（v10.17）⑥非功能变更回归证据（v10.17）。
+④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（含纯文档）。
 缺任一 → exit 2 回灌（阻止停止）；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
 另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
 
@@ -40,6 +40,7 @@ DEFAULT_CFG = {
     "auto_check_timeout_sec": 25,
     "skip_keywords": ["跳过验证", "不用验证", "skip verify"],
     "require_reviewer_min_files": 3,
+    "require_requirements_replay": True,
     "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"],
 }
 
@@ -111,6 +112,47 @@ def last_user_message(transcript_path: str) -> str:
             parts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
             return "\n".join(p for p in parts if p)
     return ""
+
+
+def last_assistant_message(transcript_path: str) -> str:
+    """读取 transcript 中最后一条 assistant 文本（用于 R20 会话终验标记检测）。"""
+    if not transcript_path or not os.path.exists(transcript_path):
+        return ""
+    try:
+        with open(transcript_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+    except OSError as e:
+        print(f"stop-verification-gate: transcript read failed: {e}", file=sys.stderr)
+        return ""
+    for line in reversed(lines[-120:]):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("type") != "assistant":
+            continue
+        content = (obj.get("message") or {}).get("content")
+        text = ""
+        if isinstance(content, str):
+            text = content
+        elif isinstance(content, list):
+            parts = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+            text = "\n".join(p for p in parts if p)
+        if text.strip():
+            return text
+    return ""
+
+
+def has_requirements_replay(transcript_path: str) -> bool:
+    """R20：最后一条 assistant 须含会话终验标记 + 遗漏 + 错改。"""
+    text = last_assistant_message(transcript_path)
+    if not text:
+        return False
+    has_header = ("会话终验" in text) or ("R20" in text)
+    return has_header and ("遗漏" in text) and ("错改" in text)
 
 
 def unique_code_files(edited_files: list, doc_exts: list) -> list:
@@ -379,19 +421,23 @@ def plan_artifact_active(cwd: str) -> bool:
 
 
 def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) -> str:
+    only_r20 = reasons and all(("R20" in r or "会话终验" in r) for r in reasons)
     lines = [
-        "【门控 · 完成验证硬门（R1）— 已阻止停止】",
-        "本会话存在代码修改，但验证证据不完整：",
+        "【门控 · 完成验证硬门（R1/R20）— 已阻止停止】",
+        "本会话存在修改，但验证证据不完整：" if not only_r20 else "本会话有编辑，但未完成会话终验（R20）：",
     ]
     lines.extend(f"  {i}. {r}" for i, r in enumerate(reasons, 1))
     lines.append("必须执行（全部完成后再次结束）：")
-    lines.append("  ① 实际运行测试/lint/构建/功能核验命令，贴出输出证据（禁止\"应该没问题\"）")
-    if crg:
-        lines.append("  ② 项目已建 code-review-graph：调用 detect_changes_tool 检查 test-gap 与高风险函数")
-    if any("eng-reviewer" in r for r in reasons):
-        lines.append("  ③ 委派 eng-reviewer（只读审查本轮 diff）获取 PASS/NEEDS-CHANGES 结论")
-    if any("预期符合性" in r for r in reasons):
-        lines.append("  ④ 对照 plan/spec 的 tasks 清单逐项确认：无静默缩范围、无遗漏需求")
+    if not only_r20:
+        lines.append("  ① 实际运行测试/lint/构建/功能核验命令，贴出输出证据（禁止\"应该没问题\"）")
+        if crg:
+            lines.append("  ② 项目已建 code-review-graph：调用 detect_changes_tool 检查 test-gap 与高风险函数")
+        if any("eng-reviewer" in r for r in reasons):
+            lines.append("  ③ 委派 eng-reviewer（只读审查本轮 diff）获取 PASS/NEEDS-CHANGES 结论")
+        if any("预期符合性" in r for r in reasons):
+            lines.append("  ④ 对照 plan/spec 的 tasks 清单逐项确认：无静默缩范围、无遗漏需求")
+    if any("R20" in r or "会话终验" in r for r in reasons):
+        lines.append("  ⑤ 会话终验（R20）：对照用户原始请求输出满足/遗漏/错改清单（不是把任务重做一遍）")
     lines.append("跳过验证的完成声明视为无效（R1，先证据后断言）。")
     lines.append(f"（第 {blocks}/{max_blocks} 次阻断；达上限后放行并标 DONE_WITH_CONCERNS；确需跳过请用户显式说「跳过验证」）")
     return "\n".join(lines)
@@ -505,7 +551,8 @@ def main():
         if edited and not code_files and not untracked:
             print("ℹ️ 本会话仅文档类编辑：请重读修改内容确认无误后再声称完成", file=sys.stderr)
 
-        if code_files or untracked:
+        has_any_edit = bool(edited) or bool(untracked)
+        if has_any_edit:
             blocks = int(entry.get("blocks", 0))
             skip_msg = last_user_message(transcript_path).lower()
             user_skipped = any(k.lower() in skip_msg for k in cfg["skip_keywords"])
@@ -520,48 +567,59 @@ def main():
                 )
             else:
                 project_cwd = entry.get("cwd") or cwd
-                # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
-                checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
-                roots = find_project_roots(checkable, project_cwd)
-                crg, crg_warnings = crg_refresh_and_flag(roots, min(15, int(cfg["auto_check_timeout_sec"])))
-                failures, check_warnings = run_auto_checks(checkable, project_cwd, int(cfg["auto_check_timeout_sec"]))
+                crg = False
+                crg_warnings = []
+                check_warnings = []
+                reasons = []
+                if code_files or untracked:
+                    # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
+                    checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
+                    roots = find_project_roots(checkable, project_cwd)
+                    crg, crg_warnings = crg_refresh_and_flag(roots, min(15, int(cfg["auto_check_timeout_sec"])))
+                    failures, check_warnings = run_auto_checks(checkable, project_cwd, int(cfg["auto_check_timeout_sec"]))
 
-                reasons = list(failures)
-                if untracked:
-                    shown = ", ".join(os.path.basename(p) for p in untracked[:8])
-                    more = f" 等 {len(untracked)} 个" if len(untracked) > 8 else ""
-                    reasons.append(
-                        f"工作树存在 hook 未追踪的代码变更（MCP/Shell 写入）：{shown}{more}。"
-                        "这些文件未进入本会话验证范围，须逐一确认影响面并纳入验证后再声称完成"
-                    )
-                edit_ts = [f.get("ts", 0) for f in code_files]
-                last_edit_ts = max(edit_ts) if edit_ts else session_start_ts(entry, transcript_path)
-                verified = any(c.get("ts", 0) >= last_edit_ts - 1 for c in entry.get("verify_commands", []))
-                if not verified:
-                    reasons.append("最后一次代码编辑之后未检测到任何测试/lint/构建验证命令运行记录")
-                total_changed = len({f["path"] for f in code_files} | set(untracked))
-                if total_changed >= int(cfg["require_reviewer_min_files"]):
-                    reviewed = any(r.get("ts", 0) >= last_edit_ts - 1 for r in entry.get("reviews", []))
-                    if not reviewed:
+                    reasons = list(failures)
+                    if untracked:
+                        shown = ", ".join(os.path.basename(p) for p in untracked[:8])
+                        more = f" 等 {len(untracked)} 个" if len(untracked) > 8 else ""
                         reasons.append(
-                            f"会话内 {total_changed} 个代码文件变更（≥{cfg['require_reviewer_min_files']}）"
-                            "但无 eng-reviewer 审查委派记录"
+                            f"工作树存在 hook 未追踪的代码变更（MCP/Shell 写入）：{shown}{more}。"
+                            "这些文件未进入本会话验证范围，须逐一确认影响面并纳入验证后再声称完成"
                         )
-                # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
-                changed_paths = [f["path"] for f in code_files] + list(untracked)
-                if (
-                    changed_paths
-                    and not any(is_test_path(p) for p in changed_paths)
-                    and repo_has_test_infra(roots)
-                    and not has_test_evidence(entry, last_edit_ts)
-                ):
+                    edit_ts = [f.get("ts", 0) for f in code_files]
+                    last_edit_ts = max(edit_ts) if edit_ts else session_start_ts(entry, transcript_path)
+                    verified = any(c.get("ts", 0) >= last_edit_ts - 1 for c in entry.get("verify_commands", []))
+                    if not verified:
+                        reasons.append("最后一次代码编辑之后未检测到任何测试/lint/构建验证命令运行记录")
+                    total_changed = len({f["path"] for f in code_files} | set(untracked))
+                    if total_changed >= int(cfg["require_reviewer_min_files"]):
+                        reviewed = any(r.get("ts", 0) >= last_edit_ts - 1 for r in entry.get("reviews", []))
+                        if not reviewed:
+                            reasons.append(
+                                f"会话内 {total_changed} 个代码文件变更（≥{cfg['require_reviewer_min_files']}）"
+                                "但无 eng-reviewer 审查委派记录"
+                            )
+                    # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
+                    changed_paths = [f["path"] for f in code_files] + list(untracked)
+                    if (
+                        changed_paths
+                        and not any(is_test_path(p) for p in changed_paths)
+                        and repo_has_test_infra(roots)
+                        and not has_test_evidence(entry, last_edit_ts)
+                    ):
+                        reasons.append(
+                            "非功能变更回归保持：本次变更未新增/修改任何测试文件，且最后一次编辑后无测试运行记录"
+                            "（lint/类型检查不足以证明原功能未变）。请运行既有测试并贴出输出，"
+                            "或说明该仓库无相关测试覆盖"
+                        )
+                    if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
+                        reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
+
+                if cfg.get("require_requirements_replay", True) and not has_requirements_replay(transcript_path):
                     reasons.append(
-                        "非功能变更回归保持：本次变更未新增/修改任何测试文件，且最后一次编辑后无测试运行记录"
-                        "（lint/类型检查不足以证明原功能未变）。请运行既有测试并贴出输出，"
-                        "或说明该仓库无相关测试覆盖"
+                        "R20 会话终验：未输出对照原始用户请求的满足/遗漏/错改清单"
+                        "（不是把任务重做一遍；验证命令不能代替本项）"
                     )
-                if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
-                    reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
 
                 if reasons:
                     entry["blocks"] = blocks + 1

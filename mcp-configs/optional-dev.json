@@ -8,7 +8,7 @@
   "fallbacks": {
     "firecrawl": "常驻 .mcp.json（npx firecrawl-mcp@3.23.9 + FIRECRAWL_API_KEY）；npx 不可用时改用 scripts/firecrawl-mcp.ps1 包装器，勿两处同时挂载",
     "exa": "常驻 .mcp.json（npx exa-mcp-server@3.4.0 + EXA_API_KEY）；Cursor 侧由 Exa plugin 提供，勿在 ~/.cursor/mcp.json 重复声明",
-    "github": "常驻远端 https://api.githubcopilot.com/mcp/；远端不可用时回退本地 github-mcp-server"
+    "github": "常驻本地 stdio ~/.local/bin/github-mcp-server.exe；PAT 走 User env GITHUB_PERSONAL_ACCESS_TOKEN。禁止改回 api.githubcopilot.com HTTP（Cursor/Claude 会变成 mcp_auth + 0 tools）"
   },
   "_archive_codebase_memory": {
     "_description": "DISABLED — 勿 merge。原 L4 架构/ADR/detect_changes。替代：codegraph_explore。",

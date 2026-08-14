@@ -19,7 +19,7 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — v11（仅 Cursor 差�
 | code-review-graph | 变更后 test-gap / 风险评分                                 |
 | aider-repo-map    | 仓库结构概览 / codegraph 无索引时降级                      |
 | serena            | 符号级精确编辑 + LSP 诊断                                  |
-| github            | PR/Issue（pr-workflow）                                    |
+| github            | PR/Issue（本地 stdio `github-mcp-server`，User env `GITHUB_PERSONAL_ACCESS_TOKEN`） |
 | grep              | grep.app 跨仓搜索                                          |
 | firecrawl         | 网页抓取（`FIRECRAWL_API_KEY`）                            |
 | context7          | 库/API 文档                                                |

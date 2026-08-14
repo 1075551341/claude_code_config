@@ -53,6 +53,7 @@
       "code-reviewer"
     ],
     "require_reviewer_min_files": 3,
+    "require_requirements_replay": true,
     "doc_only_extensions": [
       ".md",
       ".txt",

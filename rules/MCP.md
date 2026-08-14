@@ -29,7 +29,7 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 | 层         | 服务器                                               | 位置            |
 | ---------- | ---------------------------------------------------- | --------------- |
 | 本地代码   | codegraph, code-review-graph, aider-repo-map, serena | `.mcp.json`     |
-| 远端探索   | github（官方远端，Bearer `GITHUB_TOKEN`）, grep      | `.mcp.json`     |
+| 远端探索   | github（本地 stdio `github-mcp-server`，User env `GITHUB_PERSONAL_ACCESS_TOKEN`）, grep | `.mcp.json`     |
 | Web & 文档 | exa（`EXA_API_KEY`）, context7, firecrawl（`FIRECRAWL_API_KEY`） | `.mcp.json`     |
 | debug      | chrome-devtools（`@latest` + `--isolated`，R14 例外，用户决策） | `mcp-configs/debug.json`（按需 merge） |
 | fsaccess   | fs（默认仅配置仓路径）                                | `mcp-configs/fsaccess.json`（按需 merge） |
@@ -49,7 +49,7 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 > **playwright**：Claude 默认走 **Plugins**，不要 merge 进 `.mcp.json`（禁止同端双挂）。Cursor 侧浏览器能力优先用内置 `cursor-ide-browser`，不必 merge chrome-devtools。详见 CURSOR_MCP_PROFILE。
 
-Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
+Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python 系（serena / uv / uvx）经 `scripts/python-mcp.ps1` 启动：清 PYTHONHOME/PYTHONPATH，避免残缺前缀导致 `encodings` 崩溃。编辑器 `mcp.json` 各自手工维护，**禁止经 sync.ps1 复制**。
 
 ### 4. 本地代码四工具分工（防互博）
 
@@ -115,7 +115,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 | 搜索           | exa MCP                        | Exa **plugin**（勿双挂 mcp 条目）  |
 | 文档           | context7 MCP                   | user-context7                      |
 | 跨仓代码搜索   | grep MCP                       | user-grep                          |
-| GitHub         | github MCP（官方远端）/ `gh`   | user-github                        |
+| GitHub         | github MCP（本地 stdio）/ `gh` | user-github                        |
 | 浏览器         | playwright **插件**            | 内置 `cursor-ide-browser`          |
 
 ## 验证清单
@@ -125,6 +125,6 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。
 □ servers.json toolsets.always_* 与 .mcp.json 一致；按需 profile 仅出现在 on_demand_profiles
 □ settings.json 无 mcpServers；CLAUDE_MCP_PROFILE 仅合法值或省略
 □ Cursor mcp.json 恰 8 键（9 项减 exa，exa 走 plugin）；无 memory/thinking/claude-mem/exa/postgres
-□ 无硬编码 API 密钥（GITHUB_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 ${ENV_VAR}）
+□ 无硬编码 API 密钥（GITHUB_PERSONAL_ACCESS_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走环境变量；github MCP 用本地 stdio，勿把 token 写进 json）
 □ npx 类服务器均已钉版本（chrome-devtools@latest 为记录在案的例外）
 ```

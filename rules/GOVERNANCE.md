@@ -12,11 +12,11 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 > 原则：不依赖模型自觉。三门文本 SSOT = `hooks/_lib/gate_messages.md`（改文本不改代码）；双端 hook 注入 `additionalContext`/`additional_context`。
 > v10.14：完成验证门升级硬阻断（Claude Stop hook exit 2 回灌强制补验）；新增 PostToolUse 追踪器记录编辑/验证/审查状态；引入 code-review-graph 审查/验证专用层。
 
-| 门         | Claude Code 触发                                             | Cursor Guard 触发                               | 行为                                                                                          | 豁免                                                              |
-| ---------- | ------------------------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| P0 分类门  | SessionStart → `session-start-bootstrap.py`                  | sessionStart → `session_bootstrap.py`           | 每会话注入分类指令（简单/Bug/非简单路由）                                                     | 无；skill 已读且范围未变可不重复 Read                             |
+| 门         | Claude Code 触发                                                                                                      | Cursor Guard 触发                                                                                                       | 行为                                                                                                                                                                   | 豁免                                                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| P0 分类门  | SessionStart → `session-start-bootstrap.py`                                                                           | sessionStart → `session_bootstrap.py`                                                                                   | 每会话注入分类指令（简单/Bug/非简单路由）                                                                                                                              | 无；skill 已读且范围未变可不重复 Read                                                                               |
 | 完成验证门 | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**） | beforeSubmitPrompt → `verification_gate.py`（软注入，enforce_mode=soft）+ postToolUse → `verify_tracker.py`（状态追踪） | 软注入：命中关键词**或**状态显示未验证编辑 → 注入验证指令；硬阻断（Claude）：Stop 时强制核查变更范围轻量检查+测试证据+预期符合性+eng-reviewer 委派，未通过 exit 2 回灌 | 纯文档编辑降级；逃逸关键词（跳过验证）；max_blocks=3 上限后放行标 DONE_WITH_CONCERNS；Cursor 无 Stop 阻断能力仅注入 |
-| 变更影响门 | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py` | preToolUse Write/StrReplace → `impact_nudge.py` | 本会话首次编辑注入「blast-radius + Grep 引用 + MANIFEST depends_on」                          | **永不 deny**（用户决策）；二次编辑静默；状态 7 天自动清理        |
+| 变更影响门 | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py`                                                          | preToolUse Write/StrReplace → `impact_nudge.py`                                                                         | 本会话首次编辑注入「blast-radius + Grep 引用 + MANIFEST depends_on」                                                                                                   | **永不 deny**（用户决策）；二次编辑静默；状态 7 天自动清理                                                          |
 
 - 状态文件：Claude `~/.claude/.state/impact-nudge.json` + `verification-gate.json`；Cursor Guard 同路径共用
 - 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节（max_blocks / auto_check_timeout_sec / skip_keywords / verify_command_patterns / require_reviewer_min_files）
@@ -185,13 +185,53 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 - 不可变数据流优于可变状态
 - 组合优于继承，函数优于类
 
+## 工程决策原则（v11.2.0 并入 AGENTS.md 详参）
+
+> 骨架（优先级 5 + 工程原则节）在 `rules/CORE.md`；本小节为操作化详参。
+
+**第一性原理思考**：
+
+- 遇到问题先追问本质：真正要解决的问题是什么？拆解到不可再分的原子需求
+- 区分「事实」与「假设」：基于事实决策，对假设显式标注并验证
+- 不被既有方案束缚：先想「从零开始会怎么做」，再看现有约束哪些是真约束
+
+**KISS / SOLID 思想**：
+
+- KISS：优先简单直接实现；DRY 不要为消除少量重复而引入过度抽象
+- SOLID 思想（操作化）：单一职责、降低模块耦合；不要求机械套用五原则全文
+
+**YAGNI 判定标准**：
+
+- 无当前需求 = 不实现；「将来可能用到」不构成实现理由
+- 不做未经验证的架构设计：架构从最小可工作版本演进，不预先设计完整抽象
+- 不用未来复杂性牺牲当前可用性；预留扩展点 ≠ 提前实现扩展
+
+**删除过时代码执行流程**：
+
+- 确认无引用（codegraph blast-radius + Grep 全项目）→ 直接删除 → 不留兼容层/fallback/临时迁移逻辑
+- 不为向后兼容长期保留废弃方案；迁移成本由调用方一次性承担，而非永久背负兼容包袱
+- 例外：对外公开 API 的破坏性变更需显式 deprecation 周期（由变更彻底性门控约束）
+
+**依赖评估清单**（引入新依赖前逐项确认）：
+
+- 成熟度：发布历史、API 稳定性、生产验证规模
+- 维护活跃度：最近提交/issue 响应/安全更新频率
+- 与现有依赖重叠度：已有依赖能否覆盖？引入前必须先查已有代码/依赖/文档/能力
+- 避免为「看起来更优雅」增加实际复杂度；简单方案已满足则不主动升级复杂方案
+
+**终端环境规范（Windows）**：
+
+- 优先 `pwsh`（PowerShell 7+ 稳定版）：PS5.1 在编码（默认 GBK/UTF-16LE）、管道行为、异常处理、跨平台路径上与 PS7 有实质差异，易引发脚本异常
+- 脚本注释/文档示例统一 `pwsh -ExecutionPolicy Bypass -File <脚本>`；PS5.1 环境回退用 `powershell`
+- **Qoder / 编辑器 MCP 特例**：`scripts/chrome-devtools-mcp.ps1`、`playwright-mcp.ps1`、`context7-mcp.ps1`、`python-mcp.ps1` 用 `powershell.exe` 间接启动（编辑器 MCP spawn / Qoder Go 客户端兼容），不受 pwsh 优先规则约束
+
 ## API 设计
 
 - RESTful 资源命名用名词复数
 - 版本化：`/v1/resources`
 - 幂等设计：PUT/DELETE 天然幂等，POST 需显式保证
 - 分页、过滤、排序参数统一格式
-- 响应包含自我描述（_links / _meta）
+- 响应包含自我描述（\_links / \_meta）
 
 ## 日志规范
 
@@ -206,6 +246,19 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 - 对话偏离时 rewind 优于 correct — 回退到分叉点比重定向更省 token
 - 上下文 >70% 择机 compact，>90% 强制新子Agent
 - 长任务（>30分钟）拆分为独立子Agent，每个有明确完成标准
+
+**会话终验（R20）**：本会话全部任务完成后，必须对照用户**原始请求**输出清单（不是把任务重做一遍；验证命令不能代替需求对照）：
+
+```
+## 会话终验（R20）
+原始要求：<一句复述>
+- 满足：...
+- 遗漏：无 | ...
+- 错改：无 | ...
+结论：DONE | DONE_WITH_CONCERNS
+```
+
+未输出该清单不得声称完成。Claude Code Stop 硬门检测标记（`会话终验` 或 `R20`，且含 `遗漏` 与 `错改`）；Cursor 经完成验证门软注入。纯文档编辑同样适用。
 
 ## 上下文管理
 

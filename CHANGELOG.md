@@ -2,6 +2,19 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.0 变更摘要（2026-08-14，会话终验 R20 + Python MCP 修复）
+
+- **铁律 R20 会话终验**：全部任务完成后必须对照用户原始请求输出满足/遗漏/错改清单（不是把任务重做一遍）。L0：`CLAUDE.md` + `rules/CORE.md`；L2：`verification-before-completion`；Cursor 软提醒：`hooks/_lib/gate_messages.md` 第 8 条；Claude Stop 硬门：`stop-verification-gate.py` 检测标记（含纯文档编辑）。`quality_gates.json` 增 `require_requirements_replay`
+- **AGENTS.md 缺口补全**：CORE 工程原则点名 KISS + SOLID 思想；GOVERNANCE 操作化 2–3 句。不新建规则文件（`global_rules_max: 10`），不覆盖 `rules/AGENTS.md`
+- **Python 系 MCP 修复（不同步 mcp.json）**：根因是 uv 的 CPython 3.13.11 安装残缺（无 `Lib/encodings`），导致 serena / uvx CRG / aider-repo-map 全部 `encodings` 崩溃。已重装完整 3.13、serena 改钉 3.12、RepoMapper venv 重建；新增 `scripts/python-mcp.ps1` 清 PYTHONHOME。Cursor / Claude / Qoder 的 `mcp.json` **手工**对齐（github 保持本地 stdio；Qoder 去掉常驻 chrome-devtools/fs）。`sync.ps1` 仍永不同步 MCP；`check.ps1` 增加断言
+- **SSOT**：`CLAUDE.md`（R20）+ `rules/CORE.md` + `hooks/stop-verification-gate.py` + 各编辑器自有 `mcp.json`
+
+## v11.2.0 变更摘要（2026-08-14，工程原则整合 + pwsh 7 优先）
+
+- **AGENTS.md 工程原则整合**：`d:\download\AGENTS.md` 18 规则去重后 6 条增量（第一性原理/YAGNI/删除过时优先于兼容层/依赖克制三件套/长期可维护优先/简单方案不主动升级）分层注入 —— 骨架进 `rules/CORE.md` 新增「工程原则」节 + 优先级第 5 条（L0 alwaysApply），详参进 `rules/GOVERNANCE.md` 最佳实践详参章新增「工程决策原则」小节；不新建规则文件（守 `global_rules_max: 10`），不覆盖 `rules/AGENTS.md`（同名不同义：现有=多Agent编排路由）
+- **PowerShell 7 优先规则**：CLAUDE.md R9 从纯负面禁令升级为「Windows 终端优先 pwsh（PS7+ 稳定版，避免 PS5.1 异常）」；CORE.md 工作原则节同步；脚本注释示例 pwsh 化（sync.ps1/scripts/README.md/docs/SYNC_GUIDE.md/check.ps1），保留 `#Requires -Version 5.1` 兼容与 powershell 回退说明；Qoder MCP 启动脚本（chrome-devtools/playwright/context7-mcp.ps1）powershell.exe 用法为刻意兼容修复，明确豁免
+- **SSOT**：`CLAUDE.md`（R9）+ `rules/CORE.md`（工程原则节）+ `rules/GOVERNANCE.md`（工程决策原则详参）
+
 ## v11.1.1 变更摘要（2026-08-13，问题指纹判定重构）
 
 - **`hooks/_lib/issue_state.py` 重构（hooks v5.7）**：原「同问题重复修改」判定为特征集 SHA1 精确匹配，粗糙/不准——六个根因：①精确哈希无相似度概念（换措辞即漏检）②中文无分词、整段连续中文当单 token（中文漏报主因）③「还是不行」类零信息追问独立成桶且同 cwd 共桶（跨问题误报主因）④cwd 大小写/斜杠形态不归一（CC↔Cursor 跨端识别失效）⑤top-8 词频在短 prompt 下按字典序截断致指纹抖动 ⑥resolved 终态化、回归不升级。重构为：**分层特征**（strong=归一化路径/异常名/错误码/代码符号/反引号片段，weak=英文词+**中文字符 bigram**）+ **加权相似匹配**（strong=overlap 系数 0.6 + weak=Jaccard 0.4，`similarity_threshold` 默认 0.5，纯弱信号自动抬至 ≥0.6）+ 精确 key 短路；**泛化追问续接**（短+含错误词+无强信号 → 续接同会话 2h 内最近条目，不建新桶）；**cwd 归一化**（小写/正斜杠/去尾分隔符）；**resolved 回归升级**（解决后连续命中 ≥2 → 撤销 resolved + 回归硬提醒 build_regression_message）；状态条目新增 features/cwd/resolved_hits 字段（旧条目兼容，仅精确匹配 30 天老化；条目上限 300 防扫描膨胀）。消费者 API 零改动（CC/Cursor/stop-verification-gate 三方签名不变；Cursor 经 import_claude_lib 直读源 lib 即时生效，无需重部署）。配置 `similarity_threshold` 三处显式化（quality_gates.json / guard-config 模板+部署）。**验证**：新增 `hooks/tests/test_issue_state.py` 21 用例全过（六根因逐项覆盖 + 旧格式兼容 + 防抖 + compact 轻提示）；双端 e2e 实跑（CC launcher 链路 + Cursor 部署 hook 链路，中文改写跨会话均正确命中）；状态文件清理测试残渣后重置

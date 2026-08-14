@@ -23,7 +23,7 @@
   "priority_p1_remote_web": [
     {
       "name": "github",
-      "intent": "GitHub PR/Issue（官方远端 MCP，Bearer GITHUB_TOKEN）"
+      "intent": "GitHub PR/Issue（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN）"
     },
     {
       "name": "grep",
