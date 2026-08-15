@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     GitHub 热门开发工具搜索与推荐脚本
 .DESCRIPTION
@@ -179,7 +179,7 @@ $(($allResults | Where-Object { $_.Safety -ge 70 } | Sort-Object { $_.Stars } -D
 1. 优先引入安全评分 ≥ 70 的工具
 2. 查看 README 和 Issues 确认活跃度
 3. 本地测试通过后添加到 skills 技能库
-4. 运行 sync-tools.ps1 同步到所有编辑器
+4. 运行 scripts/sync.ps1 同步到所有编辑器
 
 ---
 > 由 search-github-tools.ps1 自动生成

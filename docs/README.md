@@ -1,6 +1,6 @@
 # Docs 文档索引
 
-> 最后更新: 2026-08-13 | **当前配置: v11.1.0**
+> 最后更新: 2026-08-14 | **当前配置: v11.3.1**
 
 ---
 
@@ -12,7 +12,7 @@
 | [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)                                                 | Cursor 插件/MCP 边界                     |
 | [CURSOR_EDITOR_SETUP.md](CURSOR_EDITOR_SETUP.md)                                               | Cursor 编辑器专有设置                    |
 | [ADR/](ADR/)                                                                                   | 架构决策记录                             |
-| [SYNC_GUIDE.md](SYNC_GUIDE.md)                                                                 | 多编辑器同步 1+N（Claude Code 零同步 + Cursor/qoder-cn/trae-cn/workbuddy） |
+| [SYNC_GUIDE.md](SYNC_GUIDE.md)                                                                 | 多编辑器同步 1+N（Claude Code 零同步 + Cursor/qoder-cn/trae-cn/workbuddy，qoder/trae/codearts 待装自动跳过） |
 | [TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md)                                               | MCP / R17/R18 路由                       |
 | [superpowers/plans/2026-08-01-v10.11-44repo.md](superpowers/plans/2026-08-01-v10.11-44repo.md) | 最近一次优化计划（本地制品，不入版本库） |
 

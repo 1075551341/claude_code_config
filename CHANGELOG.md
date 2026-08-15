@@ -2,6 +2,16 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.1 变更摘要（2026-08-14，多端一致性修复）
+
+- **版本串/计数/残留引用对齐 SSOT**：MANIFEST/SPEC/CLAUDE/README/docs-README/package.json 统一 v11.3.1（docs-README 原错标 v11.1.0、package.json 原 11.1.1）；README catalog 计数 101+43+15 → 107+48+15（对齐 `catalog/INDEX.md`）；编辑器口径统一 `config/sync-manifest.json` 7 编辑器（qoder/trae/codearts 保留待装、home 缺席自动跳过）
+- **残留引用修复**：settings.json 注释删除失效 sync-tools.ps1 说明（settings.json 永不同步编辑器）；`scripts/search-github-tools.ps1` → sync.ps1；settings.json env 移除 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`（validate_config V17；`autoCompactWindow` 已等效）
+- **安全清理**：`settings.json.bak_20260812_231253`（含 API token）移出 git 跟踪 → `backups/`；`.gitignore` 增 `settings.json.bak_*` 锚定；git 历史保留（提醒轮换 kimi key）
+- **遗留清理**：移除已并入 main 的 worktree `.claude/worktrees/mcp-configs-sync` 及其分支（未提交 diff 快照备份至 `backups/`）
+- **DSH 消费方登记**：`docs/SYNC_GUIDE.md` 增「DSH 适配层」小节 + `MANIFEST.yaml` sync_targets 注记；`~/.dsh/AGENTS.md` 对齐 v11.3.1（v1.0.0 → v1.1.0）
+- **同步**：sync.ps1 -All 重同步四编辑器（Cursor plugin / qoder-cn / trae-cn / workbuddy 漂移清零），check.ps1 复检
+- **SSOT**：`config/sync-manifest.json`（编辑器清单）+ `catalog/INDEX.md`（catalog 计数）+ 本文件
+
 ## v11.3.0 变更摘要（2026-08-14，会话终验 R20 + Python MCP 修复）
 
 - **铁律 R20 会话终验**：全部任务完成后必须对照用户原始请求输出满足/遗漏/错改清单（不是把任务重做一遍）。L0：`CLAUDE.md` + `rules/CORE.md`；L2：`verification-before-completion`；Cursor 软提醒：`hooks/_lib/gate_messages.md` 第 8 条；Claude Stop 硬门：`stop-verification-gate.py` 检测标记（含纯文档编辑）。`quality_gates.json` 增 `require_requirements_replay`

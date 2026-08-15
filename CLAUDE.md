@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.0**（R20 会话终验；ROUTER/agent.yaml 已并入；同步 1+N）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.1**（R20 会话终验；多端一致性修复；ROUTER/agent.yaml 已并入；同步 1+N）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -165,7 +165,7 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 内容             | 位置                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | 归属矩阵/harness | MANIFEST.yaml                                                                            |
-| 法典/架构        | SPEC.md (v11.3.0) + CHANGELOG.md                                                         |
+| 法典/架构        | SPEC.md (v11.3.1) + CHANGELOG.md                                                         |
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |
@@ -176,6 +176,6 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 记忆搜索         | claude-mem (R18)                                                                         |
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
+**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
 **业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init && codegraph index`；探索一律 codegraph_explore（R17）；codebase-memory 已永久禁用（相关索引脚本已删除）。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`。

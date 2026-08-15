@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.0 (v11.1.0) | **日期**: 2026-08-13 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.1 (v11.3.1) | **日期**: 2026-08-14 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -76,6 +76,17 @@ pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 | codearts  | `~/.codeartsdoer` |     ✅      | `rule/*.mdc`                     | 未安装，缺席自动跳过                            |
 
 > 实体复制通道带 `.claude-managed` 台账：孤儿清除只删台账内条目，编辑器目录中**用户自有规则不受影响**。
+
+## DSH 适配层（v11.3.1 登记，非 sync 目标）
+
+| 项       | 内容 |
+| -------- | ---- |
+| 落点     | `~/.dsh/AGENTS.md`（DSH 用户全局指令，每会话首轮注入） |
+| 形态     | 静态适配快照：合并源 = `~/.claude` v11.3.1（五柱/五阶段/铁律 R1–R20）+ `D:\download\AGENTS.md`（工程原则 5 章）；已适配 DSH 工具链（glob/grep/read 三件套、pwsh、goal/subagent） |
+| 机制     | **手工对齐，不参与 sync.ps1**（DSH 非 Claude 系编辑器；快照主体不逐条镜像规则） |
+| 对齐协议 | `~/.claude` 升版（CLAUDE.md/SPEC/铁律有实质变更）→ 同步刷新其「合并源」版本串与受影响节 → DSH 版本 +0.1（v1.0.0↔v11.3.0；v1.1.0↔v11.3.1） |
+| 本地扩展（v1.2.1） | DSH 侧能力：MCP 常驻 9（`~/.dsh/profiles/web/cordis.patch.yml`，镜像 `~/.claude/.mcp.json` 常驻集合；`dsh-mcp-profile.ps1` 四档切换 default/review/full/minimal，loader 热加载）+ skill 精选 30（`~/.dsh/skills`，`~/.claude/skills` 的 DSH 适配版）；不同流入 `~/.claude` |
+| 边界     | DSH 侧改动不回流 `~/.claude`；两侧重叠原则以各自工具链为准 |
 
 ## Cursor 落点布局
 
@@ -218,6 +229,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 版本史（同步链）
 
+- **v20.1 (v11.3.1)**：新增「DSH 适配层」小节（DSH 消费方登记 + 手工对齐协议）；编辑器口径统一 7 编辑器（qoder/trae/codearts 保留待装、home 缺席自动跳过）
 - **v20.0 (v11.1.0)**：**多编辑器恢复（1+N）** — 按用户决策在 v19 架构上恢复 qoder-cn/trae-cn/workbuddy 落点（未回滚 v18.4 旧脚本）；编辑器清单入 `sync-manifest.json` editors 段（home 缺席自动跳过）；新增 `Deploy-EditorRules`（实体复制 + `.claude-managed` 台账孤儿清除，用户自有规则免疫）；check.ps1 S3 反转为 managed 白名单校验；impact_sync 规则漂移检测覆盖多编辑器
 - v19.0 (v11.0.0)：**双端重构** — 目标收敛为仅 Cursor（Claude Code 零同步）；删除 qoder/trae(-cn)/codearts/workbuddy 分支、`sync.sh`、`templates/cursor-claude-config-plugin/` 镜像层；常量单源 `config/sync-manifest.json`；插件规则直接从 SSOT 生成（含孤儿清除）；根文件 8→6（ROUTER 并入 CLAUDE.md、agent.yaml 并入 MANIFEST）
 - v18.4：根文件 8 项部署到除 workbuddy 外所有编辑器；四处集合统一
