@@ -181,6 +181,18 @@ def v4_iron_laws_consistency():
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
     if "Karpathy" not in core or "Karpathy" not in claude:
         ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
+    verif_path = os.path.join(BASE, "skills", "verification-before-completion", "SKILL.md")
+    extra = core
+    if os.path.exists(verif_path):
+        with open(verif_path, "r", encoding="utf-8") as fh:
+            extra = core + "\n" + fh.read()
+    for kw in ("漏改", "原功能"):
+        if kw not in extra:
+            ERRORS.append(
+                f"V4: R20 keyword {kw!r} missing from CORE.md or verification skill"
+            )
+        if kw not in claude:
+            ERRORS.append(f"V4: R20 keyword {kw!r} missing from CLAUDE.md")
 
 
 def v5_manifest_completeness():

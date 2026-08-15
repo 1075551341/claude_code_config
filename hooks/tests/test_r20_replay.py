@@ -48,7 +48,7 @@ def test_positive_string_content() -> None:
             {
                 "type": "assistant",
                 "message": {
-                    "content": "## 会话终验（R20）\n- 满足：a\n- 遗漏：无\n- 错改：无\n结论：DONE"
+                    "content": "## 会话终验（R20）\n- 满足：a\n- 遗漏：无\n- 错改：无\n- 漏改：无\n- 原功能：保持\n结论：DONE"
                 },
             },
         ]
@@ -66,7 +66,7 @@ def test_positive_list_content() -> None:
                 "type": "assistant",
                 "message": {
                     "content": [
-                        {"type": "text", "text": "会话终验\n遗漏：无\n错改：无"},
+                        {"type": "text", "text": "会话终验\n遗漏：无\n错改：无\n漏改：无\n原功能：保持"},
                         {"type": "tool_use", "name": "x"},
                     ]
                 },
@@ -107,7 +107,7 @@ def test_empty_path() -> None:
 def test_skip_empty_tool_use_assistant() -> None:
     path = write_transcript(
         [
-            {"type": "assistant", "message": {"content": "会话终验 R20\n遗漏：无\n错改：无"}},
+            {"type": "assistant", "message": {"content": "会话终验 R20\n遗漏：无\n错改：无\n漏改：无\n原功能：保持"}},
             {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "x"}]}},
         ]
     )
@@ -127,6 +127,51 @@ def test_missing_yilou() -> None:
         os.remove(path)
 
 
+def test_old_three_fields_fail() -> None:
+    path = write_transcript(
+        [
+            {
+                "type": "assistant",
+                "message": {"content": "会话终验 R20\n遗漏：无\n错改：无"},
+            }
+        ]
+    )
+    try:
+        check("old three fields fail", mod.has_requirements_replay(path) is False)
+    finally:
+        os.remove(path)
+
+
+def test_missing_lougai() -> None:
+    path = write_transcript(
+        [
+            {
+                "type": "assistant",
+                "message": {"content": "会话终验 R20\n遗漏：无\n错改：无\n原功能：保持"},
+            }
+        ]
+    )
+    try:
+        check("missing 漏改", mod.has_requirements_replay(path) is False)
+    finally:
+        os.remove(path)
+
+
+def test_missing_yuangongneng() -> None:
+    path = write_transcript(
+        [
+            {
+                "type": "assistant",
+                "message": {"content": "会话终验 R20\n遗漏：无\n错改：无\n漏改：无"},
+            }
+        ]
+    )
+    try:
+        check("missing 原功能", mod.has_requirements_replay(path) is False)
+    finally:
+        os.remove(path)
+
+
 def test_last_assistant_wins() -> None:
     path = write_transcript(
         [
@@ -142,7 +187,7 @@ def test_last_assistant_wins() -> None:
 
 def test_block_message_doc_only() -> None:
     msg = mod.build_block_message(
-        ["R20 会话终验：未输出对照原始用户请求的满足/遗漏/错改清单"],
+        ["R20 会话终验：未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能"],
         False,
         1,
         3,
@@ -150,6 +195,8 @@ def test_block_message_doc_only() -> None:
     check("doc-only block omits 代码修改", "代码修改" not in msg)
     check("doc-only block omits 跑测试指令", "实际运行测试" not in msg)
     check("doc-only block asks R20", "会话终验（R20）" in msg)
+    check("doc-only block asks 漏改", "漏改" in msg)
+    check("doc-only block asks 原功能", "原功能" in msg)
 
 
 def main() -> int:
@@ -162,6 +209,9 @@ def main() -> int:
     test_last_assistant_wins()
     test_skip_empty_tool_use_assistant()
     test_missing_yilou()
+    test_old_three_fields_fail()
+    test_missing_lougai()
+    test_missing_yuangongneng()
     test_block_message_doc_only()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0

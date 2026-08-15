@@ -2,6 +2,13 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.2 变更摘要（2026-08-15，R20 逐条回放强化）
+
+- **铁律 R20 强化（A 方案）**：改前优先成熟方案或已有全局通用处理（禁止为单编辑器/单场景发明特例）；完成后按原始要求**逐条回放**（禁止把实现重做一遍），清单扩为满足/遗漏/错改/漏改/原功能。非功能变更「原功能」必须写「保持」并指向测试或冒烟证据。L0：`CLAUDE.md`（workbuddy 短句自洽）+ `rules/CORE.md` 两段正文；模板 SSOT：`skills/verification-before-completion`；详参指针：`rules/GOVERNANCE.md`；双端注入：`hooks/_lib/gate_messages.md`；Claude Stop 硬门增检 `漏改`+`原功能`（`test_r20_replay.py`）。不新建规则文件、不写入 CURSOR-EDITOR.mdc
+- **校验**：`validate_config.py` V4 断言 CLAUDE.md 与 CORE/verification 含 `漏改`/`原功能`，防缩回三字段
+- **同步**：sync.ps1 刷新 Cursor plugin / qoder-cn / trae-cn / workbuddy；DSH 映射 v1.2.x↔v11.3.2（手工，非 sync）
+- **SSOT**：`CLAUDE.md`（R20）+ `rules/CORE.md` + `skills/verification-before-completion/SKILL.md`（模板）+ `hooks/stop-verification-gate.py`
+
 ## v11.3.1 变更摘要（2026-08-14，多端一致性修复）
 
 - **版本串/计数/残留引用对齐 SSOT**：MANIFEST/SPEC/CLAUDE/README/docs-README/package.json 统一 v11.3.1（docs-README 原错标 v11.1.0、package.json 原 11.1.1）；README catalog 计数 101+43+15 → 107+48+15（对齐 `catalog/INDEX.md`）；编辑器口径统一 `config/sync-manifest.json` 7 编辑器（qoder/trae/codearts 保留待装、home 缺席自动跳过）

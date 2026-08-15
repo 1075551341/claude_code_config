@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.3.1
+# 组件唯一归属源 — 防左右手互博 — v11.3.2
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.3.1"
-updated: "2026-08-14"
+version: "11.3.2"
+updated: "2026-08-15"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -899,8 +899,8 @@ sync_targets:
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
   editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts]
-  # v11.3.1: DSH 消费方登记 — ~/.dsh/AGENTS.md 为静态适配快照（合并源=本仓 v11.3.1 + D:\download\AGENTS.md），
-  # 非 sync.ps1 目标；本仓升版后手工刷新其版本串/指针（协议见 docs/SYNC_GUIDE.md「DSH 适配层」）。
+  # v11.3.2: DSH 消费方登记 — ~/.dsh/AGENTS.md 为静态适配快照（合并源=本仓 v11.3.2 + D:\download\AGENTS.md），
+  # 非 sync.ps1 目标；本仓升版后手工刷新其版本串/指针（协议见 docs/SYNC_GUIDE.md「DSH 适配层」；映射 v1.2.x↔v11.3.2）。
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]
