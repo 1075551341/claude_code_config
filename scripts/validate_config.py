@@ -186,7 +186,7 @@ def v4_iron_laws_consistency():
     if os.path.exists(verif_path):
         with open(verif_path, "r", encoding="utf-8") as fh:
             extra = core + "\n" + fh.read()
-    for kw in ("漏改", "原功能"):
+    for kw in ("漏改", "原功能", "文档/备注"):
         if kw not in extra:
             ERRORS.append(
                 f"V4: R20 keyword {kw!r} missing from CORE.md or verification skill"
@@ -555,7 +555,7 @@ def _parse_skill_frontmatter(skill_path):
 
 
 def check_v15_loading_tiers():
-    """V15: L0-L4 skill frontmatter — loading_tier + disable-model-invocation 与 skills-INDEX 一致."""
+    """V15: L0-L3 skill frontmatter — loading_tier + disable-model-invocation 与 skills-INDEX 一致."""
     skills_dir = os.path.join(BASE, "skills")
     if not os.path.isdir(skills_dir):
         ERRORS.append("V15: skills/ directory missing")

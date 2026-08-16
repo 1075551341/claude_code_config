@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.3.2 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.2 逐条回放）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
+> 版本：11.3.3 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.3 文档/备注一致）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
 
 ---
 
@@ -80,15 +80,14 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 **Cursor**：L2/L3 supplement 用 `disable-model-invocation: true` + 显式 Read。
 **Claude Code**：`layer: skeleton/supplement` + using-superpowers 路由 Read。
 
-### 加载等级 L0–L4（MANIFEST SSOT；ROUTER 口径等价 L0–L3，L4=L3 子集）
+### 加载等级 L0–L3（MANIFEST SSOT；历史 L4 已并入 L3_dispatch）
 
-| 等级 | 内容                                                                                                |
-| ---- | --------------------------------------------------------------------------------------------------- |
-| L0   | CLAUDE.md（v11 并入 ROUTER）+ CORE                                                                  |
-| L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming                               |
-| L2   | 阶段门控：writing-plans, spec-validation, executing-plans, subagent-driven, verification, debugging |
-| L3   | deep-research, adr, workstream, deer-flow, git/pr/mem workflow, …                                   |
-| L4   | agents(Task), MCP, claude-mem, lazy rules（CLAUDE 细分；ROUTER 并入 L3）                            |
+| 等级 | 内容                                                                                           |
+| ---- | ---------------------------------------------------------------------------------------------- |
+| L0   | CLAUDE.md（v11 并入 ROUTER）+ CORE                                                             |
+| L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming                          |
+| L2   | 阶段门控：writing-plans, spec-validation, executing-plans, verification, debugging             |
+| L3   | 其余 skills（含 subagent-driven-development 显式触发）+ agents(Task)/MCP/claude-mem/lazy rules |
 
 ## Workflow Skills
 
@@ -353,8 +352,8 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ## 变更史
 
-> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.2 全量）。
+> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.3 全量）。
 
 ---
 
-> 版本：11.3.2 | 日期：2026-08-15 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（逐条回放）+ 多端一致性
+> 版本：11.3.3 | 日期：2026-08-16 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（文档/备注一致）+ 加载口径对齐

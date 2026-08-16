@@ -2,6 +2,13 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.3 变更摘要（2026-08-16，R20 文档一致 + 加载口径对齐）
+
+- **铁律 R20**：完成后「漏改」显式包含——修改后文件/配置必须与文档/备注保持一致（README/SPEC/CHANGELOG/INDEX/MANIFEST/frontmatter/注释）。不新增 Stop 硬门字段（仍检满足/遗漏/错改/漏改/原功能）；模板增场景 F。L0：`CLAUDE.md` + `rules/CORE.md`；模板 SSOT：`skills/verification-before-completion`；详参：`rules/GOVERNANCE.md`；双端注入：`hooks/_lib/gate_messages.md`
+- **全局加载**：统一 L0–L3。SPEC 加载表去掉历史 L4 行，L2 不再误列 `subagent-driven-development`（v10.15 起为 L3 显式触发）；`using-superpowers` 去掉「CLAUDE.md 细分 L4」过时口径并补全 L1 四技能；`validate_config.py` V15 文案 L0–L3，V4 增检关键词 `文档/备注`
+- **同步**：sync.ps1 刷新 Cursor plugin / qoder-cn / trae-cn / workbuddy；DSH 无工具链变更，映射仍 v1.2.x↔v11.3.2（不强制手工对齐）
+- **SSOT**：`CLAUDE.md`（R20 + L2 列）+ `rules/CORE.md` + `SPEC.md`（加载表）+ `MANIFEST.yaml` loading_tiers
+
 ## v11.3.2 变更摘要（2026-08-15，R20 逐条回放强化）
 
 - **铁律 R20 强化（A 方案）**：改前优先成熟方案或已有全局通用处理（禁止为单编辑器/单场景发明特例）；完成后按原始要求**逐条回放**（禁止把实现重做一遍），清单扩为满足/遗漏/错改/漏改/原功能。非功能变更「原功能」必须写「保持」并指向测试或冒烟证据。L0：`CLAUDE.md`（workbuddy 短句自洽）+ `rules/CORE.md` 两段正文；模板 SSOT：`skills/verification-before-completion`；详参指针：`rules/GOVERNANCE.md`；双端注入：`hooks/_lib/gate_messages.md`；Claude Stop 硬门增检 `漏改`+`原功能`（`test_r20_replay.py`）。不新建规则文件、不写入 CURSOR-EDITOR.mdc

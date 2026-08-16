@@ -19,20 +19,20 @@ loading_tier: L1
 | **Read 工具** | `Read skills/<name>/SKILL.md`          | **首选**；L2/L3 必须     |
 | slash 命令    | `/discuss` `/plan` `/deep-research` 等 | 入口快捷；仍应 Read 全文 |
 | 关键词        | description/triggers 匹配              | 路由信号；触发后 Read    |
-| Task 子代理   | `subagent_type` + 任务描述             | L4 agents                |
+| Task 子代理   | `subagent_type` + 任务描述             | L3 agents                |
 
 L2/L3 设 `disable-model-invocation: true` → 不会自动注入上下文；**进入阶段时必须显式 Read**。
 
-## 加载等级（L0–L3，CLAUDE.md 细分 L4）
+## 加载等级（L0–L3）
 
 | 等级 | 机制                                                            |
 | ---- | --------------------------------------------------------------- |
 | L0   | CLAUDE.md（含路由，v11 并入 ROUTER）+ CORE alwaysApply          |
-| L1   | 本 skill + change-impact-analysis 常驻                          |
+| L1   | 本 skill + task-triage + change-impact-analysis + brainstorming |
 | L2   | 进入阶段 Read 全文（见下表）                                    |
-| L3   | slash/关键词后 Read supplement skill / agent / MCP / claude-mem |
+| L3   | slash/关键词后 Read 其余 skill / agent / MCP / claude-mem       |
 
-> **统一口径**：ROUTER（L0 always）以 **L0–L3** 为准，L3 = 其余 skills/rules/agents/MCP/claude-mem。CLAUDE.md 出于细分把 agents(Task)/MCP/claude-mem 单列为 **L4**，等价于 ROUTER 的 L3 子集。本 skill 采用 ROUTER 口径。
+> ROUTER/CLAUDE.md 以 **L0–L3** 为准；历史 L4（agents/MCP/claude-mem）已并入 L3（MANIFEST `L3_dispatch`）。
 
 同会话同一 skill 已 Read → 不重复 Read（制品 hash 变更除外）。
 
@@ -59,22 +59,22 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 
 ## P0 路由集（6）
 
-| 等级 | Skill                          | 触发                                                     |
-| ---- | ------------------------------ | -------------------------------------------------------- |
-| L1   | using-superpowers              | 会话开始                                                 |
+| 等级 | Skill                          | 触发                                                                                                 |
+| ---- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| L1   | using-superpowers              | 会话开始                                                                                             |
 | L1   | task-triage                    | 会话开始分类、新任务（判定条件 SSOT；简单需同时满足 Phase0+≤2+白名单+六维全低+模型匹配低+attempt=1） |
-| L1   | change-impact-analysis         | 任何修改                                                 |
-| L1   | brainstorming                  | 非简单、方案、架构                                       |
-| L2   | verification-before-completion | 完成、验收                                               |
-| L2   | systematic-debugging           | 调试、测试失败                                           |
+| L1   | change-impact-analysis         | 任何修改                                                                                             |
+| L1   | brainstorming                  | 非简单、方案、架构                                                                                   |
+| L2   | verification-before-completion | 完成、验收                                                                                           |
+| L2   | systematic-debugging           | 调试、测试失败                                                                                       |
 
 ## 非简单 L2 链
 
-| 阶段 | Read                                          |
-| ---- | --------------------------------------------- |
-| ②    | writing-plans → spec-validation（门控）       |
+| 阶段 | Read                                                                |
+| ---- | ------------------------------------------------------------------- |
+| ②    | writing-plans → spec-validation（门控）                             |
 | ③    | executing-plans(默认) + subagent-driven-development(用户显式要求时) |
-| ④    | verification-before-completion                |
+| ④    | verification-before-completion                                      |
 
 ## 规格三轨（自动判定，互斥）
 
@@ -103,16 +103,16 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 
 ## 工作流扩展（L3 信号触发）
 
-| 信号     | Skill                                 |
-| -------- | ------------------------------------- |
-| 写计划   | writing-plans                         |
-| TDD      | test-driven-development (默认关闭,用户显式要求时触发) |
-| 代码审查 | requesting-code-review → eng-reviewer |
-| 架构决策 | adr-management                        |
+| 信号     | Skill                                                           |
+| -------- | --------------------------------------------------------------- |
+| 写计划   | writing-plans                                                   |
+| TDD      | test-driven-development (默认关闭,用户显式要求时触发)           |
+| 代码审查 | requesting-code-review → eng-reviewer                           |
+| 架构决策 | adr-management                                                  |
 | 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
-| Git 提交 | git-workflow                          |
-| 开 PR    | pr-workflow                           |
-| 输出冗长 | caveman-compress                      |
+| Git 提交 | git-workflow                                                    |
+| 开 PR    | pr-workflow                                                     |
+| 输出冗长 | caveman-compress                                                |
 
 ## Token
 

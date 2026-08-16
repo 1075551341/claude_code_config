@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.2 (v11.3.2) | **日期**: 2026-08-15 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.3 (v11.3.3) | **日期**: 2026-08-16 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -220,8 +220,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 | ----- | -------------------------------------------- | ------------------------------------ |
 | L0    | CLAUDE（含路由）+ CORE + CURSOR-EDITOR       | alwaysApply（经 plugin）             |
 | L1    | using-superpowers, change-impact-analysis 等 | 会话常驻                             |
-| L2/L3 | 其余 skills                                  | disable-model-invocation + 阶段 Read |
-| L4    | agents, MCP, plugins                         | 显式调用                             |
+| L2/L3 | 其余 skills + agents/MCP/plugins             | disable-model-invocation + 显式调用 |
 
 - **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)（Claude 侧 SSOT = `rules/MCP.md`）
 
@@ -229,6 +228,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 版本史（同步链）
 
+- **v20.3 (v11.3.3)**：R20 文档/备注与文件/配置一致；加载口径统一 L0–L3（本表去掉 L4 行）
 - **v20.2 (v11.3.2)**：R20 逐条回放强化（改前成熟/全局 + 漏改/原功能）；DSH 映射补 v1.2.x↔v11.3.2
 - **v20.1 (v11.3.1)**：新增「DSH 适配层」小节（DSH 消费方登记 + 手工对齐协议）；编辑器口径统一 7 编辑器（qoder/trae/codearts 保留待装、home 缺席自动跳过）
 - **v20.0 (v11.1.0)**：**多编辑器恢复（1+N）** — 按用户决策在 v19 架构上恢复 qoder-cn/trae-cn/workbuddy 落点（未回滚 v18.4 旧脚本）；编辑器清单入 `sync-manifest.json` editors 段（home 缺席自动跳过）；新增 `Deploy-EditorRules`（实体复制 + `.claude-managed` 台账孤儿清除，用户自有规则免疫）；check.ps1 S3 反转为 managed 白名单校验；impact_sync 规则漂移检测覆盖多编辑器
