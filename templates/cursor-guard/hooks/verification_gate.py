@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""beforeSubmitPrompt: 完成验证门（v10.15.0）。
+"""beforeSubmitPrompt: 完成验证门（v11.3.4）。
 prompt 命中完成类关键词 **或** 状态显示本轮有未验证编辑时，注入 verification-before-completion 强制指令。
-修复关键词盲区（模型连续工具调用后自行声称完成）。幂等无状态；永不阻断（Cursor 无 Stop 阻断能力，
-enforce_mode 显式标注 soft；硬门在 Claude Code 侧 stop-verification-gate.py 兜底）。"""
+修复关键词盲区（模型连续工具调用后自行声称完成）。幂等无状态；本 hook 永不阻断。
+硬门：Cursor stop → verification_stop.py 的 followup_message（enforce_mode=followup）；
+Claude Code → stop-verification-gate.py exit 2。"""
 from __future__ import annotations
 
 import json
@@ -45,19 +46,14 @@ def has_unverified_edits(data: dict, claude_home: str) -> bool:
         with open(path, "r", encoding="utf-8") as f:
             state = json.load(f)
         entry = state.get(session_id)
-        if not entry or not entry.get("edited_files"):
-            return False
-        last_edit_ts = max(
-            (e.get("ts", 0) for e in entry.get("edited_files", [])),
-            default=0,
-        )
-        if last_edit_ts == 0:
-            return False
-        verified = any(
-            c.get("ts", 0) >= last_edit_ts - 1
-            for c in entry.get("verify_commands", [])
-        )
-        return not verified
+        try:
+            from hook_io import import_claude_lib
+
+            r20 = import_claude_lib(claude_home, "r20_replay")
+            return r20.has_unverified_edits(entry or {})
+        except Exception as e:
+            print(f"verification_gate: r20_replay unavailable: {e}", file=sys.stderr)
+            return bool((entry or {}).get("edited_files"))
     except (OSError, json.JSONDecodeError) as e:
         print(f"verification_gate: state read failed: {e}", file=sys.stderr)
         return False

@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.7
+# Hooks 钩子系统 v5.8
 
 > Claude Code 专用，不同步编辑器。16 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.8 变更（v11.3.4）**：① `post-edit-verify-tracker.py` 在记账后对每个文件首次成功编辑注入五维迷你验收（`_lib/first_edit_verify.py`）；② Stop 硬门 R20 反空模板抽到 `_lib/r20_replay.py`（漏改须含文档/无文档影响/路径，原功能须含证据/测试/冒烟）；③ 门控文本经 `_lib/gate_reader.py` 读短指针；④ Cursor Guard v1.2.1 增 `first_edit_verify` / `verification_stop`（followup）/ `r20_capture`。
 > **v5.7 变更（v11.1.1）**：`_lib/issue_state.py` 判定重构——原特征集 SHA1 精确匹配粗糙/不准（中文整段单 token、泛化追问共桶误报、cwd 形态不归一跨端失效）。改为分层特征（strong=路径/错误码/异常名/符号，weak=英文词+中文 bigram）+ 加权相似度阈值（`similarity_threshold` 默认 0.5，纯弱信号自动抬高）；泛化追问（「还是不行」等）续接同会话最近条目不再独立成桶；resolved 后连续命中 ≥2 判回归自动恢复硬提醒；消费者 API 不变（record/merge_config/min_prompt_len/mark_session_resolved），Cursor 经 import_claude_lib 直读本 lib 即时生效。单测 `tests/test_issue_state.py`（21 用例）。
 > **v5.6 变更（v11.0.0 Phase 5）**：退役 `post-codegraph-sync.py` 与 `stop-knowledge-graph-sync.py`（及共享库 `_lib/knowledge_graph_sync.py`、Cursor Guard `knowledge_graph_sync_hook.py`）——codegraph v1.5 MCP server 自带原生文件监听自动同步（300ms 静默窗 + 连接时追赶），本地 sync hook 冗余；注册 18→16。
 > **v5.5 变更（v11.0.0）**：`_archive/`（36）与 `_deprecated/`（4）目录整体删除——非激活资产不再随仓携带，需要时从 git 历史恢复（tag `v10.17-baseline` 前）。
@@ -16,7 +17,7 @@
 | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/`             | 16 注册激活 | standard profile（settings.json 已注册）                                                                                                     |
 | `hooks/`（未注册 4） | 4           | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor — 文件保留未注册：Claude Code 原生机制或 Cursor Guard 已覆盖 |
-| `hooks/_lib/`        | 4           | 共享库：context_thresholds.py + gate_messages.md（门控文本 SSOT）+ issue_state.py（重复追踪 SSOT）+ tool_paths.py（写工具识别 SSOT）         |
+| `hooks/_lib/`        | 7           | 共享库：context_thresholds.py + gate_messages.md + gate_reader.py + r20_replay.py + first_edit_verify.py + issue_state.py + tool_paths.py    |
 
 ---
 
@@ -50,11 +51,11 @@
 
 ### PostToolUse (3)
 
-| Hook                          | 触发                                                     | 功能                                                                                                                         | 层   |
-| ----------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `post-edit-format.py`         | Edit/Write                                               | 代码格式化 + Lint                                                                                                            | 执行 |
-| `post-secret-detector.py`     | Edit/Write + `mcp__serena__.*` / `mcp__fs__.*`           | 密钥/Token/密码泄露扫描                                                                                                      | 横切 |
-| `post-edit-verify-tracker.py` | Edit/Write/Bash/Task + `mcp__serena__.*` / `mcp__fs__.*` | 完成验证追踪器：记录编辑文件/验证命令/审查委派到状态文件，供 Stop 硬门核查；MCP 写工具的文件路径经 `_lib/tool_paths.py` 解析 | 骨架 |
+| Hook                          | 触发                                                     | 功能                                                                                                                                                     | 层   |
+| ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| `post-edit-format.py`         | Edit/Write                                               | 代码格式化 + Lint                                                                                                                                        | 执行 |
+| `post-secret-detector.py`     | Edit/Write + `mcp__serena__.*` / `mcp__fs__.*`           | 密钥/Token/密码泄露扫描                                                                                                                                  | 横切 |
+| `post-edit-verify-tracker.py` | Edit/Write/Bash/Task + `mcp__serena__.*` / `mcp__fs__.*` | 完成验证追踪器：记录编辑/验证/审查；**每个文件首次成功编辑后注入五维迷你验收**（范围=该文件+blast-radius 全部相关项）；MCP 写路径经 `_lib/tool_paths.py` | 骨架 |
 
 > codegraph 索引同步不再走 hook：v1.5 起 MCP server 原生监听自动同步（v11 退役 `post-codegraph-sync.py`）。
 
@@ -66,20 +67,23 @@
 
 ### Stop (3)
 
-| Hook                        | 功能                                                                                                                                                                                                                                                                             | 层   |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `stop-verification-gate.py` | **完成验证硬门**：变更范围轻量自动检查 + 测试证据 + 预期符合性 + eng-reviewer 委派核查 + R16 裸 except 扫描 + plan 提醒；v10.17 增 `git status --porcelain` 工作树交叉核查（堵 MCP/Bash 写入绕过）与非功能变更回归证据校验；验证全通过时把本会话 issue-tracker 指纹标记 resolved | 骨架 |
-| `stop-session-summary.py`   | 会话摘要                                                                                                                                                                                                                                                                         | 执行 |
-| `stop-readme-updater.py`    | README 自动更新                                                                                                                                                                                                                                                                  | 执行 |
+| Hook                        | 功能                                                                                                                                                                        | 层   |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| `stop-verification-gate.py` | **完成验证硬门**：轻量自动检查 + 测试证据 + R20 反空模板（`_lib/r20_replay.py`）+ 工作树交叉核查 + 非功能变更回归证据；验证全通过时把本会话 issue-tracker 指纹标记 resolved | 骨架 |
+| `stop-session-summary.py`   | 会话摘要                                                                                                                                                                    | 执行 |
+| `stop-readme-updater.py`    | README 自动更新                                                                                                                                                             | 执行 |
 
 共享库（双端共用，Cursor Guard 经 `hook_io.import_claude_lib()` 动态导入）：
 
-| 模块                         | 职责                                                    | 使用方                                                                                                    |
-| ---------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `_lib/issue_state.py`        | 问题指纹算法 + 单一状态文件 + `mark_session_resolved()` | `pre-userprompt-issue-tracker.py`、Cursor `issue_tracker.py`、`stop-verification-gate.py`                 |
-| `_lib/tool_paths.py`         | 写工具识别（原生 + MCP）与入参文件路径解析              | `post-edit-verify-tracker.py`、`pre-edit-impact-nudge.py`、Cursor `verify_tracker.py` / `impact_nudge.py` |
-| `_lib/context_thresholds.py` | 70%/90% 阈值解析                                        | 压缩相关 hook                                                                                             |
-| `_lib/gate_messages.md`      | 三门控文本 SSOT                                         | bootstrap / verify-gate / impact-nudge                                                                    |
+| 模块                         | 职责                                                    | 使用方                                                                                                                             |
+| ---------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `_lib/issue_state.py`        | 问题指纹算法 + 单一状态文件 + `mark_session_resolved()` | `pre-userprompt-issue-tracker.py`、Cursor `issue_tracker.py`、`stop-verification-gate.py`                                          |
+| `_lib/tool_paths.py`         | 写工具识别（原生 + MCP）与入参文件路径解析              | `post-edit-verify-tracker.py`、`pre-edit-impact-nudge.py`、Cursor `verify_tracker.py` / `impact_nudge.py` / `first_edit_verify.py` |
+| `_lib/context_thresholds.py` | 70%/90% 阈值解析                                        | 压缩相关 hook                                                                                                                      |
+| `_lib/gate_messages.md`      | 四门控短指针 SSOT（完整清单在 skill）                   | bootstrap / verify-gate / impact-nudge / first-edit                                                                                |
+| `_lib/gate_reader.py`        | 分段读取 gate_messages.md                               | 上列注入 hook + Cursor `gate_messages.py`                                                                                          |
+| `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
+| `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
 
 ---
 
@@ -124,7 +128,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`）：同步、70%/90% 压缩、codegraph 路由、shell/密钥守卫、维护提示。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.1（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，21 hooks）：同步、70%/90% 压缩、codegraph 路由、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` followup。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
@@ -156,4 +160,4 @@ Cursor Guard v1.2（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`）：�
 
 ---
 
-_版本：5.6（v11.0.0）| 16 注册激活 + 4 未注册（归档/弃用目录已删除；codegraph 同步走 MCP 原生）_
+_版本：5.8（v11.3.4）| 16 注册激活 + 4 未注册；初次修改验收并入 tracker；R20 反空模板 + Cursor Guard v1.2.1_

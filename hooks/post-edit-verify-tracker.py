@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-PostToolUse Hook: 完成验证追踪器（v10.17.0）
+PostToolUse Hook: 完成验证追踪器 + 初次修改验收（v11.3.4）
 按 session_id 记录本会话编辑文件/验证命令/审查委派，供 stop-verification-gate 硬门核查。
-v10.17: 编辑工具识别与路径解析移交 `_lib/tool_paths.py`，覆盖 serena/fs 等 MCP 写工具
-（此前 MCP 写文件不进 edited_files，Stop 门会误判「本会话未改代码」直接放行回归）。
-状态 ~/.claude/.state/verification-gate.json（7 天自动清理）；永不阻断（exit 0）。
+每个文件首次成功编辑后附加五维迷你验收 additionalContext（first_edit_nudged）。
 """
 import json
 import sys
@@ -17,10 +15,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 
 from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
+from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 
-STATE_DIR = os.path.join(str(claude_home()), ".state")
+CLAUDE_HOME = str(claude_home())
+STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
 STATE_FILE = os.path.join(STATE_DIR, "verification-gate.json")
-CONFIG_FILE = os.path.expanduser("~/.claude/config/quality_gates.json")
+CONFIG_FILE = os.path.join(CLAUDE_HOME, "config", "quality_gates.json")
 STALE_SECONDS = 7 * 24 * 3600
 
 DEFAULT_VERIFY_PATTERNS = [
@@ -112,9 +112,15 @@ def main():
         entry["cwd"] = cwd
 
     changed = False
+    first_edit_msg = None
     if is_edit_tool(tool_name):
-        for path in extract_edit_paths(tool_input, cwd):
+        paths = extract_edit_paths(tool_input, cwd)
+        for path in paths:
             entry["edited_files"].append({"path": path, "ts": now})
+            changed = True
+        fresh = fresh_edit_paths(entry, paths)
+        if fresh:
+            first_edit_msg = compose_message(load_first_edit_message(CLAUDE_HOME), fresh)
             changed = True
     elif tool_name == "Bash":
         command = str(tool_input.get("command") or "")
@@ -131,6 +137,15 @@ def main():
 
     if changed:
         save_state(state)
+    if first_edit_msg:
+        result = {
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": first_edit_msg,
+            }
+        }
+        sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
     sys.exit(0)
 
 

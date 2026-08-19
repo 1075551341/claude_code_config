@@ -17,29 +17,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 
 from tool_paths import extract_edit_paths  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
+from gate_reader import load_gate  # noqa: E402
 
 STATE_DIR = os.path.join(str(claude_home()), ".state")
 STATE_FILE = os.path.join(STATE_DIR, "impact-nudge.json")
 STALE_SECONDS = 7 * 24 * 3600
 MAX_TRACKED_FILES = 200
 
-FALLBACK = (
-    "【门控 · 每个文件首次编辑前必做】\n"
-    "1. codegraph_explore 目标 blast-radius；2. Grep 全项目引用；"
-    "3. 配置类改动查 MANIFEST depends_on。范围不明不修改。"
-)
-
 
 def load_gate_message() -> str:
-    gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")
-    try:
-        with open(gate_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        section = content.split("## 变更影响门", 1)[1].strip()
-        return section if section else FALLBACK
-    except (OSError, IndexError) as e:
-        print(f"pre-edit-impact-nudge: gate_messages read failed: {e}", file=sys.stderr)
-        return FALLBACK
+    return load_gate("impact")
 
 
 def load_state() -> dict:

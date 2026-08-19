@@ -28,16 +28,22 @@ alwaysApply: true
 
 ## 上下文与压缩（Cursor ≠ Claude Code）
 
-| 目标 | Cursor 操作 |
-|------|-------------|
-| **降低上下文环 / 压缩当前会话** | Agent 输入框发送 **`/summarize`** 或 **「压缩上下文」**（二者等效） |
+| 目标                             | Cursor 操作                                                               |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| **降低上下文环 / 压缩当前会话**  | Agent 输入框发送 **`/summarize`** 或 **「压缩上下文」**（二者等效）       |
 | **获取结构化会话摘要（不压缩）** | 发送 **「提取上下文」** → Agent 输出摘要 → Guard 写入 `session-digest.md` |
-| CLI 终端 Agent | **`/compress`** |
-| Claude Code | **`/compact`**（Cursor 中无效） |
+| CLI 终端 Agent                   | **`/compress`**                                                           |
+| Claude Code                      | **`/compact`**（Cursor 中无效）                                           |
 
 - 无 Command Palette 的 Compact 命令；点击输入框旁**上下文环**仅查看占用，不触发压缩
 - 「压缩上下文」与 `/summarize` 同为压缩意图；Guard 不拦截，由 Cursor 原生压缩处理
 - 「提取上下文」才触发结构化摘要制品；需要**先摘要再压缩**时：提取 → `/summarize`
+
+## Stop 门控
+
+- Cursor `stop` **不能** `permission: deny`（仅 shell/MCP 能 deny）
+- 完成验证用 `followup_message` 自动续轮，等效 Claude Code Stop exit 2；`loop_limit` 对齐 `max_blocks`
+- 每个文件首次编辑后注入五维迷你验收（需求/错改/漏改/原功能/工具）；核对范围 = 该文件 + blast-radius 全部相关项（禁止只验当前文件），清单 SSOT → verification skill
 
 ## 工具路由
 

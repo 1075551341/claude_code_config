@@ -12,7 +12,7 @@ source: obra/superpowers
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
-> **v10.14 硬门兜底**：Stop 时 `stop-verification-gate.py` 强制核查验证证据（exit 2 阻止停止），本 skill 为模型侧前置自审；项目已建 code-review-graph 时全量档须调用 `detect_changes_tool` 检查 test-gap。
+> **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）；Cursor `verification_stop.py`（followup_message）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
 
 ## @Examples
 
@@ -112,15 +112,32 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 ```
 ## 会话终验（R20）
 原始要求：<逐条复述，禁止一句含糊摘要>
-- 满足：...
+- 满足：<对照原话的具体结果，禁止 ... >
 - 遗漏：无 | ...
 - 错改：无 | ...
-- 漏改：无 | ...（对照本会话影响面清单；含文档/备注与文件/配置是否已同步）
+- 漏改：无文档影响 | 已同步 <paths>
 - 原功能：保持（证据：<测试或冒烟>）| 破坏说明
 结论：DONE | DONE_WITH_CONCERNS
 ```
 
-未输出不得声称完成。Stop 硬门检测标记：`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`。
+未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
+`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`；
+「满足」不可为空/`...`；「漏改」须含 `文档` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）。
+Cursor Stop 用 `followup_message` 续轮（非 permission deny）。
+
+**场景G：初次修改后迷你验收（v11.3.4，每个文件首次成功编辑后 hook 注入一次）**
+
+核对范围 = **本文件 + codegraph/Grep blast-radius 全部相关项**（文档/INDEX/MANIFEST/注释/命令/测试/同类引用），禁止只验当前编辑文件（否则需求/错改/漏改/原功能/工具五问题会复发）。
+
+```
+□ 需求：影响面对照用户原话，未满足标遗漏
+□ 错改：是否改了范围外行为或顺手重构
+□ 漏改：同类引用与 INDEX/MANIFEST/README/注释/命令是否同步（无则写「无文档影响」）
+□ 原功能：非功能变更须给出测试或冒烟证据（禁止「应该没影响」）
+□ 工具：codegraph blast-radius 或 Grep 残留 = 0（无索引则 DONE_WITH_CONCERNS + Grep）
+```
+
+同一文件第二次编辑不再注入。完成前仍须输出完整 R20（范围同样是影响面全部相关项，非仅已编辑文件）。
 
 ### 关联文件验证（任何修改必须执行，分两种场景）
 

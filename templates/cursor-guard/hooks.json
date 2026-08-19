@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "guard_version": "1.2.0",
+  "guard_version": "1.2.1",
   "hooks": {
     "sessionStart": [
       {
@@ -82,6 +82,11 @@
         "timeout": 5
       },
       {
+        "command": "python hooks/first_edit_verify.py",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "timeout": 5
+      },
+      {
         "command": "python hooks/maintenance_hints.py",
         "matcher": "Write|StrReplace",
         "timeout": 5
@@ -97,9 +102,18 @@
       {
         "command": "python hooks/capture_compress_digest.py",
         "timeout": 5
+      },
+      {
+        "command": "python hooks/r20_capture.py",
+        "timeout": 5
       }
     ],
     "stop": [
+      {
+        "command": "python hooks/verification_stop.py",
+        "timeout": 8,
+        "loop_limit": 3
+      },
       {
         "command": "python hooks/context_stop.py",
         "timeout": 8,

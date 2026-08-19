@@ -505,6 +505,9 @@ def check_v13_cursor_guard():
         "context_stop.py",
         "session_bootstrap.py",
         "pre_compact_snapshot.py",
+        "verification_stop.py",
+        "first_edit_verify.py",
+        "r20_capture.py",
     )
     if not os.path.isfile(template):
         ERRORS.append("V13: templates/cursor-guard/hooks.json missing")
@@ -628,7 +631,7 @@ def check_v14_cursor_guard_v11():
     if not os.path.isfile(rule):
         ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
-        print(f"  V14: Cursor Guard v1.2 ({len(v11_hooks)} hooks + docs) ✓")
+        print(f"  V14: Cursor Guard v1.2.1 ({len(v11_hooks)} hooks + docs) ✓")
 
 
 def check_v17_auto_compact_window():

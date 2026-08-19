@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.3.3 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.3 文档/备注一致）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
+> 版本：11.3.4 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.4 反空模板 + 初次修改验收 + Cursor stop followup）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
 
 ---
 
@@ -59,7 +59,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 16     | core 7 + 审查 6 + 补全 2 + 跨模型 1（v11: 25→16，4 并入 + 5 降级 catalog）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；经 `_editor_hook_launcher` 分发，含 SessionStart bootstrap；v11 退役 2 个 kg sync hook（codegraph v1.5 MCP 自动同步） |
+| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 21（v1.2.1） |
 | 全局 MCP     | 9 常驻 | 本地代码4+远端探索2+Web&文档3；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 启用16 / 禁用3                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -352,8 +352,8 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ## 变更史
 
-> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.3 全量）。
+> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.4 全量）。
 
 ---
 
-> 版本：11.3.3 | 日期：2026-08-16 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（文档/备注一致）+ 加载口径对齐
+> 版本：11.3.4 | 日期：2026-08-19 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（反空模板 + 初次修改验收 + Cursor stop followup）

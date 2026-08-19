@@ -81,7 +81,7 @@ source: internal
 
 | 禁止 | 正确做法 |
 |------|----------|
-| 只改指定文件 | Grep 找到所有关联文件一并修改 |
+| 只改指定文件 | Grep 找到所有关联文件一并修改；五维验收覆盖 blast-radius 全部相关项 |
 | "应该只有这些" | codegraph 验证，不靠直觉 |
 | 手动估计范围 | codegraph_explore + code-review-graph detect_changes + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
@@ -91,4 +91,4 @@ source: internal
 
 - 阶段 1 清单为空 → **拒绝执行**（先让用户明确变更范围）
 - 阶段 3 残留 > 0 → **不可声称完成**（回到阶段 2）
-- 全部通过 → 进入 verification-before-completion
+- 全部通过 → 进入 verification-before-completion（五维/R20 核对范围含本清单全部相关项，禁止只验已编辑文件）

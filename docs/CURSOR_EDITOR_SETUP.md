@@ -26,6 +26,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.1**：完成验证 Stop `followup_message`（不能 permission deny）；每文件首次编辑后五维验收；`enforce_mode=followup`（已部署 `soft` 映射为 followup）。
+
 **v1.1.5**：语义分离 — 「压缩上下文」= `/summarize`（压缩，Guard 不拦截）；「提取上下文」= 结构化摘要 → `session-digest.md`。
 
 **v1.1.4**：双步压缩（已废弃，见 v1.1.5）。
@@ -83,6 +85,10 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | Shell 危险命令      | 自动拦截                          | `shell_guard`                                              |
 | 密钥粘贴            | 自动警告                          | `prompt_secret_scan`                                       |
 | 会话状态一览        | 自动                              | `session_bootstrap`                                        |
+| 初次修改五维验收    | 自动（每文件一次）                | `first_edit_verify`：该文件 + blast-radius 全部相关项 |
+| 完成验证 Stop 硬门  | 自动续轮                          | `verification_stop` → `followup_message`（`loop_limit=3`） |
+| R20 合格标记        | afterAgentResponse                | `r20_capture` 写入 `r20_replay_ok`                         |
+| 业务仓文档 companion | 自动                              | `maintenance_hints`（不限 ~/.claude）                      |
 
 ### 显式同步关键词
 

@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
@@ -398,6 +399,89 @@ def main() -> int:
     results["tests"]["maintenance_hints"]["behavior_pass"] = results["tests"][
         "maintenance_hints"
     ].get("pass", False)
+
+    r_mh_repo = run_hook(
+        "maintenance_hints.py",
+        {"file_path": "C:/tmp-not-claude-home/app.py"},
+    )
+    results["tests"]["maintenance_hints_repo"] = finish_case(
+        r_mh_repo,
+        behavior="文档" in stdout_text(r_mh_repo) or "codegraph" in stdout_text(r_mh_repo),
+        note="业务仓 .py 也应提示文档 companion / Grep",
+    )
+
+    vg_path = CLAUDE / ".state" / "verification-gate.json"
+    with state_backup([vg_path]):
+        sid_fe = "first-edit-hook-test"
+        vg_path.parent.mkdir(parents=True, exist_ok=True)
+        if vg_path.exists():
+            vg_path.unlink()
+        payload_fe = {
+            "tool_name": "Write",
+            "tool_input": {"file_path": str(CLAUDE / "tmp-first-edit-a.py")},
+            "conversation_id": sid_fe,
+        }
+        r_fe1 = run_hook("first_edit_verify.py", payload_fe)
+        results["tests"]["first_edit_once"] = finish_case(
+            r_fe1,
+            behavior="首次编辑后" in stdout_text(r_fe1)
+            and (
+                "additional_context" in (r_fe1.get("stdout") or {})
+                or "agent_message" in (r_fe1.get("stdout") or {})
+            ),
+        )
+        r_fe2 = run_hook("first_edit_verify.py", payload_fe)
+        results["tests"]["first_edit_second_silent"] = finish_case(
+            r_fe2,
+            behavior=(r_fe2.get("stdout") or {}) == {},
+            note="同一文件第二次编辑不再注入",
+        )
+
+        sid_vs = "verify-stop-hook-test"
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_vs: {
+                        "ts": time.time(),
+                        "edited_files": [{"path": "a.py", "ts": 1}],
+                        "verify_commands": [],
+                        "r20_replay_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_vs = run_hook(
+            "verification_stop.py",
+            {"conversation_id": sid_vs, "status": "completed", "loop_count": 0},
+        )
+        results["tests"]["verification_stop_followup"] = finish_case(
+            r_vs,
+            behavior="followup_message" in (r_vs.get("stdout") or {})
+            and "R20" in stdout_text(r_vs),
+        )
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_vs: {
+                        "ts": time.time(),
+                        "edited_files": [{"path": "a.py", "ts": 1}],
+                        "verify_commands": [{"command": "pytest", "ts": 2}],
+                        "r20_replay_ok": True,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_vs_ok = run_hook(
+            "verification_stop.py",
+            {"conversation_id": sid_vs, "status": "completed", "loop_count": 0},
+        )
+        results["tests"]["verification_stop_pass"] = finish_case(
+            r_vs_ok,
+            behavior=(r_vs_ok.get("stdout") or {}) == {},
+            note="R20 合格且已有验证命令 → 不 followup",
+        )
 
     results["tests"]["sync_no_keyword"] = run_hook(
         "sync_on_prompt.py", {"prompt": "hello"}

@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.3**（R20 文档/备注一致+L0–L3 口径对齐；ROUTER/agent.yaml 已并入；同步 1+N）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.4**（R20 反空模板+初次修改验收+Cursor stop followup；ROUTER/agent.yaml 已并入；同步 1+N）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -81,28 +81,28 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 
 ## 铁律 R1–R20
 
-| #   | 约束        | 核心                                                                                                                                         | 全文    |
-| --- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| R1  | 任务完成    | 验证通过才算完成                                                                                                                             | —       |
-| R2  | 修改确认    | Read→Edit→Read                                                                                                                               | —       |
-| R3  | Bug修复     | Grep全修→确认                                                                                                                                | —       |
-| R4  | 配置变更    | Grep引用→构建                                                                                                                                | —       |
-| R5  | 重试上限    | 同方案≤2次                                                                                                                                   | —       |
-| R6  | 非简单      | ①→⑤全流程                                                                                                                                    | —       |
-| R7  | 交叉验证    | 完成前验证清单                                                                                                                               | —       |
-| R8  | 高危确认    | 删数据/强推main前确认                                                                                                                        | —       |
-| R9  | 命令安全    | Windows终端优先pwsh(PS7+稳定版)；禁cd+重定向/powershell -Command；Qoder MCP启动脚本例外                                                      | —       |
-| R10 | 简洁优先    | 高内聚低耦合易迭代                                                                                                                           | —       |
-| R11 | 安全默认    | 不信任输入、无硬编码密钥                                                                                                                     | —       |
-| R12 | 子Agent隔离 | fresh context+制品通信                                                                                                                       | CORE.md |
-| R13 | 制品存活    | 跨会话持久化                                                                                                                                 | CORE.md |
-| R14 | 版本克制    | 非必要不升major                                                                                                                              | CORE.md |
-| R15 | 包管理器    | pnpm优先；npm兜底                                                                                                                            | CORE.md |
-| R16 | 错误暴漏    | 禁止裸except:pass                                                                                                                            | CORE.md |
-| R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                           | CORE.md |
-| R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                  | CORE.md |
-| R19 | Git 禁令    | 禁自动stash/commit                                                                                                                           | CORE.md |
-| R20 | 会话终验    | 改前优先成熟或全局通用方案；完成后按原始要求逐条回放：满足/遗漏/错改/漏改/原功能；修改后文件/配置须与文档/备注一致；非功能变更必须保持原功能 | CORE.md |
+| #   | 约束        | 核心                                                                                                                                                | 全文    |
+| --- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| R1  | 任务完成    | 验证通过才算完成                                                                                                                                    | —       |
+| R2  | 修改确认    | Read→Edit→Read                                                                                                                                      | —       |
+| R3  | Bug修复     | Grep全修→确认                                                                                                                                       | —       |
+| R4  | 配置变更    | Grep引用→构建                                                                                                                                       | —       |
+| R5  | 重试上限    | 同方案≤2次                                                                                                                                          | —       |
+| R6  | 非简单      | ①→⑤全流程                                                                                                                                           | —       |
+| R7  | 交叉验证    | 完成前验证清单                                                                                                                                      | —       |
+| R8  | 高危确认    | 删数据/强推main前确认                                                                                                                               | —       |
+| R9  | 命令安全    | Windows终端优先pwsh(PS7+稳定版)；禁cd+重定向/powershell -Command；Qoder MCP启动脚本例外                                                             | —       |
+| R10 | 简洁优先    | 高内聚低耦合易迭代                                                                                                                                  | —       |
+| R11 | 安全默认    | 不信任输入、无硬编码密钥                                                                                                                            | —       |
+| R12 | 子Agent隔离 | fresh context+制品通信                                                                                                                              | CORE.md |
+| R13 | 制品存活    | 跨会话持久化                                                                                                                                        | CORE.md |
+| R14 | 版本克制    | 非必要不升major                                                                                                                                     | CORE.md |
+| R15 | 包管理器    | pnpm优先；npm兜底                                                                                                                                   | CORE.md |
+| R16 | 错误暴漏    | 禁止裸except:pass                                                                                                                                   | CORE.md |
+| R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                                  | CORE.md |
+| R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                         | CORE.md |
+| R19 | Git 禁令    | 禁自动stash/commit                                                                                                                                  | CORE.md |
+| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
 
 > 工程原则（第一性原理/YAGNI/依赖克制/删除过时优先）→ `rules/CORE.md` 工程原则节 + `rules/GOVERNANCE.md` 最佳实践详参章
 
@@ -165,7 +165,7 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 内容             | 位置                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | 归属矩阵/harness | MANIFEST.yaml                                                                            |
-| 法典/架构        | SPEC.md (v11.3.3) + CHANGELOG.md                                                         |
+| 法典/架构        | SPEC.md (v11.3.4) + CHANGELOG.md                                                         |
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |

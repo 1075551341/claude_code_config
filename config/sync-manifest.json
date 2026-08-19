@@ -38,7 +38,7 @@
     },
     "workbuddy": {
       "home": "~/.workbuddy",
-      "enabled": true,
+      "enabled": false,
       "rules_channel": null,
       "rules_ext": null,
       "root_index": false,

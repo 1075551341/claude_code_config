@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""门控注入文本读取器（v11.3.4）。优先 Claude 侧 gate_reader，失败则本地兜底。"""
+"""门控注入文本读取器（v11.3.4）。SSOT: hooks/_lib/gate_messages.md。"""
 from __future__ import annotations
 
 import sys
@@ -32,15 +32,19 @@ FALLBACKS = {
         "【门控 · 每个文件首次编辑后必做】\n"
         "对照本文件及其 blast-radius 全部相关项逐条核对："
         "需求 / 错改 / 漏改（文档或无文档影响）/ 原功能证据 / "
-        "codegraph 或 Grep 残留=0。禁止只验当前文件。"
+        "codegraph 或 Grep 残留=0。禁止只验当前文件、禁止「应该没影响」。"
     ),
 }
 
 
-def _local_load(name: str, claude_home: Path) -> str:
+def load_gate(name: str, claude_home: str | Path | None = None) -> str:
+    """读取指定门控段；失败返回内置兜底（R16 不静默，stderr 留痕）。"""
     fallback = FALLBACKS[name]
     start_mark, end_mark = SECTIONS[name]
-    gate_file = Path(claude_home) / "hooks" / "_lib" / "gate_messages.md"
+    if claude_home is None:
+        gate_file = Path(__file__).resolve().parent / "gate_messages.md"
+    else:
+        gate_file = Path(claude_home) / "hooks" / "_lib" / "gate_messages.md"
     try:
         content = gate_file.read_text(encoding="utf-8")
         start = content.index(start_mark) + len(start_mark)
@@ -48,17 +52,5 @@ def _local_load(name: str, claude_home: Path) -> str:
         section = content[start:end].strip()
         return section if section else fallback
     except (OSError, ValueError) as e:
-        print(f"gate_messages: read {name} failed: {e}", file=sys.stderr)
+        print(f"gate_reader: read {name} failed: {e}", file=sys.stderr)
         return fallback
-
-
-def load_gate(name: str, claude_home: Path) -> str:
-    """读取指定门控段；优先 Claude hooks/_lib/gate_reader.py。"""
-    try:
-        from hook_io import import_claude_lib
-
-        reader = import_claude_lib(claude_home, "gate_reader")
-        return reader.load_gate(name, claude_home)
-    except Exception as e:
-        print(f"gate_messages: gate_reader unavailable, local fallback: {e}", file=sys.stderr)
-        return _local_load(name, claude_home)

@@ -10,29 +10,15 @@ import sys
 import io
 import os
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
+
 KEYWORDS = ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
 STATE_FILE = os.path.expanduser("~/.claude/.state/verification-gate.json")
 
-FALLBACK = (
-    "【门控 · 完成前必做】\n"
-    "Read ~/.claude/skills/verification-before-completion/SKILL.md，"
-    "实际运行验证命令并贴出证据后方可声称完成（R1）。"
-    "Stop 时 hook 将强制核查：未验证无法结束会话（硬阻断）。"
-)
-
-
 def load_gate_message() -> str:
-    gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")
-    try:
-        with open(gate_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        start = content.index("## 完成验证门")
-        end = content.index("## 变更影响门")
-        section = content[start:end].replace("## 完成验证门", "").strip()
-        return section if section else FALLBACK
-    except (OSError, ValueError) as e:
-        print(f"pre-userprompt-verify-gate: gate_messages read failed: {e}", file=sys.stderr)
-        return FALLBACK
+    from gate_reader import load_gate
+
+    return load_gate("verify")
 
 
 def has_unverified_edits(session_id: str) -> bool:
@@ -43,20 +29,10 @@ def has_unverified_edits(session_id: str) -> bool:
         with open(STATE_FILE, "r", encoding="utf-8") as f:
             state = json.load(f)
         entry = state.get(session_id)
-        if not entry or not entry.get("edited_files"):
-            return False
-        last_edit_ts = max(
-            (e.get("ts", 0) for e in entry.get("edited_files", [])),
-            default=0,
-        )
-        if last_edit_ts == 0:
-            return False
-        verified = any(
-            c.get("ts", 0) >= last_edit_ts - 1
-            for c in entry.get("verify_commands", [])
-        )
-        return not verified
-    except (OSError, json.JSONDecodeError) as e:
+        from r20_replay import has_unverified_edits as _unverified
+
+        return _unverified(entry or {})
+    except (OSError, json.JSONDecodeError, ImportError) as e:
         print(f"pre-userprompt-verify-gate: state read failed: {e}", file=sys.stderr)
         return False
 

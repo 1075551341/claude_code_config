@@ -2,6 +2,15 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.4 变更摘要（2026-08-19，门控强化 + 初次修改验收）
+
+- **全局加载**：`hooks/_lib/gate_messages.md` 四段改为短指针（完整清单只在 skill），降低会话注入体积。L0 R20 缩为指针；Cursor `CURSOR-EDITOR.mdc` 写明 Stop 用 `followup_message` 等效硬门。
+- **初次修改验收门**：每个文件首次成功编辑后注入五维核对。核对范围 = 该文件 + blast-radius **全部相关项**（禁止只验当前文件）。Claude 并入 `post-edit-verify-tracker.py`；Cursor `first_edit_verify.py`。`maintenance_hints` 扩展到业务仓库。
+- **R20 反空模板**：共享 `hooks/_lib/r20_replay.py`。漏改须含文档/无文档影响/路径；原功能须含证据/测试/冒烟；满足不可为省略号。Claude Stop 与 Cursor stop 共用。
+- **Cursor Stop 对齐**：`verification_stop.py` 在未验证或 R20 不合格时 `followup_message` 续轮；`loop_limit` 对齐 `max_blocks`；`r20_capture.py` 在 afterAgentResponse 记录合格终验。`guard-config` `enforce_mode=followup`；已部署的 `soft` 自动映射为 `followup`（仅 `off` 关闭）。
+- **SSOT**：`hooks/_lib/gate_messages.md` + `r20_replay.py` + `skills/verification-before-completion`（场景 G）+ `config/quality_gates.json`
+- **核对范围**：五维/R20 覆盖 blast-radius **全部相关项**（文档/INDEX/命令/测试/同类引用），禁止只验已编辑文件；门控文案、场景 G、CORE 反模式、`/verify`、GOVERNANCE R20 口径已对齐。
+
 ## v11.3.3 变更摘要（2026-08-16，R20 文档一致 + 加载口径对齐）
 
 - **铁律 R20**：完成后「漏改」显式包含——修改后文件/配置必须与文档/备注保持一致（README/SPEC/CHANGELOG/INDEX/MANIFEST/frontmatter/注释）。不新增 Stop 硬门字段（仍检满足/遗漏/错改/漏改/原功能）；模板增场景 F。L0：`CLAUDE.md` + `rules/CORE.md`；模板 SSOT：`skills/verification-before-completion`；详参：`rules/GOVERNANCE.md`；双端注入：`hooks/_lib/gate_messages.md`

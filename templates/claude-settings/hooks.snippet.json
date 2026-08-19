@@ -1,5 +1,5 @@
 {
-  "_comment": "settings.json 的 hooks 段快照（v11.0.0：post-codegraph-sync ×2 与 stop-knowledge-graph-sync 已退役，codegraph v1.5 MCP 自动同步接管，注册 23→20）。settings.json 本体含 API token 故被 .gitignore 排除，导致 hook 注册与 matcher 无法从仓库复现；本文件只保留 hooks 段，不含任何密钥。恢复步骤见 scripts/README.md「重装后恢复 hook 注册」。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
+  "_comment": "settings.json 的 hooks 段快照（v11.3.4：post-edit-verify-tracker 兼初次修改五维验收注入；R20 反空模板在 stop-verification-gate）。settings.json 本体含 API token 故被 .gitignore 排除。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
   "hooks": {
     "PostToolUse": [
       {

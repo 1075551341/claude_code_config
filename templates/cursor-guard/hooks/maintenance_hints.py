@@ -33,9 +33,9 @@ def main() -> None:
 
         claude_home = cfg["sync"]["claude_home"]
         try:
-            rel = Path(file_path).resolve().relative_to(claude_home.resolve()).as_posix()
+            rel = Path(file_path).resolve().relative_to(Path(claude_home).resolve()).as_posix()
         except (ValueError, OSError):
-            return
+            rel = Path(file_path).as_posix()
 
         hints = hint_for_path(rel)
         if hints:

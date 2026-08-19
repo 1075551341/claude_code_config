@@ -151,8 +151,14 @@ DEFAULT_VERIFICATION_KEYWORDS = ["完成", "修好", "测试通过", "done", "�
 
 def _load_verification_config(verification: dict) -> dict:
     enabled = os.environ.get("CURSOR_GUARD_VERIFY_GATE", "1") != "0"
+    raw_mode = str(verification.get("enforce_mode", "followup")).lower()
+    # v11.3.4: 旧 soft（仅 prompt 注入）升级为 stop followup；off 才关闭
+    if raw_mode in {"soft", "nudge"}:
+        raw_mode = "followup"
     return {
         "enabled": enabled and verification.get("enabled", True),
+        "enforce_mode": raw_mode,
+        "unverified_reminder": verification.get("unverified_reminder", True),
         "prompt_keywords": verification.get(
             "prompt_keywords", DEFAULT_VERIFICATION_KEYWORDS
         ),

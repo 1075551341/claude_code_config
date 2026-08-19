@@ -55,7 +55,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
        → 调研类 → L3 deep-research
 ```
 
-**简单旁路**：仅 attempt=1；不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion。
+**简单旁路**：仅 attempt=1；不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项，非仅已编辑文件）。
 
 ## P0 路由集（6）
 
@@ -65,7 +65,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 | L1   | task-triage                    | 会话开始分类、新任务（判定条件 SSOT；简单需同时满足 Phase0+≤2+白名单+六维全低+模型匹配低+attempt=1） |
 | L1   | change-impact-analysis         | 任何修改                                                                                             |
 | L1   | brainstorming                  | 非简单、方案、架构                                                                                   |
-| L2   | verification-before-completion | 完成、验收                                                                                           |
+| L2   | verification-before-completion | 完成、验收（五维/R20 覆盖 blast-radius 全部相关项）                                                 |
 | L2   | systematic-debugging           | 调试、测试失败                                                                                       |
 
 ## 非简单 L2 链

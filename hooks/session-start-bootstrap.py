@@ -77,25 +77,10 @@ def load_previous_context(cwd: str) -> dict:
 
 
 def load_p0_gate() -> str | None:
-    """读取门控 SSOT 的 P0 分类门段（v10.15.0）。"""
-    fallback = (
-        "【门控 · 会话开始必做】\n"
-        "第一轮回复前必须按 task-triage 分类：Phase0 盘点 → "
-        "[简单(关联需改≤2+白名单+六维全低+模型匹配+attempt=1) | "
-        "非简单(需改>2/黑名单/六维含中高/模型不足/持续处理执行升档)]\n"
-        "Read ~/.claude/skills/task-triage/SKILL.md 后按使用类型路由执行。"
-    )
-    gate_file = os.path.join(os.path.dirname(__file__), "_lib", "gate_messages.md")
-    try:
-        with open(gate_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        start = content.index("## P0分类门")
-        end = content.index("## 完成验证门")
-        section = content[start:end].replace("## P0分类门", "").strip()
-        return section if section else fallback
-    except (OSError, ValueError) as e:
-        print(f"session-start-bootstrap: gate_messages read failed: {e}", file=sys.stderr)
-        return fallback
+    """读取门控 SSOT 的 P0 分类门段。"""
+    from gate_reader import load_gate
+
+    return load_gate("p0")
 
 
 def detect_codegraph(cwd: str) -> str | None:

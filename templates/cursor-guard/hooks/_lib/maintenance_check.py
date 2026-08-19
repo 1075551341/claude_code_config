@@ -1,25 +1,39 @@
 #!/usr/bin/env python3
-"""文档/INDEX 维护提示与粗检（不解析 MANIFEST）。"""
+"""文档/INDEX 维护提示与粗检（v11.3.4：业务仓也提示，不限 ~/.claude）。"""
 from __future__ import annotations
 
 from pathlib import Path
 
+CODE_EXTS = {
+    ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".go", ".rs",
+    ".java", ".kt", ".c", ".cpp", ".h", ".cs", ".rb", ".php", ".swift",
+}
+
 
 def hint_for_path(rel: str) -> list[str]:
     hints: list[str] = []
-    if rel.startswith("agents/") and rel.endswith(".md") and rel != "agents/README.md":
+    posix = Path(rel).as_posix().replace("\\", "/")
+    name = Path(rel).name
+    suffix = Path(rel).suffix.lower()
+
+    if posix.startswith("agents/") and posix.endswith(".md") and name != "README.md":
         hints.append("检查 agents-INDEX.md 是否需更新条目")
-    elif rel.startswith("skills/") and rel.endswith("/SKILL.md"):
+    elif "/skills/" in f"/{posix}" and name == "SKILL.md":
         hints.append("检查 skills-INDEX.md 是否需更新条目")
-    elif rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
-        # Cursor 规则唯一通道是 local plugin 实体副本；~/.cursor/rules 实测不生效，应保持空
+    elif posix.startswith("rules/") and posix.endswith(".md") and name != "README.md":
         hints.append("rules 经 sync.ps1 刷新到 ~/.cursor/plugins/local/claude-config/rules；检查 rules-INDEX.md")
-    elif rel == "MANIFEST.yaml":
+    elif name in ("MANIFEST.yaml", "MANIFEST.yml"):
         hints.append("检查 concern 归属与 *-INDEX.md 一致性")
-    elif rel.startswith("hooks/") or rel.startswith("templates/cursor-guard/"):
+    elif posix.startswith("hooks/") or "templates/cursor-guard/" in posix:
         hints.append("运行 deploy-cursor-guard.ps1 部署到 ~/.cursor（不跑 sync.ps1）")
-    elif rel == "README.md" or rel.startswith("docs/"):
-        hints.append("确认文档交叉链接与 SYNC_GUIDE / CURSOR_EDITOR_SETUP 一致")
+    elif name == "README.md" or posix.startswith("docs/") or "/docs/" in posix:
+        hints.append("确认文档交叉链接与 CHANGELOG / INDEX 一致")
+
+    if suffix in CODE_EXTS:
+        hints.append("核对 README/注释是否仍准确；漏改写「无文档影响」或已同步路径")
+        hints.append("Grep 残留引用须为 0；优先 codegraph_explore blast-radius")
+    elif suffix in {".md", ".mdc"} and "检查" not in " ".join(hints):
+        hints.append("确认 INDEX/CHANGELOG/交叉链接是否需同步（漏改：文档）")
     return hints
 
 
@@ -37,10 +51,7 @@ def index_drift_report(claude_home: Path) -> list[str]:
         if not src_dir.is_dir() or not index_file.exists():
             continue
         try:
-            if pattern.startswith("**/"):
-                files = list(src_dir.glob(pattern))
-            else:
-                files = list(src_dir.glob(pattern))
+            files = list(src_dir.glob(pattern))
             files = [f for f in files if f.name != "README.md"]
             if not files:
                 continue

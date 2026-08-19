@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.3.3）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+Stop Hook: 完成验证硬门（v11.3.4）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
 本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
-④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（含纯文档）。
-缺任一 → exit 2 回灌（阻止停止）；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
+④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
+R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
 另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
 
 v10.17 新增两项拦截，均针对「改完影响其他功能」：
@@ -27,6 +27,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
 
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
+from r20_replay import replay_ok  # noqa: E402
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -147,18 +148,9 @@ def last_assistant_message(transcript_path: str) -> str:
 
 
 def has_requirements_replay(transcript_path: str) -> bool:
-    """R20：最后一条 assistant 须含会话终验标记 + 遗漏 + 错改 + 漏改 + 原功能。"""
+    """R20：最后一条 assistant 须为合格终验（反空模板，逻辑在 r20_replay）。"""
     text = last_assistant_message(transcript_path)
-    if not text:
-        return False
-    has_header = ("会话终验" in text) or ("R20" in text)
-    return (
-        has_header
-        and ("遗漏" in text)
-        and ("错改" in text)
-        and ("漏改" in text)
-        and ("原功能" in text)
-    )
+    return replay_ok(text)
 
 
 def unique_code_files(edited_files: list, doc_exts: list) -> list:
@@ -443,7 +435,7 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         if any("预期符合性" in r for r in reasons):
             lines.append("  ④ 对照 plan/spec 的 tasks 清单逐项确认：无静默缩范围、无遗漏需求")
     if any("R20" in r or "会话终验" in r for r in reasons):
-        lines.append("  ⑤ 会话终验（R20）：按原始要求逐条回放，输出满足/遗漏/错改/漏改/原功能（禁止把实现重做一遍；漏改含文档/备注与文件/配置一致；非功能变更必须证明原功能保持）")
+        lines.append("  ⑤ 会话终验（R20）：按原始要求逐条回放，输出满足/遗漏/错改/漏改/原功能（禁止把实现重做一遍；核对范围=blast-radius 全部相关项，非仅已编辑文件；漏改含文档/备注与文件/配置一致；非功能变更必须证明原功能保持）")
     lines.append("跳过验证的完成声明视为无效（R1，先证据后断言）。")
     lines.append(f"（第 {blocks}/{max_blocks} 次阻断；达上限后放行并标 DONE_WITH_CONCERNS；确需跳过请用户显式说「跳过验证」）")
     return "\n".join(lines)
@@ -624,8 +616,8 @@ def main():
                 if cfg.get("require_requirements_replay", True) and not has_requirements_replay(transcript_path):
                     reasons.append(
                         "R20 会话终验：未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能"
-                        "（禁止把实现重做一遍；漏改含文档/备注与文件/配置一致；"
-                        "非功能变更必须证明原功能保持；验证命令不能代替本项）"
+                        "（禁止空模板：漏改须含文档或无文档影响，原功能须含证据/测试/冒烟；"
+                        "验证命令不能代替本项）"
                     )
 
                 if reasons:
