@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.3.4）
+# 门控注入文本 SSOT（v11.3.5）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -18,7 +18,7 @@
 【门控 · 完成前必做】
 Read ~/.claude/skills/verification-before-completion/SKILL.md
 
-1. 运行测试/lint/构建并贴证据（R1）；Grep 残留引用必须为 0
+1. 运行测试/lint/构建并贴证据（R1）；Grep 残留引用必须为 0；验证证据须为观察输出（命令/测试/文件），不信叙述（v11.3.5）
 2. 会话终验 R20：满足/遗漏/错改/漏改/原功能；漏改须含「文档」或「无文档影响」；原功能须含证据/测试/冒烟；核对范围=影响面全部相关项（非仅已编辑文件）
 3. 全量档：有 .code-review-graph/ 时调用 detect_changes_tool；交叉验证全项
    Claude Stop 不合格 → exit 2。Cursor Stop 不合格 → followup_message 续轮（loop_limit=max_blocks）。

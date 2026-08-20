@@ -7,9 +7,10 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v11.3.4 — 短指针 + hook 强制 + Cursor followup）
+## 门控强度（v11.3.5 — 短指针 + hook 强制 + Cursor followup）
 
 > 原则：不依赖模型自觉。门控文本 SSOT = `hooks/_lib/gate_messages.md`（短指针，完整清单在 skill）。R20 机械检测 SSOT = `hooks/_lib/r20_replay.py`。
+> v11.3.5：完成验证门第 1 条增「验证证据须为观察输出（命令/测试/文件），不信叙述」（软性短句，硬门字段不变）；hooks 无变更（v5.8）。
 > v11.3.4：Cursor Stop 用 `followup_message` 等效硬门；初次修改后五维验收；R20 反空模板。
 
 | 门             | Claude Code 触发                                                                                                                    | Cursor Guard 触发                                                                                                                                                         | 行为                                                                                                                       | 豁免                                                                 |

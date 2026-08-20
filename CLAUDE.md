@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.4**（R20 反空模板+初次修改验收+Cursor stop followup；ROUTER/agent.yaml 已并入；同步 1+N）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.5**（验证准则分解评分=llm-as-a-verifier；R20 反空模板+初次修改验收+Cursor stop followup；ROUTER/agent.yaml 已并入；同步 1+N）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -102,7 +102,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 | R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                                  | CORE.md |
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                         | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit                                                                                                                                  | CORE.md |
-| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
+| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；**验证证据须观察输出（命令/测试/文件），不信叙述**。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
 
 > 工程原则（第一性原理/YAGNI/依赖克制/删除过时优先）→ `rules/CORE.md` 工程原则节 + `rules/GOVERNANCE.md` 最佳实践详参章
 
@@ -165,7 +165,7 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 内容             | 位置                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | 归属矩阵/harness | MANIFEST.yaml                                                                            |
-| 法典/架构        | SPEC.md (v11.3.4) + CHANGELOG.md                                                         |
+| 法典/架构        | SPEC.md (v11.3.5) + CHANGELOG.md                                                         |
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |

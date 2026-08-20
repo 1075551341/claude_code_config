@@ -1,6 +1,6 @@
 # Docs 文档索引
 
-> 最后更新: 2026-08-19 | **当前配置: v11.3.4**
+> 最后更新: 2026-08-20 | **当前配置: v11.3.5**
 
 ---
 
@@ -13,6 +13,7 @@
 
 | [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md) | Cursor 插件/MCP 边界 |
 | [CURSOR_EDITOR_SETUP.md](CURSOR_EDITOR_SETUP.md) | Cursor 编辑器专有设置 |
+| [LLM_AS_A_VERIFIER_SYNC.md](LLM_AS_A_VERIFIER_SYNC.md) | llm-as-a-verifier 优点提取 + Claude 优点盘点 + 对比矩阵与融合决策（v11.3.5） |
 | [ADR/](ADR/) | 架构决策记录 |
 | [SYNC_GUIDE.md](SYNC_GUIDE.md) | 多编辑器同步 1+N（Claude Code 零同步 + Cursor/qoder-cn/trae-cn/workbuddy，qoder/trae/codearts 待装自动跳过） |
 | [TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md) | MCP / R17/R18 路由 |

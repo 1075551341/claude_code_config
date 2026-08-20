@@ -2,6 +2,17 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.3.5 变更摘要（2026-08-20，验证准则分解评分 = llm-as-a-verifier）
+
+- **优点来源**：github.com/llm-as-a-verifier/llm-as-a-verifier（通用验证框架，agentic benchmarks SOTA）。提取 9 项优点，与 Claude 配置自身优点盘点对比后融合缺失 5 项；完整对比矩阵与决策记录 → `docs/LLM_AS_A_VERIFIER_SYNC.md`
+- **verification skill 新增「验证准则分解评分」小节**（SSOT）：①观察输出优先——证据=命令 stdout/stderr、测试结果、文件内容，**禁止以 agent 叙述代替证据**（Trust observed output — NOT narration）；②准则分解≥2 条（正确性/根因/验证确认三问）逐条核验；③关键结论 1–20 细粒度评分（<10 不声称完成，禁二值模糊）；④关键验证项重复评估≥2 次（独立视角/反向验证）；⑤方案选择/审查候选成对比较 + A/B 交换复评消位置偏差（多候选与参照基线比较，O(Nk) 控成本）；⑥长任务每原子任务自评进度分，连续 2 次 <10 → 上报止损/换方案
+- **L0 同步**：CLAUDE.md 版本行 + R20 行「验证证据须观察输出（命令/测试/文件），不信叙述」；rules/CORE.md R20 会话终验段同句；hooks/_lib/gate_messages.md 版本行 + 软性短句（**不动硬门字段**）
+- **hooks 零变更**：R20 模板字段（满足/遗漏/错改/漏改/原功能）原样保留，r20_replay.py / stop-verification-gate.py 无需改动；hooks v5.8 保持
+- **未纳入项及理由**（防回潮）：logprob 分布期望（模型层无 logprob API，理念≈重复评估）、Best-of-N 自验证（审查路由/codex 跨模型复核已覆盖）、prefix-cache+记账（工程实现细节非方法论）
+- **版本一致性**：CLAUDE.md / SPEC.md / MANIFEST / README / docs-README / SYNC_GUIDE / hooks-README / gate_messages 全量 v11.3.5
+- **DSH 同步（手工对齐协议）**：`~/.dsh/AGENTS.md` v1.3.2→v1.3.3（合并源指针 v11.3.2→**v11.3.5**，顺带修复 v11.3.3/11.3.4 滞后；④验证行 + 铁律 R7/R20 行 + 会话终验模板证据行）+ `~/.dsh/skills/verification-before-completion/SKILL.md`（同源小节，DSH 简化版）；SYNC_GUIDE DSH 适配层登记 v1.3.3↔v11.3.5
+- **SSOT**：`skills/verification-before-completion/SKILL.md`（融合正文）+ `docs/LLM_AS_A_VERIFIER_SYNC.md`（决策记录）+ `CLAUDE.md`（R20 行）+ `rules/CORE.md`（R20 段）
+
 ## v11.3.4 变更摘要（2026-08-19，门控强化 + 初次修改验收）
 
 - **全局加载**：`hooks/_lib/gate_messages.md` 四段改为短指针（完整清单只在 skill），降低会话注入体积。L0 R20 缩为指针；Cursor `CURSOR-EDITOR.mdc` 写明 Stop 用 `followup_message` 等效硬门。

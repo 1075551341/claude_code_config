@@ -24,12 +24,7 @@
     "codegraph": {
       "_description": "R17 探索主位：符号/调用链/blast-radius/变更前影响面。钉扎 1.5.0（R14）。",
       "command": "npx",
-      "args": [
-        "-y",
-        "@colbymchenry/codegraph@1.5.0",
-        "serve",
-        "--mcp"
-      ]
+      "args": ["-y", "@colbymchenry/codegraph@1.5.0", "serve", "--mcp"]
     },
     "code-review-graph": {
       "_description": "代码审查/验证专用图谱 MCP。钉扎 2.3.6（R14）。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
@@ -68,10 +63,7 @@
         "${workspaceFolder}",
         "--open-web-dashboard",
         "false"
-      ],
-      "env": {
-        "NODE_OPTIONS": "--max-old-space-size=1536"
-      }
+      ]
     },
     "grep": {
       "_description": "grep.app 远端代码搜索：跨 GitHub 公开仓库找真实用法/实现范式。本地代码一律走 codegraph（R17），勿用本服务替代。",
@@ -81,10 +73,7 @@
       "_description": "网页抓取/爬取/结构化提取（L2/L3 调研）。钉扎 3.23.9（R14）。",
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "-y",
-        "firecrawl-mcp@3.23.9"
-      ],
+      "args": ["-y", "firecrawl-mcp@3.23.9"],
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
@@ -92,10 +81,7 @@
     "exa": {
       "_description": "语义搜索/网页正文提取（L1–L3 调研，与 firecrawl 双源交叉）。钉扎 3.4.0（R14）。",
       "command": "npx",
-      "args": [
-        "-y",
-        "exa-mcp-server@3.4.0"
-      ],
+      "args": ["-y", "exa-mcp-server@3.4.0"],
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"
       }
@@ -104,9 +90,7 @@
       "_description": "GitHub 官方本地 stdio（github-mcp-server）。Cursor/Claude 对 api.githubcopilot.com 走 OAuth 时只暴露 mcp_auth、0 tools；PAT 用 User env GITHUB_PERSONAL_ACCESS_TOKEN 继承，勿把 token 写进 json，也勿在 env 块里写 ${GITHUB_TOKEN}（展开失败会覆盖真实 PAT）。",
       "type": "stdio",
       "command": "C:\\Users\\DELL\\.local\\bin\\github-mcp-server.exe",
-      "args": [
-        "stdio"
-      ]
+      "args": ["stdio"]
     },
     "context7": {
       "_description": "库/框架/API 官方文档（L1 首选）：resolve-library-id → query-docs。",

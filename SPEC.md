@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.3.4 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.4 反空模板 + 初次修改验收 + Cursor stop followup）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
+> 版本：11.3.5 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.4 反空模板 + 初次修改验收 + Cursor stop followup；v11.3.5 验证准则分解评分=llm-as-a-verifier）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
 
 ---
 
@@ -352,8 +352,8 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ## 变更史
 
-> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.4 全量）。
+> v11 起版本变更摘要外置 → [CHANGELOG.md](CHANGELOG.md)（v9.0–v11.3.5 全量）。
 
 ---
 
-> 版本：11.3.4 | 日期：2026-08-19 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（反空模板 + 初次修改验收 + Cursor stop followup）
+> 版本：11.3.5 | 日期：2026-08-20 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（反空模板 + 初次修改验收 + Cursor stop followup + 验证准则分解评分=llm-as-a-verifier）

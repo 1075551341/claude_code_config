@@ -2,6 +2,7 @@
 
 > Claude Code 专用，不同步编辑器。16 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v11.3.5 注记**：无 hooks 变更（v5.8 保持）——验证准则分解评分（llm-as-a-verifier）只改 `skills/verification-before-completion` 模板正文与 `_lib/gate_messages.md` 软性短句，R20 硬门字段（满足/遗漏/错改/漏改/原功能）不变，`r20_replay.py`/`stop-verification-gate.py` 无需改动。
 > **v5.8 变更（v11.3.4）**：① `post-edit-verify-tracker.py` 在记账后对每个文件首次成功编辑注入五维迷你验收（`_lib/first_edit_verify.py`）；② Stop 硬门 R20 反空模板抽到 `_lib/r20_replay.py`（漏改须含文档/无文档影响/路径，原功能须含证据/测试/冒烟）；③ 门控文本经 `_lib/gate_reader.py` 读短指针；④ Cursor Guard v1.2.1 增 `first_edit_verify` / `verification_stop`（followup）/ `r20_capture`。
 > **v5.7 变更（v11.1.1）**：`_lib/issue_state.py` 判定重构——原特征集 SHA1 精确匹配粗糙/不准（中文整段单 token、泛化追问共桶误报、cwd 形态不归一跨端失效）。改为分层特征（strong=路径/错误码/异常名/符号，weak=英文词+中文 bigram）+ 加权相似度阈值（`similarity_threshold` 默认 0.5，纯弱信号自动抬高）；泛化追问（「还是不行」等）续接同会话最近条目不再独立成桶；resolved 后连续命中 ≥2 判回归自动恢复硬提醒；消费者 API 不变（record/merge_config/min_prompt_len/mark_session_resolved），Cursor 经 import_claude_lib 直读本 lib 即时生效。单测 `tests/test_issue_state.py`（21 用例）。
 > **v5.6 变更（v11.0.0 Phase 5）**：退役 `post-codegraph-sync.py` 与 `stop-knowledge-graph-sync.py`（及共享库 `_lib/knowledge_graph_sync.py`、Cursor Guard `knowledge_graph_sync_hook.py`）——codegraph v1.5 MCP server 自带原生文件监听自动同步（300ms 静默窗 + 连接时追赶），本地 sync hook 冗余；注册 18→16。

@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.4 (v11.3.4) | **日期**: 2026-08-19 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.5 (v11.3.5) | **日期**: 2026-08-20 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -77,14 +77,14 @@ pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 
 > 实体复制通道带 `.claude-managed` 台账：孤儿清除只删台账内条目，编辑器目录中**用户自有规则不受影响**。
 
-## DSH 适配层（v11.3.2 登记，非 sync 目标）
+## DSH 适配层（v11.3.5 登记，非 sync 目标）
 
 | 项                 | 内容                                                                                                                                                                                                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 落点               | `~/.dsh/AGENTS.md`（DSH 用户全局指令，每会话首轮注入）                                                                                                                                                                                                                     |
-| 形态               | 静态适配快照：合并源 = `~/.claude` v11.3.2（五柱/五阶段/铁律 R1–R20 逐条回放）+ `D:\download\AGENTS.md`（工程原则 5 章）；已适配 DSH 工具链（glob/grep/read 三件套、pwsh、goal/subagent）                                                                                  |
+| 形态               | 静态适配快照：合并源 = `~/.claude` v11.3.5（五柱/五阶段/铁律 R1–R20 逐条回放 + 验证准则分解评分=llm-as-a-verifier）+ `D:\download\AGENTS.md`（工程原则 5 章）；已适配 DSH 工具链（glob/grep/read 三件套、pwsh、goal/subagent）                                                                                  |
 | 机制               | **手工对齐，不参与 sync.ps1**（DSH 非 Claude 系编辑器；快照主体不逐条镜像规则）                                                                                                                                                                                            |
-| 对齐协议           | `~/.claude` 升版（CLAUDE.md/SPEC/铁律有实质变更）→ 同步刷新其「合并源」版本串与受影响节 → DSH 版本 +0.1（v1.0.0↔v11.3.0；v1.1.0↔v11.3.1；v1.2.x↔v11.3.2）                                                                                                                  |
+| 对齐协议           | `~/.claude` 升版（CLAUDE.md/SPEC/铁律有实质变更）→ 同步刷新其「合并源」版本串与受影响节 → DSH 版本 +0.1（v1.0.0↔v11.3.0；v1.1.0↔v11.3.1；v1.2.x↔v11.3.2；**v1.3.3↔v11.3.5**）                                                                                                                 |
 | 本地扩展（v1.2.1） | DSH 侧能力：MCP 常驻 9（`~/.dsh/profiles/web/cordis.patch.yml`，镜像 `~/.claude/.mcp.json` 常驻集合；`dsh-mcp-profile.ps1` 四档切换 default/review/full/minimal，loader 热加载）+ skill 精选 30（`~/.dsh/skills`，`~/.claude/skills` 的 DSH 适配版）；不同流入 `~/.claude` |
 | 边界               | DSH 侧改动不回流 `~/.claude`；两侧重叠原则以各自工具链为准                                                                                                                                                                                                                 |
 
@@ -231,6 +231,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 ## 版本史（同步链）
 
+- **v20.5 (v11.3.5)**：验证准则分解评分（llm-as-a-verifier：观察输出优先/准则三问/1-20 评分/重复评估/成对比较消偏/进度止损）；DSH 映射补 v1.3.3↔v11.3.5（合并源指针顺带修复 v11.3.3/11.3.4 滞后）
 - **v20.4 (v11.3.4)**：门控短指针 + 初次修改五维验收 + R20 反空模板；Cursor stop followup 等效硬门
 - **v20.3 (v11.3.3)**：R20 文档/备注与文件/配置一致；加载口径统一 L0–L3（本表去掉 L4 行）
 - **v20.2 (v11.3.2)**：R20 逐条回放强化（改前成熟/全局 + 漏改/原功能）；DSH 映射补 v1.2.x↔v11.3.2
