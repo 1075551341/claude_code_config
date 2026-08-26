@@ -65,6 +65,13 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 - 注释：独立组件/完整功能/复杂逻辑/对外 API 时写头部 docstring（模板 → `rules/GOVERNANCE.md`）
 - 测试：新功能必覆盖；Bug 修复先写复现测试；命名 `should_x_when_y`；不跳过测试
 
+## 文件编码与写入约束（防乱码 v11.4.2）
+
+- 默认 UTF-8 无 BOM；保留目标文件既有编码/BOM/EOL 风格，禁止全文件重写时改变行尾（机械防护 → `hooks/pre-encoding-snapshot.py` + `post-encoding-check.py`）
+- **文件内容写入一律用 Edit/Write 工具**，禁止 `echo >/>></tee/Set-Content/Out-File/heredoc` 等 shell 重定向写内容（PS5.1 默认 ANSI 是乱码重灾区；命令级警告 → `hooks/pre-bash-guard.py` 编码误用组）
+- Windows 一律 `pwsh` 禁 `powershell -Command`（R9）；含中文输出的命令先确保 `[Console]::OutputEncoding=UTF8`
+- 检测到乱码（U+FFFD/GBK 特征串/非法 UTF-8）立即回滚本次修改并精准恢复原片段，**禁止在损坏内容上继续叠加修改**；二进制/非文本文件禁 Read/Edit
+
 ## 工程原则
 
 - KISS：优先简单直接实现，不为消除少量重复而做过度抽象
@@ -93,11 +100,11 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | R17 | 代码探索优先  | 严格：codegraph → claude-mem；codebase-memory **已禁用**；禁止跳级                                                                    |
 | R18 | 记忆优先      | 「为什么/约定/偏好」查 claude-mem；禁止塞入 codegraph/cbm                                                                             |
 | R19 | Git 禁令      | 禁止自动 `git stash`/`git commit`（仅用户显式指令+Guard 确认）；禁止 force push main/master                                           |
-| R20 | 会话终验      | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；原功能须证据。模板与硬门 → verification skill |
+| R20 | 会话终验      | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；原功能须证据；「满足」行须覆盖需求指纹关键词（v11.4 机械比对）。模板与硬门 → verification skill |
 
 ### R20 会话终验
 
-**改前**：优先成熟方案或已有全局通用处理（禁止为单编辑器发明特例）。**完成后**：逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；漏改含文档/备注是否同步；原功能须测试或冒烟证据。**验证证据须为观察输出（命令/测试/文件），不信 agent 叙述**（v11.3.5 吸收 llm-as-a-verifier）。模板与检测 SSOT → `skills/verification-before-completion/SKILL.md`。未输出不得声称完成。
+**改前**：优先成熟方案或已有全局通用处理（禁止为单编辑器发明特例）。**完成后**：逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；漏改含文档/备注是否同步；原功能须测试或冒烟证据。「满足」行须覆盖会话需求指纹的 strong 关键词（v11.4 `req_fingerprint` 机械比对，反「满足」行空话）。**验证证据须为观察输出（命令/测试/文件），不信 agent 叙述**（v11.3.5 吸收 llm-as-a-verifier）。模板与检测 SSOT → `skills/verification-before-completion/SKILL.md`。未输出不得声称完成。
 
 ### R17-R18 代码理解工具优先级（严格递进，禁止跳级）
 

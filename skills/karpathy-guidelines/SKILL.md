@@ -1,6 +1,7 @@
 ---
 name: karpathy-guidelines
 description: Karpathy 四原则指导。触发词：Karpathy | 四原则 | 代码精炼 | 删除代码 | 简单至上
+triggers: [Karpathy, 四原则, 代码精炼, 简单至上]
 layer: supplement
 source: forrestchang/andrej-karpathy-skills
 disable-model-invocation: true

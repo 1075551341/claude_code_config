@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.8
+# Hooks 钩子系统 v5.9
 
-> Claude Code 专用，不同步编辑器。16 注册激活 hooks
+> Claude Code 专用，不同步编辑器。18 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.9 变更（v11.4.2）**：① 新增**编码守卫双阶段** `pre-encoding-snapshot.py` + `post-encoding-check.py`（共享库 `_lib/encoding_guard.py`）——Pre 快照 BOM/EOL 签名，Post 比对差异 + 绝对检查（非法 UTF-8/U+FFFD/GBK 特征串/游离 BOM/json+py 带 BOM/严重 mixed EOL），警告注入永不阻断，注册 16→18；② `post-edit-format.py` prettier 调用补 `--end-of-line auto` 保留既有行尾（防止 prettier 默认 LF 静默改写 CRLF 配置文件）；③ `pre-bash-guard.py` 新增编码误用警告组（echo/tee/Set-Content/Out-File/heredoc 重定向写内容、powershell.exe、sed -i → 提示改用稳定替代）。
 > **v11.3.5 注记**：无 hooks 变更（v5.8 保持）——验证准则分解评分（llm-as-a-verifier）只改 `skills/verification-before-completion` 模板正文与 `_lib/gate_messages.md` 软性短句，R20 硬门字段（满足/遗漏/错改/漏改/原功能）不变，`r20_replay.py`/`stop-verification-gate.py` 无需改动。
 > **v5.8 变更（v11.3.4）**：① `post-edit-verify-tracker.py` 在记账后对每个文件首次成功编辑注入五维迷你验收（`_lib/first_edit_verify.py`）；② Stop 硬门 R20 反空模板抽到 `_lib/r20_replay.py`（漏改须含文档/无文档影响/路径，原功能须含证据/测试/冒烟）；③ 门控文本经 `_lib/gate_reader.py` 读短指针；④ Cursor Guard v1.2.1 增 `first_edit_verify` / `verification_stop`（followup）/ `r20_capture`。
 > **v5.7 变更（v11.1.1）**：`_lib/issue_state.py` 判定重构——原特征集 SHA1 精确匹配粗糙/不准（中文整段单 token、泛化追问共桶误报、cwd 形态不归一跨端失效）。改为分层特征（strong=路径/错误码/异常名/符号，weak=英文词+中文 bigram）+ 加权相似度阈值（`similarity_threshold` 默认 0.5，纯弱信号自动抬高）；泛化追问（「还是不行」等）续接同会话最近条目不再独立成桶；resolved 后连续命中 ≥2 判回归自动恢复硬提醒；消费者 API 不变（record/merge_config/min_prompt_len/mark_session_resolved），Cursor 经 import_claude_lib 直读本 lib 即时生效。单测 `tests/test_issue_state.py`（21 用例）。
@@ -16,13 +17,13 @@
 
 | 目录                 | 数量        | 用途                                                                                                                                         |
 | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hooks/`             | 16 注册激活 | standard profile（settings.json 已注册）                                                                                                     |
+| `hooks/`             | 18 注册激活 | standard profile（settings.json 已注册）                                                                                                     |
 | `hooks/`（未注册 4） | 4           | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor — 文件保留未注册：Claude Code 原生机制或 Cursor Guard 已覆盖 |
-| `hooks/_lib/`        | 7           | 共享库：context_thresholds.py + gate_messages.md + gate_reader.py + r20_replay.py + first_edit_verify.py + issue_state.py + tool_paths.py    |
+| `hooks/_lib/`        | 10          | 共享库：context_thresholds.py + gate_messages.md + gate_reader.py + r20_replay.py + req_fingerprint.py + first_edit_verify.py + issue_state.py + tool_paths.py + encoding_guard.py + gate_cli.py |
 
 ---
 
-## 16 注册激活 Hook 清单（v11.0.0 对齐运行态）
+## 18 注册激活 Hook 清单（v11.4.2 对齐运行态）
 
 ### SessionStart (1)
 
@@ -39,22 +40,24 @@
 | `pre-userprompt-issue-tracker.py` | **重复问题追踪**：prompt 指纹命中历史记录时注入「先查上轮结论、禁止从头重做」（状态 `~/.claude/.state/issue-tracker.json`，与 Cursor 共用，永不阻断） | 横切 |
 | `pre-userprompt-verify-gate.py`   | **完成验证门**：prompt 命中完成类关键词 **或** 状态显示本轮有未验证编辑 → 注入 verification-before-completion 强制指令（修复关键词盲区）              | 骨架 |
 
-### PreToolUse (6)
+### PreToolUse (8)
 
 | Hook                        | 触发                                                     | 功能                                                                                                                                            | 层   |
 | --------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
 | `pre-edit-impact-nudge.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **变更影响门**：**每个文件首次编辑**注入 change-impact-analysis 强制指令（状态 `~/.claude/.state/impact-nudge.json` 记已注入文件集，永不 deny） | 骨架 |
 | `pre-read-before-edit.py`   | Edit/Write/MultiEdit                                     | GSD read-before-edit 强制                                                                                                                       | 执行 |
+| `pre-encoding-snapshot.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **编码快照**（v11.4.2）：编辑前记录目标文件 BOM/EOL/大小签名 → `.state/encoding-snapshots.json`，供 Post 侧比对，永不阻断                        | 横切 |
 | `pre-context-injector.py`   | Task/Bash/Write/Edit                                     | 项目 CLAUDE.md 上下文注入（每会话一次）                                                                                                         | 骨架 |
 | `pre-rtk-rewrite.py`        | Bash                                                     | RTK Shell 命令压缩改写                                                                                                                          | 横切 |
-| `pre-bash-guard.py`         | Bash                                                     | 危险命令拦截 + git --no-verify 阻止 + **stash exit2 硬拦截 + commit WARN 注入**（`-C/--git-dir/--work-tree/-c` 变体防绕过）+ dep check          | 骨架 |
+| `pre-bash-guard.py`         | Bash                                                     | 危险命令拦截 + git --no-verify 阻止 + **stash exit2 硬拦截 + commit WARN 注入**（`-C/--git-dir/--work-tree/-c` 变体防绕过）+ dep check + **编码误用警告组**（echo/tee/Set-Content/Out-File/heredoc 重定向写内容、powershell.exe、sed -i → 提示稳定替代，v11.4.2） | 骨架 |
 | `pre-manifest-validator.py` | Skill/Task                                               | MANIFEST 归属校验防互博                                                                                                                         | 横切 |
 
-### PostToolUse (3)
+### PostToolUse (5)
 
 | Hook                          | 触发                                                     | 功能                                                                                                                                                     | 层   |
 | ----------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `post-edit-format.py`         | Edit/Write                                               | 代码格式化 + Lint                                                                                                                                        | 执行 |
+| `post-edit-format.py`         | Edit/Write                                               | 代码格式化 + Lint（prettier 补 `--end-of-line auto` 保留既有行尾）                                                                                        | 执行 |
+| `post-encoding-check.py`      | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **编码校验**（v11.4.2）：绝对检查（非法 UTF-8/U+FFFD/GBK 特征串/游离 BOM/json+py 带 BOM/严重 mixed EOL）+ 快照比对（BOM 增删/EOL 翻转），警告注入回滚指引，永不阻断 | 横切 |
 | `post-secret-detector.py`     | Edit/Write + `mcp__serena__.*` / `mcp__fs__.*`           | 密钥/Token/密码泄露扫描                                                                                                                                  | 横切 |
 | `post-edit-verify-tracker.py` | Edit/Write/Bash/Task + `mcp__serena__.*` / `mcp__fs__.*` | 完成验证追踪器：记录编辑/验证/审查；**每个文件首次成功编辑后注入五维迷你验收**（范围=该文件+blast-radius 全部相关项）；MCP 写路径经 `_lib/tool_paths.py` | 骨架 |
 
@@ -85,6 +88,7 @@
 | `_lib/gate_reader.py`        | 分段读取 gate_messages.md                               | 上列注入 hook + Cursor `gate_messages.py`                                                                                          |
 | `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
 | `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
+| `_lib/encoding_guard.py`     | 编码守卫核心：快照签名/比对 + 绝对损坏检查              | `pre-encoding-snapshot.py`、`post-encoding-check.py`                                                                               |
 
 ---
 
@@ -161,4 +165,4 @@ Cursor Guard v1.2.1（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，21
 
 ---
 
-_版本：5.8（v11.3.4）| 16 注册激活 + 4 未注册；初次修改验收并入 tracker；R20 反空模板 + Cursor Guard v1.2.1_
+_版本：5.9（v11.4.2）| 18 注册激活 + 4 未注册；编码守卫双阶段（快照+校验）防乱码；初次修改验收并入 tracker；R20 反空模板 + Cursor Guard v1.2.1_

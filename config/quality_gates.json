@@ -14,6 +14,11 @@
       "enabled": true,
       "compare_plan_vs_impl": true,
       "description": "检查planner是否静默丢弃需求（存在活跃 plan/spec 制品时强制对照 tasks 清单）"
+    },
+    "impact_manifest_gate": {
+      "enabled": true,
+      "platforms": ["claude-code", "cursor"],
+      "description": "清单制品+diff差集校验（design-v2 方案A）：PostToolUse 记 git 基线并提醒落盘 IMPACT 制品；Stop 门比对 当前脏集−基线集 ⊆ 清单集，超集=followup（错改/漏改硬证据）。非git仓库静默降级 DONE_WITH_CONCERNS"
     }
   },
   "verification_gate": {
@@ -54,6 +59,9 @@
     ],
     "require_reviewer_min_files": 3,
     "require_requirements_replay": true,
+    "requirement_fingerprint": true,
+    "require_review_verdict": true,
+    "verdict_trigger_min_blocks": 2,
     "doc_only_extensions": [
       ".md",
       ".txt",

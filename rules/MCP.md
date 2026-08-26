@@ -118,6 +118,8 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 | GitHub         | github MCP（本地 stdio）/ `gh` | user-github                        |
 | 浏览器         | playwright **插件**            | 内置 `cursor-ide-browser`          |
 
+> **opencode 侧已知差异**（v11.4.3 查证 opencode 官方文档）：① serena 不传 `--project`（opencode local MCP 无 `${workspaceFolder}` 类占位符，仅 `{env:VAR}` 环境变量替换），项目激活走 serena `activate_project` 工具；② chrome-devtools 默认 `enabled:false`（debug 按需，与 Claude 侧 mcp-configs/debug.json 同语义），临时调试改 true 后用完还原；③ 其余 9 常驻与 `.mcp.json` 同名同钉版本。
+
 ## 验证清单
 
 ```

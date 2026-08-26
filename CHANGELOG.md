@@ -2,6 +2,44 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.3 配置一致性修复（2026-08-26）全量审计 + 触发词去重 + 权限对齐
+
+- **审计**：validate_config 19 项 PASS 基础上清零遗留漂移——MANIFEST 版本串滞后（头注释 11.4.0/version 11.4.1 → 对齐全局）、SPEC plugins 计数失实（enabledPlugins 实为启用7/禁用9，claude-hud/exa 未显式登记）、hooks/README `_lib` 计数 8→10（v11.4 新增 gate_cli.py/req_fingerprint.py 漏更）、gate_messages.md 头部版本标记停 v11.3.5
+- **触发词去重（V1 归零）**：`重构` 唯一归属 code-refactoring；change-impact-analysis 与 improve-codebase-architecture frontmatter triggers 移除裸词（路由无损：前者 P0 表强制触发、后者保留 架构改进/refactor/技术债务）
+- **策略对齐**：settings.local.json 删 `Bash(powershell *)` allow（与 R9 + pre-bash-guard PS5.1 警告一致）；opencode.json chrome-devtools → enabled:false（debug 按需，与 Claude 侧 mcp-configs/debug.json 同语义）
+- **插件登记**：enabledPlugins 显式补齐 claude-hud@jarrodwatts=true / exa@claude-plugins-official=false（exa 已由 .mcp.json 常驻挂载，禁双挂）
+- **残留清理**：删 ~/.config/opencode/plugins/.load-probe-marker + zz-load-probe.ts（v11.4.1 插件加载诊断探针使命完成）
+
+## v11.4.2 防乱码约束（2026-08-26）编码守卫双阶段 + 格式化保行尾 + 命令误用警告
+
+- **编码守卫（hooks 16→18）**：新增 `pre-encoding-snapshot.py` + `post-encoding-check.py`（共享库 `_lib/encoding_guard.py`）——Pre 快照目标文件 BOM/EOL 签名（`.state/encoding-snapshots.json`），Post 比对差异 + 绝对检查（非法 UTF-8/U+FFFD 替换符/GBK 双重编码特征串/游离 BOM/json+py 带 BOM/严重 mixed EOL）；检出经 additionalContext 警告注入永不阻断，提示立即回滚、禁止在损坏内容上叠加修改；注册于 Edit/Write/MultiEdit + serena/fs MCP 双组（PostToolUse 顺序=格式化→编码校验→密钥扫描→验证追踪）
+- **格式化治本**：`post-edit-format.py` prettier 三处调用补 `--end-of-line auto`——此前 npx prettier 兜底按默认 LF 输出，会把 CRLF 配置文件静默改写行尾，是 AI 编辑配置仓反复出现异常的最大来源
+- **命令误用警告**：`pre-bash-guard.py` 新增编码误用警告组——echo/tee/Set-Content/Add-Content/Out-File/heredoc 重定向写文件内容（PS5.1 默认 ANSI 是乱码重灾区）、powershell.exe(PS5.1)（落实 R9）、sed -i → 一律警告注入并给出稳定替代（Edit/Write 工具/pwsh）
+- **规则层**：`rules/CORE.md` 新增「文件编码与写入约束」小节：默认 UTF-8 无 BOM、保留目标文件既有编码/BOM/EOL、文件内容写入一律用 Edit/Write 工具禁 shell 重定向、Windows 中文输出先设 UTF-8、检测到乱码立即回滚禁叠加、二进制禁 Read/Edit
+- **登记链**：settings.json（Pre/Post 各 +2 注册位，共 24 hook 条目）+ hooks.snippet.json 快照刷新 + hooks/README v5.9（18 注册激活）+ MANIFEST.yaml core 清单 + TRAE AppData pre-bash-guard 副本同步
+
+## v11.4.1 同日热修（2026-08-25，opencode 插件活性 + 观测性）
+
+- **目录净化（去耦合）**：删除跨编辑器误生成残留 `~/.claude/.cursor/`、`.trae/`（openspec init 于 .claude cwd 误产物；用户手删）+ `.git/opencode`（watcher projectID 标记）+ `__pycache__`×5（406KB）+ `.ruff_cache` + `debug.log`（搜狗输入法误落）+ `last_summary_date.txt`（零引用已证）+ tray 诊断残留；`openspec/` 含全局 config.yaml **改判保留**。**设计内耦合清单声明**（保留勿清）：`templates/cursor-guard/`、`docs/CURSOR_*.md`、sync-manifest editors 段、sync/check/fix.ps1 多端逻辑、`plugins/marketplaces/*`（claude-mem 插件源码含 .windsurf 子树）、`mcp-configs/`。配套：.gitignore UTF-8 重写（修乱码注释 + 删 .cursor 白名单×3 + 增 `/.ruff_cache/`）、package.json version → 11.4.1、README/SYNC_GUIDE「永不同步」清单措辞更新
+
+- **插件未触发根因修复**：全局插件目录单数 `plugin/` → 官方约定复数 `plugins/`（autoload 不加载单数目录）；插件导出形态改为仅命名导出 `VerifyGate`（去除 default 双导出疑似注册冲突）
+- **观测性**：插件接 `client.app.log`（service=verify-gate）——加载/捕获/追踪/idle 全链路可于 opencode.log 审计；gate_cli 非零退出/spawn 失败显式上报
+- **健壮性**：python 路径 `Bun.which` 解析；`message.updated(role=user)` 事件流兜底 capture-req（chat.message 未触发时仍建档，会话级去重）
+- **指纹条目时间戳**：`req_fingerprint.save_requirements` 建档补 `started_ts/ts`（修验证探针盲区：纯指纹条目原无时间戳，新鲜度过滤误判为不存在）
+- **关闭防误触**：新增 `~/.config/opencode/tui.json`——`app_exit` 收敛为 `<leader>q`；ctrl+c 走双按退出守卫（上游 PR #12733 内联确认）；原生退出确认弹窗无配置项（#40510 开放中），此为当前最接近方案
+- **托盘伴侣 v3**：桌面版 close-to-tray 上游未实现（#35775 assigned 未发布；源码 window-all-closed→quit）。**用户定义行为语义**：点 X=隐藏到托盘（等效实现：看门狗检测退出→800ms 确认→自动重启→新窗口绘制后自动隐藏，会话持久化恢复）；托盘「退出 OpenCode」=正式退出（AutoRelaunch 让位）；托盘左键唤回。v2 的 SC_CLOSE 灰化已回退（用户要 X 可点而非死按钮）。**OpenCode 开机自启审计：零条目**（HKCU/HKLM Run+RunOnce、WOW6432Node、双启动文件夹、计划任务全查无命中）；伴侣亦有意不自启（用户决策）。**插件加载诊断探针**：`plugins/zz-load-probe.ts` 顶层写 marker——下次重启判别「目录未扫描 vs 钩子未注册」
+
+## v11.4.0 变更摘要（2026-08-25，多端验证精细化 + opencode 接入 + 上游矩阵）
+
+- **主诉**：「解决后验证不够精细」（不符合预期要求 / 漏改 / 错改 / 破坏原功能）。路线 C=混合分层（brainstorming 访谈确认）：机械层全任务常开 + 独立审查分层触发。
+- **G3 错改硬证据自动化**：`post-edit-verify-tracker.py` 增 `append_impact_record()`——追踪到的编辑路径自动写项目 `.claude/state/impact-manifest.log`，方案A清单差集不再依赖模型自觉落盘；`IMPACT_REMINDER` 降级为写失败兜底。测试 `hooks/tests/test_impact_autolog.py`（含 e2e git 仓库场景）
+- **G2 需求指纹实质比对**：新增 `_lib/req_fingerprint.py`（复用 `issue_state.extract_features` strong/weak 分层，零新算法）；捕获点=`pre-userprompt-issue-tracker.py`（与问题指纹同点）；`r20_replay.replay_ok(text, requirements=None)` 可选参——「满足」行须命中 strong 指纹（<5 全命中，≥5 允许 ≥80%），weak-only 不启用防误伤；Stop 门经 `requirement_fingerprint` 开关传入。Cursor 端 import_claude_lib 同源自动继承
+- **W3 审查结论机械检测**：`r20_replay.review_verdict_ok()`（PASS / NEEDS-CHANGES 大写标记）；≥3 文件已委派但回复缺结论 → 阻断；blocks≥2（持续处理代理信号）即使 <3 文件也触发审查委派要求。开关 `require_review_verdict` / 触发线 `verdict_trigger_min_blocks`
+- **G1 opencode 接入**：sync-manifest editors 增 `opencode`（special=`agents_md`，CLAUDE.md 改名副本落 `~/.config/opencode/AGENTS.md`；sync.ps1/check.ps1 各增分支，fix.ps1 有意不纳——无 launcher）；新增 opencode 插件 `~/.config/opencode/plugins/verify-gate.ts`（chat.message 存指纹 / tool.execute.after 追踪 / system.transform 注入 R20 完成令 / idle 未验加急提醒）+ 薄入口 `_lib/gate_cli.py`（判定 SSOT 仍居 _lib，禁复制实现）。平台限制：opencode 无 Stop exit-2 硬阻断，硬阻断二期评估。**修正（同日复查）**：全局插件目录须为复数 `plugins/`（官方 autoload 约定），单数目录不会被加载
+- **G4 上游矩阵（详证 → `docs/research/45-upstream-stability-v11.4.md`）**：superpowers cherry-pick 分级仪式（spike/bounded/architectural，HARD-GATE 不减）；OpenSpec 升 1.10.0（changelog 无破坏+init 冒烟门）；gsd-core 版本串 1.11.0（Node≥24 不适用：概念集成）；ECC 2.1.0 参考串；rtk 0.45.0；CRG pin 2.3.8（明示 no breaking）；caveman 条件升级（diff 门）；**claude-mem 维持 13.13.1 钉扎**（13.14+ 为 CMEM Pro 推销专版，运行态核查未越线）；gstack vendored 维持
+- **版本一致性**：CLAUDE.md / SPEC.md / MANIFEST.yaml / rules-CORE.md / verification SKILL.md / sync-manifest.json / scripts-README / SYNC_GUIDE 全量 v11.4.0
+- **SSOT**：验证链判定唯一居于 `hooks/_lib/*.py`；多端（Claude/Cursor 直载、opencode 子进程）共享同一份实现
+
 ## v11.3.5 变更摘要（2026-08-20，验证准则分解评分 = llm-as-a-verifier）
 
 - **优点来源**：github.com/llm-as-a-verifier/llm-as-a-verifier（通用验证框架，agentic benchmarks SOTA）。提取 9 项优点，与 Claude 配置自身优点盘点对比后融合缺失 5 项；完整对比矩阵与决策记录 → `docs/LLM_AS_A_VERIFIER_SYNC.md`

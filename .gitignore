@@ -9,6 +9,7 @@ Thumbs.db
 
 # Python
 __pycache__/
+/.ruff_cache/
 *.py[cod]
 *$py.class
 
@@ -70,13 +71,9 @@ history.jsonl
 .workbuddy
 .codebuddy
 
-# Workspace-local Cursor assets: OpenSpec commands/skills are配置（跟踪），
 # 其余（hooks 状态等）是运行时。整目录忽略会连带吞掉 opsx 命令与 openspec 技能。
-/.cursor/*
-!/.cursor/commands/
-!/.cursor/skills/
 
-# Misc generated —— 仅根级运行时 txt/html；
+# Misc generated：根目录临时 txt/html 忽略（skills/*/LICENSE.txt 与 templates/*.txt 属版本化资产勿删）
 # skills/*/LICENSE.txt 与 templates/*.txt 属配置资产，不得忽略
 /*.txt
 /*.html
@@ -101,7 +98,13 @@ scripts/test-guard-result.json
 openspec/changes/
 .planning/
 
-# v10.17: 过程制品（计划/设计/执行记录）不入版本库 —— 只保留最近一次在本地。
+# v10.17：运行制品（计划/报告/执行记录）不入版本库——只保留最新一份在本地。
 # 配置真源是 SPEC.md 变更日志 + MANIFEST.yaml；调研（docs/research/）是配置决策依据，仍跟踪。
 /spec/
 /docs/superpowers/plans/
+
+# v11.3.5：编辑器同步临时产物 + 项目级 hook 运行时状态
+/$log
+.mcp.json.bak-*
+cleanup-backup/
+**/.claude/state/

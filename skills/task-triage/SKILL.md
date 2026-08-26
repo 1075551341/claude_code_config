@@ -50,7 +50,7 @@ loading_tier: L1
 
 | 维度          | 低(1)            | 中(2)                | 高(3)                                              |
 | ------------- | ---------------- | -------------------- | -------------------------------------------------- |
-| ①关联需改文件 | **≤2**           | 3–5                  | >5                                                 |
+| ①关联需改文件 | **≤2**           | —（死档已消：≥3 由判定顺序#1 直接拦截为非简单）       | ≥3                                                 |
 | ②变更风险     | 纯文本/格式/注释 | 单模块逻辑/配置值    | 配置结构/hook/rule/skill/agent/依赖升级/DB/API签名 |
 | ③跨模块影响   | 无共享符号       | 局部共享             | 改接口/类型/MANIFEST depends_on 目标/多模块调用链  |
 | ④需求歧义度   | 成功标准可一行写出且用户已确认 | 部分模糊             | 多义/缺成功标准/需用户决策                         |
@@ -93,7 +93,7 @@ loading_tier: L1
 
 `大类 | 需改文件列表 | 模型档(当前≥所需) | verify_tier | 置信度 | 成功标准(1句)`
 
-- `verify_tier`：`比例`（简单且 attempt=1）| `全量`（非简单，或持续处理/执行升档）
+- verify_tier 两档定义 SSOT → `skills/verification-before-completion/SKILL.md`「verify_tier」节；本文件只引用取值
 - 置信度低 → 按非简单或 grill 处理
 
 ## 简单路径 — 一次改完（attempt=1）
@@ -158,5 +158,5 @@ loading_tier: L1
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`（本文件只定 verify_tier 与升档触发）。
+- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；verify_tier 定义表同上指针（v11.3.6 所有权收敛）。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

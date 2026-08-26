@@ -13,6 +13,7 @@ source: obra/superpowers
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
 > **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）；Cursor `verification_stop.py`（followup_message）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
+> **v11.4 机械增强**：① IMPACT 清单由追踪器自动登记（差集校验零依赖自觉）；② 「满足」行须覆盖需求指纹 strong 关键词（`req_fingerprint.coverage_ok`，<5 全命中/≥5 允许 ≥80%）；③ ≥3 文件委派审查后回复须含 PASS/NEEDS-CHANGES 结论标记，blocks≥2 持续处理同样触发；④ opencode 端经 `gate_cli.py` 共享同一判定源。
 
 ## @Examples
 
@@ -29,6 +30,8 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 > **任何任务完成前必须走此验证流程，无一例外（含初判简单）。禁止「轻量验证」跳过本 skill。**
 
 ## verify_tier（两档）
+
+> **定义 SSOT = 本节**（v11.3.6 所有权收敛）；task-triage 仅引用取值，升档触发仍归 task-triage。
 
 | 档       | 何时                                                              | 必须项                                                  |
 | -------- | ----------------------------------------------------------------- | ------------------------------------------------------- |
@@ -197,6 +200,7 @@ Cursor Stop 用 `followup_message` 续轮（非 permission deny）。
 ```
 □ 本轮改动的文件/配置/frontmatter 是否有对应文档或备注（README/SPEC/CHANGELOG/INDEX/MANIFEST/注释）
 □ 有 → 必须同步更新，禁止只改实现留旧描述
+□ 改 L0 六根文件/skills/rules/hooks/config → 「漏改」须含 sync.ps1 执行证据或豁免理由（多端 1+N 继承）
 □ 「漏改」须写明：无文档影响 | 已同步 <paths>
 ```
 

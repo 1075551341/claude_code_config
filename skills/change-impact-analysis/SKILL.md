@@ -1,6 +1,7 @@
 ---
 name: change-impact-analysis
-description: 变更影响分析 — 改任何文件/函数/类型/配置前必须先执行。触发词：修改、改、重构、更新、删除、变更、rename、move。
+description: 变更影响分析 — 改任何文件/函数/类型/配置前必须先执行。触发词：修改、改、更新、删除、变更、rename、move。（重构类变更同样适用，经「改/修改」路由）
+triggers: [修改, 变更, 影响, blast-radius]
 layer: skeleton
 loading_tier: L1
 source: internal
@@ -34,6 +35,9 @@ source: internal
 
 输出: 受影响文件完整清单（含依赖关系）
 ```
+
+**清单落盘契约（v11.3.6）**：清单确定后同步追加一行至项目 `.claude/state/impact-manifest.log`：
+`IMPACT|<session>|<路径1,路径2,...>|<时间戳>`（口径=需 Edit 的逻辑源文件，镜像副本计 1）；落盘后与 `git status --porcelain` 对照一次。Stop 门据此执行「diff ⊆ 清单」差集校验（错改/漏改硬证据）。
 
 ### 阶段 2: 逐文件执行
 

@@ -1,7 +1,7 @@
 ---
 name: test-edge-case-analyzer
 description: 深度扫描业务代码的分支路径，识别并推荐开发人员容易遗漏的极端边界测试场景。
-tags: [testing, code-analysis, unit-test, boundary-value]
+triggers: [边界测试, 极端场景, 测试盲区, 分支扫描]
 metadata:
   version: 1.0.0
 loading_tier: L3

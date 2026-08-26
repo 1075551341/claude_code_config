@@ -1,6 +1,7 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Agent's capabilities with specialized knowledge, workflows, or tool integrations. 触发：编写技能、创建技能、技能设计、skill writing。
+triggers: [编写技能, 创建技能, 技能设计, skill writing]
 metadata:
   version: 1.1.0
 loading_tier: L3

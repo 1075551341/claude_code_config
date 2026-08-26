@@ -32,7 +32,7 @@
       ]
     },
     "code-review-graph": {
-      "_description": "代码审查/验证专用图谱 MCP。钉扎 2.3.6（R14）。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
+      "_description": "代码审查/验证专用图谱 MCP。v11.4 升钉 2.3.8（2.3.7 明示 no breaking；token 预算硬顶）。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
       "type": "stdio",
       "command": "powershell",
       "args": [
@@ -45,7 +45,7 @@
         "--python",
         "C:\\Python312\\python.exe",
         "--with",
-        "code-review-graph==2.3.6",
+        "code-review-graph==2.3.8",
         "code-review-graph",
         "serve"
       ]
@@ -78,23 +78,23 @@
       "url": "https://mcp.grep.app"
     },
     "firecrawl": {
-      "_description": "网页抓取/爬取/结构化提取（L2/L3 调研）。钉扎 3.23.9（R14）。",
+      "_description": "网页抓取/爬取/结构化提取（L2/L3 调研）。v11.4 升钉 3.24.0。",
       "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
-        "firecrawl-mcp@3.23.9"
+        "firecrawl-mcp@3.24.0"
       ],
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
     "exa": {
-      "_description": "语义搜索/网页正文提取（L1–L3 调研，与 firecrawl 双源交叉）。钉扎 3.4.0（R14）。",
+      "_description": "语义搜索/网页正文提取（L1–L3 调研，与 firecrawl 双源交叉）。v11.4 升钉 3.4.1。",
       "command": "npx",
       "args": [
         "-y",
-        "exa-mcp-server@3.4.0"
+        "exa-mcp-server@3.4.1"
       ],
       "env": {
         "EXA_API_KEY": "${EXA_API_KEY}"

@@ -1,17 +1,17 @@
-# 组件唯一归属源 — 防左右手互博 — v11.3.5
+# 组件唯一归属源 — 防左右手互博 — v11.4.3
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.3.5"
-updated: "2026-08-20"
+version: "11.4.3"
+updated: "2026-08-26"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
 
 superpowers:
   source: obra/superpowers
-  version: "6.2.0" # v10.11: 插件 autoUpdater 运行态（installed_plugins.json 事实源）；override 机制不变
+  version: "6.3.0" # v11.4: claude plugin update 已升运行态（installed_plugins.json 事实源）；override 机制不变
   override: local_post_load # 插件自动更新 + 本地 skills 后加载覆盖
 
 openspec_config:
@@ -65,14 +65,14 @@ module_resolver:
 pillars:
   superpowers: {
       source: obra/superpowers,
-      version: "6.2.0", # 与顶栏 superpowers.version / 插件运行态对齐（v10.11）
+      version: "6.3.0", # 与顶栏 superpowers.version / 插件运行态对齐（v11.4）
       capabilities: [brainstorming, verification, debugging],
     }
   gsd:
     {
       source: open-gsd/gsd-core,
-      version: "1.4.5",
-      note: "原 gsd-build/get-shit-done 已归档；跟踪 v1.5.0-rc 仅文档",
+      version: "1.11.0",
+      note: "概念集成未装 npm 包（Node≥24 约束不适用）；honest-verifier 三态处置记为后续候选；调研 docs/research/45",
       capabilities:
         [context-engineering, continuous-execution, read-before-edit],
     }
@@ -105,7 +105,7 @@ pillars:
     }
   claude_mem: {
       source: thedotmack/claude-mem,
-      version: "13.13.1", # v11: 运行态对齐；钉扎上限 <13.14（13.14+ 推 CMEM Pro 订阅，见疑难项#7）
+      version: "13.13.1", # 钉扎 <13.14 维持（v11.4 复核：13.14+ 安装器 Pro 首选+trial 漏斗+全表面横幅；2026-08-25 运行态核查=13.13.1 未越线）
       capabilities: [cross-session-memory, pattern-extraction],
     }
 
@@ -114,7 +114,7 @@ horizontal_layers:
     description: 治理横切层 — 防互博 + hook分级 + 编排
     owners:
       - source: affaan-m/ECC
-        version: "2.0.0"
+        version: "2.1.0"
         concerns:
           [manifest-validation, hook-profile, loop-guard, selective-install]
       - source: bytedance/deer-flow
@@ -125,11 +125,11 @@ horizontal_layers:
     description: 优化横切层 — Token压缩 + 上下文治理
     owners:
       - source: rtk-ai/rtk
-        version: "0.44.1"
+        version: "0.45.0"
         concerns: [shell-compression, 60-90pct-savings]
       - source: JuliusBrussee/caveman
         version: "1.9.1"
-        concerns: [output-compression, lite-full-ultra-wenyan]
+        concerns: [output-compression, lite-full-ultra-wenyan] # v11.4 豁免：上游 2.x 同名技能已重定位为「文件压缩器」，套用即破坏输出压缩语义；保持本地正文，待专项评估 plugins/caveman
       - source: internal
         concerns: [context-threshold-70-90, gsd-logical-breakpoint-70]
   L3_insight:
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.3.4 — 完成验证硬门：Claude Stop exit 2（R20 反空模板 r20_replay）；Cursor stop followup_message；PostToolUse 初次修改五维验收；配置 SSOT config/quality_gates.json verification_gate"
+    note: "v11.4 — IMPACT 清单自动登记（追踪器直写 impact-manifest.log）；需求指纹留存+R20「满足」行实质比对（_lib/req_fingerprint，issue-tracker 捕获）；审查结论机械检测 review_verdict_ok（PASS/NEEDS-CHANGES）+ blocks≥2 持续处理升档触发；opencode 端经 _lib/gate_cli.py 复用同源判定。上游：Claude Stop exit 2（r20_replay 反空模板）；Cursor stop followup_message；PostToolUse 初次修改五维验收；配置 SSOT config/quality_gates.json verification_gate"
 
   debugging:
     owner: skill/systematic-debugging
@@ -321,7 +321,7 @@ concerns:
     excludes: [openspec/changes]
 
   lite_spec:
-    owner: spec/project/
+    owner: spec/<project>/ # 约定占位（spec/README.md），非实体路径
     source: local
     stage: spec
 
@@ -493,7 +493,7 @@ concerns:
     owner: mcp/code-review-graph
     source: tirth8205/code-review-graph
     stage: verify
-    note: "v10.14 引入 — 审查/验证专用图谱：TESTED_BY 测试缺口、detect_changes 风险评分、review-delta、pre_merge_check。与 codegraph 互补（codegraph=R17 探索主位；CRG=审查/验证专用）。项目内 code-review-graph build 建图。钉扎 2.3.6（R14）"
+    note: "v10.14 引入 — 审查/验证专用图谱：TESTED_BY 测试缺口、detect_changes 风险评分、review-delta、pre_merge_check。与 codegraph 互补（codegraph=R17 探索主位；CRG=审查/验证专用）。项目内 code-review-graph build 建图。v11.4 升钉 2.3.8（2.3.7 明示 no breaking；token 预算硬顶利好 detect_changes）"
     depends_on: [mcp/codegraph, skills/verification-before-completion]
 
   tmux_reminder:
@@ -844,8 +844,10 @@ harness:
       - pre-context-injector
       - pre-manifest-validator
       - pre-edit-impact-nudge
+      - pre-encoding-snapshot
       - post-secret-detector
       - post-edit-format
+      - post-encoding-check
       - post-edit-verify-tracker
       - pre-compact-state
       - stop-verification-gate
@@ -900,9 +902,7 @@ sync_targets:
   # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts]
-  # v11.3.2: DSH 消费方登记 — ~/.dsh/AGENTS.md 为静态适配快照（合并源=本仓 v11.3.2 + D:\download\AGENTS.md），
-  # 非 sync.ps1 目标；本仓升版后手工刷新其版本串/指针（协议见 docs/SYNC_GUIDE.md「DSH 适配层」；映射 v1.2.x↔v11.3.2）。
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts, opencode] # v11.4: opencode 经 special=agents_md 落 AGENTS.md
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]

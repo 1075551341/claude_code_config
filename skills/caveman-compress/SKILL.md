@@ -1,6 +1,7 @@
 ---
 name: caveman-compress
 description: 输出压缩（caveman 模式，上游 v1.9.1 刷新）。触发词：caveman | 压缩输出 | 精简回复 | 言简意赅 | talk like caveman
+triggers: [caveman, 压缩输出, 精简回复, 言简意赅]
 layer: supplement
 source: JuliusBrussee/caveman v1.9.1
 disable-model-invocation: true

@@ -41,7 +41,6 @@ powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
 ```
 
 - 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
-- **DSH 适配层**：`~/.dsh/AGENTS.md` 静态快照（合并源=本仓 + `D:\download\AGENTS.md`，非 sync 目标，升版后手工对齐版本串；见 SYNC_GUIDE「DSH 适配层」）
 - **常量单源**：`config/sync-manifest.json`（root_files + editors）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
 - 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md)
 
@@ -56,7 +55,11 @@ powershell scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.3.5**（2026-08-20）— 验证准则分解评分（llm-as-a-verifier：观察输出优先/准则三问/1-20 评分/重复评估/成对比较消偏/进度止损）+ DSH 同步 v1.3.3
+- 当前：**v11.4.3**（2026-08-26）— 配置一致性修复：版本/计数漂移清零 + 触发词去重（V1 归零，`重构` 唯一归属 code-refactoring）+ 权限对齐（删 powershell allow；opencode chrome-devtools 转按需）+ 插件显式登记（claude-hud=true/exa=false 禁双挂）+ opencode 诊断探针残留清理
+- 前版：v11.4.2（2026-08-26）— 防乱码编码守卫双阶段（快照+校验）+ prettier 保行尾 + 命令误用警告组
+- 前版：v11.4.1（2026-08-25）— opencode 验证门修复与可观测性
+- 前版：v11.4.0（2026-08-25）— IMPACT 自动登记 + 需求指纹 R20 实质比对 + 审查结论机械检测 + opencode 接入（AGENTS.md+验证门插件）+ 上游矩阵 docs/research/45 + DSH 同步 v1.3.4
+- 前版：v11.3.5（2026-08-20）— 验证准则分解评分（llm-as-a-verifier：观察输出优先/准则三问/1-20 评分/重复评估/成对比较消偏/进度止损）+ DSH 同步 v1.3.3
 - 前版：v11.3.4（2026-08-19）— 门控短指针 + 初次修改五维验收 + R20 反空模板 + Cursor stop followup
 - 前版：v11.3.2（2026-08-15）— R20 逐条回放强化（改前成熟/全局 + 满足/遗漏/错改/漏改/原功能；非功能变更必须保持原功能）
 - 前版：v11.3.1（2026-08-14）— 多端一致性修复（版本串/计数/残留引用对齐 SSOT + 四编辑器重同步 + DSH 消费方登记 + 遗留清理）

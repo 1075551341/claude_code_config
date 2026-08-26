@@ -57,6 +57,14 @@ def main():
 
     inject = record(prompt, cwd, session_id, cfg)
 
+    # v11.4 需求指纹留存：与问题指纹同点捕获，供 Stop 门 R20 实质比对（失败不阻断）
+    try:
+        from req_fingerprint import save_requirements
+
+        save_requirements(session_id, prompt)
+    except Exception as e:  # noqa: BLE001 — 显式报出后继续（R16，禁止裸吞）
+        print(f"issue-tracker: req fingerprint failed: {e}", file=sys.stderr)
+
     if inject:
         result = {
             "hookSpecificOutput": {

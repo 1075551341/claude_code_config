@@ -64,6 +64,15 @@
       "rules_channel": "rule",
       "rules_ext": ".mdc",
       "root_index": true
+    },
+    "opencode": {
+      "_comment": "v11.4：special=agents_md — CLAUDE.md 以软链优先/副本回退落 ~/.config/opencode/AGENTS.md（opencode 原生读 AGENTS.md 约定）；MCP/plugin 由其 opencode.json 自管不触",
+      "home": "~/.config/opencode",
+      "enabled": true,
+      "rules_channel": null,
+      "rules_ext": null,
+      "root_index": false,
+      "special": "agents_md"
     }
   }
 }

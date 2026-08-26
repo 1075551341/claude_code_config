@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-PostToolUse Hook: 完成验证追踪器 + 初次修改验收（v11.3.4）
+PostToolUse Hook: 完成验证追踪器 + 初次修改验收（v11.3.4；v11.4 IMPACT 自动登记）
 按 session_id 记录本会话编辑文件/验证命令/审查委派，供 stop-verification-gate 硬门核查。
 每个文件首次成功编辑后附加五维迷你验收 additionalContext（first_edit_nudged）。
+v11.4：追踪到的编辑路径自动追加 IMPACT 行至项目 .claude/state/impact-manifest.log
+—— 方案A清单差集不再依赖模型自觉落盘；写失败时才降级弹 IMPACT_REMINDER 兜底。
 """
 import json
 import sys
 import io
 import os
 import re
+import subprocess
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
@@ -30,6 +33,99 @@ DEFAULT_VERIFY_PATTERNS = [
     "go test", "go vet",
 ]
 DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+
+IMPACT_GATE_KEY = "impact_manifest_gate"
+IMPACT_REMINDER = (
+    "⚠️ IMPACT 清单自动登记失败（v11.4 起由追踪器自动写入；本条为兜底）：请将影响面清单"
+    "手动追加至 .claude/state/impact-manifest.log，格式 IMPACT|<session>|<路径1,路径2,...>|<时间戳>。"
+    "Stop 门将校验「diff ⊆ 清单」，清单外变更会被拦截（错改/漏改硬证据）。"
+)
+
+
+def detect_platform() -> str:
+    if os.environ.get("CLAUDECODE"):
+        return "claude-code"
+    for key in os.environ:
+        if key.upper().startswith("CURSOR"):
+            return "cursor"
+    return "unknown"
+
+
+def load_impact_gate() -> dict:
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f).get("quality_gates", {}).get(IMPACT_GATE_KEY, {})
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"post-edit-verify-tracker: gate config read failed: {e}", file=sys.stderr)
+    return {}
+
+
+def manifest_log_path(cwd: str) -> str:
+    return os.path.join(cwd or os.getcwd(), ".claude", "state", "impact-manifest.log")
+
+
+def git_dirty_set(cwd: str):
+    """git status --porcelain 文件集；非 git 仓库返回 None（静默降级）。"""
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=cwd or None,
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as e:
+        print(f"post-edit-verify-tracker: git status failed: {e}", file=sys.stderr)
+        return None
+    if proc.returncode != 0:
+        return None
+    files = set()
+    for line in proc.stdout.splitlines():
+        if len(line) > 3:
+            files.add(line[3:].strip().strip('"').replace("\\", "/"))
+    return files
+
+
+def append_impact_record(session_id: str, cwd: str, paths: list) -> bool:
+    """v11.4：把本次追踪到的编辑路径自动登记进项目 IMPACT 清单。
+
+    路径相对 cwd 归一化为正斜杠（与 r20_replay._norm_path 一致）；跨盘等 relpath
+    失败时回退原路径。同一 session 多行合法——declared_impact 对各行取并集。
+    """
+    if not paths:
+        return False
+    path = manifest_log_path(cwd)
+    try:
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent, exist_ok=True)
+        rel = []
+        for p in paths[:50]:
+            try:
+                rel.append(os.path.relpath(p, cwd or ".").replace("\\", "/"))
+            except ValueError:
+                rel.append(str(p).replace("\\", "/"))
+        line = f"IMPACT|{session_id}|{','.join(rel)}|{int(time.time())}\n"
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line)
+        return True
+    except OSError as e:
+        print(f"post-edit-verify-tracker: impact autolog failed: {e}", file=sys.stderr)
+        return False
+
+
+def missing_impact_record(session_id: str, cwd: str) -> bool:
+    """本 session 在项目清单中无 IMPACT 记录 → True。"""
+    path = manifest_log_path(cwd)
+    if not os.path.exists(path):
+        return True
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.split("|")
+                if len(parts) >= 3 and parts[0].strip() == "IMPACT" and parts[1].strip() == session_id:
+                    return False
+    except OSError as e:
+        print(f"post-edit-verify-tracker: manifest read failed: {e}", file=sys.stderr)
+    return True
 
 
 def load_config() -> dict:
@@ -122,6 +218,19 @@ def main():
         if fresh:
             first_edit_msg = compose_message(load_first_edit_message(CLAUDE_HOME), fresh)
             changed = True
+
+        gate = load_impact_gate()
+        platforms = [str(x) for x in (gate.get("platforms") or ["claude-code", "cursor"])]
+        if gate.get("enabled") and str(data.get("platform") or detect_platform()) in platforms:
+            dirty = git_dirty_set(cwd)
+            if dirty is not None:
+                entry.setdefault("git_baseline", sorted(dirty))
+                changed = True
+                logged = append_impact_record(session_id, cwd, paths)
+                if not logged or missing_impact_record(session_id, cwd):
+                    first_edit_msg = (
+                        f"{first_edit_msg}\n\n{IMPACT_REMINDER}" if first_edit_msg else IMPACT_REMINDER
+                    )
     elif tool_name == "Bash":
         command = str(tool_input.get("command") or "")
         if command and is_verify_command(command, cfg["verify_command_patterns"]):

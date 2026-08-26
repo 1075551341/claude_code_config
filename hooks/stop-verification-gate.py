@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
 
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
-from r20_replay import replay_ok  # noqa: E402
+from r20_replay import impact_diff_check, replay_ok, review_verdict_ok  # noqa: E402
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -43,6 +43,9 @@ DEFAULT_CFG = {
     "require_reviewer_min_files": 3,
     "require_requirements_replay": True,
     "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"],
+    "requirement_fingerprint": True,
+    "require_review_verdict": True,
+    "verdict_trigger_min_blocks": 2,
 }
 
 CODE_EXTENSIONS = {
@@ -64,6 +67,17 @@ def load_config() -> dict:
     except (OSError, json.JSONDecodeError) as e:
         print(f"stop-verification-gate: config read failed: {e}", file=sys.stderr)
     return cfg
+
+
+def load_impact_gate() -> dict:
+    """方案A 灰度开关（design-v2）：quality_gates.impact_manifest_gate。"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f).get("quality_gates", {}).get("impact_manifest_gate", {})
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"stop-verification-gate: gate config read failed: {e}", file=sys.stderr)
+    return {}
 
 
 def load_state() -> dict:
@@ -147,10 +161,10 @@ def last_assistant_message(transcript_path: str) -> str:
     return ""
 
 
-def has_requirements_replay(transcript_path: str) -> bool:
-    """R20：最后一条 assistant 须为合格终验（反空模板，逻辑在 r20_replay）。"""
+def has_requirements_replay(transcript_path: str, requirements: dict | None = None) -> bool:
+    """R20：最后一条 assistant 须为合格终验（反空模板；v11.4 可选需求指纹实质比对）。"""
     text = last_assistant_message(transcript_path)
-    return replay_ok(text)
+    return replay_ok(text, requirements)
 
 
 def unique_code_files(edited_files: list, doc_exts: list) -> list:
@@ -590,13 +604,29 @@ def main():
                     if not verified:
                         reasons.append("最后一次代码编辑之后未检测到任何测试/lint/构建验证命令运行记录")
                     total_changed = len({f["path"] for f in code_files} | set(untracked))
+                    verdict_cfg_on = cfg.get("require_review_verdict", True)
+                    verdict_ok = review_verdict_ok(last_assistant_message(transcript_path)) if verdict_cfg_on else True
                     if total_changed >= int(cfg["require_reviewer_min_files"]):
                         reviewed = any(r.get("ts", 0) >= last_edit_ts - 1 for r in entry.get("reviews", []))
                         if not reviewed:
                             reasons.append(
                                 f"会话内 {total_changed} 个代码文件变更（≥{cfg['require_reviewer_min_files']}）"
-                                "但无 eng-reviewer 审查委派记录"
+                                "但无 eng-reviewer 审查委派记录（委派后须在回复中回贴结论 PASS 或 NEEDS-CHANGES）"
                             )
+                        elif verdict_cfg_on and not verdict_ok:
+                            reasons.append(
+                                f"会话内 {total_changed} 个代码文件变更已委派审查，但最终回复缺少独立审查结论标记"
+                                "（PASS / NEEDS-CHANGES）— v11.4 审查结论机械检测"
+                            )
+                    elif (
+                        verdict_cfg_on
+                        and not verdict_ok
+                        and blocks >= int(cfg.get("verdict_trigger_min_blocks", 2))
+                    ):
+                        reasons.append(
+                            f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
+                            "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
+                        )
                     # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
                     changed_paths = [f["path"] for f in code_files] + list(untracked)
                     if (
@@ -613,12 +643,32 @@ def main():
                     if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
                         reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
 
-                if cfg.get("require_requirements_replay", True) and not has_requirements_replay(transcript_path):
-                    reasons.append(
-                        "R20 会话终验：未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能"
-                        "（禁止空模板：漏改须含文档或无文档影响，原功能须含证据/测试/冒烟；"
-                        "验证命令不能代替本项）"
-                    )
+                # 方案A：清单制品差集校验（v11.3.6）— 当前脏集−基线集 ⊄ 声明清单 → 错改/漏改硬证据
+                igate = load_impact_gate()
+                if igate.get("enabled") and entry.get("git_baseline"):
+                    extras = impact_diff_check(entry, session_id, project_cwd)
+                    if extras:
+                        shown = ", ".join(extras[:8])
+                        more = f" 等 {len(extras)} 个" if len(extras) > 8 else ""
+                        reasons.append(
+                            f"清单差集校验：以下文件已变更但不在 change-impact 声明清单内：{shown}{more}。"
+                            "逐个确认：范围外变更=错改，回滚或向用户说明；清单漏项=补登记至 "
+                            ".claude/state/impact-manifest.log（IMPACT|<session>|<路径,...>）"
+                        )
+
+                if cfg.get("require_requirements_replay", True):
+                    reqs = entry.get("requirements") if cfg.get("requirement_fingerprint", True) else None
+                    if not has_requirements_replay(transcript_path, reqs):
+                        hint = (
+                            "「满足」行未覆盖需求指纹关键词（v11.4 实质比对）"
+                            if reqs
+                            else "未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能"
+                        )
+                        reasons.append(
+                            f"R20 会话终验：{hint}"
+                            "（禁止空模板：漏改须含文档或无文档影响，原功能须含证据/测试/冒烟；"
+                            "验证命令不能代替本项）"
+                        )
 
                 if reasons:
                     entry["blocks"] = blocks + 1

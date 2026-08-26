@@ -111,6 +111,27 @@ SENSITIVE_WRITE_PATTERNS = [
 
 WRITE_INDICATORS = [">", ">>", "tee ", " write ", "truncate "]
 
+# ─── Encoding-misuse patterns (improper tool/command usage causing mojibake;
+# warn-level injection with stable alternative guidance) ──────────────────────
+ENCODING_MISUSE_PATTERNS = [
+    # PS5.1 Set-Content/Out-File/Add-Content defaults to ANSI(GBK); CJK content gets mangled
+    (r"\b(?:Set-Content|Add-Content|Out-File)\b",
+     "shell 写文件易致编码乱码（PS5.1 默认 ANSI）— 改用 Edit/Write 工具写入内容"),
+    # echo redirection: escaping/EOL/encoding all uncontrolled
+    (r"\becho\b[^|;&]*>{1,2}\s*\S",
+     "echo 重定向写文件易致编码/EOL 异常 — 改用 Edit/Write 工具写入内容"),
+    (r"\btee\s+(?:-{1,2}\w+\s+)*(?!-)\S+",
+     "tee 写文件易致编码异常 — 改用 Edit/Write 工具写入内容"),
+    (r"<<\s*['\"]?\w+['\"]?\s*>?>",
+     "heredoc 重定向写文件易致转义/编码异常 — 改用 Edit/Write 工具写入内容"),
+    # R9: Windows terminals must use pwsh, not powershell.exe (PS5.1)
+    (r"(?:^|[;&|(]\s*)powershell(?:\.exe)?\b",
+     "powershell.exe(PS5.1) 编码与行为不稳定 — 改用 pwsh（R9）"),
+    # sed -i may break CRLF/BOM
+    (r"\bsed\s[^|;&]*\s-i(?:\.|\b)",
+     "sed -i 可能破坏 CRLF/BOM — 文件内容修改改用 Edit 工具"),
+]
+
 
 def _block(msg: str, is_trae: bool = False) -> None:
     """拦截输出：TRAE 用 hookSpecificOutput.permissionDecision=deny（stdout + exit 0），Claude Code 用 stderr + exit 2。"""
@@ -179,6 +200,14 @@ def main():
             try:
                 if re.search(pattern, command, re.IGNORECASE):
                     warns.append(f"⚠️  {msg}")
+            except re.error:
+                continue
+
+        # ─── Encoding misuse (improper commands causing mojibake) ─────────
+        for pattern, msg in ENCODING_MISUSE_PATTERNS:
+            try:
+                if re.search(pattern, command, re.IGNORECASE):
+                    warns.append("[编码] " + msg)
             except re.error:
                 continue
 

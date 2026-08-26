@@ -1,6 +1,7 @@
 ---
 name: using-superpowers
 description: 技能发现与 Tool-First 路由。触发：会话开始、不确定用什么技能、开始任务。
+triggers: [会话开始, 技能路由, 开始任务, 不确定用什么技能]
 layer: skeleton
 source: obra/superpowers
 loading_tier: L1
@@ -42,20 +43,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 
 ## 任务分类
 
-```
-用户输入
-  → R18: claude-mem search?（相关则先查）
-  → Read skills/task-triage/SKILL.md（Phase0 前置盘点 → 两大类+使用类型树 SSOT，禁止仅凭文件数）
-  → 简单(关联需改≤2+白名单+六维全低+模型匹配+attempt=1)? → L1 change-impact → 一次改齐 → ④验证(比例)
-  → 持续处理(attempt≥2/首轮未解决)? → 执行升档非简单 + verify_tier=全量
-  → 非简单(需改>2/黑名单/六维含中高/模型不足/无法判定) → 先 grill 访谈用户(一次一问+推荐答案,≤5问)
-       → Bug类(多文件/根因不明/执行升档) → L3 triage → L2 debugging → 全量验证
-         （例外：用户已给可验证成功标准的升档 Bug 可跳过 grill，见 task-triage「Grill」节）
-       → 功能/架构/配置/删除类 → grill(必经) → L1 brainstorming → …五阶段全链 → 全量验证
-       → 调研类 → L3 deep-research
-```
-
-**简单旁路**：仅 attempt=1；不 Read executing-plans / subagent-driven-development；完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项，非仅已编辑文件）。
+分类树/六维/升档触发 SSOT → `skills/task-triage/SKILL.md`。入口：R18 claude-mem search（相关先查）→ Read task-triage（Phase0 盘点）→ 按分类树路由。**简单旁路**仅 attempt=1（不 Read executing-plans/subagent-driven-development），完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项）。
 
 ## P0 路由集（6）
 

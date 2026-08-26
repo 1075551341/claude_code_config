@@ -95,14 +95,15 @@ def main():
         project_root, _ = find_project_root(file_path)
 
         # TypeScript / JavaScript / CSS / JSON / Markdown / HTML
+        # --end-of-line auto：保留文件既有行尾（v11.4.2 防止 prettier 默认 LF 静默改写 CRLF 配置文件）
         if ext in (".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".json", ".md", ".html", ".yaml", ".yml"):
             local_prettier = find_prettier(project_root)
             if local_prettier:
-                run([local_prettier, "--write", file_path])
+                run([local_prettier, "--write", "--end-of-line", "auto", file_path])
             elif shutil.which("prettier"):
-                run(["prettier", "--write", file_path])
+                run(["prettier", "--write", "--end-of-line", "auto", file_path])
             else:
-                run(f'npx --yes prettier --write "{file_path}"')
+                run(f'npx --yes prettier --write --end-of-line auto "{file_path}"')
 
         elif ext == ".py":
             if shutil.which("ruff"):

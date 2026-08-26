@@ -1,7 +1,7 @@
 # LLM-as-a-Verifier 优点提取与融合记录（v11.3.5）
 
 > 来源：[llm-as-a-verifier/llm-as-a-verifier](https://github.com/llm-as-a-verifier/llm-as-a-verifier)（通用验证框架，SOTA across agentic benchmarks）
-> 目的：提取验证方法论优点 → 与 Claude 配置自身优点对比 → 融合缺失项（v11.3.5）→ 同步 DSH（v1.3.3）
+> 目的：提取验证方法论优点 → 与 Claude 配置自身优点对比 → 融合缺失项（v11.3.5）→ 同步 DSH（v1.3.4，合并源指针 v11.4.1）
 > 变更史：`CHANGELOG.md` v11.3.5 | 模板 SSOT：`skills/verification-before-completion/SKILL.md`
 
 ---
@@ -67,8 +67,6 @@
 | `CLAUDE.md` R20 行 | 「信任观察输出而非叙述」并入 |
 | `rules/CORE.md` R20 段 | 「验证证据须为观察输出（命令/测试/文件），不信叙述」 |
 | `hooks/_lib/gate_messages.md` | 软性短句「验证证据须为观察输出」（不碰硬门字段） |
-| `~/.dsh/AGENTS.md`（v1.3.3） | ④验证行 + 铁律 R7/R20 行 + 会话终验模板证据行 |
-| `~/.dsh/skills/verification-before-completion/SKILL.md` | 同源小节（DSH 简化版） |
 
 **未纳入项及理由**（记录防回潮）：#2（无 logprob API）、#8（审查路由已覆盖）、#9（工程实现细节）。若未来启用带 logprob 的验证后端，可重新评估 #2。
 
@@ -79,4 +77,4 @@
 - 融合正文 SSOT：`skills/verification-before-completion/SKILL.md`（v11.3.5 小节）
 - 本记录：变更决策与对比矩阵（仅记录，不承载规则）
 - 变更史：`CHANGELOG.md` v11.3.5
-- DSH 同步：`~/.dsh/AGENTS.md` v1.3.3（合并源指针 v11.3.5）+ `~/.dsh/skills/verification-before-completion/SKILL.md`（手工对齐，非 sync 目标）
+- DSH 同步：`~/.dsh/AGENTS.md` v1.3.4（合并源指针 v11.4.1）+ `~/.dsh/skills/verification-before-completion/SKILL.md`（含需求指纹小节；手工对齐，非 sync 目标）

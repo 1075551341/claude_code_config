@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.3.5**（验证准则分解评分=llm-as-a-verifier；R20 反空模板+初次修改验收+Cursor stop followup；ROUTER/agent.yaml 已并入；同步 1+N）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.3**（配置一致性修复：版本/计数漂移清零+触发词去重+权限对齐；原 v11.4.2：防乱码编码守卫双阶段+格式化保行尾+命令误用警告；v11.4.0=IMPACT 自动登记+需求指纹 R20 实质比对+审查结论机械检测+opencode 接入=AGENTS.md+验证门插件+上游矩阵→docs/research/45；同步 1+N 含 opencode；llm-as-a-verifier 已吸收）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -165,7 +165,7 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 内容             | 位置                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------- |
 | 归属矩阵/harness | MANIFEST.yaml                                                                            |
-| 法典/架构        | SPEC.md (v11.3.5) + CHANGELOG.md                                                         |
+| 法典/架构        | SPEC.md + CHANGELOG.md                                                                   |
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |

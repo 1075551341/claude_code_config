@@ -339,8 +339,94 @@ def test_claude_tracker_first_edit_injects() -> None:
         check("tracker second edit silent", (second.stdout or "").strip() == "")
 
 
+def test_impact_diff_superset_blocked() -> None:
+    """清单外变更（脏集−基线−声明 ≠ ∅）→ 返回额外文件列表。"""
+    entry = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "git_baseline": ["README.md"],
+    }
+    with tempfile.TemporaryDirectory() as td:
+        orig = r20_replay.git_dirty_set
+        r20_replay.git_dirty_set = lambda cwd: {"README.md", "rogue.py"}  # noqa: E731
+        try:
+            extras = r20_replay.impact_diff_check(entry, "s1", td)
+        finally:
+            r20_replay.git_dirty_set = orig
+    check("impact superset blocked", extras == ["rogue.py"], str(extras))
+
+
+def test_impact_diff_subset_passes() -> None:
+    """变更 ⊆ 基线∪声明清单 → 放行（空列表）。"""
+    entry = {
+        "edited_files": [{"path": "src/a.py", "ts": 1}],
+        "git_baseline": ["src/b.py"],
+    }
+    with tempfile.TemporaryDirectory() as td:
+        log = os.path.join(td, ".claude", "state", "impact-manifest.log")
+        os.makedirs(os.path.dirname(log))
+        with open(log, "w", encoding="utf-8") as fh:
+            fh.write("IMPACT|s2|src/a.py|2026-08-25\n")
+        orig = r20_replay.git_dirty_set
+        r20_replay.git_dirty_set = lambda cwd: {"src/a.py"}  # noqa: E731
+        try:
+            extras = r20_replay.impact_diff_check(entry, "s2", td)
+        finally:
+            r20_replay.git_dirty_set = orig
+    check("impact subset passes", extras == [], str(extras))
+
+
+def test_impact_diff_disabled_skip() -> None:
+    """无基线/无编辑 → 静默跳过（空列表）。"""
+    check("impact no-entry skip", r20_replay.impact_diff_check({}, "s3", "") == [])
+    entry = {"edited_files": [{"path": "a.py", "ts": 1}]}  # 有编辑但无基线（非git会话）
+    check("impact no-baseline skip", r20_replay.impact_diff_check(entry, "s4", "") == [])
+
+
+def test_fingerprint_coverage_pass() -> None:
+    """v11.4：满足行覆盖 strong 指纹 → 合格。"""
+    reqs = {"strong": ["impact-manifest", "req_fingerprint"], "weak": []}
+    text = (
+        "## 会话终验（R20）\n原始要求：实现 impact-manifest 自动登记与 req_fingerprint 实质比对\n"
+        "- 满足：impact-manifest 自动落盘与 req_fingerprint 覆盖比对已实现并测试通过\n"
+        "- 遗漏：无\n- 错改：无\n- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：python hooks/tests/test_r20_replay.py 全绿）\n结论：DONE"
+    )
+    check("fingerprint coverage pass", r20_replay.replay_ok(text, reqs) is True)
+
+
+def test_fingerprint_coverage_fail() -> None:
+    """v11.4：满足行为空话（未命中 strong 指纹）→ 不合格，即使五字段齐全。"""
+    reqs = {"strong": ["impact-manifest", "req_fingerprint"], "weak": []}
+    text = (
+        "## 会话终验（R20）\n原始要求：实现自动登记\n"
+        "- 满足：全部按要求完成了\n"
+        "- 遗漏：无\n- 错改：无\n- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest 全绿）\n结论：DONE"
+    )
+    check("fingerprint coverage fail", r20_replay.replay_ok(text, reqs) is False)
+    check("same text passes without fingerprint", r20_replay.replay_ok(text) is True)
+
+
+def test_fingerprint_weak_only_noop() -> None:
+    """v11.4：weak-only 需求不启用实质比对（防误伤），行为与无指纹一致。"""
+    reqs = {"strong": [], "weak": ["同步", "文档"]}
+    check("weak-only noop pass", r20_replay.replay_ok(VALID, reqs) is True)
+
+
+def test_review_verdict_ok() -> None:
+    check("verdict PASS detected", r20_replay.review_verdict_ok("eng-reviewer 结论：PASS — 无阻断项") is True)
+    check("verdict NEEDS-CHANGES detected", r20_replay.review_verdict_ok("review verdict: NEEDS-CHANGES") is True)
+    check("verdict lowercase rejected", r20_replay.review_verdict_ok("结论：pass") is False)
+    check("verdict plain text rejected", r20_replay.review_verdict_ok("审查完成，没有问题") is False)
+    check("verdict empty rejected", r20_replay.review_verdict_ok("") is False)
+
+
 def main() -> int:
     print("=== R20 replay marker tests ===")
+    test_fingerprint_coverage_pass()
+    test_fingerprint_coverage_fail()
+    test_fingerprint_weak_only_noop()
+    test_review_verdict_ok()
     test_positive_string_content()
     test_positive_list_content()
     test_empty_template_rejected()
@@ -360,6 +446,9 @@ def main() -> int:
     test_cursor_should_followup()
     test_gate_reader_sections()
     test_claude_tracker_first_edit_injects()
+    test_impact_diff_superset_blocked()
+    test_impact_diff_subset_passes()
+    test_impact_diff_disabled_skip()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0
 

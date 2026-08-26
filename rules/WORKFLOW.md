@@ -8,49 +8,16 @@ description: 阶段式工作流规则，定义从讨论到发布的完整开发�
 ## 阶段定义
 
 > **计划唯一入口**：skill/writing-plans + /plan（禁用 hook/pre-task-planner）
-> **骨架内容已迁至 `rules/CORE.md`**：五阶段流程、状态机、门控。
+> **五阶段骨架 SSOT → `CLAUDE.md`「五阶段流程」**（目标/产出/门控全量；v11.3.6 修正迁移指针并删除本文件重复骨架）。
 
-### 1. Discuss 阶段
-- 目标：明确需求、识别约束、对齐期望
-- 产出：需求文档、验收标准、技术约束清单
-- 门控：需求无歧义、验收标准可量化
+### Learn 阶段扩展（gstack /learn）
 
-### 2. Plan 阶段
-- 目标：设计实现方案、分解任务、识别依赖
-- 产出：实施计划、任务分解、依赖图
-- 门控：方案经过头脑风暴评估、任务有明确成功标准
-
-### 3. Execute 阶段
-- 目标：按计划实现、遵循简洁优先和安全默认
-- 产出：代码变更、测试用例
-- 门控：每个子任务独立验证通过、遵循 R10+R11
-
-### 4. Verify 阶段
-- 目标：交叉验证、质量门检查、回归测试
-- 产出：验证报告、问题清单
-- 门控：交叉验证清单全部通过、质量门无告警
-
-### 5. Ship 阶段
-- 目标：合并、部署、监控
-- 产出：合并PR、部署记录
-- 门控：CI通过、无回滚风险
-
-### 6. Learn 阶段（gstack /learn）
-> **来源**: garrytan/gstack | 跨会话学习管理
-
-- 目标：提取可复用模式，跨会话积累项目知识
-- 产出：claude-mem observations（模式/反模式；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
+- 跨会话学习：项目特定模式、陷阱、偏好决策 → claude-mem observations（R18；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
 - `/learn`：查看/搜索/修剪跨会话学习内容
-- 项目级经验与会话级记忆统一由 claude-mem 承接（R18）
-- 学习内容：项目特定模式、陷阱、偏好决策
 
 ## 质量门
 
-| 门 | 检查项 | 阻断条件 |
-|----|--------|---------|
-| Schema Drift | ORM变更缺migration | 阻断 |
-| Security Anchor | 验证绑定威胁模型 | 阻断 |
-| Scope Reduction | planner静默丢弃需求 | 警告 |
+> 三门定义与阻断条件（名称见该节）SSOT → `skills/verification-before-completion/SKILL.md`「质量门」节（v11.3.6 收敛，消除「警告vs强制」漂移）。
 
 ## 上下文腐烂治理
 

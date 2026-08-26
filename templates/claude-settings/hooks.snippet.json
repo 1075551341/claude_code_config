@@ -1,5 +1,5 @@
 {
-  "_comment": "settings.json 的 hooks 段快照（v11.3.4：post-edit-verify-tracker 兼初次修改五维验收注入；R20 反空模板在 stop-verification-gate）。settings.json 本体含 API token 故被 .gitignore 排除。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
+  "_comment": "settings.json 的 hooks 段快照（v11.4.2：新增编码守卫双阶段 pre-encoding-snapshot/post-encoding-check 防乱码，PostToolUse 顺序=格式化→编码校验→密钥扫描→验证追踪；post-edit-format 补 --end-of-line auto 保留既有行尾）。settings.json 本体含 API token 故被 .gitignore 排除。{{CLAUDE_HOME}} 需替换为实际 ~/.claude 绝对路径（正斜杠）。改动 settings.json 的 hooks 段后须同步刷新本文件。",
   "hooks": {
     "PostToolUse": [
       {
@@ -7,6 +7,11 @@
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-edit-format.py",
             "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-encoding-check.py",
+            "timeout": 5000,
             "type": "command"
           },
           {
@@ -23,8 +28,13 @@
         "matcher": "Edit|Write|MultiEdit"
       },
       {
-        "_comment": "v10.17: MCP 写工具（serena/fs）此前完全绕过验证追踪链，Stop 硬门因此误判「本会话未改代码」而放行回归。matcher 必须带 .*，裸 mcp__serena 会被当精确名而永不触发。此组不含 post-edit-format：符号级编辑后自动格式化属新增行为，保持既有语义不变。",
+        "_comment": "v10.17: MCP 写工具（serena/fs）此前完全绕过验证追踪链，Stop 硬门因此误判「本会话未改代码」而放行回归。matcher 必须带 .*，裸 mcp__serena 会被当精确名而永不触发。此组不含 post-edit-format：符号级编辑后自动格式化属新增行为，保持既有语义不变。v11.4.2: 编码校验纳入此组。",
         "hooks": [
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-encoding-check.py",
+            "timeout": 5000,
+            "type": "command"
+          },
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/post-secret-detector.py",
             "timeout": 10000,
@@ -73,15 +83,25 @@
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-read-before-edit.py",
             "timeout": 5000,
             "type": "command"
+          },
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-encoding-snapshot.py",
+            "timeout": 5000,
+            "type": "command"
           }
         ],
         "matcher": "Edit|Write|MultiEdit"
       },
       {
-        "_comment": "v10.17: MCP 写工具的变更影响门（每文件首次编辑注入）。不含 pre-read-before-edit：serena 符号级编辑自带定位语义，强制先 Read 会误伤。",
+        "_comment": "v10.17: MCP 写工具的变更影响门（每文件首次编辑注入）。不含 pre-read-before-edit：serena 符号级编辑自带定位语义，强制先 Read 会误伤。v11.4.2: 编码快照纳入此组。",
         "hooks": [
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-edit-impact-nudge.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-encoding-snapshot.py",
             "timeout": 5000,
             "type": "command"
           }

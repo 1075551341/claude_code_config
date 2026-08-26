@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.3.5）
+# 门控注入文本 SSOT（v11.4.3）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -35,11 +35,5 @@ Read ~/.claude/skills/verification-before-completion/SKILL.md
 ## 初次修改验收门
 
 【门控 · 每个文件首次编辑后必做】
-对照本文件及其 blast-radius 全部相关项逐条打勾（禁止只验当前文件、禁止「应该没影响」）：
-
-1. 需求：对照用户原话，未满足标遗漏
-2. 错改：是否改了范围外行为或顺手重构
-3. 漏改：同类引用与 INDEX/MANIFEST/README/注释/命令是否同步（无则写「无文档影响」）
-4. 原功能：非功能变更须给出测试或冒烟证据
-5. 工具：codegraph blast-radius 或 Grep 残留=0
-   模板 → skills/verification-before-completion 场景 G。
+对照本文件及其 blast-radius 全部相关项，五维逐条核验：需求(未满足=遗漏) / 错改 / 漏改(同类引用+INDEX/MANIFEST/README/注释/命令同步；无则写「无文档影响」) / 原功能(非功能变更须测试或冒烟证据) / 工具(codegraph/Grep 残留=0)。禁止只验当前文件、禁止「应该没影响」。
+完整模板与判定细则 → skills/verification-before-completion/SKILL.md「场景G」（v11.3.6 收敛为指针）。

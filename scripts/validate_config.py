@@ -750,7 +750,7 @@ def check_v17_bare_except_extended():
 
     # Infrastructure files exempt from V17 (launchers, guards)
     INFRA_EXEMPT = {
-        "_editor_hook_launcher.py", "_editor_safe_guard.py",
+        "_editor_hook_launcher.py",
         "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [

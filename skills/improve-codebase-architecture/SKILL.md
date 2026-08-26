@@ -1,7 +1,7 @@
 ---
 name: improve-codebase-architecture
-description: 代码库架构改进。触发词：架构改进 | 重构架构 | 代码库优化 | 技术债务
-triggers: [架构改进, 重构, 代码结构, architecture, refactor, 模块拆分, 领域驱动]
+description: 代码库架构改进。触发词：架构改进 | 重构架构 | 代码库优化 | 技术债务（行为保持重构走 code-refactoring，本技能只管架构级）
+triggers: [架构改进, 重构架构, 代码结构, architecture, refactor, 模块拆分, 领域驱动]
 layer: supplement
 source: mattpocock/skills
 disable-model-invocation: true

@@ -1,6 +1,7 @@
 ---
 name: structured-artifacts
 description: GSD 结构化制品管理，确保跨会话状态存活。
+triggers: [制品管理, 跨会话状态, GSD, 状态存活]
 layer: supplement
 source: GSD-redux
 disable-model-invocation: true

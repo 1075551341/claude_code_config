@@ -13,7 +13,7 @@
 
 - **最新元数据**：60,419 stars；GitHub Release **v1.4.1**；`pushed_at` 2026-07-17T00:09:01Z。
 - **自 2026-06-29 的变化**：从 v1.0.1 升至 v1.4.1，版本漂移显著；本轮元数据核验未产生足以替换 R17 日常符号探索/`blast-radius` 定位的反证。
-- **本地吸收**：不变——codegraph 继续为 R17 常驻主位；cbm 仍只承担架构、ADR、跨服务与 diff 风险的 L4 按需职责。
+- **本地吸收**：不变——codegraph 继续为 R17 常驻主位；cbm 承担架构、ADR、跨服务与 diff 风险的按需职责（⚠️历史快照 v10.5 口径，现行：cbm 已永久禁用 → rules/CORE.md R17）。
 - **双源**：GitHub API（stars/release/push）+ 仓库 README/既有 npm 与官网研究记录。
 
 
@@ -88,4 +88,4 @@ v1.0.0 起 MCP 默认工具列表收敛为 **4 个**：`codegraph_explore` · `c
 ## v10.4 增量
 
 - 与 [deusdata-codebase-memory-mcp](deusdata-codebase-memory-mcp.md) 建立双引擎边界：codegraph 保持 R17 常驻主位；cbm 不替代日常 `codegraph_explore`
-- 变更影响：`codegraph_impact` / explore blast-radius 仍为默认；cbm `detect_changes` 作 L4 备选（git diff→风险分类场景）
+- 变更影响：`codegraph_impact` / explore blast-radius 仍为默认；cbm `detect_changes` 作 L4 备选（git diff→风险分类场景）（⚠️历史快照 v10.4 口径，现行：cbm 已永久禁用 → rules/CORE.md R17）

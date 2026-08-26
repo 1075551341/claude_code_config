@@ -1,6 +1,7 @@
 ---
 name: frontend-library-advisor
 description: 当用户需要为前端项目推荐、选择或评估npm包时使用。适用于所有前端库推荐场景。当检测到用户查找库、推荐库、包时，优先触发此技能。
+triggers: [推荐库, 选型, npm包, 前端库评估]
 metadata:
   version: 1.0.2
 loading_tier: L3

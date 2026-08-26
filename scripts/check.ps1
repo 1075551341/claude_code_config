@@ -48,6 +48,7 @@ $MANAGED_EDITORS = [ordered]@{
     "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
     "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $true; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $syncManifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $syncManifestPath) {
@@ -288,6 +289,18 @@ foreach ($edName in @($MANAGED_EDITORS.Keys)) {
         if (Test-IsReparseLink $sk) { $edPasses++ }
         elseif (Test-Path $sk) { $edIssues += "skills(not a link)" }
         else { $edIssues += "skills(missing)" }
+    } elseif ($ed.Special -eq "agents_md") {
+        # v11.4 opencode：CLAUDE.md → AGENTS.md（软链优先/回退副本，二者皆合格；陈旧副本才报）
+        $ag = Join-Path $ed.Home "AGENTS.md"
+        $cmSrc = Join-Path $CLAUDE_DIR "CLAUDE.md"
+        if (-not (Test-Path $ag)) { $edIssues += "AGENTS.md(missing)" }
+        elseif (Test-IsReparseLink $ag) { $edPasses++ }
+        else {
+            try {
+                if ((Get-FileHash $ag -Algorithm SHA256).Hash -eq (Get-FileHash $cmSrc -Algorithm SHA256).Hash) { $edPasses++ }
+                else { $edIssues += "AGENTS.md(stale copy)" }
+            } catch { $edIssues += "AGENTS.md(unreadable)" }
+        }
     } else {
         if ($ed.RootIndex) {
             foreach ($file in $SYNC_FILES) {

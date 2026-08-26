@@ -3,6 +3,7 @@ name: frontend-design-pattern-applier
 description: 识别前端代码中的面向过程逻辑坏味道，智能推荐并辅助重构为合适的设计模式。当用户提到代码坏味道、重构模式、条件分支优化、复杂对象创建、策略模式、工厂模式、设计模式应用、代码解耦、面向过程代码改进时，必须使用此技能。支持 TypeScript/JavaScript 前端代码的模式识别、重构建议和代码生成。
 metadata:
   version: 1.0.1
+triggers: [代码坏味道, 设计模式应用, 条件分支优化, 代码解耦]
 loading_tier: L3
 disable-model-invocation: true
 ---
