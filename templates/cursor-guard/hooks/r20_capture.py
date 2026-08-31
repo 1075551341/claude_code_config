@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""afterAgentResponse: 捕获合格 R20 终验标记，供 Cursor stop followup 判定（v11.3.4）。"""
+"""afterAgentResponse: 捕获 R20 / 审查结论 / 非简单标记（v11.4.8）。"""
 from __future__ import annotations
 
 import json
-import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -25,10 +25,11 @@ from config import load_guard_config
 from session_handoff import extract_session_id as handoff_session_id
 
 STALE_SECONDS = 7 * 24 * 3600
+_NON_SIMPLE_RE = re.compile(r"(执行升档\s*=\s*非简单)|((^|\n).{0,40}非简单)")
 
 
 def _state_path(claude_home) -> Path:
-    raw = str(claude_home or os.path.expanduser("~/.claude"))
+    raw = str(claude_home or (Path.home() / ".claude"))
     return Path(raw) / ".state" / "verification-gate.json"
 
 
@@ -36,7 +37,7 @@ def main() -> None:
     try:
         data = read_stdin()
         text = data.get("text") or ""
-        if not isinstance(text, str) or len(text.strip()) < 20:
+        if not isinstance(text, str) or len(text.strip()) < 8:
             return
         cfg = load_guard_config()
         claude_home = cfg["sync"]["claude_home"]
@@ -45,12 +46,10 @@ def main() -> None:
         except Exception as e:
             print(f"r20_capture: r20_replay unavailable: {e}", file=sys.stderr)
             return
-        if not r20.replay_ok(text):
+        session_id = handoff_session_id(data)
+        if not session_id:
+            print("r20_capture: 无 conversation_id/session_id，跳过", file=sys.stderr)
             return
-        session_id = (
-            handoff_session_id(data)
-            or str(data.get("session_id") or data.get("conversation_id") or "unknown")
-        )
         path = _state_path(claude_home)
         now = time.time()
         state: dict = {}
@@ -61,7 +60,19 @@ def main() -> None:
             print(f"r20_capture: state read failed: {e}", file=sys.stderr)
             state = {}
         entry = state.setdefault(session_id, {"ts": now, "started_ts": now})
-        entry["r20_replay_ok"] = True
+        changed = False
+        if _NON_SIMPLE_RE.search(text):
+            if not entry.get("non_simple"):
+                entry["non_simple"] = True
+                changed = True
+        if r20.apply_review_verdict(entry, text):
+            changed = True
+        if r20.replay_ok(text):
+            if not entry.get("r20_replay_ok"):
+                entry["r20_replay_ok"] = True
+                changed = True
+        if not changed:
+            return
         entry["ts"] = now
         try:
             path.parent.mkdir(parents=True, exist_ok=True)

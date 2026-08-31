@@ -21,7 +21,8 @@ def _pending_compress_path():
 
 
 def extract_session_id(data: dict[str, Any]) -> str:
-    for key in ("session_id", "conversation_id", "conversationId"):
+    """Stable chat id first. Cursor Stop often sends a per-turn session_id."""
+    for key in ("conversation_id", "conversationId", "conversationID", "session_id", "sessionId"):
         val = data.get(key)
         if isinstance(val, str) and val.strip():
             return val.strip()

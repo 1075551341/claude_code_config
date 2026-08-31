@@ -1,38 +1,19 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "MCP v11 常驻 9（v10.17 定型沿用）| 三层架构：本地代码(codegraph/code-review-graph/aider-repo-map/serena) + 远端探索(github 本地 stdio + grep) + Web&文档(exa/context7/firecrawl)。chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（全盘可写会绕过验证门）。cbm(禁用) 勿 merge。GITHUB_PERSONAL_ACCESS_TOKEN/EXA_API_KEY/FIRECRAWL_API_KEY 走 User/Machine env；npx 包按 R14 钉扎版本",
+  "_comment": "Claude MCP：仅无官方 plugin 的项（内置>plugin>MCP）。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools 默认 false，需要时中断请用户开 Plugin。github 不写 MCP。postgres 见 ops.json，中断启用。npx 钉版本。",
   "mcpServers": {
-    "aider-repo-map": {
-      "_description": "Aider 风格 Repo Map（pdavis68/RepoMapper）。RepoMapper 要求 Python >=3.13；经 python-mcp.ps1 清 PYTHONHOME 后 uv run --python 3.13。",
-      "type": "stdio",
-      "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
-        "C:\\Users\\DELL\\.local\\bin\\uv.exe",
-        "--directory",
-        "C:\\Users\\DELL\\.local\\share\\RepoMapper",
-        "run",
-        "--python",
-        "3.13",
-        "repomap-mcp"
-      ]
-    },
     "codegraph": {
-      "_description": "R17 探索主位：符号/调用链/blast-radius/变更前影响面。钉扎 1.5.0（R14）。",
+      "_description": "R17 探索主位：符号/调用链/blast-radius/变更前影响面。钉扎 1.6.0（R14）。",
       "command": "npx",
       "args": [
         "-y",
-        "@colbymchenry/codegraph@1.5.0",
+        "@colbymchenry/codegraph@1.6.0",
         "serve",
         "--mcp"
       ]
     },
     "code-review-graph": {
-      "_description": "代码审查/验证专用图谱 MCP。v11.4 升钉 2.3.8（2.3.7 明示 no breaking；token 预算硬顶）。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
+      "_description": "精准上下文/变更影响/风险/审查/PR。钉扎 2.3.8。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
       "type": "stdio",
       "command": "powershell",
       "args": [
@@ -51,7 +32,7 @@
       ]
     },
     "serena": {
-      "_description": "Serena 符号级代码工具（uv tool install --python 3.12 serena-agent）。经 python-mcp.ps1 清 PYTHONHOME。",
+      "_description": "Serena 符号级代码工具。经 python-mcp.ps1 清 PYTHONHOME。",
       "type": "stdio",
       "command": "powershell",
       "args": [
@@ -74,44 +55,8 @@
       }
     },
     "grep": {
-      "_description": "grep.app 远端代码搜索：跨 GitHub 公开仓库找真实用法/实现范式。本地代码一律走 codegraph（R17），勿用本服务替代。",
+      "_description": "grep.app 远端代码搜索。本地代码走 codegraph（R17）+ CRG（影响面/审查）。",
       "url": "https://mcp.grep.app"
-    },
-    "firecrawl": {
-      "_description": "网页抓取/爬取/结构化提取（L2/L3 调研）。v11.4 升钉 3.24.0。",
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "firecrawl-mcp@3.24.0"
-      ],
-      "env": {
-        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
-      }
-    },
-    "exa": {
-      "_description": "语义搜索/网页正文提取（L1–L3 调研，与 firecrawl 双源交叉）。v11.4 升钉 3.4.1。",
-      "command": "npx",
-      "args": [
-        "-y",
-        "exa-mcp-server@3.4.1"
-      ],
-      "env": {
-        "EXA_API_KEY": "${EXA_API_KEY}"
-      }
-    },
-    "github": {
-      "_description": "GitHub 官方本地 stdio（github-mcp-server）。Cursor/Claude 对 api.githubcopilot.com 走 OAuth 时只暴露 mcp_auth、0 tools；PAT 用 User env GITHUB_PERSONAL_ACCESS_TOKEN 继承，勿把 token 写进 json，也勿在 env 块里写 ${GITHUB_TOKEN}（展开失败会覆盖真实 PAT）。",
-      "type": "stdio",
-      "command": "C:\\Users\\DELL\\.local\\bin\\github-mcp-server.exe",
-      "args": [
-        "stdio"
-      ]
-    },
-    "context7": {
-      "_description": "库/框架/API 官方文档（L1 首选）：resolve-library-id → query-docs。",
-      "type": "http",
-      "url": "https://mcp.context7.com/mcp"
     }
   }
 }

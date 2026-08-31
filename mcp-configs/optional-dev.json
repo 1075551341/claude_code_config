@@ -1,17 +1,17 @@
 {
   "toolset": "optional-dev",
-  "description": "禁用/归档记录（v10.17 起不再声明可运行 mcpServers）。chrome-devtools 移至 debug.json、fs 移至 fsaccess.json、exa/firecrawl 已常驻 .mcp.json —— 同一能力禁止在两处维护不同参数定义（rules/MCP.md §5）。",
+  "description": "禁用/归档。exa/context7/playwright/firecrawl 走 Plugins；chrome-devtools plugin 默认 false（中断启用）。勿在 .mcp.json 再声明。无 aider-repo-map/sequential-thinking。",
   "servers": [],
   "disabled": {
-    "codebase-memory": "2026-07-31: 默认禁用。根因：hook/MCP 易对 C:\\\\Users\\\\<user> 全盘 index_repository，单进程 >6GB RAM。需要时手动临时 merge，且必须限定明确业务仓路径。"
+    "codebase-memory": "2026-07-31: 默认禁用。根因：hook/MCP 易对用户主目录全盘 index_repository，单进程 >6GB RAM。"
   },
   "fallbacks": {
-    "firecrawl": "常驻 .mcp.json（npx firecrawl-mcp@3.23.9 + FIRECRAWL_API_KEY）；npx 不可用时改用 scripts/firecrawl-mcp.ps1 包装器，勿两处同时挂载",
-    "exa": "常驻 .mcp.json（npx exa-mcp-server@3.4.0 + EXA_API_KEY）；Cursor 侧由 Exa plugin 提供，勿在 ~/.cursor/mcp.json 重复声明",
-    "github": "常驻本地 stdio ~/.local/bin/github-mcp-server.exe；PAT 走 User env GITHUB_PERSONAL_ACCESS_TOKEN。禁止改回 api.githubcopilot.com HTTP（Cursor/Claude 会变成 mcp_auth + 0 tools）"
+    "exa": "Claude/Cursor 走 Exa plugin；Qoder/OpenCode/DSH 用 MCP exa-mcp-server@3.4.1",
+    "context7": "Claude/Cursor 走 Context7 plugin；其余端 HTTP mcp.context7.com",
+    "github": "Cursor/Claude github 能力关闭。OpenCode/DSH/Qoder 条目保留但 disabled。勿把 token 写进 json。"
   },
   "_archive_codebase_memory": {
-    "_description": "DISABLED — 勿 merge。原 L4 架构/ADR/detect_changes。替代：codegraph_explore。",
+    "_description": "DISABLED — 勿 merge。替代：codegraph_explore。",
     "command": "npx",
     "args": ["-y", "codebase-memory-mcp@0.8.1"]
   }

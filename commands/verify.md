@@ -10,4 +10,4 @@ description: 交叉验证与质量门检查（④验证阶段）
 
 流程：确认 verify_tier → 按清单逐项验证并贴命令证据 → 输出会话终验（R20）逐条回放（满足/遗漏/错改/漏改/原功能；核对范围=blast-radius 全部相关项，非仅已编辑文件；漏改须含文档或无文档影响；原功能须含证据/测试/冒烟；模板见 verification skill）→ 输出验证报告（通过）或失败项+修复方案（不声称完成）。
 
-> 硬门兜底：Claude Stop `stop-verification-gate.py` 未通过 exit 2；Cursor Stop `verification_stop.py` 用 `followup_message` 续轮。
+> 硬门兜底：Claude Stop `stop-verification-gate.py` 未通过 exit 2；Cursor Stop `verification_stop.py` 用 `followup_message` 续轮（六维纠错；有 CRG 图须调用影响面/风险工具）。验证全绿后才执行 `sync.ps1`。

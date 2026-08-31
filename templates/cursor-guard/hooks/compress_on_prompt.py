@@ -19,7 +19,8 @@ ensure_lib_path()
 setup_stdio()
 
 from config import load_guard_config
-from session_handoff import extract_session_id, set_compress_pending
+from context_estimator import clear_force_nudges
+from session_handoff import extract_session_id, reset_tool_counter, set_compress_pending
 
 DEFAULT_COMPRESS_KEYWORDS = [
     "压缩上下文",
@@ -44,6 +45,12 @@ def _matches_any(text: str, keywords: list[str]) -> bool:
     return any(k in tl for k in keywords)
 
 
+def _reset_guard_estimate() -> None:
+    """User asked to compress: drop Guard's running estimate so Stop won't ping-pong."""
+    reset_tool_counter()
+    clear_force_nudges()
+
+
 def main() -> None:
     try:
         data = read_stdin()
@@ -51,6 +58,7 @@ def main() -> None:
         pl = prompt.lower()
 
         if pl in NATIVE_PASS or pl.startswith("/summarize") or pl.startswith("/compress"):
+            _reset_guard_estimate()
             return
 
         cfg = load_guard_config()
@@ -66,6 +74,7 @@ def main() -> None:
 
         # 「压缩上下文」与 /summarize 等效 — Guard 不拦截，由 Cursor 原生压缩处理
         if _matches_any(pl, compress_kws):
+            _reset_guard_estimate()
             return
 
         if not _matches_any(pl, extract_kws):

@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "guard_version": "1.2.1",
+  "guard_version": "1.2.8",
   "hooks": {
     "sessionStart": [
       {
         "command": "python hooks/session_bootstrap.py",
-        "timeout": 8
+        "timeout": 120
       }
     ],
     "sessionEnd": [
@@ -53,7 +53,18 @@
         "timeout": 5
       }
     ],
+    "beforeMCPExecution": [
+      {
+        "command": "python hooks/graph_freshness.py",
+        "timeout": 90
+      }
+    ],
     "preToolUse": [
+      {
+        "command": "python hooks/graph_freshness.py",
+        "matcher": "CallMcpTool|CallDynamicTool|Grep|Glob|Write|StrReplace|EditNotebook|Delete|Shell|MCP:.*|mcp__codegraph__.*|mcp__code-review-graph__.*|mcp_codegraph_.*|mcp_code-review-graph_.*|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "timeout": 90
+      },
       {
         "command": "python hooks/context_pre_tool.py",
         "matcher": "Task|Shell|Write|StrReplace|Read|Grep|Glob",
@@ -78,7 +89,7 @@
       },
       {
         "command": "python hooks/verify_tracker.py",
-        "matcher": "Write|StrReplace|EditNotebook|Delete|Shell|Task|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|Shell|Task|CreatePlan|SwitchMode|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       },
       {
@@ -111,7 +122,7 @@
     "stop": [
       {
         "command": "python hooks/verification_stop.py",
-        "timeout": 8,
+        "timeout": 150,
         "loop_limit": 3
       },
       {

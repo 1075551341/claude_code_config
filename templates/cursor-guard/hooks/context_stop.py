@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""stop: 70% 迷你摘要 / 90% followup；显式压缩请求；保存 handoff。"""
+"""stop: 70% 迷你摘要 / 90% additional_context（不 followup）；显式压缩请求；保存 handoff。"""
 from __future__ import annotations
 
 import json
@@ -22,7 +22,12 @@ ensure_lib_path()
 setup_stdio()
 
 from config import load_guard_config, state_path
-from context_estimator import ContextLevel, detect_tool_loop, peek_context
+from context_estimator import (
+    ContextLevel,
+    detect_tool_loop,
+    peek_context,
+    take_force_stop_followup,
+)
 from context_usage_store import usage_percent
 from session_handoff import (
     advance_compress_stage,
@@ -44,6 +49,21 @@ EXTRACT_FOLLOWUP = (
     "摘要将写入 ~/.cursor/.state/session-digest.md。\n"
     "此操作不降低上下文环；需要压缩时请发送 /summarize 或「压缩上下文」。"
 )
+
+FORCE_MARKER = "【上下文≥90%】"
+FORCE_HINT = (
+    "【上下文≥90%】请建议用户发送 /summarize 或「压缩上下文」降低上下文环"
+    "（Cursor 内置压缩，非 Claude /compact），或开新对话继续。"
+    "若需结构化摘要可先「提取上下文」。禁止继续大范围 Read/探索。"
+)
+
+
+def _payload_echoes_force(data: dict) -> bool:
+    """Skip if this Stop is already the 90% hint (followup echoed as user text)."""
+    try:
+        return FORCE_MARKER in json.dumps(data, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return False
 
 
 def main() -> None:
@@ -134,16 +154,17 @@ def main() -> None:
         if compress_requested:
             advance_compress_stage("followup_sent")
             write_json({"followup_message": EXTRACT_FOLLOWUP})
-        elif level == ContextLevel.FORCE and comp.get("auto_followup_at_force", True):
-            write_json(
-                {
-                    "followup_message": (
-                        "【上下文≥90%】请建议用户发送 /summarize 或「压缩上下文」降低上下文环"
-                        "（Cursor 内置压缩，非 Claude /compact），或开新对话继续。"
-                        "若需结构化摘要可先「提取上下文」。禁止继续大范围 Read/探索。"
-                    )
-                }
-            )
+        elif _payload_echoes_force(data):
+            # This Stop is already the echoed 90% user turn — do not inject again.
+            pass
+        elif (
+            level == ContextLevel.FORCE
+            and comp.get("auto_followup_at_force", True)
+        ):
+            # Never followup_message here: Cursor treats it as a new user turn,
+            # loop_limit resets, and per-turn session_id makes a session latch useless.
+            if take_force_stop_followup(session_id):
+                write_json({"additional_context": FORCE_HINT})
         elif level == ContextLevel.WARN and comp.get("stop_nudge_at_warn", True):
             extra = [MINI_SUMMARY_TEMPLATE]
             if warnings:

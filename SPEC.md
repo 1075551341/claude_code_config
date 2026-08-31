@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.3 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 9 项三层架构 + TDD/SDD 显式触发 + 问题指纹追踪（v11.1.1 相似匹配重构）+ 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N（v11.4 增 opencode）+ 工程原则整合（v11.2.0）+ 会话终验 R20（v11.3.4 反空模板 + 初次修改验收 + Cursor stop followup；v11.3.5 验证准则分解评分=llm-as-a-verifier；v11.4 IMPACT 自动登记 + 需求指纹实质比对 + 审查结论机械检测；v11.4.3 配置一致性修复+触发词去重+权限对齐）| UA removed | cbm 已禁用（全盘索引爆 CPU/内存）
+> 版本：11.4.8 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话 ensure 双图、无图 deny、验绿后 sync.ps1）+ 计划未批准禁止 followup + 短 R20 + 非简单双审=修改→验证→审查最多 3 轮 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20（v11.4.5 CRG 扩权 + 六维纠错续轮 + 满足行三态；v11.4 IMPACT/指纹/审查结论；v11.4.3 配置一致性）| UA removed | cbm 已禁用
 
 ---
 
@@ -197,19 +197,22 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## MCP 分组（常驻 9，v10.17 定型 / v11 沿用）
+## MCP 分组（plugin 优先；chrome-devtools 默认关）
 
 | 分组       | 服务器                                               | 加载                                   |
 | ---------- | ---------------------------------------------------- | -------------------------------------- |
-| 本地代码   | codegraph, code-review-graph, aider-repo-map, serena | `.mcp.json` 常驻                       |
-| 远端探索   | github, grep                                         | `.mcp.json` 常驻                       |
-| Web & 文档 | exa, context7, firecrawl                             | `.mcp.json` 常驻                       |
+| 本地代码   | codegraph, code-review-graph, serena                 | `.mcp.json` 常驻                       |
+| 远端探索   | grep                                                 | `.mcp.json` 常驻                       |
+| Plugins    | context7, exa, playwright                            | `settings.json` enabledPlugins=true    |
+| Plugins 默认关 | chrome-devtools, github, firecrawl                 | plugin=false；不写 MCP                 |
 | debug      | chrome-devtools                                      | `mcp-configs/debug.json` 按需 merge    |
 | fsaccess   | fs                                                   | `mcp-configs/fsaccess.json` 按需 merge |
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json` 按需 merge      |
 | collab     | figma, linear, notion, slack                         | `mcp-configs/collab.json`（声明）      |
 
-本地代码四工具分工（codegraph 探索主位 / aider-repo-map 结构概览兼降级 / serena 符号级编辑 / code-review-graph 变更后审查）→ [rules/MCP.md](rules/MCP.md) §4
+本地代码三工具分工（codegraph 探索主位 / serena 符号级编辑 / code-review-graph 变更后审查）→ [rules/MCP.md](rules/MCP.md) §4
+
+已删除：`aider-repo-map`、`sequential-thinking`（不要加回）。
 
 Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：RUNTIME_PLAYBOOK 已并入 CLAUDE.md / rules/CONTEXT.md / rules/MCP.md）
 
@@ -356,4 +359,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.3 | 日期：2026-08-26 | 五柱×五阶段×三横切 | MCP 9 项三层 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（反空模板 + 初次修改验收 + Cursor stop followup + 准则分解评分=llm-as-a-verifier + IMPACT 自动登记 + 需求指纹实质比对 + 审查结论机械检测 + 防乱码编码守卫 + 配置一致性修复/触发词去重/权限对齐）
+> 版本：11.4.8 | 日期：2026-08-31 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + 计划未批准禁止 followup + 短 R20 + 非简单双审=修改→验证→审查最多 3 轮 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（CRG 扩权 + 六维纠错续轮 + 满足行三态 + 反空模板 + 初次修改验收 + Cursor stop followup + 准则分解评分 + IMPACT/指纹/审查结论 + 防乱码编码守卫）

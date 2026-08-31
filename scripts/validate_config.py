@@ -446,6 +446,7 @@ def check_v11_hook_exception_propagation():
         "session-start-bootstrap.py", "pre-userprompt-verify-gate.py",
         "pre-userprompt-issue-tracker.py",
         "pre-bash-guard.py", "pre-rtk-rewrite.py",
+        "pre-graph-freshness.py",
         "pre-read-before-edit.py", "pre-edit-impact-nudge.py",
         "pre-context-injector.py", "pre-manifest-validator.py",
         "pre-compact-state.py",
@@ -457,6 +458,7 @@ def check_v11_hook_exception_propagation():
     optional_hooks = [
         "pre-tmux-reminder.py", "pre-loop-guard.py",
         "pre-suggest-compact.py", "stop-context-monitor.py",
+        "stop-graph-freshness.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")
     missing = []
@@ -508,6 +510,7 @@ def check_v13_cursor_guard():
         "verification_stop.py",
         "first_edit_verify.py",
         "r20_capture.py",
+        "graph_freshness.py",
     )
     if not os.path.isfile(template):
         ERRORS.append("V13: templates/cursor-guard/hooks.json missing")
@@ -519,7 +522,23 @@ def check_v13_cursor_guard():
     missing = [h for h in required_hooks if not os.path.isfile(os.path.join(hooks_tpl, h))]
     if missing:
         ERRORS.append(f"V13: missing cursor-guard hooks: {', '.join(missing)}")
+    hook_io = os.path.join(hooks_tpl, "_lib", "hook_io.py")
+    if not os.path.isfile(hook_io):
+        ERRORS.append("V13: templates/cursor-guard/hooks/_lib/hook_io.py missing")
+    proj_hooks = os.path.join(BASE, ".cursor", "hooks.json")
+    if not os.path.isfile(proj_hooks):
+        ERRORS.append(
+            "V13: .cursor/hooks.json missing (Cursor treats absent project hooks as parse ERROR)"
+        )
     else:
+        try:
+            with open(proj_hooks, "r", encoding="utf-8-sig") as fh:
+                data = json.load(fh)
+            if not isinstance(data, dict) or data.get("version") != 1:
+                ERRORS.append("V13: .cursor/hooks.json must be JSON object with version=1")
+        except (OSError, json.JSONDecodeError) as exc:
+            ERRORS.append(f"V13: .cursor/hooks.json parse failed: {exc}")
+    if not missing and os.path.isfile(hook_io) and os.path.isfile(proj_hooks):
         print(f"  V13: Cursor Guard 模板 {len(required_hooks)} hooks ✓")
 
 
@@ -630,8 +649,17 @@ def check_v14_cursor_guard_v11():
         ERRORS.append("V14: docs/CURSOR_EDITOR_SETUP.md missing")
     if not os.path.isfile(rule):
         ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
+    hooks_json = os.path.join(BASE, "templates", "cursor-guard", "hooks.json")
+    try:
+        with open(hooks_json, "r", encoding="utf-8-sig") as fh:
+            gv = json.load(fh).get("guard_version")
+        if gv != "1.2.6":
+            ERRORS.append(f"V14: templates/cursor-guard/hooks.json guard_version={gv!r} expected '1.2.6'")
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V14: hooks.json unreadable: {exc}")
+        return
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
-        print(f"  V14: Cursor Guard v1.2.1 ({len(v11_hooks)} hooks + docs) ✓")
+        print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 
 
 def check_v17_auto_compact_window():
@@ -741,6 +769,40 @@ def check_v16_codegraph_mandate():
             print(f"  V16: .codegraph/ present ({len(entries)} entries) ✓")
     else:
         print("  V16: codegraph index markers ✓")
+
+    qg_path = os.path.join(BASE, "config", "quality_gates.json")
+    try:
+        with open(qg_path, "r", encoding="utf-8") as fh:
+            gf = json.load(fh).get("graph_freshness") or {}
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V16: quality_gates.json graph_freshness unreadable: {exc}")
+        return
+    required = (
+        "session_ensure_timeout_sec",
+        "pretool_ensure_timeout_sec",
+        "stop_refresh_timeout_sec",
+        "sync_ps1_timeout_sec",
+    )
+    missing = [k for k in required if k not in gf]
+    if missing:
+        ERRORS.append(f"V16: graph_freshness missing keys: {', '.join(missing)}")
+        return
+    if int(gf.get("session_ensure_timeout_sec") or 0) < 120:
+        WARNINGS.append(
+            "V16: graph_freshness.session_ensure_timeout_sec < 120 "
+            "(首次建图可能被截断)"
+        )
+    snippet = os.path.join(BASE, "templates", "claude-settings", "hooks.snippet.json")
+    try:
+        with open(snippet, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        if "pre-graph-freshness.py" not in text:
+            ERRORS.append("V16: hooks.snippet.json missing pre-graph-freshness.py")
+        if '"timeout": 120000' not in text and '"timeout":120000' not in text:
+            WARNINGS.append("V16: hooks.snippet.json SessionStart timeout 不是 120000ms")
+    except OSError as exc:
+        WARNINGS.append(f"V16: hooks.snippet.json unreadable: {exc}")
+    print("  V16: graph_freshness timeouts + snippet ✓")
 
 
 def check_v17_bare_except_extended():

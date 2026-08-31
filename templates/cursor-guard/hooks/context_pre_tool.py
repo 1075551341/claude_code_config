@@ -18,7 +18,12 @@ from hook_io import (
 ensure_lib_path()
 setup_stdio()
 
-from context_estimator import ContextLevel, detect_tool_loop, peek_context
+from context_estimator import (
+    ContextLevel,
+    detect_tool_loop,
+    peek_context,
+    take_force_tool_nudge,
+)
 
 
 def main() -> None:
@@ -32,10 +37,11 @@ def main() -> None:
         messages: list[str] = []
 
         if level == ContextLevel.FORCE:
-            messages.append(
-                f"上下文≥90%（预估{est_pct:.0f}%，{count}次工具）— "
-                "禁止大范围 Read/探索；输出压缩摘要并建议用户开新对话。"
-            )
+            if take_force_tool_nudge():
+                messages.append(
+                    f"上下文≥90%（预估{est_pct:.0f}%，{count}次工具）— "
+                    "禁止大范围 Read/探索；输出压缩摘要并建议用户开新对话。"
+                )
         elif level == ContextLevel.WARN:
             messages.append(
                 f"上下文≥70%（预估{est_pct:.0f}%）— 择机精简回复，完成当前步骤后输出状态摘要。"

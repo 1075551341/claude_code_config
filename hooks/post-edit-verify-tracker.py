@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
+from crg_track import record_crg_call  # noqa: E402
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -240,9 +241,21 @@ def main():
         agent = str(tool_input.get("subagent_type") or tool_input.get("description") or "").lower()
         for reviewer in cfg["reviewer_agents"]:
             if reviewer.lower() in agent:
+                last_rev = 0.0
+                for item in entry.get("reviews") or []:
+                    last_rev = max(last_rev, float(item.get("ts", 0) or 0))
+                last_edit = 0.0
+                for item in entry.get("edited_files") or []:
+                    last_edit = max(last_edit, float(item.get("ts", 0) or 0))
+                if last_edit > last_rev:
+                    entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
                 entry["reviews"].append({"agent": reviewer, "ts": now})
+                entry["review_pass_ok"] = False
                 changed = True
                 break
+
+    if record_crg_call(entry, tool_name, now, tool_input):
+        changed = True
 
     if changed:
         save_state(state)

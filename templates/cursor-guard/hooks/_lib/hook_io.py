@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 _emitted = False
+_MAX_STDIN = 16 * 1024 * 1024
 
 
 def setup_stdio() -> None:
@@ -41,22 +43,118 @@ def import_claude_lib(claude_home, module_name):
     return importlib.import_module(module_name)
 
 
+def _decode_blob(blob: bytes) -> str:
+    if blob.startswith(b"\xff\xfe") or blob.startswith(b"\xfe\xff"):
+        return blob.decode("utf-16", errors="replace")
+    if blob.startswith(b"\xef\xbb\xbf"):
+        return blob[3:].decode("utf-8", errors="replace")
+    sample = blob[:64]
+    if sample and sample.count(b"\x00") >= max(2, len(sample) // 4):
+        try:
+            return blob.decode("utf-16-le")
+        except UnicodeDecodeError:
+            pass
+    return blob.decode("utf-8", errors="replace")
+
+
+def parse_hook_json(blob: bytes | str) -> dict | None:
+    """Parse Cursor hook stdin. None = incomplete/invalid; {} = empty or non-object JSON."""
+    if isinstance(blob, str):
+        blob = blob.encode("utf-8")
+    if not blob or not blob.strip():
+        return {}
+    text = _decode_blob(blob).lstrip("\ufeff")
+    stripped = text.lstrip()
+    if stripped.lower().startswith("content-length:"):
+        body = ""
+        for sep in ("\r\n\r\n", "\n\n"):
+            if sep in text:
+                body = text.split(sep, 1)[1]
+                break
+        if not body.strip():
+            return None
+        text = body
+    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
+    if not starts:
+        return None
+    text = text[min(starts) :]
+    try:
+        obj = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            obj, _end = json.JSONDecoder().raw_decode(text)
+        except json.JSONDecodeError:
+            return None
+    if isinstance(obj, dict):
+        return obj
+    return {}
+
+
+def _debug_stdin(blob: bytes, reason: str) -> None:
+    if os.environ.get("CURSOR_GUARD_DEBUG", "").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        return
+    print(f"cursor-guard: stdin {reason} ({len(blob)} bytes)", file=sys.stderr)
+    try:
+        state = Path.home() / ".cursor" / ".state"
+        state.mkdir(parents=True, exist_ok=True)
+        dump = state / "hook-stdin-fail.bin"
+        if not dump.exists():
+            dump.write_bytes(blob[:4096])
+    except OSError as exc:
+        print(f"cursor-guard: stdin dump failed: {exc}", file=sys.stderr)
+
+
 def read_stdin() -> dict:
-    """读取 Cursor 传入的单行 JSON；用 readline 避免 stdin 未关闭时 read() 阻塞至超时。
-    显式 UTF-8 解码：Windows 默认 cp936 会把中文 prompt 读成乱码。"""
+    """读取 Cursor stdin JSON。
+
+    Cursor 3.18 可能发送：UTF-8 BOM、pretty-print 多行、Content-Length 帧、或无尾换行。
+    拼到合法对象即返回；空输入返回 {}。解析失败默认静默（避免 Hooks 面板被 STDERR 刷红），
+    `CURSOR_GUARD_DEBUG=1` 时才写 stderr / 落盘前 4KB。
+    """
     try:
         if sys.stdin is None or sys.stdin.closed:
             return {}
         if sys.stdin.isatty():
             return {}
-        if hasattr(sys.stdin, "buffer"):
-            raw = sys.stdin.buffer.readline().decode("utf-8", errors="replace")
-        else:
-            raw = sys.stdin.readline()
-        if not raw.strip():
-            return {}
-        return json.loads(raw)
-    except (json.JSONDecodeError, OSError, ValueError):
+        buf = sys.stdin.buffer if hasattr(sys.stdin, "buffer") else None
+        if buf is None:
+            raw = sys.stdin.read()
+            parsed = parse_hook_json(raw if isinstance(raw, bytes) else raw.encode("utf-8"))
+            return parsed if parsed is not None else {}
+        first = buf.readline()
+        if not first.strip():
+            rest = buf.read(_MAX_STDIN)
+            parsed = parse_hook_json(rest)
+            return parsed if parsed is not None else {}
+        blob = first
+        while True:
+            parsed = parse_hook_json(blob)
+            if parsed is not None:
+                return parsed
+            line = buf.readline()
+            if not line:
+                rest = buf.read(_MAX_STDIN)
+                if rest:
+                    blob += rest
+                    parsed = parse_hook_json(blob)
+                    if parsed is not None:
+                        return parsed
+                break
+            blob += line
+            if len(blob) > _MAX_STDIN:
+                break
+        parsed = parse_hook_json(blob)
+        if parsed is not None:
+            return parsed
+        _debug_stdin(blob, "unparsed")
+        return {}
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
+        _debug_stdin(b"", f"parse failed: {exc}")
         return {}
 
 
@@ -89,6 +187,23 @@ def extract_file_path(data: dict) -> str:
 
 
 def extract_tool_name(data: dict) -> str:
+    for key in ("tool_name", "tool", "name"):
+        val = data.get(key)
+        if isinstance(val, str) and val:
+            if val in {"CallMcpTool", "call_mcp_tool", "CallDynamicTool", "call_dynamic_tool"}:
+                break
+            return val
+    tool_input = data.get("tool_input") or data.get("arguments") or data.get("input") or {}
+    if isinstance(tool_input, dict):
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
+            val = tool_input.get(key)
+            if isinstance(val, str) and val:
+                return val
+        nested = tool_input.get("arguments")
+        if isinstance(nested, dict):
+            val = nested.get("name") or nested.get("toolName")
+            if isinstance(val, str) and val:
+                return val
     for key in ("tool_name", "tool", "name"):
         val = data.get(key)
         if isinstance(val, str) and val:

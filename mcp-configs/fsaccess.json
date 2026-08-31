@@ -2,7 +2,7 @@
   "toolset": "fsaccess",
   "description": "跨路径文件系统 — fs（v10.17 从常驻降级为按需）。降级原因：全盘符可写会绕过 Edit/Write 验证追踪链，Stop 硬门因此漏判回归；日常文件读写一律用内置 Read/Write/Grep。",
   "servers": ["fs"],
-  "enable": "确需跨仓批量文件操作时，将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启；用完立即移除并重启（恢复常驻 9）",
+  "enable": "确需跨仓批量文件操作时，将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启；用完立即移除并重启（恢复常驻 4：codegraph/CRG/serena/grep）",
   "note": "已 merge 时 settings.json 的 PostToolUse matcher 会以 mcp__fs__.* 捕获写操作并纳入验证追踪；扩大 args 中的目录范围前先评估该风险",
   "mcpServers": {
     "fs": {

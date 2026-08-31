@@ -8,7 +8,7 @@ from pathlib import Path
 
 import _path  # noqa: F401
 
-from hook_io import ensure_hook_output, ensure_lib_path, read_stdin, setup_stdio, write_json
+from hook_io import ensure_hook_output, ensure_lib_path, import_claude_lib, read_stdin, setup_stdio, write_json
 
 ensure_lib_path()
 setup_stdio()
@@ -17,6 +17,7 @@ from config import load_guard_config, state_path
 from gate_messages import load_gate
 from context_usage_store import usage_percent
 from impact_sync import rules_out_of_sync
+from context_estimator import clear_force_nudges
 from session_handoff import (
     format_handoff_block,
     load_digest_block,
@@ -59,6 +60,7 @@ def main() -> None:
         is_new_session = save_session_id(session_id) if session_id else False
         if is_new_session:
             reset_tool_counter()
+            clear_force_nudges()
 
         cfg = load_guard_config()
         comp = cfg["compression"]
@@ -103,7 +105,34 @@ def main() -> None:
 
         parts.append(load_gate("p0", cfg["sync"]["claude_home"]))
 
-        write_json({"additional_context": "\n".join(parts)})
+        try:
+            gf = import_claude_lib(cfg["sync"]["claude_home"], "graph_freshness")
+            gcfg = gf.load_cfg()
+            cwd = gf.resolve_cwd(data)
+            result = gf.ensure_both(
+                cwd,
+                int(gcfg.get("session_ensure_timeout_sec", 120)),
+                session_id=session_id or "",
+            )
+            parts.append(f"- 图谱: {gf.format_status(result)}")
+            banner = gf.format_ui_banner(result, action="ensure")
+            payload = {
+                "additional_context": "\n".join(parts),
+                "user_message": banner,
+            }
+            git_root = str(result.get("root") or "")
+            if result.get("eligible") and git_root:
+                payload["env"] = {"CURSOR_PROJECT_DIR": git_root}
+            write_json(payload)
+        except Exception as exc:
+            print(f"session_bootstrap: graph ensure failed: {exc}", file=sys.stderr)
+            parts.append("- 图谱: ensure 失败（后续工具将 deny）")
+            write_json(
+                {
+                    "additional_context": "\n".join(parts),
+                    "user_message": "【会话同步双图】失败：ensure 异常",
+                }
+            )
     except Exception as e:
         print(f"session_bootstrap: {e}", file=sys.stderr)
     finally:

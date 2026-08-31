@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     - 自动设置 UTF-8，避免 Windows GBK 乱码
-    - 测试前清除 compress-pending / tool-counter（测试脚本内也会隔离）
+    - 测试前清除 compress-pending / tool-counter / context-nudge / cursor-context / context_monitor（测试脚本内也会隔离）
     - 行为断言 + JSON 合法性（见 test-cursor-guard-hooks.py）
 
 .PARAMETER Deploy
@@ -59,13 +59,13 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 Write-Ok "Python: $(& python --version 2>&1)"
 
 if ($Deploy) {
-    $deploy = Join-Path $CLAUDE_DIR "scripts\deploy-cursor-guard.ps1"
-    if (-not (Test-Path $deploy)) {
-        Write-Fail "missing $deploy"
+    $deployScript = Join-Path $CLAUDE_DIR "scripts\deploy-cursor-guard.ps1"
+    if (-not (Test-Path $deployScript)) {
+        Write-Fail "missing $deployScript"
         exit 1
     }
     Write-Info "deploy-cursor-guard.ps1 ..."
-    & powershell -ExecutionPolicy Bypass -File $deploy
+    & pwsh -NoProfile -ExecutionPolicy Bypass -File $deployScript
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
@@ -77,7 +77,13 @@ Write-Ok "hooks.json present"
 
 # 清除易干扰回归的瞬时状态（测试脚本内仍有 backup/restore）
 if (Test-Path $STATE) {
-    foreach ($f in @("compress-pending.json", "tool-counter.json")) {
+    foreach ($f in @(
+        "compress-pending.json",
+        "tool-counter.json",
+        "context-nudge.json",
+        "cursor-context.json",
+        "context_monitor.json"
+    )) {
         $p = Join-Path $STATE $f
         if (Test-Path $p) {
             Remove-Item $p -Force

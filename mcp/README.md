@@ -1,44 +1,41 @@
 # MCP 配置指南
 
-> 权威：`.mcp.json`（Claude 常驻 9）+ `mcp/servers.json`（分组视图）+ `docs/CURSOR_MCP_PROFILE.md`（Cursor）
+> 权威：`.mcp.json`（Claude 常驻：codegraph / CRG / serena / grep）+ `mcp/servers.json`（分组视图）+ `docs/CURSOR_MCP_PROFILE.md`（Cursor）
 >
-> **已废弃**：将 `memory` / `thinking` 当作 core 常驻；启用 codebase-memory；同端 plugin+mcp 双挂（pw/cdt/Cursor 侧 exa）。
+> **优先级**：编辑器内置 > 同名 plugin > MCP > 按需中断启用。
+> **已删除**：`aider-repo-map`、`sequential-thinking`。禁止常驻 `memory` MCP；禁止 codebase-memory；禁止同端 plugin+mcp 双挂。
 
-## 常驻（Claude `.mcp.json`，9 项三层架构）
+## 常驻（Claude `.mcp.json`）
 
 | 层 | 服务器 |
 |----|--------|
-| 本地代码 | codegraph \| code-review-graph \| aider-repo-map \| serena |
-| 远端探索 | github \| grep |
-| Web & 文档 | exa \| context7 \| firecrawl |
+| 本地代码 | codegraph \| code-review-graph \| serena |
+| 远端探索 | grep |
 
-四工具分工（谁做探索、谁做编辑、谁做审查）→ `rules/MCP.md` §4。
+三工具分工 → `rules/MCP.md` §4（CRG = 精准上下文/影响面/风险/审查/PR）。
 
-认证 env（User 级，已配置）：`GITHUB_TOKEN` + `GITHUB_PERSONAL_ACCESS_TOKEN`（二者同值，后者给 github-mcp-server）/ `EXA_API_KEY` / `FIRECRAWL_API_KEY`。
-github MCP 走本地 stdio `~/.local/bin/github-mcp-server.exe`，不要再用 `https://api.githubcopilot.com/mcp/`（Cursor/Claude 会变成 OAuth `mcp_auth` + 0 tools）。
-
-npx 类服务器按 R14 钉版本：codegraph 1.5.0 / firecrawl-mcp 3.23.9 / exa-mcp-server 3.4.0。
+context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plugin **默认 false**。github 不常驻。
 
 ## 浏览器
 
 | 能力 | Claude | Cursor |
 |------|--------|--------|
-| Driving (E2E) | playwright **插件** | 内置 `cursor-ide-browser` |
-| Debugging (perf) | 按需 merge `mcp-configs/debug.json` | 内置 `cursor-ide-browser`；确需时按需 merge + `--isolated` |
+| Driving (E2E) | playwright **插件** | 内置浏览器（UI）+ playwright plugin（E2E） |
+| Debugging (perf) | chrome-devtools **默认关；中断请用户开 Plugin** | 同左 |
 
-禁止共享非隔离 profile；禁止与 puppeteer 同开；禁止同端 plugin+mcp 双挂同一能力。
+禁止自动 merge `mcp-configs/debug.json`。仅用户确认且 Plugin 不可用时才由用户 merge（须 `--isolated`）。禁止与 plugin 双挂。
 
 ## 记忆
 
 仅 **claude-mem 插件**（R18）。禁止 `memory` MCP。
 
-## 按需（v10.17）
+## 按需（v10.17；v11.4.5 中断启用）
 
 | Profile | 文件 | 说明 |
 |---------|------|------|
-| debug | `mcp-configs/debug.json` | chrome-devtools（原常驻，v10.17 降级） |
-| fsaccess | `mcp-configs/fsaccess.json` | fs（原常驻，v10.17 降级：全盘可写绕过验证追踪链） |
-| ops | `mcp-configs/ops.json` | redis / sqlite / docker / postgres |
+| debug | `mcp-configs/debug.json` | chrome-devtools（Agent 禁止自动 merge） |
+| fsaccess | `mcp-configs/fsaccess.json` | fs |
+| ops | `mcp-configs/ops.json` | redis / sqlite / docker / postgres（postgres 中断启用） |
 | collab | `mcp-configs/collab.json` | figma / linear / notion / slack（仅声明） |
 
 `optional-dev.json` 自 v10.17 起不再声明可运行 `mcpServers`，只保留禁用记录与回退说明（cbm 已 disabled/archive）。

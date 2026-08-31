@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "session_ensure_timeout_sec": 120,
+  "stop_refresh_timeout_sec": 30,
+  "require_both_graphs": true,
+  "description": "v11.4.6 图谱保鲜（DSH/OpenCode 便携 CLI）：会话开始 ensure 双图；会话结束 refresh 增量。不经 sync.ps1。"
+}

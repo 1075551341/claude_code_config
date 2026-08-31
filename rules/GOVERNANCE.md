@@ -7,23 +7,27 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v11.3.5 — 短指针 + hook 强制 + Cursor followup）
+## 门控强度（v11.4.8 — 修改→验证→审查循环最多 3 轮）
 
 > 原则：不依赖模型自觉。门控文本 SSOT = `hooks/_lib/gate_messages.md`（短指针，完整清单在 skill）。R20 机械检测 SSOT = `hooks/_lib/r20_replay.py`。
+> v11.4.8：非简单双审 = 修改→验证→审查循环最多 3 轮；`dual_pass_phase`；禁止只连审不改。
+> v11.4.7：计划未批准 / CreatePlan / 零编辑 / 无 session id → Cursor **禁止** `followup_message`；完成门不再用裸词「完成」；`review_max_rounds=3`。
 > v11.3.5：完成验证门第 1 条增「验证证据须为观察输出（命令/测试/文件），不信叙述」（软性短句，硬门字段不变）；hooks 无变更（v5.8）。
 > v11.3.4：Cursor Stop 用 `followup_message` 等效硬门；初次修改后五维验收；R20 反空模板。
 
 | 门             | Claude Code 触发                                                                                                                    | Cursor Guard 触发                                                                                                                                                         | 行为                                                                                                                       | 豁免                                                                 |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | P0 分类门      | SessionStart → `session-start-bootstrap.py`                                                                                         | sessionStart → `session_bootstrap.py`                                                                                                                                     | 每会话注入分类指令（简单/Bug/非简单路由）                                                                                  | 无；skill 已读且范围未变可不重复 Read                                |
-| 完成验证门     | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**，R20 反空模板） | beforeSubmitPrompt → `verification_gate.py`（软注入）+ postToolUse → `verify_tracker.py` + `first_edit_verify.py` + Stop → `verification_stop.py`（**followup_message**） | 软注入：命中关键词**或**未验证编辑；硬门：Claude exit 2；Cursor stop followup（loop_limit=max_blocks，非 permission deny） | 逃逸关键词（跳过验证）；max_blocks=3 上限后放行标 DONE_WITH_CONCERNS |
+| 完成验证门     | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**，短 R20） | beforeSubmitPrompt → `verification_gate.py`（有未验证编辑才软注入）+ postToolUse → `verify_tracker.py` + `first_edit_verify.py` + Stop → `verification_stop.py`（短 **followup_message**） | 软注入：有未验证编辑（计划等待/门控回灌跳过）；硬门：Claude exit 2；Cursor 仅有未验证编辑才 followup（计划未批准/零编辑/无 session **不** followup；loop_limit=max_blocks） | 逃逸关键词（跳过验证）；max_blocks=3 或 review_max_rounds=3 后放行标 DONE_WITH_CONCERNS |
 | 变更影响门     | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py`                                                                        | preToolUse Write/StrReplace → `impact_nudge.py`                                                                                                                           | 每个文件首次编辑前注入 blast-radius + Grep + MANIFEST                                                                      | **永不 deny**                                                        |
 | 初次修改验收门 | PostToolUse → `post-edit-verify-tracker.py`（记账后附加 additionalContext）                                                         | postToolUse → `first_edit_verify.py`                                                                                                                                      | 每个文件首次成功编辑后注入五维迷你验收；核对范围=该文件 + blast-radius 全部相关项（禁止只验当前文件）                       | 同一文件第二次编辑静默                                               |
+| 图谱保鲜门     | SessionStart ensure（120s）+ PreToolUse `pre-graph-freshness.py`（**deny**）+ Stop 增量刷新（有无编辑都刷）；验绿后 `sync.ps1 -Scope rules`           | sessionStart ensure（120s）+ preToolUse `graph_freshness.py`（**deny**）+ Stop 刷新（有无编辑都刷）；验绿后 sync_runner                                                                    | eligible git 仓无双图禁止 Grep/编辑/查询 MCP；建图类 CLI/MCP 放行。TRAE/Qoder 经 `deploy-editor-graph-hooks.ps1`；workbuddy 仅 L0 规则 | `GRAPH_FRESHNESS_SKIP_SYNC=1`（测试）；非 git 仓跳过（判定看 `workspace_roots`/git 根，不看用户 hook 进程目录）                 |
 
 - 状态文件：Claude `~/.claude/.state/impact-nudge.json` + `verification-gate.json`；Cursor Guard 同路径共用
-- 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节（max_blocks / auto_check_timeout_sec / skip_keywords / verify_command_patterns / require_reviewer_min_files）
+- 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节 + `graph_freshness` 节（session/pretool/stop/sync 超时）
 - 强度调整：验证门硬阻断由 `verification_gate.enabled` 控制；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
 - Cursor 侧改动生效路径：改 `templates/cursor-guard/` → 跑 `scripts/deploy-cursor-guard.ps1` → 重启 Cursor
+- DSH / OpenCode：不经 Claude Stop。规则 SSOT 仍是 `hooks/_lib/r20_replay.py`；便携 `templates/editor-graph-hooks/r20_check.py` 部署到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`（无指纹比对）。OpenCode `verify-gate.ts` 本地判定对齐，**禁止 spawn** `gate_cli.py`。不经 `sync.ps1` 覆盖各端 AGENTS.md。
 
 ## R16 详细声明（错误暴漏）
 
@@ -85,7 +89,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 | Rust   | chrono / time crate |
 | C#     | NodaTime            |
 
-获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v10.17 常驻 9 项，见 `rules/MCP.md`）。
+获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v11.4.5 常驻 4 项：codegraph/CRG/serena/grep，见 `rules/MCP.md`）。
 
 ## 变更彻底性三阶段流程（R3/R4 详情）
 
@@ -249,7 +253,7 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 - 上下文 >70% 择机 compact，>90% 强制新子Agent
 - 长任务（>30分钟）拆分为独立子Agent，每个有明确完成标准
 
-**会话终验（R20）**：改前优先成熟方案或已有全局通用处理（本文件「工程决策原则」：成熟度/先查已有能力）；完成后按用户**原始要求逐条回放**（禁止把实现重做一遍）。模板 SSOT → `skills/verification-before-completion/SKILL.md`（满足/遗漏/错改/漏改/原功能）。**核对范围 = blast-radius 全部相关项**（文档/INDEX/MANIFEST/注释/命令/测试/同类引用），禁止只验已编辑文件。修改后文件/配置必须与文档/备注保持一致（不一致计入「漏改」）。非功能变更必须在「原功能」写「保持」并指向测试或冒烟证据。验证命令不能代替需求对照。未输出不得声称完成。Claude Stop 硬门：`r20_replay.py` 反空模板；Cursor Stop：`followup_message` 续轮（非 permission deny）。纯文档编辑同样适用。
+**会话终验（R20）**：改前优先成熟方案或已有全局通用处理（本文件「工程决策原则」：成熟度/先查已有能力）；完成后按用户**原始要求逐条回放**（禁止把实现重做一遍）。模板 SSOT → `skills/verification-before-completion/SKILL.md`（满足/遗漏/错改/漏改/原功能）。**核对范围 = blast-radius 全部相关项**（文档/INDEX/MANIFEST/注释/命令/测试/同类引用），禁止只验已编辑文件。修改后文件/配置必须与文档/备注保持一致（不一致计入「漏改」）。非功能变更必须在「原功能」写「保持」并指向测试或冒烟证据。验证命令不能代替需求对照。未输出不得声称完成。Claude Stop 硬门：`r20_replay.py` 反空模板；Cursor Stop：有未验证编辑才 `followup_message`（计划未批准 / CreatePlan / 零编辑 / 无 session **禁止** followup）。纯文档编辑同样适用。
 
 ## 上下文管理
 

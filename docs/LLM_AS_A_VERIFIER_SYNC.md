@@ -72,6 +72,13 @@
 
 ---
 
+## 六、v11.4.5 追加
+
+- GSD honest-verifier 三态 → R20「满足」行承认/反驳/弃权（硬门仍 coverage_ok）
+- **不吸收**：竞品 code-graph plugin、ralph-loop、实验性 agent-Stop hook
+
+---
+
 ## 五、SSOT
 
 - 融合正文 SSOT：`skills/verification-before-completion/SKILL.md`（v11.3.5 小节）

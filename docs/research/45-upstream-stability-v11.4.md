@@ -40,8 +40,8 @@
 
 - OpenSpec 1.8 `--tools agents`（`.agents/skills/` 共享位）与 ECC 2.1 官方 OpenCode 目标，
   双重印证 v11.4 opencode 经 AGENTS.md 接线的路线正确。
-- gsd-core honest-verifier 的 claim 三态处置（admit/refute/abstain）与已吸收的
-  llm-as-a-verifier 准则分解评分同源——后续可低成本增强 R20 回放质量（候选，不扩本次 scope）。
+- gsd-core honest-verifier 的 claim 三态处置（admit/refute/abstain）已于 **v11.4.5** 吸收为 R20「满足」行承认/反驳/弃权（硬门仍用 coverage_ok 关键词覆盖）。
+- **明确不吸收（v11.4.5）**：sdsrss/dorkian 等竞品 code-graph plugin；ralph-loop / Cursor `/loop` 独立进程；Anthropic 实验性 agent-Stop hook；caveman 2.x；claude-mem ≥13.14；OpenSpec 1.10 大升。
 
 ## 执行结果回填（2026-08-25 T15）
 

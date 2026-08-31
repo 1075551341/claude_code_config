@@ -10,14 +10,18 @@ alwaysApply: true
 ## 探索优先级（R17 Cursor 版 · 严格三级禁止跳级）
 
 ```
-1. 结构/局部 → codegraph_explore（禁止直接 Grep/Read）
-2. codebase-memory：已禁用（全盘索引爆内存）— 勿调用；架构问题仍用 codegraph
-3. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
+1. 结构/怎么运作 → codegraph_explore（禁止直接 Grep/Read）
+2. 精准上下文/变更影响/风险/审查/PR → CRG（有 `.code-review-graph/graph.db`）；无图则 SessionStart/PreToolUse ensure，仍无则 deny（禁止 Grep 当主路径）
+3. codebase-memory：已禁用 — 勿调用
+4. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
 ```
 
-- 结构、调用链、影响面：必须先 MCP `codegraph_explore`
-- Grep 仅 codegraph 不可用时的定点 fallback（非跳级捷径）
+- 结构、调用链、「怎么运作」：必须先 MCP `codegraph_explore`
+- 影响面/风险/审查/开 PR：有 CRG 图时 `get_minimal_context` + `get_impact_radius` + `detect_changes` / `get_review_context`
+- Grep 仅双图就绪后作残留核对（非跳级捷径）；无图 **deny**
 - 禁止未探索就大范围 Read 扫目录
+- chrome-devtools / postgres 默认关；需要时**中断请用户手动启用**（不改 Plugin 面板、不自动 merge MCP）
+- 工具优先级：内置浏览器（UI 核验）> playwright plugin（E2E）> chrome-devtools（调试）
 - codegraph 索引由 MCP server 自动同步（v1.5 原生监听；v11 起 Guard 不再挂 kg sync hook；cbm 已关）
 
 ## 编辑与引用
@@ -42,11 +46,15 @@ alwaysApply: true
 ## Stop 门控
 
 - Cursor `stop` **不能** `permission: deny`（仅 shell/MCP 能 deny）
-- 完成验证用 `followup_message` 自动续轮，等效 Claude Code Stop exit 2；`loop_limit` 对齐 `max_blocks`
-- 每个文件首次编辑后注入五维迷你验收（需求/错改/漏改/原功能/工具）；核对范围 = 该文件 + blast-radius 全部相关项（禁止只验当前文件），清单 SSOT → verification skill
+- 完成验证用短 `followup_message` 续轮（`loop_limit` 对齐 `max_blocks`）
+- **计划未批准 / CreatePlan / 本轮零编辑 / 无 session id → 禁止 followup**（避免计划卡片等待时自动跑 R20）
+- **非简单双审**：修改→验证→审查循环最多 3 轮（对照原始要求审全部修改；禁止只连审不改）
+- 每个文件首次编辑后注入五维迷你验收；核对范围 = 该文件 + blast-radius 全部相关项
 
 ## 工具路由
 
-- 库文档：Context7 MCP
-- GitHub：gh MCP
+- 库文档：Context7 plugin
+- GitHub：`gh` CLI（github plugin 默认关）
 - 跨会话：Guard 摘要制品 + 新对话 `@session-digest.md`
+- E2E：内置浏览器（UI）+ playwright plugin（脚本）
+- 调试/DB：中断请用户手动启用 chrome-devtools / postgres

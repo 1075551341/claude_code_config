@@ -66,9 +66,9 @@
       "root_index": true
     },
     "opencode": {
-      "_comment": "v11.4：special=agents_md — CLAUDE.md 以软链优先/副本回退落 ~/.config/opencode/AGENTS.md（opencode 原生读 AGENTS.md 约定）；MCP/plugin 由其 opencode.json 自管不触",
+      "_comment": "v11.4.4 解耦：AGENTS.md 由 OpenCode 自管，禁止 CLAUDE.md 覆盖。enabled=false 反向只扫残留软链；实体 AGENTS.md 保留。MCP/plugin/skills 均在 ~/.config/opencode 自管",
       "home": "~/.config/opencode",
-      "enabled": true,
+      "enabled": false,
       "rules_channel": null,
       "rules_ext": null,
       "root_index": false,

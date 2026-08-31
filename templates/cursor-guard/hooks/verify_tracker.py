@@ -29,6 +29,7 @@ ensure_lib_path()
 setup_stdio()
 
 from config import load_guard_config
+from session_handoff import extract_session_id as handoff_session_id
 
 DEFAULT_VERIFY_PATTERNS = [
     "pytest", "vitest", "jest", "npm test", "pnpm test", "yarn test",
@@ -95,7 +96,10 @@ def main() -> None:
         state_path = _state_path(claude_home)
 
         tool_name = extract_tool_name(data)
-        session_id = str(data.get("session_id") or data.get("conversation_id") or "unknown")
+        session_id = handoff_session_id(data)
+        if not session_id:
+            print("verify_tracker: 无 conversation_id/session_id，跳过写入", file=sys.stderr)
+            return
 
         patterns = cfg.get("verification", {}).get("verify_command_patterns", DEFAULT_VERIFY_PATTERNS)
         reviewers = cfg.get("verification", {}).get("reviewer_agents", DEFAULT_REVIEWER_AGENTS)
@@ -118,11 +122,21 @@ def main() -> None:
         except Exception as e:
             print(f"verify_tracker: tool_paths unavailable: {e}", file=sys.stderr)
 
+        tool_input = data.get("tool_input") or data.get("input") or {}
+        if not isinstance(tool_input, dict):
+            tool_input = {}
+
         is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
 
         changed = False
+        try:
+            r20 = import_claude_lib(claude_home, "r20_replay")
+            r20.record_plan_tool(entry, tool_name, tool_input)
+            changed = True
+        except Exception as e:
+            print(f"verify_tracker: record_plan_tool unavailable: {e}", file=sys.stderr)
+
         if is_edit:
-            tool_input = data.get("tool_input") or data.get("input") or {}
             paths = tool_paths.extract_edit_paths(tool_input, cwd) if tool_paths else []
             if not paths:
                 single = extract_file_path(data)
@@ -136,12 +150,33 @@ def main() -> None:
                 entry["verify_commands"].append({"command": command[:300], "ts": now})
                 changed = True
         elif tool_name == "Task":
-            sub = str(data.get("subagent_type") or data.get("description") or "").lower()
+            sub = str(
+                data.get("subagent_type")
+                or tool_input.get("subagent_type")
+                or data.get("description")
+                or ""
+            ).lower()
             for reviewer in reviewers:
                 if reviewer.lower() in sub:
+                    last_rev = 0.0
+                    for item in entry.get("reviews") or []:
+                        last_rev = max(last_rev, float(item.get("ts", 0) or 0))
+                    last_edit = 0.0
+                    for item in entry.get("edited_files") or []:
+                        last_edit = max(last_edit, float(item.get("ts", 0) or 0))
+                    if last_edit > last_rev:
+                        entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
                     entry["reviews"].append({"agent": reviewer, "ts": now})
+                    entry["review_pass_ok"] = False
                     changed = True
                     break
+
+        try:
+            crg = import_claude_lib(claude_home, "crg_track")
+            if crg.record_crg_call(entry, tool_name, now, tool_input):
+                changed = True
+        except Exception as e:
+            print(f"verify_tracker: crg_track unavailable: {e}", file=sys.stderr)
 
         if changed:
             save_state(state_path, state)

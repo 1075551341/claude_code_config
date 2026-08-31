@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.4.3）
+# 门控注入文本 SSOT（v11.4.8）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -16,24 +16,22 @@
 ## 完成验证门
 
 【门控 · 完成前必做】
-Read ~/.claude/skills/verification-before-completion/SKILL.md
-
-1. 运行测试/lint/构建并贴证据（R1）；Grep 残留引用必须为 0；验证证据须为观察输出（命令/测试/文件），不信叙述（v11.3.5）
-2. 会话终验 R20：满足/遗漏/错改/漏改/原功能；漏改须含「文档」或「无文档影响」；原功能须含证据/测试/冒烟；核对范围=影响面全部相关项（非仅已编辑文件）
-3. 全量档：有 .code-review-graph/ 时调用 detect_changes_tool；交叉验证全项
-   Claude Stop 不合格 → exit 2。Cursor Stop 不合格 → followup_message 续轮（loop_limit=max_blocks）。
+有未验证编辑时才执行。计划未批准 / 本轮零编辑 → 停止，不要续跑。
+Read verification-before-completion；贴观察输出。
+R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）。
+非简单：修改→验证→审查（对照预期审全部修改），最多 3 轮；禁止只连审不改。
 
 ## 变更影响门
 
 【门控 · 每个文件首次编辑前必做】
 
 1. 改前优先成熟方案或已有全局通用处理
-2. codegraph_explore 目标 blast-radius（无索引 → Grep 全扫 + DONE_WITH_CONCERNS）
-3. Grep 全项目引用；配置类查 MANIFEST.yaml depends_on 与 INDEX
-   范围不明不修改。疑难先 grill。残留引用 >0 不得声称完成。
+2. 有 CRG 图：get_minimal_context + get_impact_radius（有 git diff 再 detect_changes）；叠加 codegraph_explore blast-radius
+3. eligible git 仓须已有双图（SessionStart 已 init/update）。无图禁止 Grep/编辑/查询 MCP；hook 会再 ensure，仍失败则 deny。
+   Grep 全项目引用；配置类查 MANIFEST depends_on。范围不明不修改。
 
 ## 初次修改验收门
 
 【门控 · 每个文件首次编辑后必做】
-对照本文件及其 blast-radius 全部相关项，五维逐条核验：需求(未满足=遗漏) / 错改 / 漏改(同类引用+INDEX/MANIFEST/README/注释/命令同步；无则写「无文档影响」) / 原功能(非功能变更须测试或冒烟证据) / 工具(codegraph/Grep 残留=0)。禁止只验当前文件、禁止「应该没影响」。
+对照本文件及其 blast-radius 全部相关项，五维逐条核验：需求(未满足=遗漏) / 错改 / 漏改(同类引用+INDEX/MANIFEST/README/注释/命令同步；无则写「无文档影响」) / 原功能(非功能变更须测试或冒烟证据) / 工具(CRG 影响面或 codegraph/Grep 残留=0)。禁止只验当前文件、禁止「应该没影响」。
 完整模板与判定细则 → skills/verification-before-completion/SKILL.md「场景G」（v11.3.6 收敛为指针）。

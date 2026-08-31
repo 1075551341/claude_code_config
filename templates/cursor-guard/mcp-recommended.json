@@ -1,69 +1,76 @@
 {
-  "_comment": "参考清单 — deploy 不写入用户 MCP。v10.17：与 ~/.claude/.mcp.json 常驻 9 项三层架构对齐；chrome-devtools/fs 已降级按需。codebase-memory 已禁用（全盘索引爆内存）。",
+  "_comment": "参考清单 — deploy 不写入用户 MCP。v11.4.5：常驻 4 项（codegraph/CRG/serena/grep）；plugin 优先；chrome-devtools/postgres 默认关、中断启用。codebase-memory 已禁用。",
   "priority_p0_local_code": [
     {
       "name": "codegraph",
-      "intent": "代码结构/调用链/影响面探索（R17 强制优先）",
-      "setup": "npx @colbymchenry/codegraph && codegraph init -i"
+      "intent": "R17 探索：结构/调用链/怎么运作",
+      "setup": "npx @colbymchenry/codegraph@1.6.0 && codegraph init -i"
     },
     {
       "name": "code-review-graph",
-      "intent": "审查/验证专用图谱：test-gap 检测、变更风险评分、受影响执行流（v10.14 引入，与 codegraph 互补）",
-      "setup": "pipx install code-review-graph==2.3.6 && code-review-graph build"
-    },
-    {
-      "name": "aider-repo-map",
-      "intent": "仓库级结构概览；codegraph 无索引时的首选降级（本地代码层）"
+      "intent": "精准上下文 / 变更影响 / 风险门禁 / 审查 / 开 PR（get_minimal_context、get_impact_radius、detect_changes、get_review_context）",
+      "setup": "uvx --with code-review-graph==2.3.8 code-review-graph serve；项目内 code-review-graph build"
     },
     {
       "name": "serena",
-      "intent": "符号级精确编辑 + LSP 诊断；只读探索仍走 codegraph（本地代码层）"
+      "intent": "符号级精确编辑 + LSP；只读探索仍走 codegraph"
     }
   ],
   "priority_p1_remote_web": [
     {
-      "name": "github",
-      "intent": "GitHub PR/Issue（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN）"
-    },
-    {
       "name": "grep",
-      "intent": "grep.app 远端代码搜索"
-    },
-    {
-      "name": "exa",
-      "intent": "语义搜索/调研双源（EXA_API_KEY）"
-    },
+      "intent": "grep.app 远端代码搜索（禁止替代本地 codegraph/CRG）"
+    }
+  ],
+  "plugins_not_mcp": [
     {
       "name": "context7",
       "intent": "库/API 文档"
     },
     {
-      "name": "firecrawl",
-      "intent": "网页抓取/调研（FIRECRAWL_API_KEY）"
-    }
-  ],
-  "on_demand_not_resident": [
-    {
-      "name": "chrome-devtools",
-      "intent": "页面调试/性能（v10.17 降级按需，mcp-configs/debug.json；@latest 为 R14 例外；须 --isolated）。Cursor 优先用内置 cursor-ide-browser"
-    },
-    {
-      "name": "fs",
-      "intent": "跨路径文件（v10.17 降级按需，mcp-configs/fsaccess.json）。降级原因：全盘可写会绕过 Edit/Write 验证追踪链"
+      "name": "exa",
+      "intent": "语义搜索/调研双源"
     },
     {
       "name": "playwright",
-      "intent": "浏览器 E2E（Driving）。Claude 走插件；Cursor 用内置 cursor-ide-browser"
+      "intent": "E2E 脚本。Cursor UI 核验优先内置浏览器"
+    },
+    {
+      "name": "firecrawl",
+      "intent": "Claude plugin；Cursor 面板无则不常驻 MCP"
+    }
+  ],
+  "on_demand_interrupt": [
+    {
+      "name": "chrome-devtools",
+      "intent": "调试/性能。默认关。需要时中断请用户开 Plugin，禁止自动 merge mcp-configs/debug.json"
+    },
+    {
+      "name": "postgres",
+      "intent": "数据库。默认 disabled。需要时中断请用户设 DATABASE_URL 后启用"
+    },
+    {
+      "name": "fs",
+      "intent": "跨路径文件（mcp-configs/fsaccess.json）。全盘可写会绕过 Edit/Write 验证追踪链"
     }
   ],
   "disabled": [
     {
       "name": "codebase-memory",
       "reason": "默认禁用：index_repository 易扫到用户主目录，单进程 >6GB RAM。替代：codegraph_explore。"
+    },
+    {
+      "name": "github",
+      "reason": "Claude/Cursor plugin 关且不写 MCP；用 gh CLI"
+    },
+    {
+      "name": "ralph-loop",
+      "reason": "不启用；质量纠错走 Stop/followup 门控续轮（max_blocks=3）"
     }
   ],
   "do_not_mirror": [
     "claude-mem plugin hooks",
-    "~/.claude/.mcp.json 全量复制"
+    "~/.claude/.mcp.json 全量复制",
+    "用户 Plugin 面板与各端 mcp.json"
   ]
 }

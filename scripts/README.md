@@ -6,9 +6,9 @@
 
 ## 同步与验证（v11.1 多编辑器 1+N）
 
-**1+N 模型**：Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy + opencode**（v11.4 增补 opencode：special=`agents_md`，CLAUDE.md 改名副本落 `~/.config/opencode/AGENTS.md`，MCP/plugin 由其 opencode.json 自管；清单单源 `config/sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
+**1+N 模型**：Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `config/sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 
-> **opencode 特例（v11.4）**：不进 `fix.ps1` 的 `$ALL_EDITORS`——该表只管 hook-launcher 部署的编辑器，opencode 无 launcher（验证链走其自有插件 `~/.config/opencode/plugins/verify-gate.ts`，全局目录为复数 `plugins/`——官方 autoload 约定；逻辑经 `hooks/_lib/gate_cli.py` 复用本仓 SSOT，禁止复制实现）。**MCP 对齐（v11.4.1）**：常驻 9 全对齐（serena 启用补符号级位——opencode 原生 LSP 默认关闭；pin 与 `.mcp.json` 双侧一致：CRG 2.3.8 / firecrawl 3.24.0 / exa 3.4.1 / codegraph 1.5.0）；chrome-devtools/fs/task-master 等按需项不进常驻（fs 会绕过验证链，opencode 自带 edit/write 不需要）。**托盘伴侣（v11.4.1 v3）**：桌面版点 X 即退出且 close-to-tray 上游未实现（#35775/#18134）→ `~/.config/opencode/tray/opencode-tray.ps1`。**行为语义（用户定义）**：点 X = 隐藏到系统托盘（等效实现：看门狗 1s 内检测退出→800ms 确认→自动重启→新窗口绘制后 400ms 自动 SW_HIDE，会话持久化恢复，净效果=X=进托盘后台运行）；托盘左键唤回；**托盘「退出 OpenCode」= 正式退出**（AutoRelaunch=false 让位看门狗）。零注入零消息发送，应用运行时零触碰。手动启动：`powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ~\.config\opencode\tray\opencode-tray.ps1`；**有意不写开机自启**（用户决策：OpenCode 及伴侣均不自启；如需自启自行在 shell:startup 放快捷方式）。
+> **opencode（v11.4.4 解耦）**：不进 `sync.ps1` 投放、不进 `fix.ps1` 的 `$ALL_EDITORS`。配置与验证门由 `~/.config/opencode` 自管，禁止 spawn 本仓 `hooks/_lib/gate_cli.py`。**托盘伴侣（v11.4.1 v3）**：桌面版点 X 即退出且 close-to-tray 上游未实现（#35775/#18134）→ `~/.config/opencode/tray/opencode-tray.ps1`。手动启动：`pwsh -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ~\.config\opencode\tray\opencode-tray.ps1`；**有意不写开机自启**。
 
 ### `sync.ps1` — 多编辑器同步（v20.0）
 
@@ -60,6 +60,7 @@ Claude Code hooks 在 Cursor 内不执行；编辑器侧由 **Cursor Guard** 负
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
 ```
 
 - 模板：`templates/cursor-guard/`；运行时：`~/.cursor/hooks.json`、`guard-config.json`
@@ -72,6 +73,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 | ----------------------------------------------- | ------------------------------------------------ |
 | `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
 | `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor          |
+| TRAE/Qoder 图谱 hook + DSH/OpenCode CLI/r20_check/plugin | `deploy-editor-graph-hooks.ps1`（不进 sync.ps1） |
 | `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话）     |
 | `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                           |
 

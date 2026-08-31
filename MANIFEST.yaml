@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.3
+# 组件唯一归属源 — 防左右手互博 — v11.4.8
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.3"
-updated: "2026-08-26"
+version: "11.4.8"
+updated: "2026-08-31"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4 — IMPACT 清单自动登记（追踪器直写 impact-manifest.log）；需求指纹留存+R20「满足」行实质比对（_lib/req_fingerprint，issue-tracker 捕获）；审查结论机械检测 review_verdict_ok（PASS/NEEDS-CHANGES）+ blocks≥2 持续处理升档触发；opencode 端经 _lib/gate_cli.py 复用同源判定。上游：Claude Stop exit 2（r20_replay 反空模板）；Cursor stop followup_message；PostToolUse 初次修改五维验收；配置 SSOT config/quality_gates.json verification_gate"
+    note: "v11.4.8 — 双审=修改→验证→审查循环最多 3 轮（dual_pass_phase）。v11.4.7 — 计划未批准/CreatePlan/零编辑禁止 Cursor followup；短 R20；非简单双审最多 3 次（review_max_rounds）。v11.4.6 — R20 必填影响范围；便携 r20_check.py 部署到 DSH tools/ 与 OpenCode scripts/（无指纹比对）；OpenCode verify-gate.ts 本地判定对齐、不 spawn。v11.4.5 — CRG 扩权 + crg_calls；Stop/followup 六维纠错；满足行承认/反驳/弃权。上游：Claude Stop exit 2；Cursor followup_message。SSOT quality_gates.json + hooks/_lib/r20_replay.py。v11.4.4：opencode 验证门已自管，不再经 gate_cli.py"
 
   debugging:
     owner: skill/systematic-debugging
@@ -436,7 +436,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2 — sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.8 — 双审循环 modify-verify-review；计划未批准禁止 followup；短 R20。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
@@ -558,7 +558,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude Code 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；v10.17 起 chrome-devtools→mcp-configs/debug.json、fs→mcp-configs/fsaccess.json 按需；pw 走插件勿写入 .mcp.json；cbm 永久禁用
+    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright 走 Plugins；chrome-devtools plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
     depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,
@@ -569,11 +569,11 @@ concerns:
 
   mcp_local_code_split:
     owner: rules/MCP.md
-    note: 本地代码四工具分工防互博 — codegraph=R17 探索主位；aider-repo-map=仓库结构概览兼 codegraph 无索引降级；serena=符号级精确编辑+LSP 诊断；code-review-graph=变更后 test-gap/风险评分
+    note: 本地代码三工具分工防互博 — codegraph=R17 探索主位；serena=符号级精确编辑+LSP 诊断；code-review-graph=变更后 test-gap/风险评分
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, rules/CORE.md]
     excludes:
       [
-        用 serena/aider-repo-map 替代 codegraph 做 R17 探索,
+        用 serena 替代 codegraph 做 R17 探索,
         用 codegraph 做 test-gap,
       ]
 
@@ -832,10 +832,11 @@ harness:
   hooks:
     profile_env: ECC_HOOK_PROFILE
     default: standard
-    # settings.json 已注册（v11 对齐：三门控 + issue-tracker；
-    # post-codegraph-sync / stop-knowledge-graph-sync 已退役 — codegraph v1.5 MCP 自动同步）
+    # settings.json 已注册（v11.4.6：图谱保鲜 SessionStart ensure + pre-graph-freshness；
+    # 每次编辑 kg sync 仍退役 — codegraph watcher + 会话/Stop 保鲜）
     core:
       - session-start-bootstrap
+      - pre-graph-freshness
       - pre-userprompt-issue-tracker
       - pre-userprompt-verify-gate
       - pre-bash-guard
@@ -859,6 +860,7 @@ harness:
       - pre-loop-guard
       - pre-suggest-compact
       - stop-context-monitor
+      - stop-graph-freshness # TRAE/Qoder Stop；CC 已并入 stop-verification-gate
     disabled:
       - pre-task-planner
   commands:
@@ -884,14 +886,9 @@ harness:
     always: [
         codegraph,
         code-review-graph,
-        aider-repo-map,
         serena,
-        github,
         grep,
-        exa,
-        context7,
-        firecrawl,
-      ] # 常驻 9 三层架构（本地代码4+远端探索2+Web&文档3）；pw 走插件勿双挂
+      ] # 常驻：本地代码3 + grep；pw/context7/exa 走插件；chrome-devtools 默认关；无 aider-repo-map/sequential-thinking
     debug: [chrome-devtools] # mcp-configs/debug.json
     fsaccess: [fs] # mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
     ops: [redis, sqlite, docker, postgres]
@@ -902,7 +899,7 @@ sync_targets:
   # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts, opencode] # v11.4: opencode 经 special=agents_md 落 AGENTS.md
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.4: opencode 解耦；v11.4.6：DSH/OpenCode 图谱+R20 走各自 home（CLI/r20_check/verify-gate），仍不投放 CLAUDE.md
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]

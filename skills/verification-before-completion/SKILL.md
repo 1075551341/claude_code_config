@@ -13,7 +13,10 @@ source: obra/superpowers
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
 > **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）；Cursor `verification_stop.py`（followup_message）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
-> **v11.4 机械增强**：① IMPACT 清单由追踪器自动登记（差集校验零依赖自觉）；② 「满足」行须覆盖需求指纹 strong 关键词（`req_fingerprint.coverage_ok`，<5 全命中/≥5 允许 ≥80%）；③ ≥3 文件委派审查后回复须含 PASS/NEEDS-CHANGES 结论标记，blocks≥2 持续处理同样触发；④ opencode 端经 `gate_cli.py` 共享同一判定源。
+> **v11.4.8**：非简单双审 = 修改→验证→审查循环，最多 3 轮；审查须对照原始要求检查全部修改；禁止只连审不改。
+> **v11.4.7**：计划未批准 / CreatePlan / 零编辑禁止 Cursor followup；短 R20；非简单双审最多 3 次。
+> **v11.4.6**：eligible git 仓 SessionStart **执行** `codegraph init|sync` + `code-review-graph build|update`；无图 PreToolUse **deny**（禁止 Grep 当探索主路径）。Stop 增量刷新双图；仅验证全绿后 `sync.ps1 -Scope rules`（跳过验证 / max_blocks / 无编辑 → 不跑）。
+> **v11.4.5**：有 `.code-review-graph/` 时改前/完成前强制 CRG（`get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context`）；Stop/followup 六维纠错续轮（影响面/需求/错改/漏改/原功能/文档）；「满足」行对指纹关键词承认/反驳/弃权（GSD honest-verifier）。不启用 ralph-loop，不采用实验性 agent-Stop hook。
 
 ## @Examples
 
@@ -53,7 +56,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 ├─ 文档级验证（如涉及公共API）
 ├─ 关联文件验证（任何修改必须）
 ├─ 交叉验证（verify_tier=全量 必须）
-└─ 会话终验 R20（任何有过编辑的会话必须：按原始要求逐条回放 满足/遗漏/错改/漏改/原功能）
+└─ 会话终验 R20（任何有过编辑的会话必须：按原始要求逐条回放 满足/遗漏/错改/漏改/原功能/影响范围）
 ```
 
 ## 验证准则分解评分（v11.3.5 吸收 llm-as-a-verifier）
@@ -66,6 +69,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 4. **重复评估**：关键验证项重复评估 ≥2 次（换独立视角/反向验证），结论不一致 → 继续查证，不以单次结果定论。
 5. **成对比较消偏**：方案选择/审查时对候选成对比较，并交换 A/B 顺序复评（消除位置偏差）；候选多时与参照基线比较（O(Nk) 控成本，非全量两两）。
 6. **进度止损（长任务）**：每个原子任务完成后自评进度分（1–20）；连续 2 次 <10 或停滞 → 上报止损或换方案，禁止硬撑。
+7. **满足行三态（v11.4.5，GSD honest-verifier）**：「满足」中每个需求指纹 strong 关键词须 **承认**（已做+证据）/ **反驳**（明确不做+用户依据）/ **弃权**（一句原因）。硬门仍用 `coverage_ok` 关键词覆盖；弃权不算覆盖。禁止空话「全部完成」。
 
 ## 验证清单
 
@@ -125,19 +129,21 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 ```
 ## 会话终验（R20）
-原始要求：<逐条复述，禁止一句含糊摘要>
-- 满足：<对照原话的具体结果，禁止 ... >
-- 遗漏：无 | ...
-- 错改：无 | ...
-- 漏改：无文档影响 | 已同步 <paths>
-- 原功能：保持（证据：<测试或冒烟>）| 破坏说明
+原始要求：<逐条关键词，禁止复述实现>
+- 满足：<各点承认/反驳/弃权>
+- 遗漏：无
+- 错改：无
+- 漏改：无文档影响
+- 原功能：保持（证据：<命令>）
+- 影响范围：CRG / IMPACT / blast-radius
 结论：DONE | DONE_WITH_CONCERNS
 ```
 
 未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
-`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`；
-「满足」不可为空/`...`；「漏改」须含 `文档` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）。
-Cursor Stop 用 `followup_message` 续轮（非 permission deny）。
+`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`；
+「满足」不可为空/`...`；「漏改」须含 `文档` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。
+DSH / OpenCode 用便携副本 `r20_check.py`（规则对齐，无指纹比对）。
+Cursor Stop 用短 `followup_message` 续轮（非 permission deny）。**计划未批准 / CreatePlan / 本轮零编辑禁止 followup。**
 
 **场景G：初次修改后迷你验收（v11.3.4，每个文件首次成功编辑后 hook 注入一次）**
 
@@ -148,7 +154,7 @@ Cursor Stop 用 `followup_message` 续轮（非 permission deny）。
 □ 错改：是否改了范围外行为或顺手重构
 □ 漏改：同类引用与 INDEX/MANIFEST/README/注释/命令是否同步（无则写「无文档影响」）
 □ 原功能：非功能变更须给出测试或冒烟证据（禁止「应该没影响」）
-□ 工具：codegraph blast-radius 或 Grep 残留 = 0（无索引则 DONE_WITH_CONCERNS + Grep）
+□ 工具：eligible 仓须双图已就绪；有 CRG 图须调用 get_impact_radius 或 detect_changes；codegraph blast-radius；Grep 仅作残留核对（无图禁止 Grep 当探索主路径）
 ```
 
 同一文件第二次编辑不再注入。完成前仍须输出完整 R20（范围同样是影响面全部相关项，非仅已编辑文件）。
@@ -232,21 +238,24 @@ Cursor Stop 用 `followup_message` 续轮（非 permission deny）。
 □ Scope Reduction: 存在活跃 plan/spec 制品 → 强制对照 tasks 清单确认无静默缩范围
 ```
 
-### 审查委派（非简单任务必须；v11 自 /verify 并入）
+### 审查委派（非简单任务必须；v11.4.8）
 
 ```
-□ 代码文件变更 ≥3 个 → 委派 eng-reviewer（只读审查 diff）获取 PASS/NEEDS-CHANGES
-□ 项目已建 code-review-graph → 调用 detect_changes_tool 检查 test-gap 与高风险函数
+□ 非简单：每轮 修改 → 验证（对照原始要求）→ eng-reviewer 审全部修改 → PASS / NEEDS-CHANGES
+□ NEEDS-CHANGES → 按未满足项修改并验证后再审；最多 3 轮；禁止只连审不改；满轮未过不得声称完成
+□ 代码文件 ≥3 且无非简单标记时，Stop 门仍按会话累计编辑数要求审查（与六维分类不同维度）
+□ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
 ```
 
-> 「≥3 个」是 Stop 门按**会话累计编辑数**触发的代理规则，与 task-triage 六维分类不是同一维度：
-> 2 文件的非简单任务不触发本项，但 verify_tier 仍为全量。分类 SSOT → `skills/task-triage/SKILL.md`。
+> 简单任务一轮（执行 + 短 R20）。计划未批准禁止终审/审查 followup。
+> 分类 SSOT → `skills/task-triage/SKILL.md`。
 
 ## 失败与升级
 
-- 验证失败 → **不声称完成**；输出失败项 + 修复方案
+- 验证失败 → **不声称完成**；输出失败项 + 按六维纠错续轮修复（影响面/需求/错改/漏改/原功能/文档），同方案 ≤R5（2 次）
 - 初判简单且继续处理 → `verify_tier=全量` + **执行升档非简单**（Bug 升档可跳过 grill，见 task-triage）
 - 需改膨胀>2 / 黑名单 / 同方案达 R5 仍失败 → 执行升档非简单或 NEEDS_CONTEXT（禁止第 3 次同方案空转）
+- Stop/followup 达 `max_blocks` → 放行并标 `DONE_WITH_CONCERNS`（不启用 ralph-loop / 独立 loop 进程）
 
 ## 反合理化检查
 

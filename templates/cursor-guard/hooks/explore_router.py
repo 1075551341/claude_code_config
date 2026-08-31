@@ -12,6 +12,7 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_tool_name,
+    import_claude_lib,
     read_stdin,
     setup_stdio,
     write_json,
@@ -34,17 +35,38 @@ BLOCKABLE = {"Grep", "Glob"}
 STATE_NAME = "explore_router.json"
 
 
-def _codegraph_index_available(cwd: str | None) -> bool:
+def _codegraph_index_available(cwd: str | None, claude_home: str | None = None) -> bool:
     if not cwd:
         return True  # 未知 cwd 时不降级误放行阻断语义；仍允许 soft_block
+    if claude_home:
+        try:
+            gf = import_claude_lib(claude_home, "graph_freshness")
+            return bool(gf.has_codegraph_index(cwd))
+        except Exception as e:
+            print(f"explore_router: graph_freshness index check failed: {e}", file=sys.stderr)
     try:
         p = Path(cwd).resolve()
+        git_stop = None
+        cur = p
         for _ in range(8):
-            if (p / ".codegraph").is_dir():
-                return True
-            if p.parent == p:
+            if (cur / ".git").exists():
+                git_stop = cur
                 break
-            p = p.parent
+            if cur.parent == cur:
+                break
+            cur = cur.parent
+        cur = p
+        for _ in range(8):
+            cg = cur / ".codegraph"
+            if cg.is_dir():
+                names = {x.name for x in cg.iterdir()} - {".gitignore", "daemon.log"}
+                if names:
+                    return True
+            if git_stop is not None and cur == git_stop:
+                break
+            if cur.parent == cur:
+                break
+            cur = cur.parent
     except OSError as e:
         print(f"explore_router: cwd resolve failed: {e}", file=sys.stderr)
         return False
@@ -94,10 +116,10 @@ def main() -> None:
 
         mode = str(explore.get("enforce_mode", "soft_block")).lower()
         cwd = data.get("cwd") or data.get("working_directory")
-        index_ok = _codegraph_index_available(cwd)
+        index_ok = _codegraph_index_available(cwd, cfg["sync"]["claude_home"])
 
         # soft_block：Grep/Glob 且本会话尚未用过 codegraph → deny
-        # 无索引或模式为 nudge → 仅提示（DONE_WITH_CONCERNS 暴露原因）
+        # 无索引 → 图谱保鲜硬门 deny（禁止 Grep 兜底）
         if (
             mode == "soft_block"
             and tool_name in BLOCKABLE
@@ -120,13 +142,16 @@ def main() -> None:
             return
 
         if mode == "soft_block" and tool_name in BLOCKABLE and not index_ok:
+            # ensure 由 graph_freshness.py（90s）负责；此处只 deny，避免 5s 超时截断
             write_json(
                 {
+                    "permission": "deny",
+                    "user_message": "已拦截：无 codegraph 索引",
                     "agent_message": (
-                        f"【Cursor Guard · codegraph 优先 · DONE_WITH_CONCERNS】\n{msg}\n"
-                        "未检测到 .codegraph 索引，已降级为 nudge。"
-                        "请在项目根执行 codegraph init 后重试 soft_block。"
-                    )
+                        f"【Cursor Guard · 图谱保鲜硬门】\n{msg}\n"
+                        "未检测到 .codegraph 索引，禁止 Grep/Glob。"
+                        "SessionStart/pre-graph-freshness 会先 init；仍无图不得探索。"
+                    ),
                 }
             )
             return

@@ -14,6 +14,7 @@ import subprocess
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
 from context_thresholds import sync_settings_compact_window  # noqa: E402
+from graph_freshness import ensure_both, format_status, format_ui_banner, load_cfg, resolve_cwd  # noqa: E402
 
 try:
     if hasattr(sys.stdout, "buffer"):
@@ -83,29 +84,6 @@ def load_p0_gate() -> str | None:
     return load_gate("p0")
 
 
-def detect_codegraph(cwd: str) -> str | None:
-    """检测 codegraph 索引状态"""
-    is_git = os.path.exists(os.path.join(cwd, ".git"))
-    has_codegraph = os.path.exists(os.path.join(cwd, ".codegraph"))
-
-    if not is_git:
-        return None  # 非 git 项目，跳过
-
-    if has_codegraph:
-        return (
-            "✅ CodeGraph 已索引 — 优先使用 codegraph_search/explore/impact "
-            "代替 grep 探索代码（47% token 减少, 58% 调用减少）"
-        )
-    else:
-        # 有 .git 但没有 .codegraph → 提示初始化
-        file_count = sum(1 for _ in os.walk(cwd)) if os.path.isdir(cwd) else 0
-        return (
-            f"⚠️ 项目有 .git 但未初始化 CodeGraph 索引。\n"
-            f"   → 运行 codegraph init -i 可节省 ~47% token 和 ~58% 工具调用\n"
-            f"   → 索引后自动同步，无需手动维护"
-        )
-
-
 def main():
     try:
         # 读取 stdin（显式 UTF-8：Claude Code 传入 UTF-8 JSON，Windows 默认 cp936 会乱码）
@@ -115,7 +93,7 @@ def main():
         except Exception:
             sys.exit(0)
 
-        cwd = data.get("cwd", os.getcwd())
+        cwd = resolve_cwd(data)
 
         # 按当前模型同步 autoCompactWindow（封顶，不超出模型最大上下文）
         try:
@@ -127,8 +105,16 @@ def main():
         # 检测包管理器
         package_manager = detect_package_manager(cwd)
 
-        # 检测 codegraph 索引
-        codegraph_status = detect_codegraph(cwd)
+        session_id = str(data.get("session_id") or data.get("conversation_id") or "")
+        cfg = load_cfg()
+        graph_result = ensure_both(
+            cwd,
+            int(cfg.get("session_ensure_timeout_sec", 120)),
+            session_id=session_id,
+        )
+        codegraph_status = format_status(graph_result) if not (
+            graph_result.get("skipped") and not graph_result.get("eligible")
+        ) else None
 
         # 加载上下文
         context = load_previous_context(cwd)
@@ -154,6 +140,7 @@ def main():
         bootstrap_info = "\n".join(parts)
 
         result = {
+            "systemMessage": format_ui_banner(graph_result, action="ensure"),
             "hookSpecificOutput": {
                 "hookEventName": "SessionStart",
                 "additionalContext": bootstrap_info,

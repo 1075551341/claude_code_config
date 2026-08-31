@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.3**（配置一致性修复：版本/计数漂移清零+触发词去重+权限对齐；原 v11.4.2：防乱码编码守卫双阶段+格式化保行尾+命令误用警告；v11.4.0=IMPACT 自动登记+需求指纹 R20 实质比对+审查结论机械检测+opencode 接入=AGENTS.md+验证门插件+上游矩阵→docs/research/45；同步 1+N 含 opencode；llm-as-a-verifier 已吸收）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.8**（非简单双审=修改→验证→审查最多 3 轮。原 v11.4.7：计划未批准禁止 followup；短 R20。原 v11.4.6：图谱保鲜硬门）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -59,6 +59,8 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
+          非简单另须独立审查者：每轮 修改→验证→审查（对照原始要求审全部修改）；
+          PASS 才可完成；NEEDS-CHANGES 回执行者再改再验再审。最多 3 轮，禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
        → ⑤学习
 非简单 调研 → deep-research（L3 双源）
 ```
@@ -75,7 +77,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
   ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
   ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
   ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
-  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能；未全绿 → DONE_WITH_CONCERNS 需说明）
+  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；未全绿 → DONE_WITH_CONCERNS 需说明）。非简单：修改→验证→审查循环 PASS（最多 3 轮）
   ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
 
@@ -102,7 +104,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 | R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                                  | CORE.md |
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                         | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit                                                                                                                                  | CORE.md |
-| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；**验证证据须观察输出（命令/测试/文件），不信叙述**。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
+| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；**验证证据须观察输出（命令/测试/文件），不信叙述**。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
 
 > 工程原则（第一性原理/YAGNI/依赖克制/删除过时优先）→ `rules/CORE.md` 工程原则节 + `rules/GOVERNANCE.md` 最佳实践详参章
 
@@ -114,7 +116,8 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 | 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
 | ---------------------- | ------------------- | ------------------- | ------------------------- |
-| 结构/调用链/局部影响面 | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
+| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
+| 精准上下文/变更影响/风险/审查/PR | CRG `get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context` | 用 codegraph 做 test-gap；无图仍假装已审 | 有 `.code-review-graph/` 的改前/完成前/开 PR |
 | 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |
 | 网页深度调研           | `Firecrawl+Exa`     | WebFetch            | /deep-research 或调研意图 |
 | Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
@@ -127,6 +130,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 **禁止场景**（违反即阻断）：
 
+- eligible git 仓无双图时 Grep/Glob/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
 - 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
 - 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
@@ -143,6 +147,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 ```
 所有变更→eng-reviewer | 产品→+ceo | UI/UX→+designer+dx-reviewer
+非简单：每轮修改→验证→审查（最多 3 轮，禁止只连审不改）；计划未批准禁止 followup 终审
 安全→+security-reviewer(全量审计=深度模式) | 跨模型→+codex-reviewer
 iOS/部署/多方案设计→catalog/agents/ 按需启用
 ```
@@ -177,5 +182,5 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
 **同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
-**业务仓库**：进入时检测 `.codegraph/` → 无则提示 `codegraph init && codegraph index`；探索一律 codegraph_explore（R17）；codebase-memory 已永久禁用（相关索引脚本已删除）。
+**业务仓库**：SessionStart 对 eligible git 仓 **执行** `codegraph init|sync` 与 `code-review-graph build|update`（无图禁止后续探索/编辑，不是仅提示）；有图后改前/完成前走 CRG 上下文与影响面；探索「怎么运作」一律 codegraph_explore（R17）；验证全绿后才跑 `scripts/sync.ps1`。codebase-memory 已永久禁用。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`。

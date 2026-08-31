@@ -1,6 +1,6 @@
 {
   "toolset": "dev",
-  "description": "开发常驻：本地代码 + 远端探索 + Web&文档（与 .mcp.json 同步，v10.17 恰 9 项）",
-  "servers": ["codegraph", "code-review-graph", "aider-repo-map", "serena", "github", "grep", "exa", "context7", "firecrawl"],
-  "note": "chrome-devtools → mcp-configs/debug.json 按需；fs → mcp-configs/fsaccess.json 按需（v10.17 降级）；勿与插件双挂"
+  "description": "与 .mcp.json 同步：本地代码三件 + grep。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools/postgres 默认关、中断启用。勿再写入 MCP。无 aider-repo-map/sequential-thinking。",
+  "servers": ["codegraph", "code-review-graph", "serena", "grep"],
+  "note": "github 不常驻。postgres → mcp-configs/ops.json，中断启用。勿与插件双挂。"
 }

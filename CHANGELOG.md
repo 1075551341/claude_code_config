@@ -2,6 +2,57 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.8 双审循环=修改→验证→审查（2026-08-31）
+
+- **语义**：非简单双审不是「只审查最多 3 次」，而是 **修改 → 验证（对照原始要求）→ 独立审查全部修改** 循环，直到符合预期或满 3 轮。`NEEDS-CHANGES` 后无新修改不得再审（禁止只连审不改）。
+- **机械门**：`dual_pass_phase` = modify | verify | review | capped | done。Cursor/Claude Stop 按相位注入。`review_cycle: modify-verify-review`。`review_rounds` 仅在 last_edit > last_rev 时 +1（同轮连派不耗轮次）。`apply_review_verdict`：PASS 须已有 reviews，禁止自报。
+- **多端**：DSH 2.7 / OpenCode 1.7 手工对齐。Cursor Guard **1.2.8**。
+- **不改**：计划未批准禁止 followup、短 R20 六字段、`require_reviewer_min_files=3`、sync 不覆盖 AGENTS.md。
+
+## v11.4.7 计划未批准不终审 + 短 R20 + 非简单双审（2026-08-31）
+
+- **根因**：Cursor `CreatePlan` 后用户未点 Build，`stop` 仍写 `followup_message`（完成验证门），把计划等待当成任务完成。
+- **Cursor Guard 1.2.7**：计划未批准 / CreatePlan / SwitchMode→plan / 本轮零编辑 / 无 session id → **禁止 followup**；禁止把 session 写成 `"unknown"`。完成门不再用裸词「完成」（避免「所有都完成后」回灌）。短 followup；审查满 3 次仍无 PASS → `DONE_WITH_CONCERNS`，禁止第 4 次空转。
+- **短 R20**：`gate_messages.md` 完成验证门收成约 6 行；技能模板六行字段不变（满足/遗漏/错改/漏改/原功能/影响范围），机械检测仍走 `r20_replay.py`。
+- **非简单双审**：执行者做完后 fresh `eng-reviewer` 审 diff+影响面；`NEEDS-CHANGES` 则执行→再审；**审查最多 3 次**（含首次）。简单任务仍一轮。`require_reviewer_min_files` 保持 3。
+- **多端**：DSH AGENTS **2.6**、OpenCode AGENTS **1.6** 手工对齐（独立视角再审最多 3 次；禁止把 Cursor `followup_message` 搬过去）。`sync.ps1` **不覆盖** 两端 `AGENTS.md`。OpenCode `verify-gate.ts` 仅在有未验编辑时注入短 R20。
+- **不改**：图谱保鲜硬门；R5 同方案 ≤2；不启用 ralph-loop。
+
+## v11.4.6 图谱保鲜硬门（2026-08-29）
+
+- **会话先建图**：SessionStart 对 eligible git 仓执行 `codegraph init\|sync` 与 `code-review-graph build\|update`（不是仅提示）。超时：SessionStart 120s、PreToolUse 90s、Stop 刷新 30s。`_editor_hook_launcher` 子进程超时 55s→180s，避免截断 ensure。
+- **无图不准后续**：PreToolUse deny 查询 MCP / Grep / Glob / 写工具；建图类 CLI/MCP 放行。取消「无图 Grep 兜底」主路径。
+- **验绿后 sync.ps1**：Stop 增量刷新双图；仅验证门全绿（非跳过、非 max_blocks）才 `pwsh sync.ps1 -Scope rules`。
+- **多端**：Claude + Cursor Guard hook；TRAE/Qoder 用 `scripts/deploy-editor-graph-hooks.ps1` 合并注册（不经 launcher）；workbuddy 仅 CLAUDE/CORE 硬性规则。**DSH 2.3 / OpenCode 1.3**：提取便携 CLI `templates/editor-graph-hooks/graph_freshness_cli.py`（ensure/refresh）到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`；OpenCode `plugins/graph-freshness.ts` 会话开始 ensure、idle refresh；DSH 无 Stop，总纲+verification 强制同一 CLI。仍不经 `sync.ps1` 覆盖各端 AGENTS.md。
+- **不恢复** 每次编辑 kg sync hook（codegraph watcher 仍管日常改动）。
+- **cwd 回退（重启复验）**：SessionStart/PreToolUse 用 `resolve_cwd`（`cwd` → `workspace_roots` → `VSCODE_CWD` → 进程 cwd），避免 Cursor 不传 cwd 时把 eligible 仓当成非 git 跳过 ensure。Cursor matcher 含 `CallDynamicTool` / `MCP:.*`，并挂 `beforeMCPExecution`。
+- **cwd 优先级补漏**：用户级 Cursor hook 进程 cwd / payload.cwd 常为 `~/.cursor`（本机联接 `D:\cursor`，非 git）。`resolve_cwd` 改为**先选 git-eligible 的 `workspace_roots`**，不再让 hook-home cwd 抢先；仍无 git 根时读 `projects/*/.workspace-trusted`（viewed files 不得压过已信任工作区）。显式非 git 的 `workspace_roots` **或 payload `cwd`** 禁止 infer 到另一仓。Stop 无编辑也增量刷新双图，且 **保留 SessionStart 的 `session_id`、不因 CLI 超时把 `ok` 打成 False**。sessionStart 成功 ensure 后写入 `env.CURSOR_PROJECT_DIR` 供后续 hook。
+- **Cursor Guard 1.2.6**：SessionStart `user_message` 展示双图同步成功/失败（非仅 additional_context）；Stop 刷新同样 `user_message`（失败必显、成功每会话一次）。子项目 depth-1 封顶，禁止无穷嵌套同步。
+- **R20 影响范围**：终验必填「影响范围」并对照 CRG/IMPACT/blast；便携 `r20_check.py` 提取到 DSH `tools/` 与 OpenCode `scripts/`；OpenCode `verify-gate.ts` 机械门对齐。DSH 2.5 / OpenCode 1.5。不经 `sync.ps1` 覆盖各端 AGENTS.md。
+- **DSH 2.4 / OpenCode 1.4**：对齐「禁止重复调用/注入」——ensure 每会话一次；OpenCode `GRAPH_RULE`/`R20` 每会话注入一次，idle refresh 60s 冷却，加急每空闲周期一次。不经 `sync.ps1` 覆盖 AGENTS.md。
+- **Cursor Guard 1.2.4 防乒乓**：`context_stop` 的「上下文≥90%」`followup_message` 每会话只发一次（`loop_limit=1` 不能跨「followup 当新用户消息」生效）。工具侧 90% `additional_context`/`agent_message` 同样只注入一次。`/summarize` 与「压缩上下文」重置工具计数并清除陈旧 preCompact 百分比，避免估算永远卡在 FORCE。
+
+## v11.4.5 MCP 分工 + 门控六维纠错（2026-08-29）
+
+- **工具优先级**：编辑器内置 > 同名 plugin > MCP > 按需中断启用。常驻 MCP 仍为 codegraph / CRG / serena / grep。Firecrawl：Claude 走 plugin（不写 `.mcp.json`）。
+- **CRG 扩权**：精准上下文（`get_minimal_context`）+ 变更影响（`get_impact_radius`）+ 风险/审查/开 PR（`detect_changes` / `get_review_context`）。codegraph 仍为 R17「怎么运作」。chrome-devtools / postgres 默认关，需要时**中断请用户手动启用**（禁止自动 merge debug/ops）。
+- **门控续轮**：追踪器记 `crg_calls`；有 `.code-review-graph/` 且最后一次代码编辑后未调 CRG → Stop/followup 阻断。续轮文案六维：影响面/需求未达/错改/漏改/原功能/文档。`max_blocks=3` 不变。
+- **R20 满足行三态**：对指纹关键词承认/反驳/弃权（GSD honest-verifier）；硬门仍用 `coverage_ok`。
+- **不吸收**：竞品 code-graph plugin；ralph-loop / 独立 `/loop`；实验性 agent-Stop hook；caveman 2.x；claude-mem ≥13.14；OpenSpec 1.10。
+- **多端**：Cursor/qoder/trae 经 sync 规则通道。DSH AGENTS 2.2 + skills；OpenCode AGENTS 1.2 + oc-\* skills；`verify-gate.ts` **仅改注入文案**。各端 plugin/MCP 开关不动。
+- **复核补漏**：OpenCode `oc-using-superpowers` 去掉过时「未挂 CRG」；SPEC 页脚 / fsaccess / GOVERNANCE / TOOL_MATCHING 的「常驻 9」与 Firecrawl-MCP 措辞对齐；有图判定须存在 `graph.db`（避免把空的 `~/.code-review-graph` 登记目录当项目图）；Cursor Guard 测试覆盖「有图无 crg_calls → followup」。
+
+## 2026-08-29 MCP 裁剪
+
+- **删除常驻**：全部编辑器去掉 `aider-repo-map`、`sequential-thinking`（不要加回）。
+- **chrome-devtools 默认关**：Claude plugin=`false`；OpenCode/DSH/Qoder 条目保留但 disabled；Cursor 为 Plugin，须在面板 Disabled。
+- 权威：`.mcp.json` 仅 codegraph / CRG / serena / grep。
+
+## v11.4.4 出站切断（2026-08-27）opencode / DSH 不再耦合 Claude 配置
+
+- **sync 切断**：`config/sync-manifest.json` 将 `opencode.enabled` 置 `false`；`sync.ps1`/`check.ps1` fallback 对齐。不再把 `CLAUDE.md` 覆盖 `~/.config/opencode/AGENTS.md`。`enabled=false` 仅反向扫残留软链，OpenCode 自管的实体 `AGENTS.md` 保留。
+- **范围**：不改 Claude 本体 `settings.json` / hooks / skills / `.mcp.json`。OpenCode 与 DSH 各自拥有独立总纲、P0 技能、MCP 启动脚本与验证门。
+
 ## v11.4.3 配置一致性修复（2026-08-26）全量审计 + 触发词去重 + 权限对齐
 
 - **审计**：validate_config 19 项 PASS 基础上清零遗留漂移——MANIFEST 版本串滞后（头注释 11.4.0/version 11.4.1 → 对齐全局）、SPEC plugins 计数失实（enabledPlugins 实为启用7/禁用9，claude-hud/exa 未显式登记）、hooks/README `_lib` 计数 8→10（v11.4 新增 gate_cli.py/req_fingerprint.py 漏更）、gate_messages.md 头部版本标记停 v11.3.5
@@ -35,7 +86,7 @@
 - **G3 错改硬证据自动化**：`post-edit-verify-tracker.py` 增 `append_impact_record()`——追踪到的编辑路径自动写项目 `.claude/state/impact-manifest.log`，方案A清单差集不再依赖模型自觉落盘；`IMPACT_REMINDER` 降级为写失败兜底。测试 `hooks/tests/test_impact_autolog.py`（含 e2e git 仓库场景）
 - **G2 需求指纹实质比对**：新增 `_lib/req_fingerprint.py`（复用 `issue_state.extract_features` strong/weak 分层，零新算法）；捕获点=`pre-userprompt-issue-tracker.py`（与问题指纹同点）；`r20_replay.replay_ok(text, requirements=None)` 可选参——「满足」行须命中 strong 指纹（<5 全命中，≥5 允许 ≥80%），weak-only 不启用防误伤；Stop 门经 `requirement_fingerprint` 开关传入。Cursor 端 import_claude_lib 同源自动继承
 - **W3 审查结论机械检测**：`r20_replay.review_verdict_ok()`（PASS / NEEDS-CHANGES 大写标记）；≥3 文件已委派但回复缺结论 → 阻断；blocks≥2（持续处理代理信号）即使 <3 文件也触发审查委派要求。开关 `require_review_verdict` / 触发线 `verdict_trigger_min_blocks`
-- **G1 opencode 接入**：sync-manifest editors 增 `opencode`（special=`agents_md`，CLAUDE.md 改名副本落 `~/.config/opencode/AGENTS.md`；sync.ps1/check.ps1 各增分支，fix.ps1 有意不纳——无 launcher）；新增 opencode 插件 `~/.config/opencode/plugins/verify-gate.ts`（chat.message 存指纹 / tool.execute.after 追踪 / system.transform 注入 R20 完成令 / idle 未验加急提醒）+ 薄入口 `_lib/gate_cli.py`（判定 SSOT 仍居 _lib，禁复制实现）。平台限制：opencode 无 Stop exit-2 硬阻断，硬阻断二期评估。**修正（同日复查）**：全局插件目录须为复数 `plugins/`（官方 autoload 约定），单数目录不会被加载
+- **G1 opencode 接入**：sync-manifest editors 增 `opencode`（special=`agents_md`，CLAUDE.md 改名副本落 `~/.config/opencode/AGENTS.md`；sync.ps1/check.ps1 各增分支，fix.ps1 有意不纳——无 launcher）；新增 opencode 插件 `~/.config/opencode/plugins/verify-gate.ts`（chat.message 存指纹 / tool.execute.after 追踪 / system.transform 注入 R20 完成令 / idle 未验加急提醒）+ 薄入口 `_lib/gate_cli.py`（判定 SSOT 仍居 \_lib，禁复制实现）。平台限制：opencode 无 Stop exit-2 硬阻断，硬阻断二期评估。**修正（同日复查）**：全局插件目录须为复数 `plugins/`（官方 autoload 约定），单数目录不会被加载
 - **G4 上游矩阵（详证 → `docs/research/45-upstream-stability-v11.4.md`）**：superpowers cherry-pick 分级仪式（spike/bounded/architectural，HARD-GATE 不减）；OpenSpec 升 1.10.0（changelog 无破坏+init 冒烟门）；gsd-core 版本串 1.11.0（Node≥24 不适用：概念集成）；ECC 2.1.0 参考串；rtk 0.45.0；CRG pin 2.3.8（明示 no breaking）；caveman 条件升级（diff 门）；**claude-mem 维持 13.13.1 钉扎**（13.14+ 为 CMEM Pro 推销专版，运行态核查未越线）；gstack vendored 维持
 - **版本一致性**：CLAUDE.md / SPEC.md / MANIFEST.yaml / rules-CORE.md / verification SKILL.md / sync-manifest.json / scripts-README / SYNC_GUIDE 全量 v11.4.0
 - **SSOT**：验证链判定唯一居于 `hooks/_lib/*.py`；多端（Claude/Cursor 直载、opencode 子进程）共享同一份实现
@@ -44,7 +95,7 @@
 
 - **优点来源**：github.com/llm-as-a-verifier/llm-as-a-verifier（通用验证框架，agentic benchmarks SOTA）。提取 9 项优点，与 Claude 配置自身优点盘点对比后融合缺失 5 项；完整对比矩阵与决策记录 → `docs/LLM_AS_A_VERIFIER_SYNC.md`
 - **verification skill 新增「验证准则分解评分」小节**（SSOT）：①观察输出优先——证据=命令 stdout/stderr、测试结果、文件内容，**禁止以 agent 叙述代替证据**（Trust observed output — NOT narration）；②准则分解≥2 条（正确性/根因/验证确认三问）逐条核验；③关键结论 1–20 细粒度评分（<10 不声称完成，禁二值模糊）；④关键验证项重复评估≥2 次（独立视角/反向验证）；⑤方案选择/审查候选成对比较 + A/B 交换复评消位置偏差（多候选与参照基线比较，O(Nk) 控成本）；⑥长任务每原子任务自评进度分，连续 2 次 <10 → 上报止损/换方案
-- **L0 同步**：CLAUDE.md 版本行 + R20 行「验证证据须观察输出（命令/测试/文件），不信叙述」；rules/CORE.md R20 会话终验段同句；hooks/_lib/gate_messages.md 版本行 + 软性短句（**不动硬门字段**）
+- **L0 同步**：CLAUDE.md 版本行 + R20 行「验证证据须观察输出（命令/测试/文件），不信叙述」；rules/CORE.md R20 会话终验段同句；hooks/\_lib/gate_messages.md 版本行 + 软性短句（**不动硬门字段**）
 - **hooks 零变更**：R20 模板字段（满足/遗漏/错改/漏改/原功能）原样保留，r20_replay.py / stop-verification-gate.py 无需改动；hooks v5.8 保持
 - **未纳入项及理由**（防回潮）：logprob 分布期望（模型层无 logprob API，理念≈重复评估）、Best-of-N 自验证（审查路由/codex 跨模型复核已覆盖）、prefix-cache+记账（工程实现细节非方法论）
 - **版本一致性**：CLAUDE.md / SPEC.md / MANIFEST / README / docs-README / SYNC_GUIDE / hooks-README / gate_messages 全量 v11.3.5

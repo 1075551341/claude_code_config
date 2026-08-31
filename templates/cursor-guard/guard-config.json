@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.8",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -59,7 +59,7 @@
     "enforce_mode": "followup",
     "_note": "v1.2.1: Cursor stop 不能 permission deny，用 followup_message 续轮（loop_limit=max_blocks）",
     "unverified_reminder": true,
-    "prompt_keywords": ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
+    "prompt_keywords": ["完成了", "修好了", "测试通过", "声称完成", "done", "搞定", "fixed"]
   },
   "impact": {
     "enabled": true,

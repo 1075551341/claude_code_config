@@ -161,7 +161,17 @@ def main():
             print(f"⚠️ {e}", file=sys.stderr)
         sys.exit(0)
     try:
-        proc = subprocess.run([sys.executable, target] + sys.argv[2:], input=raw if raw else None, timeout=55)
+        # 图谱 SessionStart ensure 可达 120s；55s 会静默截断导致无图仍放行
+        launcher_tmo = 180
+        try:
+            launcher_tmo = int(os.environ.get("CLAUDE_HOOK_LAUNCHER_TIMEOUT") or "180")
+        except ValueError:
+            launcher_tmo = 180
+        proc = subprocess.run(
+            [sys.executable, target] + sys.argv[2:],
+            input=raw if raw else None,
+            timeout=launcher_tmo,
+        )
         sys.exit(proc.returncode if proc.returncode is not None else 1)
     except subprocess.TimeoutExpired:
         sys.exit(0)

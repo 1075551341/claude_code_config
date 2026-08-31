@@ -73,6 +73,17 @@
     ],
     "PreToolUse": [
       {
+        "_comment": "v11.4.6 图谱保鲜：查询/Grep/写工具前 ensure；建图类 MCP 放行。timeout 90s 覆盖首次 init。",
+        "hooks": [
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-graph-freshness.py",
+            "timeout": 90000,
+            "type": "command"
+          }
+        ],
+            "matcher": "mcp__codegraph__.*|mcp__code-review-graph__.*|mcp__serena__.*|mcp__fs__.*|Grep|Glob|Edit|Write|MultiEdit|Bash"
+      },
+      {
         "hooks": [
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/pre-edit-impact-nudge.py",
@@ -149,7 +160,7 @@
         "hooks": [
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/session-start-bootstrap.py",
-            "timeout": 15000,
+            "timeout": 120000,
             "type": "command"
           }
         ],
@@ -161,7 +172,7 @@
         "hooks": [
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/stop-verification-gate.py",
-            "timeout": 60000,
+            "timeout": 180000,
             "type": "command"
           },
           {

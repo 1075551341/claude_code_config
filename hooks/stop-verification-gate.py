@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.3.4）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+Stop Hook: 完成验证硬门（v11.4.8）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+非简单双审：修改→验证→审查循环最多 3 轮；apply_review_verdict 同步 PASS（须已有 reviews）。
 本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
@@ -27,7 +28,21 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
 
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
-from r20_replay import impact_diff_check, replay_ok, review_verdict_ok  # noqa: E402
+from r20_replay import (  # noqa: E402
+    apply_review_verdict,
+    dual_pass_phase,
+    impact_diff_check,
+    replay_ok,
+    review_verdict_ok,
+)
+from crg_track import has_crg_since  # noqa: E402
+from graph_freshness import (  # noqa: E402
+    load_cfg as load_graph_cfg,
+    refresh_incremental,
+    resolve_cwd,
+    run_sync_ps1_if_verified,
+    take_ui_slot,
+)
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -46,6 +61,8 @@ DEFAULT_CFG = {
     "requirement_fingerprint": True,
     "require_review_verdict": True,
     "verdict_trigger_min_blocks": 2,
+    "require_crg_when_graph": True,
+    "review_max_rounds": 3,
 }
 
 CODE_EXTENSIONS = {
@@ -337,36 +354,11 @@ def find_project_roots(code_files: list, cwd: str) -> list:
     return sorted(roots)
 
 
-def crg_refresh_and_flag(roots: list, timeout_sec: int) -> tuple:
-    has_graph = False
-    warnings = []
-    for root in roots:
-        probe = root
-        found = ""
-        for _ in range(6):
-            if os.path.isdir(os.path.join(probe, ".code-review-graph")):
-                found = probe
-                break
-            parent = os.path.dirname(probe)
-            if parent == probe:
-                break
-            probe = parent
-        if not found:
-            continue
-        has_graph = True
-        if shutil.which("code-review-graph"):
-            try:
-                proc = subprocess.run(
-                    ["code-review-graph", "update"], capture_output=True, text=True,
-                    timeout=timeout_sec, cwd=found,
-                )
-                if proc.returncode != 0:
-                    warnings.append(f"CRG update 非零退出（{found}）: {(proc.stderr or proc.stdout).strip()[:300]}")
-            except subprocess.TimeoutExpired:
-                warnings.append(f"CRG update 超时（{timeout_sec}s），图可能过时")
-            except OSError as e:
-                warnings.append(f"CRG update 执行失败: {e}")
-    return has_graph, warnings
+def crg_refresh_and_flag(roots: list, timeout_sec: int, session_id: str = "") -> tuple:
+    """Stop 增量刷新双图（codegraph sync + CRG update）。返回 (has_crg, warnings, aggregate)。"""
+    gcfg = load_graph_cfg()
+    tmo = min(int(timeout_sec), int(gcfg.get("stop_refresh_timeout_sec", 30)))
+    return refresh_incremental(roots, tmo, session_id=session_id)
 
 
 TEST_FILE_MARKERS = ("test_", "_test.", ".test.", ".spec.", "conftest.py")
@@ -439,19 +431,15 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         "本会话存在修改，但验证证据不完整：" if not only_r20 else "本会话有编辑，但未完成会话终验（R20）：",
     ]
     lines.extend(f"  {i}. {r}" for i, r in enumerate(reasons, 1))
-    lines.append("必须执行（全部完成后再次结束）：")
     if not only_r20:
-        lines.append("  ① 实际运行测试/lint/构建/功能核验命令，贴出输出证据（禁止\"应该没问题\"）")
-        if crg:
-            lines.append("  ② 项目已建 code-review-graph：调用 detect_changes_tool 检查 test-gap 与高风险函数")
+        lines.append("补齐观察输出（测试/lint/构建）；有 CRG 则调 get_impact_radius。")
         if any("eng-reviewer" in r for r in reasons):
-            lines.append("  ③ 委派 eng-reviewer（只读审查本轮 diff）获取 PASS/NEEDS-CHANGES 结论")
+            lines.append("委派 eng-reviewer 只读审，回贴 PASS 或 NEEDS-CHANGES。")
         if any("预期符合性" in r for r in reasons):
-            lines.append("  ④ 对照 plan/spec 的 tasks 清单逐项确认：无静默缩范围、无遗漏需求")
+            lines.append("对照 plan/spec tasks，禁止静默缩范围。")
     if any("R20" in r or "会话终验" in r for r in reasons):
-        lines.append("  ⑤ 会话终验（R20）：按原始要求逐条回放，输出满足/遗漏/错改/漏改/原功能（禁止把实现重做一遍；核对范围=blast-radius 全部相关项，非仅已编辑文件；漏改含文档/备注与文件/配置一致；非功能变更必须证明原功能保持）")
-    lines.append("跳过验证的完成声明视为无效（R1，先证据后断言）。")
-    lines.append(f"（第 {blocks}/{max_blocks} 次阻断；达上限后放行并标 DONE_WITH_CONCERNS；确需跳过请用户显式说「跳过验证」）")
+        lines.append("输出短 R20：满足/遗漏/错改/漏改/原功能/影响范围（漏改含文档；原功能含证据）。")
+    lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行 DONE_WITH_CONCERNS；跳过请说「跳过验证」）")
     return "\n".join(lines)
 
 
@@ -516,6 +504,23 @@ def check_security_anchor(code_files: list) -> list:
     return []
 
 
+def _emit_graph_ui(session_id: str, aggregate: dict | None) -> None:
+    """Stop 把双图刷新成败写到 systemMessage（会话界面，非 stderr 日志）。"""
+    if not aggregate:
+        return
+    banner = str(aggregate.get("ui") or "").strip()
+    if not banner:
+        return
+    show_fail = bool(aggregate.get("blocked") or not aggregate.get("ok"))
+    if not show_fail and not take_ui_slot(session_id, "refresh"):
+        return
+    try:
+        sys.stdout.write(json.dumps({"systemMessage": banner}, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except OSError as exc:
+        print(f"stop-verification-gate: ui write failed: {exc}", file=sys.stderr)
+
+
 def mark_issues_resolved(session_id: str) -> None:
     """验证全部通过 → 把本会话触碰过的问题指纹标记已解决（issue-tracker 轻提示分支）。
 
@@ -544,6 +549,7 @@ def main():
     cwd = str(data.get("cwd") or "")
     transcript_path = str(data.get("transcript_path") or "")
     code_files = []
+    graph_refresh = None
 
     if cfg["enabled"]:
         state = load_state()
@@ -568,6 +574,21 @@ def main():
             blocks = int(entry.get("blocks", 0))
             skip_msg = last_user_message(transcript_path).lower()
             user_skipped = any(k.lower() in skip_msg for k in cfg["skip_keywords"])
+            project_cwd = entry.get("cwd") or cwd
+            checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
+            refresh_roots = find_project_roots(checkable, project_cwd)
+            if not refresh_roots and project_cwd:
+                refresh_roots = [project_cwd]
+            crg = False
+            crg_warnings = []
+            if refresh_roots:
+                crg, crg_warnings, graph_refresh = crg_refresh_and_flag(
+                    refresh_roots,
+                    int(load_graph_cfg().get("stop_refresh_timeout_sec", 30)),
+                    session_id=session_id,
+                )
+                for w in crg_warnings:
+                    print(f"⚠️ {w}", file=sys.stderr)
 
             if user_skipped:
                 print("⚠️ 用户显式跳过验证 — 本次放行，完成声明按 DONE_WITH_CONCERNS 处理", file=sys.stderr)
@@ -578,16 +599,11 @@ def main():
                     file=sys.stderr,
                 )
             else:
-                project_cwd = entry.get("cwd") or cwd
-                crg = False
-                crg_warnings = []
                 check_warnings = []
                 reasons = []
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
-                    checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
-                    roots = find_project_roots(checkable, project_cwd)
-                    crg, crg_warnings = crg_refresh_and_flag(roots, min(15, int(cfg["auto_check_timeout_sec"])))
+                    roots = refresh_roots
                     failures, check_warnings = run_auto_checks(checkable, project_cwd, int(cfg["auto_check_timeout_sec"]))
 
                     reasons = list(failures)
@@ -603,21 +619,41 @@ def main():
                     verified = any(c.get("ts", 0) >= last_edit_ts - 1 for c in entry.get("verify_commands", []))
                     if not verified:
                         reasons.append("最后一次代码编辑之后未检测到任何测试/lint/构建验证命令运行记录")
+                    if cfg.get("require_crg_when_graph", True) and crg and not has_crg_since(entry, last_edit_ts):
+                        reasons.append(
+                            "项目已建 .code-review-graph/ 但最后一次代码编辑后未调用 CRG"
+                            "（get_minimal_context / get_impact_radius / detect_changes / get_review_context）"
+                        )
                     total_changed = len({f["path"] for f in code_files} | set(untracked))
                     verdict_cfg_on = cfg.get("require_review_verdict", True)
-                    verdict_ok = review_verdict_ok(last_assistant_message(transcript_path)) if verdict_cfg_on else True
-                    if total_changed >= int(cfg["require_reviewer_min_files"]):
-                        reviewed = any(r.get("ts", 0) >= last_edit_ts - 1 for r in entry.get("reviews", []))
-                        if not reviewed:
-                            reasons.append(
-                                f"会话内 {total_changed} 个代码文件变更（≥{cfg['require_reviewer_min_files']}）"
-                                "但无 eng-reviewer 审查委派记录（委派后须在回复中回贴结论 PASS 或 NEEDS-CHANGES）"
-                            )
-                        elif verdict_cfg_on and not verdict_ok:
-                            reasons.append(
-                                f"会话内 {total_changed} 个代码文件变更已委派审查，但最终回复缺少独立审查结论标记"
-                                "（PASS / NEEDS-CHANGES）— v11.4 审查结论机械检测"
-                            )
+                    last_msg = last_assistant_message(transcript_path)
+                    verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
+                    if apply_review_verdict(entry, last_msg):
+                        entry["ts"] = time.time()
+                        state[session_id] = entry
+                        save_state(state)
+                    non_simple = bool(entry.get("non_simple"))
+                    max_rounds = int(cfg.get("review_max_rounds", 3))
+                    rounds = int(entry.get("review_rounds") or 0)
+                    need_rev = non_simple or total_changed >= int(cfg["require_reviewer_min_files"])
+                    phase = dual_pass_phase(entry, cfg) if need_rev else "skip"
+                    if phase == "capped":
+                        print(
+                            f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
+                            file=sys.stderr,
+                        )
+                    elif phase == "modify":
+                        reasons.append(
+                            "非简单双审：须先按未满足项修改并跑验证，再审全部修改是否符合预期"
+                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止只连审不改。"
+                        )
+                    elif phase == "verify":
+                        pass
+                    elif phase == "review":
+                        reasons.append(
+                            "非简单双审：须委派 eng-reviewer 对照原始要求审全部修改，"
+                            f"回贴 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮）"
+                        )
                     elif (
                         verdict_cfg_on
                         and not verdict_ok
@@ -662,7 +698,7 @@ def main():
                         hint = (
                             "「满足」行未覆盖需求指纹关键词（v11.4 实质比对）"
                             if reqs
-                            else "未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能"
+                            else "未按原始要求逐条回放输出满足/遗漏/错改/漏改/原功能/影响范围"
                         )
                         reasons.append(
                             f"R20 会话终验：{hint}"
@@ -676,12 +712,25 @@ def main():
                     entry["ts"] = time.time()
                     state[session_id] = entry
                     save_state(state)
-                    for w in crg_warnings + check_warnings:
+                    for w in check_warnings:
                         print(f"⚠️ {w}", file=sys.stderr)
                     print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
+                    _emit_graph_ui(session_id, graph_refresh)
                     sys.exit(2)
 
                 mark_issues_resolved(session_id)
+                _ok_sync, sync_msg = run_sync_ps1_if_verified(has_edits=True, verified_green=True)
+                print(f"graph_freshness: {sync_msg}", file=sys.stderr)
+        else:
+            refresh_root = resolve_cwd(data) or entry.get("cwd") or cwd
+            if refresh_root:
+                _crg, crg_warnings, graph_refresh = crg_refresh_and_flag(
+                    [refresh_root],
+                    int(load_graph_cfg().get("stop_refresh_timeout_sec", 30)),
+                    session_id=session_id,
+                )
+                for w in crg_warnings:
+                    print(f"⚠️ {w}", file=sys.stderr)
 
     issues = (
         check_schema_drift(code_files)
@@ -691,6 +740,7 @@ def main():
     )
     for issue in issues:
         print(issue, file=sys.stderr)
+    _emit_graph_ui(session_id, graph_refresh if cfg["enabled"] else None)
     if any("🚫" in i for i in issues):
         sys.exit(1)
     sys.exit(0)

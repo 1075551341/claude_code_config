@@ -20,18 +20,17 @@ source: internal
 ### 阶段 1: 范围识别
 
 ```
-① codegraph_explore(target) blast-radius 或 codegraph_impact（env 启用）
+① 有 `.code-review-graph/`（v11.4.6 强制；无图由 hook ensure，仍无则 BLOCKED）：
+   └ get_minimal_context_tool — 任务入口精准上下文
+   └ get_impact_radius_tool — 变更影响面（函数/类/文件/执行流）
+   └ 有 git diff → detect_changes_tool（风险评分 / test-gap）
+   └ 无图 → hook 先 ensure（init/build）；仍无图 → **BLOCKED**，禁止 Grep 当探索主路径
+② codegraph_explore(target) blast-radius（怎么运作 / 符号调用链）
    └ 先确认 codegraph 无 staleness ⚠️ banner；有则 Read 文件直接获取最新内容
-   └ git diff 变更风险场景：code-review-graph detect_changes（项目已建图时）
-   └ 无 .codegraph/ 索引 → 标注 DONE_WITH_CONCERNS + Grep 全扫 + 提示 codegraph init
-
-② Grep 全项目(reference_pattern)
+   └ 无 .codegraph/ 索引 → hook 先 `codegraph init -i`；仍无 → **BLOCKED**，禁止 Grep 全扫当主路径
+③ Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
-   → 命令: grep -rn "pattern" --include="*.ext"
-
-③ MANIFEST.yaml concern → depends_on
-   → 查: 改 rules/CONTEXT.md 是否影响 rules/CORE.md 的阈值引用？
-   → 查: 改 agent 定义是否需同步 agents-INDEX.md？
+④ MANIFEST.yaml concern → depends_on（配置/rule/skill/agent）
 
 输出: 受影响文件完整清单（含依赖关系）
 ```
@@ -72,22 +71,22 @@ source: internal
 
 | 变更类型 | 检测范围 |
 |----------|----------|
-| 改函数名/签名 | codegraph blast-radius/impact + Grep 全项目函数名 |
-| 改类型/接口 | codegraph blast-radius/impact + Grep import 引用 |
-| git diff 变更风险 | code-review-graph detect_changes（有图项目）+ Grep 残留 |
+| 改函数名/签名 | CRG impact（有图）+ codegraph blast-radius + Grep 全项目函数名 |
+| 改类型/接口 | 同上 + Grep import 引用 |
+| git diff / 风险 / 开 PR | CRG detect_changes + get_review_context（有图）+ Grep 残留 |
 | 改配置文件 | MANIFEST depends_on 遍历 |
 | 重命名/移动文件 | Grep 全项目路径引用 |
 | 改 rule/skill/agent | 同步更新 INDEX.md + MANIFEST.yaml |
 | 删除代码 | Grep 确认无残留引用 |
-| 调研/探索任务 | codegraph_explore blast-radius 先确定范围 |
+| 调研/探索任务 | codegraph_explore blast-radius 先确定「怎么运作」 |
 
 ## 反模式（禁止）
 
 | 禁止 | 正确做法 |
 |------|----------|
 | 只改指定文件 | Grep 找到所有关联文件一并修改；五维验收覆盖 blast-radius 全部相关项 |
-| "应该只有这些" | codegraph 验证，不靠直觉 |
-| 手动估计范围 | codegraph_explore + code-review-graph detect_changes + Grep 实证 |
+| "应该只有这些" | CRG impact + codegraph 验证，不靠直觉 |
+| 手动估计范围 | CRG get_impact_radius + detect_changes + codegraph + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 | 跳过阶段 1 直接改 | 范围不明 = 盲改 = 必遗漏 |
 

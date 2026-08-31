@@ -26,6 +26,14 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.8**：非简单双审=修改→验证→审查循环最多 3 轮；禁止只连审不改；同轮连派不耗轮次；PASS 须已有 reviews。
+**v1.2.7**：计划未批准 / CreatePlan / 零编辑 / 无 session id → Stop **不** `followup_message`；完成门不用裸词「完成」；短 R20；非简单审查最多 3 次。
+**v1.2.6**：SessionStart / Stop 把双图同步 **成功或失败** 写到会话界面（`user_message`）；90% 仍不用 `followup_message`。
+**v1.2.5**：90% 不再 `followup_message`（避免假用户续轮）；最多一次 `additional_context`；Stop 载荷已含该提示则跳过。
+**v1.2.4**：90% Stop `followup_message` 与工具侧过载提醒**每会话只一次**；`/summarize` /「压缩上下文」重置 Guard 估算，避免压缩后仍按旧计数反复续轮。
+
+**v1.2.3**：`hook_io.read_stdin` 解析 Cursor 3.18 stdin（UTF-8 BOM / pretty-print / Content-Length）；失败默认不写 stderr，避免 Hooks 面板刷红。本仓 `.cursor/hooks.json` 为空 stub，消除 `Failed to parse project hooks configuration`（Cursor 把缺失项目 hooks 当 ERROR）。部署后**不必重启**即可对后续 Hook 生效；项目 stub 在 Cursor 下次 reload hooks 后生效。
+
 **v1.2.1**：完成验证 Stop `followup_message`（不能 permission deny）；每文件首次编辑后五维验收；`enforce_mode=followup`（已部署 `soft` 映射为 followup）。
 
 **v1.1.5**：语义分离 — 「压缩上下文」= `/summarize`（压缩，Guard 不拦截）；「提取上下文」= 结构化摘要 → `session-digest.md`。
@@ -70,25 +78,25 @@ slash 命令是**路由信号**，不替代 Read 全文。
 
 ## 显式功能对照表
 
-| 功能                | 自动/显式                         | 实现                                                       |
-| ------------------- | --------------------------------- | ---------------------------------------------------------- |
-| 配置同步 rules/总纲 | 自动 + 关键词                     | `sync_on_edit` + `sync_on_prompt` → `sync.ps1`             |
-| 文档/INDEX 维护提醒 | 自动                              | `maintenance_hints`                                        |
-| 上下文 70% 提醒     | 自动                              | 工具估算 **与** `preCompact` 实测取较大值                  |
-| 上下文 90% 强制摘要 | 自动                              | `context_stop` → `followup_message`                        |
-| 显式「压缩上下文」  | 关键词                            | 与 **`/summarize`** 等效；Guard 不拦截                     |
-| 显式「提取上下文」  | 关键词                            | 结构化摘要 → `session-digest.md`（不压缩）                 |
-| Cursor 原生压缩     | **`/summarize`** 或「压缩上下文」 | 降低上下文环；触发 `preCompact` hook                       |
-| Compact 前快照      | `/summarize` 或自动满窗时         | `pre_compact_snapshot` + `cursor-context.json`             |
-| 新会话交接          | 新 conversation_id                | `sessionEnd`/`stop` 写 handoff → `sessionStart` 注入       |
-| codegraph 优先      | soft_block（默认）                | `explore_router` + `CURSOR-EDITOR.mdc`；无索引则降级 nudge |
-| Shell 危险命令      | 自动拦截                          | `shell_guard`                                              |
-| 密钥粘贴            | 自动警告                          | `prompt_secret_scan`                                       |
-| 会话状态一览        | 自动                              | `session_bootstrap`                                        |
-| 初次修改五维验收    | 自动（每文件一次）                | `first_edit_verify`：该文件 + blast-radius 全部相关项 |
-| 完成验证 Stop 硬门  | 自动续轮                          | `verification_stop` → `followup_message`（`loop_limit=3`） |
-| R20 合格标记        | afterAgentResponse                | `r20_capture` 写入 `r20_replay_ok`                         |
-| 业务仓文档 companion | 自动                              | `maintenance_hints`（不限 ~/.claude）                      |
+| 功能                 | 自动/显式                         | 实现                                                                                                           |
+| -------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 配置同步 rules/总纲  | 自动 + 关键词                     | `sync_on_edit` + `sync_on_prompt` → `sync.ps1`                                                                 |
+| 文档/INDEX 维护提醒  | 自动                              | `maintenance_hints`                                                                                            |
+| 上下文 70% 提醒      | 自动                              | 工具估算 **与** `preCompact` 实测取较大值                                                                      |
+| 上下文 90% 强制摘要  | 自动（不续轮）                    | `context_stop` → 一次 `additional_context`（不用 followup）                                                    |
+| 显式「压缩上下文」   | 关键词                            | 与 **`/summarize`** 等效；Guard 不拦截                                                                         |
+| 显式「提取上下文」   | 关键词                            | 结构化摘要 → `session-digest.md`（不压缩）                                                                     |
+| Cursor 原生压缩      | **`/summarize`** 或「压缩上下文」 | 降低上下文环；触发 `preCompact` hook                                                                           |
+| Compact 前快照       | `/summarize` 或自动满窗时         | `pre_compact_snapshot` + `cursor-context.json`                                                                 |
+| 新会话交接           | 新 conversation_id                | `sessionEnd`/`stop` 写 handoff → `sessionStart` 注入                                                           |
+| codegraph 优先       | soft_block（默认）                | `explore_router` + `graph_freshness`；无索引 **deny**（禁止 Grep 兜底）                                        |
+| Shell 危险命令       | 自动拦截                          | `shell_guard`                                                                                                  |
+| 密钥粘贴             | 自动警告                          | `prompt_secret_scan`                                                                                           |
+| 会话状态一览         | 自动                              | `session_bootstrap`（ensure 双图；用户 hook cwd 是 `~/.cursor` 时用 `workspace_roots` / `.workspace-trusted`） |
+| 初次修改五维验收     | 自动（每文件一次）                | `first_edit_verify`：该文件 + blast-radius 全部相关项                                                          |
+| 完成验证 Stop 硬门   | 有未验证编辑才续轮                | `verification_stop` → 短 `followup_message`（计划未批准/零编辑/无 session **不** followup；`loop_limit=3`） |
+| R20 合格标记         | afterAgentResponse                | `r20_capture` 写入 `r20_replay_ok`                                                                             |
+| 业务仓文档 companion | 自动                              | `maintenance_hints`（不限 ~/.claude）                                                                          |
 
 ### 显式同步关键词
 
@@ -108,13 +116,13 @@ slash 命令是**路由信号**，不替代 Read 全文。
 
 #### 对照表
 
-| 你想做的事               | 正确操作                                     |
-| ------------------------ | -------------------------------------------- |
+| 你想做的事                                              | 正确操作                                     |
+| ------------------------------------------------------- | -------------------------------------------- |
 | 降低上下文环（70% 择机 / 90% 强制，SSOT→rules/CORE.md） | **`/summarize`** 或 **「压缩上下文」**       |
-| 获取结构化摘要（不压缩） | **「提取上下文」**                           |
-| 保留决策/路径再压缩      | 「提取上下文」→ 等摘要 → **`/summarize`**    |
-| 新会话带上轮状态         | handoff 或 `@session-digest.md` → 新开 Agent |
-| 查看占用明细             | 点击输入框旁**上下文环**                     |
+| 获取结构化摘要（不压缩）                                | **「提取上下文」**                           |
+| 保留决策/路径再压缩                                     | 「提取上下文」→ 等摘要 → **`/summarize`**    |
+| 新会话带上轮状态                                        | handoff 或 `@session-digest.md` → 新开 Agent |
+| 查看占用明细                                            | 点击输入框旁**上下文环**                     |
 
 - 自动压缩：接近窗口上限时 Cursor 自动 summarize（`preCompact` 的 `trigger: auto`）。
 - 制品路径：`~/.cursor/.state/session-digest.md`、`session-handoff.json`、`pre-compact-state.json`。

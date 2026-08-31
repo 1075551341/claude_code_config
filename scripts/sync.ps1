@@ -88,7 +88,7 @@ $EDITOR_TARGETS = [ordered]@{
     "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
     "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $true; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
+    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $manifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $manifestPath) {
@@ -697,11 +697,9 @@ if (-not $SKIP_EDITOR_SYNC) {
             Sync-Directory -SrcPath (Join-Path $CLAUDE_DIR "skills") `
                 -DstPath (Join-Path $cfg.Home "skills") -Label "skills -> $ed"
         } elseif ($cfg.Special -eq "agents_md") {
-            # opencode（v11.4）：原生读 AGENTS.md 约定 → CLAUDE.md 改名副本落 ~/.config/opencode/AGENTS.md；
-            # MCP/plugin 由 opencode.json 自管，本仓不触其命名空间
-            New-Item -ItemType Directory -Force -Path $cfg.Home | Out-Null
-            Sync-File -SrcPath (Join-Path $CLAUDE_DIR "CLAUDE.md") `
-                -DstPath (Join-Path $cfg.Home "AGENTS.md") -Label "CLAUDE.md -> $ed/AGENTS.md"
+            # v11.4.4：opencode 已解耦（manifest enabled=false）。此分支仅在误开 enabled 时可达；
+            # 禁止再把 CLAUDE.md 覆盖 ~/.config/opencode/AGENTS.md。
+            Write-Skip "$ed`: agents_md decoupled — AGENTS.md is owned by OpenCode, not synced"
         } else {
             if ($cfg.RootIndex) {
                 foreach ($name in $ROOT_FILES) {
@@ -751,7 +749,7 @@ if ($script:STATS.Failed -gt 0) {
 Write-Host ""
 Write-Host "  Mode        : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Root files  : $($ROOT_FILES -join ', ') (single source: config/sync-manifest.json)" -ForegroundColor DarkGray
-Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn=user_rules/*.md; workbuddy=CLAUDE.md+skills only; opencode=CLAUDE.md->AGENTS.md" -ForegroundColor DarkGray
+Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn=user_rules/*.md; workbuddy=CLAUDE.md+skills only; opencode=disabled (self-managed AGENTS.md)" -ForegroundColor DarkGray
 Write-Host "  Editors     : cursor$(if ($presentEditors) { ' + ' + ($presentEditors -join ' + ') }) (absent homes auto-skipped)" -ForegroundColor DarkGray
 Write-Host "  Excluded    : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""

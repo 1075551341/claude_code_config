@@ -18,7 +18,7 @@ from hook_io import (
 ensure_lib_path()
 setup_stdio()
 
-from context_estimator import ContextLevel, record_tool_use
+from context_estimator import ContextLevel, record_tool_use, take_force_tool_nudge
 
 
 def main() -> None:
@@ -39,14 +39,15 @@ def main() -> None:
                 }
             )
         elif level == ContextLevel.FORCE:
-            write_json(
-                {
-                    "additional_context": (
-                        f"🚨 上下文严重过载: {count}次调用 预估{est_pct:.0f}% — "
-                        "本轮结束前输出压缩摘要"
-                    )
-                }
-            )
+            if take_force_tool_nudge():
+                write_json(
+                    {
+                        "additional_context": (
+                            f"🚨 上下文严重过载: {count}次调用 预估{est_pct:.0f}% — "
+                            "本轮结束前输出压缩摘要（本会话只提醒一次）"
+                        )
+                    }
+                )
     except Exception as e:
         print(f"context_post_tool: {e}", file=sys.stderr)
     finally:

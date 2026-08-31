@@ -131,6 +131,64 @@ def peek_context() -> tuple[int, float, ContextLevel]:
     return count, est_pct, level
 
 
+def _nudge_path() -> Path:
+    return state_path("context-nudge.json")
+
+
+def _load_nudge() -> dict:
+    path = _nudge_path()
+    try:
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                return data
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {}
+
+
+def _save_nudge(data: dict) -> None:
+    _nudge_path().write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def take_force_stop_followup(session_id: str = "") -> bool:
+    """True only once until compress/new-session reset.
+
+    Ignore session_id: Cursor Stop frequently sends a per-generation id, so a
+    per-session list still allowed followup_message to restart the agent loop.
+    """
+    _ = session_id  # payload id is not a stable conversation key
+    data = _load_nudge()
+    if data.get("stop_followup_sent"):
+        return False
+    data["stop_followup_sent"] = True
+    _save_nudge(data)
+    return True
+
+
+def take_force_tool_nudge() -> bool:
+    """True only the first per-tool FORCE inject until compress/session reset."""
+    data = _load_nudge()
+    if data.get("tool_nudge_sent"):
+        return False
+    data["tool_nudge_sent"] = True
+    _save_nudge(data)
+    return True
+
+
+def clear_force_nudges() -> None:
+    path = _nudge_path()
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        pass
+    cursor_ctx = state_path("cursor-context.json")
+    try:
+        cursor_ctx.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def detect_tool_loop() -> bool:
     path = monitor_file()
     try:
