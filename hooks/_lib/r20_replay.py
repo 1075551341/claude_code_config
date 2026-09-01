@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """R20 会话终验机械检测（v11.3.4）— 空模板不得过门。
 
-Claude Stop 与 Cursor stop followup 共用，禁止再复制一份正则。
+Claude Stop 与 Cursor 记账共用，禁止再复制一份正则。Cursor 完成门不再 followup。
 """
 from __future__ import annotations
 
@@ -10,6 +10,9 @@ import re
 import subprocess
 
 _VERDICT_RE = re.compile(r"\b(PASS|NEEDS-CHANGES)\b")
+_UNCLEAN_PASS_RE = re.compile(
+    r"(未同步|须同步|应同步|存在文档漂移|注释不一致)"
+)
 
 _REQUIRED = ("遗漏", "错改", "漏改", "原功能", "影响范围")
 _EMPTY_SATISFIED = {"", ".", "..", "...", "…", "无", "n/a", "na", "none"}
@@ -70,6 +73,7 @@ def replay_ok(text: str, requirements: dict | None = None) -> bool:
         return False
     if not (
         "文档" in missed
+        or "注释" in missed
         or "无文档影响" in missed
         or _PATH_RE.search(missed)
     ):
@@ -90,6 +94,18 @@ def replay_ok(text: str, requirements: dict | None = None) -> bool:
     return True
 
 
+def is_resumed_subagent(tool_input) -> bool:
+    """Task/Agent 带非空 resume 则沿用上轮上下文，不计入独立审查。"""
+    if not isinstance(tool_input, dict):
+        return False
+    resume = tool_input.get("resume")
+    if resume is None or resume is False:
+        return False
+    if isinstance(resume, str) and not resume.strip():
+        return False
+    return True
+
+
 def review_verdict_ok(text: str) -> bool:
     """v11.4：最后一条助手回复是否含独立审查结论标记（PASS / NEEDS-CHANGES）。"""
     if not text or not text.strip():
@@ -98,10 +114,15 @@ def review_verdict_ok(text: str) -> bool:
 
 
 def apply_review_verdict(entry: dict, text: str) -> bool:
-    """把审查正文写入 review_pass_ok。PASS 须已有 reviews，禁止自报。返回是否改了 entry。"""
+    """把审查正文写入 review_pass_ok。PASS 须已有 reviews，禁止自报。
+
+    PASS 夹带未关闭同步问题（须同步/未同步等）视为不干净，不得记 pass。
+    返回是否改了 entry。
+    """
     if not text or not text.strip():
         return False
-    if "NEEDS-CHANGES" in text:
+    unclean = "NEEDS-CHANGES" in text or bool(_UNCLEAN_PASS_RE.search(text))
+    if unclean:
         if entry.get("review_pass_ok") is not False:
             entry["review_pass_ok"] = False
             return True
@@ -113,9 +134,30 @@ def apply_review_verdict(entry: dict, text: str) -> bool:
     return False
 
 
+def is_plan_artifact(path: str) -> bool:
+    """Cursor/计划落盘：.cursor/plans/ 与 *.plan.md 不计完成门。"""
+    if not path or not str(path).strip():
+        return False
+    n = str(path).replace("\\", "/").lower()
+    if n.endswith(".plan.md"):
+        return True
+    return "/.cursor/plans/" in n or n.endswith("/.cursor/plans")
+
+
+def counted_edit_items(entry: dict) -> list:
+    """完成门口径：去掉计划制品。"""
+    out = []
+    for item in entry.get("edited_files") or []:
+        path = str(item.get("path") or "")
+        if not path or is_plan_artifact(path):
+            continue
+        out.append(item)
+    return out
+
+
 def has_unverified_edits(entry: dict) -> bool:
-    """本会话有编辑且最后一次编辑后无验证命令。"""
-    edited = entry.get("edited_files") or []
+    """本会话有（非计划制品）编辑且最后一次编辑后无验证命令。"""
+    edited = counted_edit_items(entry)
     if not edited:
         return False
     last_edit_ts = max((item.get("ts", 0) for item in edited), default=0)
@@ -129,7 +171,10 @@ def has_unverified_edits(entry: dict) -> bool:
 
 GATE_HEADER = "【门控 · 完成前必做】"
 PLAN_MODE_VALUES = frozenset({"plan", "planning", "ask"})
+AGENT_MODE_VALUES = frozenset({"agent", "edit", "implementation"})
 PLAN_TOOL_NAMES = frozenset({"createplan", "switchmode"})
+_WRAPPER_TOOLS = frozenset({"calldynamictool", "callmcptool"})
+_EDIT_TOOL_KEYS = frozenset({"write", "strreplace", "edit", "multiedit", "editnotebook", "delete"})
 COMPLETION_KEYWORDS = (
     "完成了",
     "修好了",
@@ -141,6 +186,38 @@ COMPLETION_KEYWORDS = (
 )
 
 
+def _inner_from_blob(blob: dict) -> str:
+    for key in ("toolName", "name", "tool_name", "tool"):
+        val = blob.get(key)
+        if isinstance(val, str) and val.strip():
+            key_n = val.strip().lower().replace("_", "")
+            if key_n not in _WRAPPER_TOOLS:
+                return val.strip()
+    nested = blob.get("arguments") or blob.get("tool_input") or blob.get("input")
+    if isinstance(nested, dict):
+        return _inner_from_blob(nested)
+    return ""
+
+
+def unwrap_tool_name(name: str, data: dict | None = None) -> str:
+    """CallDynamicTool / CallMcpTool 解析内层 CreatePlan / SwitchMode。"""
+    raw = (name or "").strip()
+    key = raw.lower().replace("_", "")
+    if key not in _WRAPPER_TOOLS:
+        return raw
+    if isinstance(data, dict):
+        inner = _inner_from_blob(data)
+        if inner:
+            return inner
+        for nest_key in ("tool_input", "arguments", "input"):
+            blob = data.get(nest_key)
+            if isinstance(blob, dict):
+                inner = _inner_from_blob(blob)
+                if inner:
+                    return inner
+    return raw
+
+
 def payload_tool_name(data: dict | None) -> str:
     """Stop/工具载荷里的工具名；没有则空串。"""
     if not isinstance(data, dict):
@@ -148,17 +225,26 @@ def payload_tool_name(data: dict | None) -> str:
     for key in ("tool_name", "toolName", "last_tool_name", "lastToolName"):
         val = data.get(key)
         if isinstance(val, str) and val.strip():
-            return val.strip()
+            return unwrap_tool_name(val.strip(), data)
     tool = data.get("tool")
     if isinstance(tool, dict):
         val = tool.get("name") or tool.get("toolName")
         if isinstance(val, str) and val.strip():
-            return val.strip()
+            return unwrap_tool_name(val.strip(), data)
     return ""
 
 
 def _mode_value(data: dict) -> str:
-    for key in ("composer_mode", "mode", "agent_mode", "plan_mode"):
+    if data.get("is_plan_mode") is True:
+        return "plan"
+    for key in (
+        "composer_mode",
+        "mode",
+        "agent_mode",
+        "plan_mode",
+        "current_mode",
+        "conversation_state",
+    ):
         val = data.get(key)
         if isinstance(val, str) and val.strip():
             return val.strip().lower()
@@ -173,11 +259,19 @@ def _mode_value(data: dict) -> str:
 def switchmode_target(data: dict | None) -> str:
     if not isinstance(data, dict):
         return ""
-    tool_input = data.get("tool_input") or data.get("input") or {}
-    if not isinstance(tool_input, dict):
-        return ""
-    val = tool_input.get("target_mode_id") or tool_input.get("target_mode")
-    return str(val or "").strip().lower()
+    blobs: list[dict] = [data]
+    for key in ("tool_input", "input", "arguments"):
+        nested = data.get(key)
+        if isinstance(nested, dict):
+            blobs.append(nested)
+            inner = nested.get("arguments") or nested.get("tool_input") or nested.get("input")
+            if isinstance(inner, dict):
+                blobs.append(inner)
+    for blob in blobs:
+        val = blob.get("target_mode_id") or blob.get("target_mode")
+        if val:
+            return str(val).strip().lower()
+    return ""
 
 
 def is_awaiting_plan(entry: dict | None, data: dict | None = None) -> bool:
@@ -185,7 +279,7 @@ def is_awaiting_plan(entry: dict | None, data: dict | None = None) -> bool:
     entry = entry or {}
     if entry.get("awaiting_plan_approval"):
         return True
-    last = str(entry.get("last_tool") or "").lower().replace("_", "")
+    last = unwrap_tool_name(str(entry.get("last_tool") or "")).lower().replace("_", "")
     if last == "createplan":
         return True
     if last == "switchmode" and str(entry.get("last_mode_target") or "").lower() in PLAN_MODE_VALUES:
@@ -208,10 +302,10 @@ def is_gate_echo(text: str) -> bool:
 
 
 def cursor_should_followup(entry: dict, data: dict | None = None) -> bool:
-    """Cursor stop：有编辑且非计划等待，且（无验证命令或 R20 未过）。"""
+    """Cursor stop：有非计划制品编辑且非计划等待，且（无验证命令或 R20 未过）。"""
     if is_awaiting_plan(entry, data):
         return False
-    if not (entry.get("edited_files") or []):
+    if not counted_edit_items(entry):
         return False
     if not entry.get("r20_replay_ok"):
         return True
@@ -219,10 +313,10 @@ def cursor_should_followup(entry: dict, data: dict | None = None) -> bool:
 
 
 def unique_code_edit_count(entry: dict, doc_exts=None) -> int:
-    """会话内非文档编辑路径去重计数。"""
+    """会话内非文档、非计划制品编辑路径去重计数。"""
     skip = {str(x).lower() for x in (doc_exts or (".md", ".txt", ".rst", ".markdown"))}
     seen = set()
-    for item in entry.get("edited_files") or []:
+    for item in counted_edit_items(entry):
         path = str(item.get("path") or "")
         ext = os.path.splitext(path)[1].lower()
         if not path or ext in skip:
@@ -238,25 +332,30 @@ def _last_item_ts(items) -> float:
 
 
 def dual_pass_in_scope(entry: dict, cfg: dict | None = None) -> bool:
-    """是否走非简单双审循环。"""
+    """是否走修改→验证→独立审查循环（有代码/配置编辑即启用）。"""
     cfg = cfg or {}
     if is_awaiting_plan(entry):
         return False
-    if not (entry.get("edited_files") or []):
+    if not counted_edit_items(entry):
         return False
-    min_files = int(cfg.get("require_reviewer_min_files", 3))
+    min_files = int(cfg.get("require_reviewer_min_files", 1))
     non_simple = bool(entry.get("non_simple"))
     code_n = unique_code_edit_count(entry, cfg.get("doc_only_extensions"))
+    if code_n < 1:
+        return False
     if non_simple:
         return True
     return code_n >= min_files
 
 
 def dual_pass_phase(entry: dict, cfg: dict | None = None) -> str:
-    """非简单双审相位。
+    """双审相位。
 
     一轮 = 修改 → 验证（对照预期）→ 独立审查全部修改。
-    不合格则再开一轮；最多 review_max_rounds 轮。禁止只连审不改。
+    独立审查干净 PASS / 符合预期 → done（立即结束，禁止再审浪费 token）。
+    审查给出完整未满足清单（禁止发现一条就停审）→ 再派一次 change-implementer 按清单集中改齐后再验。
+    下一轮审查必须全新开审（禁止 resume 上一轮审查者；对照原始要求全量重扫，上轮清单不得限定范围）。
+    禁止边审边改耗轮次。最多 review_max_rounds 轮。禁止审查者改文件、禁止只连审不改。
 
     返回: skip | done | capped | modify | verify | review
     """
@@ -270,7 +369,7 @@ def dual_pass_phase(entry: dict, cfg: dict | None = None) -> str:
     if rounds >= max_rounds:
         return "capped"
     review_ts = _last_item_ts(entry.get("reviews") or [])
-    edit_ts = _last_item_ts(entry.get("edited_files") or [])
+    edit_ts = _last_item_ts(counted_edit_items(entry))
     if rounds > 0 and edit_ts <= review_ts:
         return "modify"
     if has_unverified_edits(entry):
@@ -283,28 +382,54 @@ def review_followup_needed(entry: dict, cfg: dict | None = None) -> bool:
     return dual_pass_phase(entry, cfg) == "review"
 
 
+def _edit_paths_from_input(tool_input) -> list[str]:
+    if not isinstance(tool_input, dict):
+        return []
+    paths: list[str] = []
+    for key in ("path", "file_path", "target_file", "target_notebook"):
+        val = tool_input.get(key)
+        if isinstance(val, str) and val.strip():
+            paths.append(val.strip())
+    nested = tool_input.get("arguments") or tool_input.get("tool_input")
+    if isinstance(nested, dict):
+        paths.extend(_edit_paths_from_input(nested))
+    return paths
+
+
 def record_plan_tool(entry: dict, tool_name: str, tool_input=None) -> None:
-    """追踪 CreatePlan / SwitchMode，供 stop 跳过 followup。"""
-    name = (tool_name or "").strip()
+    """追踪 CreatePlan / SwitchMode，供 stop 跳过 followup。
+
+    写计划制品不得清除 awaiting；仅切到 agent 或出现非计划制品代码编辑时才清除。
+    """
+    blob = tool_input if isinstance(tool_input, dict) else {}
+    name = unwrap_tool_name((tool_name or "").strip(), {"tool_input": blob, "toolName": tool_name})
     if not name:
         return
-    entry["last_tool"] = name
     key = name.lower().replace("_", "")
+    if key in _WRAPPER_TOOLS:
+        return
+    entry["last_tool"] = name
     if key == "createplan":
         entry["awaiting_plan_approval"] = True
         return
     if key == "switchmode":
-        data = {"tool_input": tool_input or {}}
+        data = {"tool_input": blob}
         target = switchmode_target(data)
         if target:
             entry["last_mode_target"] = target
         if target in PLAN_MODE_VALUES:
             entry["awaiting_plan_approval"] = True
-        elif target in {"agent", "edit", "implementation"}:
+        elif target in AGENT_MODE_VALUES:
             entry["awaiting_plan_approval"] = False
         return
-    if key in {"write", "strreplace", "edit", "multiedit", "editnotebook", "delete"}:
-        entry["awaiting_plan_approval"] = False
+    if key not in _EDIT_TOOL_KEYS:
+        return
+    paths = _edit_paths_from_input(blob)
+    if paths and all(is_plan_artifact(p) for p in paths):
+        return
+    if not paths:
+        return
+    entry["awaiting_plan_approval"] = False
 
 
 
@@ -367,7 +492,7 @@ def impact_diff_check(entry: dict, session_id: str, cwd: str = "") -> list:
     baseline = entry.get("git_baseline")
     if not isinstance(baseline, list) or not baseline:
         return []
-    if not (entry.get("edited_files") or []):
+    if not counted_edit_items(entry):
         return []
     current = git_dirty_set(cwd)
     if current is None:

@@ -20,6 +20,7 @@ from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 from crg_track import record_crg_call  # noqa: E402
+from r20_replay import is_plan_artifact, is_resumed_subagent, record_plan_tool  # noqa: E402
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -40,6 +41,11 @@ IMPACT_REMINDER = (
     "⚠️ IMPACT 清单自动登记失败（v11.4 起由追踪器自动写入；本条为兜底）：请将影响面清单"
     "手动追加至 .claude/state/impact-manifest.log，格式 IMPACT|<session>|<路径1,路径2,...>|<时间戳>。"
     "Stop 门将校验「diff ⊆ 清单」，清单外变更会被拦截（错改/漏改硬证据）。"
+)
+RESUMED_REVIEW_REMINDER = (
+    "⚠️ 本审查委派带 resume，不计入独立审查。"
+    "每轮须全新 Task/Agent（禁止 resume 上一轮审查者），对照原始要求全量重扫；"
+    "上轮清单仅作参考，不得限定范围。"
 )
 
 
@@ -210,12 +216,15 @@ def main():
 
     changed = False
     first_edit_msg = None
+    record_plan_tool(entry, tool_name, tool_input)
+    changed = True
     if is_edit_tool(tool_name):
         paths = extract_edit_paths(tool_input, cwd)
+        plan_only = bool(paths) and all(is_plan_artifact(p) for p in paths)
         for path in paths:
             entry["edited_files"].append({"path": path, "ts": now})
             changed = True
-        fresh = fresh_edit_paths(entry, paths)
+        fresh = [] if plan_only else fresh_edit_paths(entry, paths)
         if fresh:
             first_edit_msg = compose_message(load_first_edit_message(CLAUDE_HOME), fresh)
             changed = True
@@ -237,10 +246,21 @@ def main():
         if command and is_verify_command(command, cfg["verify_command_patterns"]):
             entry["verify_commands"].append({"command": command[:300], "ts": now})
             changed = True
-    elif tool_name == "Task":
+    elif tool_name in ("Task", "Agent"):
         agent = str(tool_input.get("subagent_type") or tool_input.get("description") or "").lower()
         for reviewer in cfg["reviewer_agents"]:
             if reviewer.lower() in agent:
+                if is_resumed_subagent(tool_input):
+                    entry.setdefault("skipped_resumed_reviews", []).append(
+                        {"agent": reviewer, "ts": now}
+                    )
+                    changed = True
+                    first_edit_msg = (
+                        f"{first_edit_msg}\n\n{RESUMED_REVIEW_REMINDER}"
+                        if first_edit_msg
+                        else RESUMED_REVIEW_REMINDER
+                    )
+                    break
                 last_rev = 0.0
                 for item in entry.get("reviews") or []:
                     last_rev = max(last_rev, float(item.get("ts", 0) or 0))

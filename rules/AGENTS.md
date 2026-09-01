@@ -13,15 +13,15 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 > 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
 
-## gstack 审查 6 + 补全 2 + 跨模型 1（v11 收敛）
+## gstack 审查 6 + 补全 3 + 跨模型 1（v11.4.12）
 
 审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
 
-补全（supplement）：sre | doc-writer；跨模型（cross-model）：codex-reviewer
+补全（supplement）：sre | doc-writer | change-implementer；跨模型（cross-model）：codex-reviewer
 
 > v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline Phase 2；product-manager 删除（与 office-hours 重叠）；pair-agent / ios-specialist / land-and-deploy / design-shotgun / performance-engineer 降级 `catalog/agents/`（按需复制）。
 
-位置：`agents/`（全局 16）+ `catalog/agents/`（按需复制）
+位置：`agents/`（全局 17）+ `catalog/agents/`（按需复制）
 
 ## 何时委派
 
@@ -32,7 +32,8 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | 多模块并行 | agentic-orchestrator |
 | 构建失败 | build-error-resolver |
 | spec 审查 | spec-reviewer |
-| 代码审查 | code-reviewer + eng-reviewer |
+| 代码审查 | code-reviewer + eng-reviewer（只找问题，禁止改文件） |
+| 落实修改 | 审查未满足项 | change-implementer（禁止审查） |
 | 产品决策 | ceo-reviewer |
 | UI/UX 审查 | designer + dx-reviewer |
 | DX 体验审查 | dx-reviewer |
@@ -46,7 +47,7 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 ## 审查路由规则
 
 ```
-所有变更        → eng-reviewer (必须)
+所有变更        → eng-reviewer（只找问题；修复 → change-implementer）
 产品/新功能     → + ceo-reviewer
 UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）
 DX体验变更      → + dx-reviewer
@@ -66,6 +67,8 @@ iOS 变更        → 按需启用 catalog/ios-specialist
 - 同一制品路径并行写入（DAG冲突检测阻断）
 - 子agent 回写主会话上下文（仅通过三态制品通信）
 - 按 agent 名称堆叠委派（应按 MANIFEST concern→owner 路由）
+- 审查者与修改者同一 agent（禁止既审又改；审查只找问题，修改必须 change-implementer）
+- `resume` 上一轮审查者充当本轮独立审查（须全新 Task/Agent；上轮遗漏不得继承为已扫范围）
 
 ## 上下文预算
 

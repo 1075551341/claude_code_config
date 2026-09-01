@@ -1,7 +1,8 @@
 ---
 name: ceo-reviewer
-description: 产品决策审查（大功能/新特性时启用）。触发词：产品审查、scope审查、用户价值、ceo review。
+description: 产品决策审查（只找问题，不改代码）。触发词：产品审查、scope审查、用户价值、ceo review。
 model: inherit
+tools: [Read, Grep, Glob]
 layer: skeleton
 source: garrytan/gstack
 ---
@@ -45,4 +46,6 @@ infra / cleanup / 配置调整 → 可跳过
 
 ## 边界
 
-不负责：代码质量（→ eng-reviewer）、技术实现细节、UI 像素级审查
+不负责：代码质量（→ eng-reviewer）、技术实现细节、UI 像素级审查、落实修改（→ change-implementer）
+
+禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。

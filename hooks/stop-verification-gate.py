@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.4.8）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-非简单双审：修改→验证→审查循环最多 3 轮；apply_review_verdict 同步 PASS（须已有 reviews）。
-本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
-④≥3 文件 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
+Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
+④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
 另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
 
@@ -30,8 +30,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
 from r20_replay import (  # noqa: E402
     apply_review_verdict,
+    counted_edit_items,
     dual_pass_phase,
     impact_diff_check,
+    is_awaiting_plan,
+    is_plan_artifact,
     replay_ok,
     review_verdict_ok,
 )
@@ -55,7 +58,7 @@ DEFAULT_CFG = {
     "max_blocks": 3,
     "auto_check_timeout_sec": 25,
     "skip_keywords": ["跳过验证", "不用验证", "skip verify"],
-    "require_reviewer_min_files": 3,
+    "require_reviewer_min_files": 1,
     "require_requirements_replay": True,
     "doc_only_extensions": [".md", ".txt", ".rst", ".markdown"],
     "requirement_fingerprint": True,
@@ -188,6 +191,8 @@ def unique_code_files(edited_files: list, doc_exts: list) -> list:
     seen = {}
     for item in edited_files:
         path = item.get("path", "")
+        if is_plan_artifact(path):
+            continue
         ext = os.path.splitext(path)[1].lower()
         if ext in doc_exts or ext not in CODE_EXTENSIONS:
             continue
@@ -554,17 +559,24 @@ def main():
     if cfg["enabled"]:
         state = load_state()
         entry = state.get(session_id) or {}
-        edited = entry.get("edited_files", [])
+        awaiting = is_awaiting_plan(entry, data)
+        if awaiting:
+            print("stop-verification-gate: 计划未批准，跳过完成门（仅刷新图谱）", file=sys.stderr)
+        edited = [] if awaiting else counted_edit_items(entry)
         code_files = unique_code_files(edited, cfg["doc_only_extensions"])
 
         # 工作树交叉核查：抓 MCP / Shell 重定向等绕过 hook 追踪的写入
         worktree_cwd = entry.get("cwd") or cwd
-        git_files, git_warn = git_changed_code_files(
-            worktree_cwd, cfg["doc_only_extensions"], min(10, int(cfg["auto_check_timeout_sec"]))
-        )
-        if git_warn:
-            print(f"⚠️ {git_warn}", file=sys.stderr)
-        untracked = untracked_by_hook(git_files, entry, transcript_path)
+        if awaiting:
+            git_files, git_warn = [], ""
+            untracked = []
+        else:
+            git_files, git_warn = git_changed_code_files(
+                worktree_cwd, cfg["doc_only_extensions"], min(10, int(cfg["auto_check_timeout_sec"]))
+            )
+            if git_warn:
+                print(f"⚠️ {git_warn}", file=sys.stderr)
+            untracked = untracked_by_hook(git_files, entry, transcript_path)
 
         if edited and not code_files and not untracked:
             print("ℹ️ 本会话仅文档类编辑：请重读修改内容确认无误后再声称完成", file=sys.stderr)
@@ -632,11 +644,9 @@ def main():
                         entry["ts"] = time.time()
                         state[session_id] = entry
                         save_state(state)
-                    non_simple = bool(entry.get("non_simple"))
                     max_rounds = int(cfg.get("review_max_rounds", 3))
                     rounds = int(entry.get("review_rounds") or 0)
-                    need_rev = non_simple or total_changed >= int(cfg["require_reviewer_min_files"])
-                    phase = dual_pass_phase(entry, cfg) if need_rev else "skip"
+                    phase = dual_pass_phase(entry, cfg)
                     if phase == "capped":
                         print(
                             f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
@@ -644,15 +654,15 @@ def main():
                         )
                     elif phase == "modify":
                         reasons.append(
-                            "非简单双审：须先按未满足项修改并跑验证，再审全部修改是否符合预期"
-                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止只连审不改。"
+                            "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
+                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
                         )
                     elif phase == "verify":
                         pass
                     elif phase == "review":
                         reasons.append(
-                            "非简单双审：须委派 eng-reviewer 对照原始要求审全部修改，"
-                            f"回贴 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮）"
+                            "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
+                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
                         )
                     elif (
                         verdict_cfg_on

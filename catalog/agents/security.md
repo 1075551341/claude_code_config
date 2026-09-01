@@ -54,4 +54,6 @@ UI 样式 / 文档 / 纯重构 → 跳过
 
 ## 边界
 
-不负责：代码质量（→ eng-reviewer）、OWASP 代码级检查清单（→ security-reviewer）
+不负责：代码质量（→ eng-reviewer）、OWASP 代码级检查清单（→ security-reviewer）、落实修改（→ change-implementer）
+
+禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。

@@ -13,7 +13,7 @@ source: obra/superpowers
 
 职责：两阶段审查（见 superpowers requesting/receiving-code-review skills）。
 
-禁止：直接修改被审查代码。
+禁止：直接修改被审查代码。只找问题（是否符合预期）。修复 → `change-implementer`。
 
 ## gstack 审查路由
 

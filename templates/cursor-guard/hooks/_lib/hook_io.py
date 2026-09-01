@@ -195,13 +195,26 @@ def extract_tool_name(data: dict) -> str:
             return val
     tool_input = data.get("tool_input") or data.get("arguments") or data.get("input") or {}
     if isinstance(tool_input, dict):
-        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
+        for key in ("toolName", "tool_name", "mcp_tool", "tool", "name"):
             val = tool_input.get(key)
             if isinstance(val, str) and val:
+                key_n = val.strip().lower().replace("_", "")
+                if key == "name" and key_n not in {
+                    "createplan",
+                    "switchmode",
+                    "write",
+                    "strreplace",
+                    "edit",
+                    "multiedit",
+                    "delete",
+                    "shell",
+                    "task",
+                }:
+                    continue
                 return val
         nested = tool_input.get("arguments")
         if isinstance(nested, dict):
-            val = nested.get("name") or nested.get("toolName")
+            val = nested.get("toolName") or nested.get("tool_name") or nested.get("name")
             if isinstance(val, str) and val:
                 return val
     for key in ("tool_name", "tool", "name"):

@@ -48,4 +48,6 @@ infra / cleanup / 配置调整 → 可跳过
 
 ## 边界
 
-不负责：代码质量（→ eng-reviewer）、技术实现细节、UI 像素级审查
+不负责：代码质量（→ eng-reviewer）、技术实现细节、UI 像素级审查、落实修改（→ change-implementer）
+
+禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.6）。
+"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.9）。
 
-SessionStart 真正 init/update；无图 blocked → PreToolUse deny。
-Stop 增量刷新；仅验证全绿后跑 sync.ps1。
+SessionStart/sessionEnd 真正 init/update；已有图时 CLI 失败记警告不阻断。
+无图 blocked → PreToolUse deny。Stop 增量刷新；仅验证全绿后跑 sync.ps1。
 """
 from __future__ import annotations
 
@@ -148,8 +148,13 @@ def _clean_fs_path(val: str) -> str:
         return ""
     if s.startswith("file://"):
         s = s[7:]
-        if s.startswith("/") and len(s) >= 3 and s[2] == ":":
+        if s.startswith("/") and len(s) >= 4 and s[2] == ":":
+            # file:///d:/...
             s = s[1:]
+        elif s.startswith("/") and len(s) >= 3 and s[1].isalpha() and s[2] == ":":
+            s = s[1:]
+    if len(s) >= 3 and s[0] in "/\\" and s[1].isalpha() and s[2] == ":":
+        s = s[1:]
     return s
 
 
@@ -369,7 +374,8 @@ def _put_entry(cwd: str, entry: dict) -> None:
 
 
 def find_git_root(start: str, max_up: int = 8) -> str:
-    probe = os.path.abspath(start or "") if start else ""
+    start = _clean_fs_path(start) if start else ""
+    probe = os.path.abspath(start) if start else ""
     if not probe:
         return ""
     for _ in range(max_up):
@@ -572,7 +578,7 @@ def ensure_codegraph(root: str, timeout_sec: int, incremental_only: bool = False
             return True, ""
         if which_tool("codegraph") is None:
             return True, "codegraph CLI 缺失，已有索引：跳过 sync"
-        return False, err
+        return True, err
     if incremental_only:
         return False, "无 .codegraph 索引（Stop 仅增量，不 init）"
     return _run_named("codegraph", ["init", "-i"], root, timeout_sec)
@@ -586,7 +592,7 @@ def ensure_crg(root: str, timeout_sec: int, incremental_only: bool = False) -> t
             return True, ""
         if which_tool("code-review-graph") is None:
             return True, "code-review-graph CLI 缺失，已有 graph.db：跳过 update"
-        return False, err
+        return True, err
     if incremental_only:
         return False, "无 CRG graph.db（Stop 仅增量，不 build）"
     return _run_named("code-review-graph", ["build"], root, timeout_sec)
@@ -797,8 +803,8 @@ def format_ui_banner(result: dict, *, action: str = "ensure") -> str:
     results = result.get("results") or []
     if result.get("skipped") and not results:
         where = result.get("root") or ""
-        extra = f" @ {where}" if where else ""
-        return f"【{verb}】跳过：非 git 仓或已关闭{extra}"
+        extra = f" @ {where}（原因=路径无法解析为 git 根或确非 git 仓）" if where else ""
+        return f"【{verb}】跳过：非 git 仓{extra}"
     overflow = int(result.get("overflow") or 0)
     cap_note = f"；子项目已封顶，另有 {overflow} 个未再嵌套同步" if overflow else ""
     if len(results) > 1:
@@ -821,8 +827,8 @@ def format_ui_banner(result: dict, *, action: str = "ensure") -> str:
 def format_status(result: dict) -> str:
     if result.get("skipped") and not (result.get("results") or []):
         where = result.get("root") or ""
-        extra = f"（cwd={where}）" if where else ""
-        return f"图谱保鲜：非 git 仓或已关闭，跳过{extra}"
+        extra = f"（cwd={where}；原因=路径无法解析为 git 根或确非 git 仓）" if where else ""
+        return f"图谱保鲜：跳过{extra}"
     results = result.get("results") or []
     if len(results) > 1:
         return format_ui_banner(

@@ -1,7 +1,8 @@
 ---
 name: dx-reviewer
-description: 开发体验审查（UI/UX/新功能/API设计时启用）。触发词：DX审查、开发体验、TTHW、摩擦点、magic moment。
+description: 开发体验审查（只找问题，不改代码）。触发词：DX审查、开发体验、TTHW、摩擦点、magic moment。
 model: inherit
+tools: [Read, Grep, Glob]
 layer: skeleton
 source: garrytan/gstack
 ---
@@ -53,3 +54,7 @@ UI/UX 变更     → + designer 联合审查
 ### 结论
 APPROVED | NEEDS-POLISH | BLOCKED
 ```
+
+## 边界
+
+审查不改代码。禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。修复 → `change-implementer`。

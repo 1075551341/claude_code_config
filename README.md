@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.8** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.4.12** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.8）                                                                 |
+| `SPEC.md`       | 配置法典（v11.4.12）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -17,7 +17,7 @@
 | 目录         | 内容                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------ |
 | `skills/`    | 36 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
-| `agents/`    | 16 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
+| `agents/`    | 17 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
 | `rules/`     | 10 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
 | `hooks/`     | 生命周期钩子（19 注册激活 + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
 | `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
@@ -55,7 +55,11 @@ powershell scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.4.8**（2026-08-31）— 非简单双审=修改→验证→审查循环最多 3 轮（禁止只连审不改）；Guard 1.2.8；DSH 2.7 / OpenCode 1.7
+- 当前：**v11.4.12**（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.11（2026-09-01）— 独立审查只找问题；修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。Guard 1.2.10；DSH 2.10 / OpenCode 1.10
+- 前版：v11.4.10（2026-09-01）— Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留；Guard 1.2.10；DSH 2.9 / OpenCode 1.9
+- 前版：v11.4.9（2026-09-01）— 有改动即双审（PASS 即停，仅结论不一致才再开一轮、最多 3 轮）；计划未批准零注入（CallDynamicTool/CreatePlan）；Windows `/X:/` 路径规范化；会话起止双图 ensure/refresh；已有图 CLI 失败不阻断；Guard 1.2.9；DSH 2.8 / OpenCode 1.8
+- 前版：v11.4.8（2026-08-31）— 非简单双审=修改→验证→审查循环最多 3 轮（禁止只连审不改）；Guard 1.2.8；DSH 2.7 / OpenCode 1.7
 - 前版：v11.4.7（2026-08-31）— 计划未批准 / CreatePlan / 零编辑禁止 followup；短 R20；非简单双审最多 3 次；Cursor Guard 1.2.7；DSH 2.6 / OpenCode 1.6 手工对齐（sync.ps1 不覆盖 AGENTS.md）
 - 前版：v11.4.6（2026-08-29）— 图谱保鲜硬门（会话 ensure 双图、无图 deny、验绿后 sync.ps1）；Guard 1.2.6；DSH 2.5 / OpenCode 1.5
 - 前版：v11.4.5（2026-08-29）— MCP 分工（内置>plugin>MCP；CRG=上下文/影响面/风险/审查/PR）+ Stop 六维纠错续轮 + R20 满足行三态；DevTools/Postgres 中断启用；DSH/OpenCode 手工对齐且不改其 plugin/MCP 开关

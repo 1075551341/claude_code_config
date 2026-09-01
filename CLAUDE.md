@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.8**（非简单双审=修改→验证→审查最多 3 轮。原 v11.4.7：计划未批准禁止 followup；短 R20。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.12**（审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -59,9 +59,10 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
        → ②规格(Read skills/writing-plans/SKILL.md)
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
-          非简单另须独立审查者：每轮 修改→验证→审查（对照原始要求审全部修改）；
-          PASS 才可完成；NEEDS-CHANGES 回执行者再改再验再审。最多 3 轮，禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
-       → ⑤学习
+          有代码/配置改动：修改（change-implementer）→验证→审查（eng-reviewer 只找问题）；
+          干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
+          计划未批准 / CreatePlan 等待用户 → 禁止声称完成与审查
+          → ⑤学习
 非简单 调研 → deep-research（L3 双源）
 ```
 
@@ -77,7 +78,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
   ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
   ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
   ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
-  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；未全绿 → DONE_WITH_CONCERNS 需说明）。非简单：修改→验证→审查循环 PASS（最多 3 轮）
+  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（最多 3 轮）；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
   ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
 
@@ -104,7 +105,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 | R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                                  | CORE.md |
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                         | CORE.md |
 | R19 | Git 禁令    | 禁自动stash/commit                                                                                                                                  | CORE.md |
-| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；核对范围=影响面全部相关项（非仅已编辑文件）；文件/配置须与文档/备注一致；**验证证据须观察输出（命令/测试/文件），不信叙述**。模板→verification skill；Claude Stop 硬门 + Cursor followup | CORE.md |
+| R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；核对范围=影响面全部相关项；**配置/修改必须与文档/注释同步**；独立审查一次找齐且**每轮全新开审**，修改必须 `change-implementer` 按完整清单集中改；禁止边审边改耗轮次；**验证证据须观察输出**。模板→verification skill | CORE.md |
 
 > 工程原则（第一性原理/YAGNI/依赖克制/删除过时优先）→ `rules/CORE.md` 工程原则节 + `rules/GOVERNANCE.md` 最佳实践详参章
 
@@ -146,8 +147,8 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 ## 审查路由
 
 ```
-所有变更→eng-reviewer | 产品→+ceo | UI/UX→+designer+dx-reviewer
-非简单：每轮修改→验证→审查（最多 3 轮，禁止只连审不改）；计划未批准禁止 followup 终审
+所有变更→eng-reviewer（只找问题）| 产品→+ceo | UI/UX→+designer+dx-reviewer
+有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐后汇总；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 resume 上一轮审查者，最多 3 轮）；禁止边审边改、禁止审查者改文件、禁止只连审不改。计划未批准禁止声称完成。Cursor 完成门不 followup
 安全→+security-reviewer(全量审计=深度模式) | 跨模型→+codex-reviewer
 iOS/部署/多方案设计→catalog/agents/ 按需启用
 ```

@@ -1,7 +1,10 @@
-# Hooks 钩子系统 v5.12
+# Hooks 钩子系统 v5.15
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
+> **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
+> **v5.13 变更（v11.4.9）**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；写 plan.md 不计完成门。Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断。Cursor Guard 1.2.9（sessionEnd 刷双图 timeout 45s）。
 > **v5.12 变更（v11.4.8）**：非简单双审=修改→验证→审查循环最多 3 轮；`dual_pass_phase`；禁止只连审不改。`review_rounds` 仅 last_edit>last_rev 时 +1；PASS 须已有 reviews。Cursor Guard 1.2.8。
 > **v5.11 变更（v11.4.7）**：Stop 完成门——计划未批准/零编辑不阻断；短 R20；非简单审查最多 3 次。Cursor Guard 1.2.7 对齐。图谱保鲜仍为 v5.10。
 > **v5.10 变更（v11.4.6）**：图谱保鲜硬门——SessionStart 真正 `codegraph init|sync` + `code-review-graph build|update`（120s）；新 `pre-graph-freshness.py` PreToolUse deny 无图查询/Grep/写工具；Stop 增量刷新双图，验证全绿后 `sync.ps1 -Scope rules`；launcher 子进程超时 180s。TRAE/Qoder 用 `stop-graph-freshness.py`（未在 CC settings 注册）+ `scripts/deploy-editor-graph-hooks.ps1`。不恢复每次编辑 kg sync hook。
@@ -126,7 +129,7 @@
 
 ```bash
 LOCAL_HOOK_PROFILE=minimal   # 仅生命周期+安全 (5 hooks)
-LOCAL_HOOK_PROFILE=standard  # 默认：16 注册激活 (当前)
+LOCAL_HOOK_PROFILE=standard  # 默认：19 注册激活 (当前)
 LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库已删，需从 git 历史恢复后注册）
 ```
 
@@ -139,7 +142,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.8（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` followup（计划未批准/零编辑不续轮；非简单修改→审查循环最多 3 轮）。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
@@ -171,4 +174,4 @@ Cursor Guard v1.2.8（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23
 
 ---
 
-_版本：5.12（v11.4.8）| 19 注册激活 + 5 未注册；修改→验证→审查循环最多 3 轮；计划未批准不终审 + 短 R20；图谱保鲜硬门_
+_版本：5.15（v11.4.12）| 19 注册激活 + 5 未注册；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_

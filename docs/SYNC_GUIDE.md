@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.13 (v11.4.8) | **日期**: 2026-08-31 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.17 (v11.4.12) | **日期**: 2026-09-01 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -186,7 +186,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
 | 模板（版本化） | `~/.claude/templates/cursor-guard/`         | hooks 源码 SSOT                      |
 | 运行时         | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | Cursor 原生 hook                     |
 | 状态           | `~/.cursor/.state/`                         | 计数/压缩快照（与 `~/.claude` 隔离） |
-| 配置           | `~/.cursor/guard-config.json`               | 70%/90% 阈值、同步开关、`verification.enforce_mode=followup` |
+| 配置           | `~/.cursor/guard-config.json`               | 70%/90% 阈值、同步开关、`verification.enforce_mode=off` |
 | 项目 hooks stub | 本仓 `.cursor/hooks.json`（空 `hooks`）      | Cursor 3.18 把缺失项目 hooks 标成 parse ERROR；空文件即可静音 |
 
 **部署**：
@@ -197,7 +197,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 **显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -All`。
 **自动同步**：Guard `impact_sync` 检测 `~/.claude` 下可同步路径（root_files / rules / skills / agents）变更后触发对应模式。
-**上下文**：70% `agent_message` 提醒；90% `stop` 注入 `followup_message` 强制摘要 + 建议开新对话。
+**上下文**：70% `agent_message` 提醒；90% `stop` 注入一次 `additional_context`（不用 followup_message）。
 
 **与 Claude Code 对照**：
 
@@ -208,7 +208,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 | 压缩命令     | `/compact`                    | Cursor 原生 compact + `preCompact` 快照 |
 | 计数文件     | `tool-call-counter.json`      | `.cursor/.state/tool-counter.json`      |
 | codegraph    | MCP 自动同步（v1.5 原生监听） | 同左（双端零 hook，v11 退役 sync hook） |
-| 完成验证     | Stop `exit 2` + R20 反空模板  | `verification_stop` `followup_message`（loop_limit=3） |
+| 完成验证     | Stop `exit 2` + R20 反空模板  | 规则驱动双审（无 followup）；Stop 仅图谱 refresh / 全绿 sync |
 | 初次修改验收 | PostToolUse 并入 tracker      | `first_edit_verify`（每文件一次）                      |
 | 文档 companion | stop-readme / 维护提醒        | `maintenance_hints`（含业务仓）                        |
 
@@ -239,6 +239,10 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
+- **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。
+- **v20.15 (v11.4.10)**：Cursor 完成门不再 followup（规则驱动双审）。Guard 1.2.10；DSH 2.9 / OpenCode 1.9。90% 用 `additional_context`（文档与实现对齐）。
+- **v20.14 (v11.4.9)**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入；Windows `/X:/` 路径；sessionEnd 刷双图。Guard 1.2.9；DSH 2.8 / OpenCode 1.8。
 - **v20.13 (v11.4.8)**：非简单双审=修改→验证→审查循环最多 3 轮；禁止只连审不改。Guard 1.2.8；DSH 2.7 / OpenCode 1.7。
 - **v20.12 (v11.4.7)**：Cursor Guard 1.2.7 — 计划未批准 / CreatePlan / 零编辑禁止 followup；短 R20；非简单双审最多 3 次。DSH 2.6 / OpenCode 1.6 手工对齐（`sync.ps1` 仍不覆盖 AGENTS.md；禁止把 followup_message 搬到 DSH/OpenCode）。
 - **v20.11 (v11.4.6)**：图谱保鲜配置提取到 DSH / OpenCode（便携 CLI + 本端 json；OpenCode plugin；DSH 总纲强制）。`sync.ps1` 仍不覆盖 AGENTS.md。DSH 2.5 / OpenCode 1.5：ensure/规则注入每会话一次，idle refresh 冷却，禁止压缩提示续轮；R20 影响范围经 `r20_check.py`（DSH `tools/`、OpenCode `scripts/`）与 OpenCode `verify-gate.ts` 机械门对齐。

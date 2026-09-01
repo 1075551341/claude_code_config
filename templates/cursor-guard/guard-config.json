@@ -1,5 +1,5 @@
 {
-  "version": "1.2.8",
+  "version": "1.2.11",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -56,8 +56,8 @@
   },
   "verification": {
     "enabled": true,
-    "enforce_mode": "followup",
-    "_note": "v1.2.1: Cursor stop 不能 permission deny，用 followup_message 续轮（loop_limit=max_blocks）",
+    "enforce_mode": "off",
+    "_note": "v1.2.11: resume 审查 Task 不计入 reviews。v1.2.10: Stop 不能 deny；followup_message 会刷会话面板。完成门改规则驱动（修改→验证→独立审查），hook 不再注入。",
     "unverified_reminder": true,
     "prompt_keywords": ["完成了", "修好了", "测试通过", "声称完成", "done", "搞定", "fixed"]
   },

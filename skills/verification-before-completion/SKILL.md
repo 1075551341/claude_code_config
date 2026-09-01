@@ -12,7 +12,11 @@ source: obra/superpowers
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
-> **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）；Cursor `verification_stop.py`（followup_message）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
+> **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup（规则驱动双审）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
+> **v11.4.12**：独立审查一次找齐全部问题再汇总；清单齐后再派修改者集中改齐。**每轮独立审查必须全新开审**（禁止 `resume` 上一轮审查者；对照原始要求全量重扫，上轮清单不得限定范围）。禁止边审边改耗轮次（避免满 3 轮仍有未扫到的问题）。
+> **v11.4.11**：独立审查者只找问题（是否符合预期），禁止改文件；修改必须 `change-implementer`。配置/修改必须与文档/注释同步。验证与审查不一致须立即派修改者，禁止只报不等待。
+> **v11.4.10**：Cursor Stop / beforeSubmitPrompt **不再注入完成门**（followup_message 会刷会话面板）。完成验证改由规则：修改→验证→独立审查；PASS 即停；仅结论不一致才再开一轮，最多 3 轮。Claude Stop exit 2 保留。
+> **v11.4.9**：有代码/配置改动即双审；独立审查 PASS/符合预期即停（禁止再审浪费 token）；仅结论不一致（NEEDS-CHANGES）才再开一轮，最多 3 轮。计划未批准零注入（CallDynamicTool/CreatePlan）。已有双图时 CLI update 失败记警告不阻断。
 > **v11.4.8**：非简单双审 = 修改→验证→审查循环，最多 3 轮；审查须对照原始要求检查全部修改；禁止只连审不改。
 > **v11.4.7**：计划未批准 / CreatePlan / 零编辑禁止 Cursor followup；短 R20；非简单双审最多 3 次。
 > **v11.4.6**：eligible git 仓 SessionStart **执行** `codegraph init|sync` + `code-review-graph build|update`；无图 PreToolUse **deny**（禁止 Grep 当探索主路径）。Stop 增量刷新双图；仅验证全绿后 `sync.ps1 -Scope rules`（跳过验证 / max_blocks / 无编辑 → 不跑）。
@@ -125,7 +129,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 ### 会话终验 R20（任何有过编辑的会话必须，两档同强制）
 
-按用户**原始要求逐条回放**核对（禁止把实现重做一遍）；测试/lint 证据不能代替本项。改前须已优先成熟方案或全局通用处理（不足时开的特例写入「错改」）。修改后文件/配置必须与文档/备注保持一致（不一致计入「漏改」）。非功能变更（重构/格式/配置/重命名/文档）「原功能」必须写「保持」并指向测试或冒烟证据；禁止「应该没影响」。
+按用户**原始要求逐条回放**核对（禁止把实现重做一遍）；测试/lint 证据不能代替本项。改前须已优先成熟方案或全局通用处理（不足时开的特例写入「错改」）。**配置/修改必须与文档、注释、版本戳同步**（不一致 = 未完成，计入「漏改」，须当场派 `change-implementer` 改齐，禁止记 P1 后 PASS 停手）。非功能变更（重构/格式/配置/重命名/文档）「原功能」必须写「保持」并指向测试或冒烟证据；禁止「应该没影响」。
 
 ```
 ## 会话终验（R20）
@@ -141,9 +145,9 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`；
-「满足」不可为空/`...`；「漏改」须含 `文档` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。
+「满足」不可为空/`...`；「漏改」须含 `文档` 或 `注释` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。
 DSH / OpenCode 用便携副本 `r20_check.py`（规则对齐，无指纹比对）。
-Cursor Stop 用短 `followup_message` 续轮（非 permission deny）。**计划未批准 / CreatePlan / 本轮零编辑禁止 followup。**
+Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / CreatePlan / 仅计划文件禁止声称完成。CallDynamicTool 内层 CreatePlan 必须记账；写 `.plan.md` 不得清 awaiting。
 
 **场景G：初次修改后迷你验收（v11.3.4，每个文件首次成功编辑后 hook 注入一次）**
 
@@ -201,11 +205,11 @@ Cursor Stop 用短 `followup_message` 续轮（非 permission deny）。**计划
 □ 禁止"签名没变所以没影响"式断言；行为变更的辐射面与签名变更等同处理
 ```
 
-**场景F：文档/备注与文件/配置一致（v11.3.3，计入 R20「漏改」）**
+**场景F：文档/注释与文件/配置一致（v11.4.11 硬门，计入 R20「漏改」）**
 
 ```
-□ 本轮改动的文件/配置/frontmatter 是否有对应文档或备注（README/SPEC/CHANGELOG/INDEX/MANIFEST/注释）
-□ 有 → 必须同步更新，禁止只改实现留旧描述
+□ 本轮改动的文件/配置/frontmatter 是否有对应文档或注释（README/SPEC/CHANGELOG/INDEX/MANIFEST/注释）
+□ 有 → 必须同步更新，禁止只改实现留旧描述；不一致不得声称完成
 □ 改 L0 六根文件/skills/rules/hooks/config → 「漏改」须含 sync.ps1 执行证据或豁免理由（多端 1+N 继承）
 □ 「漏改」须写明：无文档影响 | 已同步 <paths>
 ```
@@ -238,16 +242,19 @@ Cursor Stop 用短 `followup_message` 续轮（非 permission deny）。**计划
 □ Scope Reduction: 存在活跃 plan/spec 制品 → 强制对照 tasks 清单确认无静默缩范围
 ```
 
-### 审查委派（非简单任务必须；v11.4.8）
+### 审查委派（有代码/配置改动；v11.4.12 一次找齐再集中改；每轮全新开审）
 
 ```
-□ 非简单：每轮 修改 → 验证（对照原始要求）→ eng-reviewer 审全部修改 → PASS / NEEDS-CHANGES
-□ NEEDS-CHANGES → 按未满足项修改并验证后再审；最多 3 轮；禁止只连审不改；满轮未过不得声称完成
-□ 代码文件 ≥3 且无非简单标记时，Stop 门仍按会话累计编辑数要求审查（与六维分类不同维度）
+□ 修改 → Task change-implementer（禁止审查者改文件）
+□ 验证（主会话贴观察输出）→ Task eng-reviewer 只找问题：必须扫完影响面后再给结论，一次列全未满足项
+□ 每轮审查必须全新 Task/Agent（禁止 resume 上一轮审查者）；上轮清单仅参考，不得限定本轮扫描范围
+□ 干净 PASS 且与验证一致 → 立即结束，禁止再派审查
+□ NEEDS-CHANGES → 汇总完整清单后再派一次 change-implementer 集中改齐（禁止发现一条立刻改再审）；再验证后全新开审（禁止只对照旧清单核销）；最多 3 轮；禁止只连审不改、禁止只汇报等用户；满轮未过不得声称完成
+□ 有代码文件即要求审查（min_files=1）；只读/仅计划文件 skip
 □ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
 ```
 
-> 简单任务一轮（执行 + 短 R20）。计划未批准禁止终审/审查 followup。
+> 审查者与修改者不得为同一 agent。计划未批准禁止声称完成与审查。
 > 分类 SSOT → `skills/task-triage/SKILL.md`。
 
 ## 失败与升级
@@ -255,7 +262,7 @@ Cursor Stop 用短 `followup_message` 续轮（非 permission deny）。**计划
 - 验证失败 → **不声称完成**；输出失败项 + 按六维纠错续轮修复（影响面/需求/错改/漏改/原功能/文档），同方案 ≤R5（2 次）
 - 初判简单且继续处理 → `verify_tier=全量` + **执行升档非简单**（Bug 升档可跳过 grill，见 task-triage）
 - 需改膨胀>2 / 黑名单 / 同方案达 R5 仍失败 → 执行升档非简单或 NEEDS_CONTEXT（禁止第 3 次同方案空转）
-- Stop/followup 达 `max_blocks` → 放行并标 `DONE_WITH_CONCERNS`（不启用 ralph-loop / 独立 loop 进程）
+- Claude Stop 达 `max_blocks` → 放行并标 `DONE_WITH_CONCERNS`（不启用 ralph-loop / 独立 loop 进程）。Cursor 不靠 followup 续轮。
 
 ## 反合理化检查
 

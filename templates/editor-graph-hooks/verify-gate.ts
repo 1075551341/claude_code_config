@@ -20,15 +20,26 @@ const STATE_DIR = join(homedir(), ".config", "opencode", ".state");
 const STATE_FILE = join(STATE_DIR, "verify-gate.json");
 
 const R20_RULE =
-  "[完成验证] 仅当本回合有过文件编辑时输出短 R20（各一行：满足/遗漏/错改/漏改/原功能/影响范围）。" +
-  "计划未落地、零编辑不要终审。满足须承认/反驳/弃权；漏改写无文档影响或路径；原功能附证据；影响范围含 CRG/IMPACT/blast。" +
-  "非简单：每轮修改→验证→审查（对照预期审全部修改），最多 3 轮；禁止只连审不改。机械门与 scripts/r20_check.py 对齐。无观察输出不得声称完成。";
+  "[完成验证] 仅当本回合有过非计划文件的代码/配置编辑时输出短 R20（各一行：满足/遗漏/错改/漏改/原功能/影响范围）。" +
+  "计划未落地、仅 *.plan.md、零编辑不要终审、不要注入完成令。" +
+  "满足须承认/反驳/弃权；漏改写无文档影响或路径；原功能附证据；影响范围含 CRG/IMPACT/blast。" +
+  "有代码改动：审查一次找齐（禁止改文件）；每轮全新开审（禁止 resume）；清单齐后再开一次实现回合集中改齐。" +
+  "干净 PASS 即停。禁止边审边改耗轮次，最多 3 轮；禁止只连审不改。" +
+  "机械门与 scripts/r20_check.py 对齐。无观察输出不得声称完成。";
 
 const EDIT_TOOLS = new Set(["edit", "write", "patch", "multiedit"]);
+
+function isPlanArtifact(path: string): boolean {
+  const n = path.replace(/\\/g, "/").toLowerCase();
+  if (n.endsWith(".plan.md")) return true;
+  return n.includes("/.cursor/plans/") || n.endsWith("/.cursor/plans");
+}
 
 type SessionState = {
   edited: boolean;
   verified: boolean;
+  awaitingPlan?: boolean;
+  reviewPass?: boolean;
   req?: string;
 };
 
@@ -180,11 +191,16 @@ export const VerifyGate: Plugin = async ({ client }) => {
       }
       if (EDIT_TOOLS.has(tool)) {
         const paths = extractPaths(evt.args);
-        if (paths.length) {
-          s.edited = true;
-          s.verified = false;
+        if (!paths.length) return;
+        if (paths.every(isPlanArtifact)) {
+          s.awaitingPlan = true;
           saveStore(store);
+          return;
         }
+        s.edited = true;
+        s.verified = false;
+        s.awaitingPlan = false;
+        saveStore(store);
       }
     },
 
@@ -205,7 +221,7 @@ export const VerifyGate: Plugin = async ({ client }) => {
         if (!sid) return;
         const store = loadStore();
         const s = store[sid];
-        if (s && s.edited && !s.verified) {
+        if (s && s.edited && !s.verified && !s.awaitingPlan && !s.reviewPass) {
           pendingReminder.add(sid);
           await log("info", "idle unverified → pending reminder", {
             sid: sid.slice(0, 12),
@@ -220,8 +236,21 @@ export const VerifyGate: Plugin = async ({ client }) => {
       const store = loadStore();
       const s = store[sid];
       if (!s || !s.edited) return;
-      if (checkR20(output.text ?? "")) {
+      const text = output.text ?? "";
+      if (checkR20(text)) {
         s.verified = true;
+        saveStore(store);
+        pendingReminder.delete(sid);
+        urgentInjected.delete(sid);
+      }
+      if (/NEEDS-CHANGES/.test(text)) {
+        s.reviewPass = false;
+        saveStore(store);
+      } else if (
+        /\bPASS\b/.test(text) &&
+        /(独立审查|eng-reviewer|符合预期)/.test(text)
+      ) {
+        s.reviewPass = true;
         saveStore(store);
         pendingReminder.delete(sid);
         urgentInjected.delete(sid);
@@ -234,11 +263,11 @@ export const VerifyGate: Plugin = async ({ client }) => {
         | undefined;
       const store = sid ? loadStore() : {};
       const s = sid ? store[sid] : undefined;
-      if (sid && s?.edited && !s.verified && !ruleInjected.has(sid)) {
+      if (sid && s?.edited && !s.verified && !s.awaitingPlan && !s.reviewPass && !ruleInjected.has(sid)) {
         output.system.push(R20_RULE);
         ruleInjected.add(sid);
       }
-      if (sid && pendingReminder.has(sid) && !urgentInjected.has(sid)) {
+      if (sid && pendingReminder.has(sid) && !urgentInjected.has(sid) && !s?.reviewPass) {
         output.system.push(
           "[加急] 上一回合结束时检测到存在未经验证的编辑：本回合必须先完成验证并输出合格 R20 会话终验，再回应其他内容。",
         );

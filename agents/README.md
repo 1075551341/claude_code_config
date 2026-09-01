@@ -1,6 +1,6 @@
 # Agents 智能体库
 
-> **全局 16 个**（7 核心 + 6 gstack 审查 + 2 补全 + 1 跨模型）+ **catalog/agents/** 领域库（v11 精简：25→16）
+> **全局 17 个**（7 核心 + 6 gstack 审查 + 3 补全 + 1 跨模型）+ **catalog/agents/** 领域库
 
 完整索引 → [agents-INDEX.md](../agents-INDEX.md)
 
@@ -14,9 +14,9 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 eng-reviewer | ceo-reviewer | designer | **dx-reviewer** | qa | security-reviewer（含原 cso 深度模式）
 
-## 补全 2
+## 补全 3
 
-sre | doc-writer
+sre | doc-writer | **change-implementer**
 
 ## 跨模型 1
 
@@ -42,6 +42,7 @@ codex-reviewer
 | ------ | ----------------------------------------------------------------------------------------------------------- |
 | 核心 7 | planner, code-explorer, code-reviewer, build-error-resolver, architect, spec-reviewer, agentic-orchestrator |
 | 审查 6 | eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer                                    |
+| 补全   | sre, doc-writer, change-implementer                                                                         |
 
 > `context-manager` 已合并至 claude-mem（MANIFEST `memory_ssot`）；勿重复注册。
 

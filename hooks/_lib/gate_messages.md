@@ -1,8 +1,8 @@
-# 门控注入文本 SSOT（v11.4.8）
+# 门控注入文本 SSOT（v11.4.12）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
-> Cursor Stop：`followup_message` 等效硬门（非 permission deny）。Claude Stop：exit 2。
+> **完成验证门仅 Claude Stop exit 2 / 人工 Read**。Cursor 不再注入本段（Stop followup 会刷会话面板）。
 
 ## P0分类门
 
@@ -16,10 +16,10 @@
 ## 完成验证门
 
 【门控 · 完成前必做】
-有未验证编辑时才执行。计划未批准 / 本轮零编辑 → 停止，不要续跑。
+有未验证编辑时才执行。计划未批准 / 本轮零编辑 / 仅计划文件 → 停止，不要续跑。
 Read verification-before-completion；贴观察输出。
-R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）。
-非简单：修改→验证→审查（对照预期审全部修改），最多 3 轮；禁止只连审不改。
+R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档/注释或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）。
+有代码/配置改动：change-implementer 修改 → 验证 → eng-reviewer 一次找齐。干净 PASS 即停。清单齐后再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件、禁止只连审不改。只读免审。
 
 ## 变更影响门
 

@@ -149,7 +149,7 @@ loading_tier: L1
 | ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 简单   | 文档/实现/配置值/Bug(关联需改≤2可复现) | Phase0 → change-impact → **一次改齐** → verification（比例；仅 attempt=1）                              |
 | 非简单 | Bug（多文件/根因不明/执行升档）        | （歧义则 grill）→ triage(P0-P3，L3) → systematic-debugging → 全量验证                                    |
-| 非简单 | 功能/架构/配置/删除                    | **grill** → brainstorming → 五阶段全链 → 全量验证 + 修改→审查循环（最多 3 轮） |
+| 非简单 | 功能/架构/配置/删除                    | **grill** → brainstorming → 五阶段全链 → 全量验证 + 修改→审查（PASS 即停；清单齐后集中改；每轮全新开审，最多 3 轮） |
 | 非简单 | 调研                                   | deep-research（L3 双源）                                                                                |
 
 ## 边界
@@ -158,5 +158,5 @@ loading_tier: L1
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；非简单完成前须 修改→验证→审查循环（最多 3 轮），见 executing-plans。
+- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，最多 3 轮。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

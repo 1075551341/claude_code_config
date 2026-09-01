@@ -60,8 +60,8 @@ def replay_ok(text: str) -> tuple[bool, str]:
     missed = field_value(text, "漏改")
     if not missed:
         return False, "empty 漏改"
-    if not ("文档" in missed or "无文档影响" in missed or _PATH_RE.search(missed)):
-        return False, "漏改 needs 文档/路径"
+    if not ("文档" in missed or "注释" in missed or "无文档影响" in missed or _PATH_RE.search(missed)):
+        return False, "漏改 needs 文档/注释/路径"
 
     original = field_value(text, "原功能")
     if not original:

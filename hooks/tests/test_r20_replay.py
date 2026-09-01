@@ -423,13 +423,79 @@ def test_cursor_should_followup() -> None:
         == "capped",
     )
     check(
-        "review pass skips",
-        r20_replay.review_followup_needed(
+        "pass meets expected → done no second round",
+        r20_replay.dual_pass_phase(
             {
-                "non_simple": True,
                 "edited_files": [{"path": "a.py", "ts": 1}],
+                "verify_commands": [{"command": "pytest", "ts": 2}],
+                "reviews": [{"agent": "eng-reviewer", "ts": 3}],
+                "review_rounds": 1,
                 "review_pass_ok": True,
             }
+        )
+        == "done",
+    )
+    check(
+        "plan.md is artifact",
+        r20_replay.is_plan_artifact(r"C:\Users\x\.cursor\plans\foo.plan.md") is True,
+    )
+    check(
+        "src not plan artifact",
+        r20_replay.is_plan_artifact("src/a.py") is False,
+    )
+    dyn = {}
+    r20_replay.record_plan_tool(dyn, "CallDynamicTool", {"toolName": "CreatePlan"})
+    check("CallDynamicTool CreatePlan awaiting", dyn.get("awaiting_plan_approval") is True)
+    r20_replay.record_plan_tool(
+        dyn, "Write", {"path": r"C:\Users\x\.cursor\plans\foo.plan.md"}
+    )
+    check("write plan.md keeps awaiting", dyn.get("awaiting_plan_approval") is True)
+    check(
+        "only plan.md no followup",
+        r20_replay.cursor_should_followup(
+            {
+                "edited_files": [
+                    {"path": r"C:\Users\x\.cursor\plans\foo.plan.md", "ts": 1}
+                ],
+                "r20_replay_ok": False,
+            }
+        )
+        is False,
+    )
+    r20_replay.record_plan_tool(dyn, "Write", {})
+    check("unknown write keeps awaiting", dyn.get("awaiting_plan_approval") is True)
+    r20_replay.record_plan_tool(
+        dyn,
+        "CallDynamicTool",
+        {"toolName": "SwitchMode", "arguments": {"target_mode_id": "agent"}},
+    )
+    check("switch agent clears awaiting", dyn.get("awaiting_plan_approval") is False)
+    check(
+        "default min_files=1 dual pass",
+        r20_replay.dual_pass_in_scope({"edited_files": [{"path": "a.py", "ts": 1}]})
+        is True,
+    )
+    check(
+        "one py file dual pass min_files=1",
+        r20_replay.dual_pass_in_scope(
+            {"edited_files": [{"path": "a.py", "ts": 1}]},
+            {"require_reviewer_min_files": 1},
+        )
+        is True,
+    )
+    check(
+        "md only not dual pass",
+        r20_replay.dual_pass_in_scope(
+            {"edited_files": [{"path": "README.md", "ts": 1}]},
+            {"require_reviewer_min_files": 1},
+        )
+        is False,
+    )
+    check(
+        "is_plan_mode payload skips",
+        r20_replay.cursor_should_followup(
+            {"edited_files": [{"path": "a.py", "ts": 2}]},
+            {"is_plan_mode": True},
         )
         is False,
     )
@@ -445,11 +511,34 @@ def test_cursor_should_followup() -> None:
         r20_replay.apply_review_verdict(with_rev, "Independent review PASS") is True
         and with_rev.get("review_pass_ok") is True,
     )
+    unclean = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    check(
+        "PASS with 须同步 is unclean",
+        r20_replay.apply_review_verdict(unclean, "Independent review PASS；README 须同步")
+        is True
+        and unclean.get("review_pass_ok") is False,
+    )
     needs = {"reviews": [{"agent": "eng-reviewer", "ts": 1}], "review_pass_ok": True}
     check(
         "NEEDS-CHANGES clears pass",
         r20_replay.apply_review_verdict(needs, "Verdict: NEEDS-CHANGES") is True
         and needs.get("review_pass_ok") is False,
+    )
+    check(
+        "resume str is resumed",
+        r20_replay.is_resumed_subagent({"resume": "abc123"}) is True,
+    )
+    check(
+        "empty resume not resumed",
+        r20_replay.is_resumed_subagent({"resume": ""}) is False,
+    )
+    check(
+        "missing resume not resumed",
+        r20_replay.is_resumed_subagent({}) is False,
+    )
+    check(
+        "false resume not resumed",
+        r20_replay.is_resumed_subagent({"resume": False}) is False,
     )
 
 
@@ -541,6 +630,40 @@ def test_claude_tracker_first_edit_injects() -> None:
             state = json.loads(state_path.read_text(encoding="utf-8"))
             recorded = bool((state.get("fe-tracker-test") or {}).get("crg_calls"))
         check("tracker records crg_calls", recorded)
+
+        resume_payload = json.dumps(
+            {
+                "session_id": "fe-tracker-test",
+                "tool_name": "Task",
+                "tool_input": {
+                    "subagent_type": "eng-reviewer",
+                    "description": "Review",
+                    "resume": "prev-id",
+                },
+                "cwd": tmp,
+            }
+        )
+        resume_run = subprocess.run(
+            cmd,
+            input=resume_payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        check("tracker resume review exit 0", resume_run.returncode == 0)
+        check(
+            "tracker resume review nudges",
+            "不计入独立审查" in (resume_run.stdout or ""),
+        )
+        skipped = False
+        counted = False
+        if state_path.exists():
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            entry = state.get("fe-tracker-test") or {}
+            skipped = len(entry.get("skipped_resumed_reviews") or []) == 1
+            counted = len(entry.get("reviews") or []) == 0
+        check("tracker resume not counted as review", skipped and counted)
 
 
 def test_impact_diff_superset_blocked() -> None:

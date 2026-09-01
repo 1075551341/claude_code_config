@@ -26,6 +26,9 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.11**：`verify_tracker` 对带 `resume` 的审查 Task 不计入 `reviews`（每轮须全新开审）。
+**v1.2.10**：完成门不再 `followup_message`（会刷会话面板）。Stop 只刷图谱 / 全绿 sync；双审改规则驱动。`enforce_mode=off`。
+**v1.2.9**：有改动即双审；独立审查 PASS/符合预期即停；仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；sessionEnd 刷双图 timeout 45s。
 **v1.2.8**：非简单双审=修改→验证→审查循环最多 3 轮；禁止只连审不改；同轮连派不耗轮次；PASS 须已有 reviews。
 **v1.2.7**：计划未批准 / CreatePlan / 零编辑 / 无 session id → Stop **不** `followup_message`；完成门不用裸词「完成」；短 R20；非简单审查最多 3 次。
 **v1.2.6**：SessionStart / Stop 把双图同步 **成功或失败** 写到会话界面（`user_message`）；90% 仍不用 `followup_message`。
@@ -94,7 +97,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | 密钥粘贴             | 自动警告                          | `prompt_secret_scan`                                                                                           |
 | 会话状态一览         | 自动                              | `session_bootstrap`（ensure 双图；用户 hook cwd 是 `~/.cursor` 时用 `workspace_roots` / `.workspace-trusted`） |
 | 初次修改五维验收     | 自动（每文件一次）                | `first_edit_verify`：该文件 + blast-radius 全部相关项                                                          |
-| 完成验证 Stop 硬门   | 有未验证编辑才续轮                | `verification_stop` → 短 `followup_message`（计划未批准/零编辑/无 session **不** followup；`loop_limit=3`） |
+| 完成验证 Stop         | 不 followup；规则驱动双审     | `verification_stop` 仅图谱 refresh / 全绿 sync（计划未批准仍 refresh） |
 | R20 合格标记         | afterAgentResponse                | `r20_capture` 写入 `r20_replay_ok`                                                                             |
 | 业务仓文档 companion | 自动                              | `maintenance_hints`（不限 ~/.claude）                                                                          |
 

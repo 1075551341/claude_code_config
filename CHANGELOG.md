@@ -2,10 +2,38 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
+
+- **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。
+- **每轮全新开审**：下一轮独立审查必须新开 Task/Agent（禁止 `resume` 上一轮审查者）；对照原始要求全量重扫，上轮清单仅参考、不得限定范围。避免把上轮遗漏/误判带进下一轮、耗尽 3 轮后仍有未扫项。
+- **机械门**：`is_resumed_subagent`；带 `resume` 的审查委派不计入 `reviews`（Claude tracker 注入提醒；Cursor `verify_tracker` 跳过记账）。Cursor Guard **1.2.11**。
+- **多端**：DSH 2.12 / OpenCode 1.12 手工对齐。
+
+## v11.4.11 审查只找问题 + 修改者分角色（2026-09-01）
+
+- **R20**：配置/修改必须与文档、注释、版本戳同步；不一致不得声称完成。
+- **双审角色分离**：`eng-reviewer`（及审查角色：ceo/designer/dx/qa/security）只对照原始要求找问题；`tools` 仅 Read/Grep/Glob；禁止改文件、禁止提交补丁。落实修改必须 `Task` `change-implementer`（Cursor 无该类型则 `generalPurpose` 且 prompt 声明修改者）。禁止同一 agent 既审又改。
+- **结论不一致**：验证与独立审查不一致（含 PASS 夹带必须修项 / 须同步）→ 立即再派修改者，禁止只汇报等用户。`apply_review_verdict` 将 PASS+须同步视为不干净。
+- **多端**：DSH 2.10 / OpenCode 1.10 手工对齐。Guard 仍 1.2.10（完成门不 followup）。
+
+## v11.4.10 Cursor 完成门不再 followup（2026-09-01）
+
+- **根因**：Cursor Stop 不能 `permission: deny`；`followup_message` 变成假用户回合刷会话面板；`loop_count` 随 generation 重置，会话级 `edited_files` 使 Agent「本轮零编辑」无法停 hook。
+- **Cursor Guard 1.2.10**：`verification_stop` 只做图谱 refresh / 全绿 `sync.ps1`，**禁止** `followup_message`。`verification_gate` 不再注入完成门 `additional_context`。`context_stop` 不再为验证 followup 让位。`enforce_mode=off`（旧 followup/soft 部署值映射为 off）。完成验证改由规则驱动：修改→验证→独立审查；PASS 即停；仅结论不一致才再开一轮，最多 3 轮。
+- **不改**：Claude Stop `exit 2`；`first_edit_verify`；图谱 deny；用户显式「提取上下文」followup。
+- **多端**：DSH 2.9 / OpenCode 1.9 手工对齐（禁止把 followup_message 搬过去）。`sync.ps1` 仍不覆盖 AGENTS.md。
+
+## v11.4.9 计划等待零注入 + 有改动即双审 + 双图起止（2026-09-01）
+
+- **P0 计划等待**：Cursor `CreatePlan` 走 `CallDynamicTool` 时 `verify_tracker` 必须记账；写 `.cursor/plans/*.plan.md` 不得清除 `awaiting_plan_approval`、不计完成门。`verification_stop` 在 awaiting 时硬 return（可静默 refresh 图谱）。生产链单测覆盖 CallDynamicTool + 写 plan.md。
+- **双图**：Windows `/d:/` 与 `file:///d:` 路径规范化；已有图时 CLI `update` 失败记警告不阻断（避免 CRG expansion cap 把整仓编辑锁死）。Cursor `sessionEnd` 调 `refresh_incremental`（timeout 45s）。Guard **1.2.9**。
+- **双审**：`require_reviewer_min_files` 3→1；有代码/配置改动须独立审查一次。**PASS/符合预期即停**（禁止再审浪费 token）；仅审查与修改/验证结论不一致（NEEDS-CHANGES）才再改再验再审，最多 3 轮。只读与计划制品 skip。
+- **多端**：DSH 2.8 / OpenCode 1.8 手工对齐（`sync.ps1` 仍不覆盖 AGENTS.md）。OpenCode `verify-gate` 计划等待不注入 R20 完成令。
+
 ## v11.4.8 双审循环=修改→验证→审查（2026-08-31）
 
 - **语义**：非简单双审不是「只审查最多 3 次」，而是 **修改 → 验证（对照原始要求）→ 独立审查全部修改** 循环，直到符合预期或满 3 轮。`NEEDS-CHANGES` 后无新修改不得再审（禁止只连审不改）。
-- **机械门**：`dual_pass_phase` = modify | verify | review | capped | done。Cursor/Claude Stop 按相位注入。`review_cycle: modify-verify-review`。`review_rounds` 仅在 last_edit > last_rev 时 +1（同轮连派不耗轮次）。`apply_review_verdict`：PASS 须已有 reviews，禁止自报。
+- **机械门**：`dual_pass_phase` = modify | verify | review | capped | done。Cursor/Claude Stop 按相位注入。`review_cycle: modify-verify-review`。`review_rounds` 仅在 last_edit > last_rev 时 +1（同轮连派不耗轮次）。`apply_review_verdict`：PASS 须已有 reviews，禁止自报。已部署 `guard-config` 若仍含裸词「完成」，deploy 跟模板对齐。
 - **多端**：DSH 2.7 / OpenCode 1.7 手工对齐。Cursor Guard **1.2.8**。
 - **不改**：计划未批准禁止 followup、短 R20 六字段、`require_reviewer_min_files=3`、sync 不覆盖 AGENTS.md。
 

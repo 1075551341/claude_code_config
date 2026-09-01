@@ -15,7 +15,7 @@ const REFRESH_COOLDOWN_MS = 60_000;
 const GRAPH_RULE =
   "[图谱保鲜] eligible git 仓须先有 codegraph 与 code-review-graph。" +
   "插件已在会话开始执行 ensure（每会话一次）。无图禁止 Grep/Glob 当探索主路径。" +
-  "禁止反复重跑 ensure/refresh，禁止把压缩提示伪造成新的用户消息。";
+  "完成声称时 refresh 一次（idle 冷却 60s）。禁止反复重跑 ensure/refresh，禁止把压缩提示伪造成新的用户消息。";
 
 type Result = {
   ok?: boolean;
@@ -168,6 +168,13 @@ export const GraphFreshness: Plugin = async ({
       }
       if (ev?.type === "session.idle") {
         refreshIdle(String(ev.properties?.sessionID ?? ""));
+      }
+    },
+
+    "experimental.text.complete": async (inp, output) => {
+      const text = String((output as { text?: string })?.text ?? "");
+      if (/(会话终验|\bR20\b|声称完成|验证通过)/.test(text)) {
+        refreshIdle(String((inp as { sessionID?: string })?.sessionID ?? ""));
       }
     },
 

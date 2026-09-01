@@ -42,4 +42,6 @@ tools:
 
 ## 边界
 
-不负责：编写测试代码（→ qa-engineer）、代码审查（→ eng-reviewer）
+不负责：编写测试代码（→ qa-engineer）、代码审查（→ eng-reviewer）、落实修改（→ change-implementer）
+
+禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。

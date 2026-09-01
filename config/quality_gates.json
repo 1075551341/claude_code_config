@@ -57,7 +57,7 @@
       "qa",
       "code-reviewer"
     ],
-    "require_reviewer_min_files": 3,
+    "require_reviewer_min_files": 1,
     "review_max_rounds": 3,
     "review_cycle": "modify-verify-review",
     "require_requirements_replay": true,
@@ -81,7 +81,7 @@
     "require_both_graphs": true,
     "subproject_discovery": true,
     "subproject_max_children": 8,
-    "description": "v11.4.6 图谱保鲜硬门：SessionStart init/update 双图；无图 PreToolUse deny；Stop 增量刷新；仅验证全绿后 sync.ps1 -Scope rules。子项目 depth-1 封顶，禁止无穷嵌套同步。"
+    "description": "v11.4.9 图谱保鲜硬门：SessionStart/sessionEnd 双图 ensure/refresh；已有图时 CLI 失败记警告不阻断；无图 PreToolUse deny；仅验证全绿后 sync.ps1。子项目 depth-1 封顶。"
   },
   "issue_tracker": {
     "enabled": true,

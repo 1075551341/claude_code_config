@@ -131,7 +131,8 @@ def main() -> None:
         changed = False
         try:
             r20 = import_claude_lib(claude_home, "r20_replay")
-            r20.record_plan_tool(entry, tool_name, tool_input)
+            raw_tool = str(data.get("tool_name") or data.get("toolName") or tool_name or "")
+            r20.record_plan_tool(entry, raw_tool, tool_input)
             changed = True
         except Exception as e:
             print(f"verify_tracker: record_plan_tool unavailable: {e}", file=sys.stderr)
@@ -149,7 +150,7 @@ def main() -> None:
             if command and is_verify_command(command, patterns):
                 entry["verify_commands"].append({"command": command[:300], "ts": now})
                 changed = True
-        elif tool_name == "Task":
+        elif tool_name in ("Task", "Agent"):
             sub = str(
                 data.get("subagent_type")
                 or tool_input.get("subagent_type")
@@ -158,6 +159,19 @@ def main() -> None:
             ).lower()
             for reviewer in reviewers:
                 if reviewer.lower() in sub:
+                    resumed = False
+                    try:
+                        r20 = import_claude_lib(claude_home, "r20_replay")
+                        resumed = bool(r20.is_resumed_subagent(tool_input))
+                    except Exception as e:
+                        print(f"verify_tracker: is_resumed_subagent unavailable: {e}", file=sys.stderr)
+                        resumed = bool(tool_input.get("resume"))
+                    if resumed:
+                        entry.setdefault("skipped_resumed_reviews", []).append(
+                            {"agent": reviewer, "ts": now}
+                        )
+                        changed = True
+                        break
                     last_rev = 0.0
                     for item in entry.get("reviews") or []:
                         last_rev = max(last_rev, float(item.get("ts", 0) or 0))

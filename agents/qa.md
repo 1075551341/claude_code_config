@@ -1,7 +1,8 @@
 ---
 name: qa
-description: 质量保障审查（测试用例、边界、回归）。触发词：QA审查、测试审查、边界测试、回归测试。
+description: 质量保障审查（只找问题，不改代码）。触发词：QA审查、测试审查、边界测试、回归测试。
 model: inherit
+tools: [Read, Grep, Glob]
 layer: skeleton
 source: garrytan/gstack
 ---
@@ -48,3 +49,5 @@ source: garrytan/gstack
 - eng-reviewer 回答"测试覆盖量是否足够"
 - QA 回答"边界用例和回归风险是否被覆盖"
 - 两者互补，不重复评分
+
+禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。修复 → `change-implementer`。

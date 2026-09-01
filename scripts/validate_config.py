@@ -48,7 +48,7 @@ GSTACK_SUPPLEMENT_AGENTS = {
     "sre", "doc-writer", "codex-reviewer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 16  # v11: 7 核心 + 6 审查 + 3 补全
+GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
@@ -186,7 +186,7 @@ def v4_iron_laws_consistency():
     if os.path.exists(verif_path):
         with open(verif_path, "r", encoding="utf-8") as fh:
             extra = core + "\n" + fh.read()
-    for kw in ("漏改", "原功能", "文档/备注"):
+    for kw in ("漏改", "原功能", "文档/注释"):
         if kw not in extra:
             ERRORS.append(
                 f"V4: R20 keyword {kw!r} missing from CORE.md or verification skill"
@@ -212,6 +212,7 @@ def v5_manifest_completeness():
         "brainstorming", "planning", "verification", "debugging", "memory",
         "gstack_review", "gstack_eng", "shell_token", "output_token",
         "change_spec", "phase_planning", "context_engineering",
+        "change_implementer",
     }
     missing = required - set(concerns.keys())
     if missing:
@@ -650,14 +651,34 @@ def check_v14_cursor_guard_v11():
     if not os.path.isfile(rule):
         ERRORS.append("V14: templates/cursor-guard/rules/CURSOR-EDITOR.mdc missing")
     hooks_json = os.path.join(BASE, "templates", "cursor-guard", "hooks.json")
+    guard_cfg = os.path.join(BASE, "templates", "cursor-guard", "guard-config.json")
     try:
         with open(hooks_json, "r", encoding="utf-8-sig") as fh:
             gv = json.load(fh).get("guard_version")
-        if gv != "1.2.6":
-            ERRORS.append(f"V14: templates/cursor-guard/hooks.json guard_version={gv!r} expected '1.2.6'")
+        with open(guard_cfg, "r", encoding="utf-8-sig") as fh:
+            expected = json.load(fh).get("version")
+        if gv != expected:
+            ERRORS.append(
+                f"V14: templates/cursor-guard/hooks.json guard_version={gv!r} "
+                f"expected {expected!r} (guard-config.json version)"
+            )
     except (OSError, json.JSONDecodeError) as exc:
-        ERRORS.append(f"V14: hooks.json unreadable: {exc}")
+        ERRORS.append(f"V14: hooks.json/guard-config unreadable: {exc}")
         return
+    man = os.path.join(BASE, "MANIFEST.yaml")
+    try:
+        with open(man, "r", encoding="utf-8") as fh:
+            man_text = fh.read()
+        note_m = re.search(
+            r"cursor_guard:\s*\n(?:.*\n)*?\s*note:\s*\"([^\"]+)\"",
+            man_text,
+        )
+        if expected and note_m and f"v{expected}" not in note_m.group(1):
+            ERRORS.append(
+                f"V14: MANIFEST cursor_guard.note missing Guard v{expected}"
+            )
+    except OSError as exc:
+        ERRORS.append(f"V14: MANIFEST.yaml unreadable: {exc}")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 

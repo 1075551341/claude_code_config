@@ -40,6 +40,37 @@ def test_eligible_and_empty_registry() -> None:
         check("graph.db counts as CRG", gf.has_crg_graph(str(git)) is True)
 
 
+def test_clean_fs_path() -> None:
+    check("slash drive /d:", gf._clean_fs_path("/d:/apdms/pdms") == "d:/apdms/pdms")
+    check(
+        "file uri file:///d:",
+        gf._clean_fs_path("file:///d:/apdms/pdms") == "d:/apdms/pdms",
+    )
+    check("plain windows path", gf._clean_fs_path("d:/apdms/pdms") == "d:/apdms/pdms")
+    with tempfile.TemporaryDirectory() as td:
+        git = Path(td, "repo")
+        git.mkdir()
+        (git / ".git").mkdir()
+        abs_git = str(git.resolve())
+        if os.name == "nt" and len(abs_git) >= 3 and abs_git[1] == ":":
+            slash = "/" + abs_git[0] + ":" + abs_git[2:].replace("\\", "/")
+            file_uri = "file:///" + abs_git[0] + ":" + abs_git[2:].replace("\\", "/")
+            check(
+                "find_git_root /X:",
+                os.path.normcase(gf.find_git_root(slash)) == os.path.normcase(abs_git),
+                slash,
+            )
+            check(
+                "find_git_root file:///X:",
+                os.path.normcase(gf.find_git_root(file_uri)) == os.path.normcase(abs_git),
+                file_uri,
+            )
+            check(
+                "find_git_root plain",
+                os.path.normcase(gf.find_git_root(abs_git)) == os.path.normcase(abs_git),
+            )
+
+
 def test_codegraph_markers() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td, "r")
@@ -140,6 +171,43 @@ def test_deny_when_cli_missing() -> None:
             check("Grep denied when blocked", decision == "deny")
             check("deny payload present", payload is not None)
     finally:
+        gf.which_tool = orig_which  # type: ignore[method-assign]
+
+
+def test_existing_graph_cli_fail_is_warning() -> None:
+    orig = gf.run_cmd
+    orig_which = gf.which_tool
+
+    def fake_fail(argv, cwd, timeout_sec):
+        return SimpleNamespace(returncode=1, stdout="", stderr="Dependent expansion capped")
+
+    gf.run_cmd = fake_fail  # type: ignore[method-assign]
+    gf.which_tool = lambda name: f"/bin/{name}"  # type: ignore[method-assign]
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td, "repo")
+            root.mkdir()
+            (root / ".git").mkdir()
+            cg = root / ".codegraph"
+            cg.mkdir()
+            (cg / "config.json").write_text("{}", encoding="utf-8")
+            crg = root / ".code-review-graph"
+            crg.mkdir()
+            (crg / "graph.db").write_bytes(b"")
+            result = gf.ensure_both(str(root), 20, session_id="s-exist")
+            check(
+                "existing graphs CLI fail still ok",
+                result.get("ok") is True and result.get("blocked") is not True,
+                json.dumps(result),
+            )
+            check("warning recorded", bool(result.get("warnings")))
+            decision, _payload = gf.pretool_decision(
+                {"cwd": str(root), "session_id": "s-exist", "tool_name": "Grep"},
+                5,
+            )
+            check("Grep allowed when graphs exist despite CLI fail", decision == "allow")
+    finally:
+        gf.run_cmd = orig  # type: ignore[method-assign]
         gf.which_tool = orig_which  # type: ignore[method-assign]
 
 
@@ -273,6 +341,21 @@ def test_resolve_cwd() -> None:
                 os.path.normcase(os.path.abspath(got6)) == os.path.normcase(hook_abs),
                 got6,
             )
+            if os.name == "nt" and len(git_abs) >= 3 and git_abs[1] == ":":
+                uri = "/" + git_abs[0] + ":" + git_abs[2:].replace("\\", "/")
+                got_uri = gf.resolve_cwd({"workspace_roots": [uri]})
+                check(
+                    "windows /d: workspace_roots finds git",
+                    os.path.normcase(got_uri) == os.path.normcase(git_abs),
+                    f"uri={uri} got={got_uri}",
+                )
+                file_uri = "file:///" + git_abs[0] + ":" + git_abs[2:].replace("\\", "/")
+                got_file = gf.find_git_root(file_uri)
+                check(
+                    "file:///d: find_git_root",
+                    os.path.normcase(got_file) == os.path.normcase(git_abs),
+                    got_file,
+                )
             os.chdir(orig_cwd)
             fallback = gf.resolve_cwd({})
             check("empty payload uses process cwd if git", bool(fallback) and os.path.isdir(fallback))
@@ -401,10 +484,12 @@ def test_merge_hooks_idempotent() -> None:
 def main() -> int:
     print("test_graph_freshness")
     test_eligible_and_empty_registry()
+    test_clean_fs_path()
     test_codegraph_markers()
     test_tool_classify()
     test_ensure_cache_and_deny()
     test_deny_when_cli_missing()
+    test_existing_graph_cli_fail_is_warning()
     test_incremental_keeps_session_id()
     test_sync_skip_env()
     test_resolve_cwd()

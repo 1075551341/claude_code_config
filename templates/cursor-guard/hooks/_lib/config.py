@@ -146,15 +146,23 @@ def load_guard_config() -> dict:
     }
 
 
-DEFAULT_VERIFICATION_KEYWORDS = ["完成", "修好", "测试通过", "done", "搞定", "fixed"]
+DEFAULT_VERIFICATION_KEYWORDS = [
+    "完成了",
+    "修好了",
+    "测试通过",
+    "声称完成",
+    "done",
+    "搞定",
+    "fixed",
+]
 
 
 def _load_verification_config(verification: dict) -> dict:
     enabled = os.environ.get("CURSOR_GUARD_VERIFY_GATE", "1") != "0"
-    raw_mode = str(verification.get("enforce_mode", "followup")).lower()
-    # v11.3.4: 旧 soft（仅 prompt 注入）升级为 stop followup；off 才关闭
-    if raw_mode in {"soft", "nudge"}:
-        raw_mode = "followup"
+    raw_mode = str(verification.get("enforce_mode", "off")).lower()
+    # v11.4.10: followup/soft 会刷会话面板，一律视为 off（完成门改规则驱动）
+    if raw_mode in {"soft", "nudge", "followup", "rules"}:
+        raw_mode = "off"
     return {
         "enabled": enabled and verification.get("enabled", True),
         "enforce_mode": raw_mode,

@@ -5,14 +5,12 @@ from __future__ import annotations
 import json
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
 
 import _path  # noqa: F401
 
 from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
-    import_claude_lib,
     read_stdin,
     setup_stdio,
     write_json,
@@ -131,25 +129,6 @@ def main() -> None:
                 or pending.get("session_id") == session_id
             )
         )
-
-        verify_followup = False
-        if cfg.get("verification", {}).get("enabled") and str(
-            cfg.get("verification", {}).get("enforce_mode", "followup")
-        ).lower() not in {"off", "disabled", "none"}:
-            try:
-                r20 = import_claude_lib(cfg["sync"]["claude_home"], "r20_replay")
-                vpath = Path(cfg["sync"]["claude_home"]) / ".state" / "verification-gate.json"
-                entry = {}
-                if vpath.exists():
-                    vstate = json.loads(vpath.read_text(encoding="utf-8"))
-                    entry = vstate.get(session_id or "unknown") or {}
-                verify_followup = r20.cursor_should_followup(entry)
-            except Exception as e:
-                print(f"context_stop: verification peek failed: {e}", file=sys.stderr)
-
-        if verify_followup:
-            # 让 verification_stop.py 发出 followup，避免双 followup 互抢
-            return
 
         if compress_requested:
             advance_compress_stage("followup_sent")

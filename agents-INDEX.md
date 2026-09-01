@@ -1,6 +1,6 @@
 # Agents 索引
 
-> 自动生成 | 源：`agents/` | v11.0.0（16 全量；catalog 变体见 `catalog/agents/`）
+> 自动生成 | 源：`agents/` | v11.4.12（17 全量；catalog 变体见 `catalog/agents/`）
 
 ## 核心 7
 
@@ -21,10 +21,11 @@
 - [qa](agents/qa.md) — 质量保障审查
 - [security-reviewer](agents/security-reviewer.md) — 安全审查（快速模式 + 深度模式 OWASP Top 10/STRIDE，v11 并入原 cso）
 
-## 补全 2
+## 补全 3
 
 - [sre](agents/sre.md) — Canary 监控、部署后验证
 - [doc-writer](agents/doc-writer.md) — 更新文档匹配代码变更
+- [change-implementer](agents/change-implementer.md) — 落实修改（审查者不改代码）
 
 ## 跨模型 1
 

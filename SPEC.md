@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.8 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话 ensure 双图、无图 deny、验绿后 sync.ps1）+ 计划未批准禁止 followup + 短 R20 + 非简单双审=修改→验证→审查最多 3 轮 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20（v11.4.5 CRG 扩权 + 六维纠错续轮 + 满足行三态；v11.4 IMPACT/指纹/审查结论；v11.4.3 配置一致性）| UA removed | cbm 已禁用
+> 版本：11.4.12 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
 
 ---
 
@@ -10,7 +10,7 @@
 ```
 RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gstack(审查) + claude-mem(记忆)
 FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
-REVIEW   = gstack 5审查 + 7补全
+REVIEW   = gstack 6审查 + 3补全 + 1跨模型
 OPTIMIZE = RTK(shell token) + caveman(输出token)
 INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
@@ -46,7 +46,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | Superpowers | obra/superpowers      | 方法论 + P0 + HARD-GATE                 | P0×6                        | brainstorming→writing-plans(原子)→execute→verify（TDD 仅显式触发）                         | def-in-depth + 反合理化                                |
 | GSD Redux   | open-gsd/gsd-core     | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先         | 上下文工程能力（正文在 rules/CONTEXT.md，非已删同名 skill；subagent 两阶段审查仅显式触发） | read-before-edit + canonical-source + trust-but-verify |
 | OpenSpec    | Fission-AI/OpenSpec   | 规格格式 core OPSX                      | 三轨互斥                    | spec-validation + opsx 全链                                                                | spec-reviewer门控                                      |
-| gstack      | garrytan/gstack       | 审查角色                                | 审查路由5+7 + autoplan/ship | eng/ceo/design/qa/security review                                                          | browser-qa + quality-gate                              |
+| gstack      | garrytan/gstack       | 审查角色                                | 审查路由 6+3+1（本地）+ autoplan/ship | eng/ceo/designer/dx/qa/security（只找问题）；修改→change-implementer | browser-qa + quality-gate                              |
 | claude-mem  | thedotmack/claude-mem | 跨会话记忆                              | SSOT 渐进式披露             | mem-search/timeline/knowledge-agent                                                        | MEMORY.md↔claude-mem统一 + Chroma                      |
 
 ---
@@ -56,10 +56,10 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 类型         | v11    | 说明                                                                                                                                                                                   |
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 全局 skills  | 36     | P0 路由集 6 + supplement 30（v11: 45→36，6 降级 catalog + 3 删并）                                                                                                                     |
-| 全局 agents  | 16     | core 7 + 审查 6 + 补全 2 + 跨模型 1（v11: 25→16，4 并入 + 5 降级 catalog）                                                                                                             |
+| 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 21（v1.2.1） |
+| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
 | 全局 MCP     | 9 常驻 | 本地代码4+远端探索2+Web&文档3；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -128,10 +128,11 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | agentic-orchestrator | ③执行 |
 | code-explorer        | ③执行 |
 
-## gstack 审查 6+3（v11 收敛）
+## gstack 审查 6+3+1（v11.4.11 引入 change-implementer；v11.4.12 一次找齐+每轮全新开审）
 
 **审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer（深度模式=原 cso 全量审计）
-**补全 (supplement)**：sre, doc-writer, codex-reviewer
+**补全 (supplement)**：sre, doc-writer, change-implementer
+**跨模型**：codex-reviewer
 **catalog 按需变体**：ios-specialist, design-shotgun, pair-agent, land-and-deploy, performance-engineer（release-engineer→skill/ship；design-engineer→skill/design-pipeline；product-manager 删除）
 
 ---
@@ -244,7 +245,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | 1   | obra/superpowers      | 14技能+HARD-GATE+Red Flags+原子任务+两阶段审查                                                           | skills/×12（v11: writing-skills 并入 skill-creator）, hooks/         |
 | 2   | open-gsd/gsd-core     | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 (原 gsd-build/get-shit-done 已归档) | rules/CONTEXT, rules/WORKFLOW                                        |
 | 3   | Fission-AI/OpenSpec   | proposal→spec→tasks+brownfield+archive                                                                   | templates/openspec/, spec-validation, commands/propose+apply+archive |
-| 4   | garrytan/gstack       | 5审查+7补全+浏览器QA+autoplan/ship                                                                       | agents/×9 + catalog/agents/×5（v11 收敛）                            |
+| 4   | garrytan/gstack       | 本地收敛：6审查+3补全+1跨模型（上游曾 5审查+7补全）+浏览器QA+autoplan/ship                                    | agents/×9 + catalog/agents/×5（v11 收敛）                            |
 | 5   | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT+15技能                                                                    | plugin/claude-mem                                                    |
 
 ### 结构格式 (6)
@@ -359,4 +360,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.8 | 日期：2026-08-31 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + 计划未批准禁止 followup + 短 R20 + 非简单双审=修改→验证→审查最多 3 轮 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20（CRG 扩权 + 六维纠错续轮 + 满足行三态 + 反空模板 + 初次修改验收 + Cursor stop followup + 准则分解评分 + IMPACT/指纹/审查结论 + 防乱码编码守卫）
+> 版本：11.4.12 | 日期：2026-09-01 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20

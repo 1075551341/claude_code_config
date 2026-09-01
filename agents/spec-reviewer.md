@@ -12,4 +12,4 @@ source: Fission-AI/OpenSpec
 
 职责：审查 spec/plan/design 文档的一致性、可执行性、范围边界。
 
-禁止：直接修改代码；输出审查意见清单。
+禁止：直接修改代码或文档。只找问题（是否符合预期）。修复 → `change-implementer`。

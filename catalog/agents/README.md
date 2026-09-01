@@ -1,13 +1,13 @@
 # Catalog Agents — 按需复制
 
 > 此目录提供领域专用 agent 定义，按需复制到项目 `.claude/agents/` 使用。
-> 全局 agents 在 `~/.claude/agents/`（v11 精简为 16），始终可用，无需从此目录复制。
+> 全局 agents 在 `~/.claude/agents/`（v11.4.12 为 17），始终可用，无需从此目录复制。
 > **完整清单（48）以 [../INDEX.md](../INDEX.md) 为唯一权威**（`gen-catalog-index.py` 生成），本文不再复制列表。
 
 ## 使用策略
 
 ```
-全局 agents/ (16) → 五柱核心 + gstack 审查，会话始终可用
+全局 agents/ (17) → 五柱核心 + gstack 审查，会话始终可用
 catalog/agents/ (48) → 领域专用 + v11 降级变体，按需复制到项目
 ```
 
@@ -36,4 +36,4 @@ python ~/.claude/scripts/migrate-from-legacy.py --project . --agent <name>
 
 - **去重原则**: catalog 中的 agent 若与全局 agents/ 同名 → 优先使用全局版本
 - **特殊化原则**: catalog 提供语言/领域特定版本（如 `go-reviewer`, `rust-reviewer`）
-- **按需加载**: 全局 16 agents 已覆盖通用场景，catalog 仅在特定领域需求时启用
+- **按需加载**: 全局 17 agents 已覆盖通用场景，catalog 仅在特定领域需求时启用

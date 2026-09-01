@@ -59,8 +59,24 @@ def load_cfg(path: str) -> dict:
     return cfg
 
 
+def _clean_fs_path(val: str) -> str:
+    s = (val or "").strip().strip('"')
+    if not s:
+        return ""
+    if s.startswith("file://"):
+        s = s[7:]
+        if s.startswith("/") and len(s) >= 4 and s[2] == ":":
+            s = s[1:]
+        elif s.startswith("/") and len(s) >= 3 and s[1].isalpha() and s[2] == ":":
+            s = s[1:]
+    if len(s) >= 3 and s[0] in "/\\" and s[1].isalpha() and s[2] == ":":
+        s = s[1:]
+    return s
+
+
 def find_git_root(start: str, max_up: int = 8) -> str:
-    probe = os.path.abspath(start or "") if start else ""
+    start = _clean_fs_path(start) if start else ""
+    probe = os.path.abspath(start) if start else ""
     if not probe:
         return ""
     for _ in range(max_up):
@@ -269,7 +285,7 @@ def ensure_codegraph(root: str, timeout_sec: int, incremental_only: bool = False
             return True, ""
         if which_tool("codegraph") is None:
             return True, "codegraph CLI 缺失，已有索引：跳过 sync"
-        return False, err
+        return True, err
     if incremental_only:
         return False, "无 .codegraph 索引（refresh 仅增量，不 init）"
     return _run_named("codegraph", ["init", "-i"], root, timeout_sec)
@@ -283,7 +299,7 @@ def ensure_crg(root: str, timeout_sec: int, incremental_only: bool = False) -> t
             return True, ""
         if which_tool("code-review-graph") is None:
             return True, "code-review-graph CLI 缺失，已有 graph.db：跳过 update"
-        return False, err
+        return True, err
     if incremental_only:
         return False, "无 CRG graph.db（refresh 仅增量，不 build）"
     return _run_named("code-review-graph", ["build"], root, timeout_sec)
@@ -518,7 +534,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     cfg = load_cfg(args.config or default_config_path())
-    cwd = os.path.abspath(os.path.expanduser(args.cwd))
+    cwd = os.path.abspath(os.path.expanduser(_clean_fs_path(args.cwd) or args.cwd))
     if args.mode == "status":
         discover = (not args.no_subprojects) and bool(cfg.get("subproject_discovery", True))
         max_children = max(1, int(cfg.get("subproject_max_children", 8)))

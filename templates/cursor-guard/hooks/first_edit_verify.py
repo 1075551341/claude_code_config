@@ -109,6 +109,14 @@ def main() -> None:
             },
         )
         entry["ts"] = now
+        try:
+            r20 = import_claude_lib(claude_home, "r20_replay")
+            if r20.is_awaiting_plan(entry, data) or all(r20.is_plan_artifact(p) for p in paths):
+                print("first_edit_verify: 计划等待/计划制品，跳过五维验收注入", file=sys.stderr)
+                return
+        except Exception as e:
+            print(f"first_edit_verify: plan skip check failed: {e}", file=sys.stderr)
+
         fresh = fev.fresh_edit_paths(entry, paths)
         if not fresh:
             return

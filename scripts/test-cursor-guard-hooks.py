@@ -166,12 +166,32 @@ def main() -> int:
         behavior=cfg_ok,
         note="guard-config version matches template",
     )
+    kws = []
+    if guard_cfg_path.exists():
+        try:
+            kws = list(
+                (json.loads(guard_cfg_path.read_text(encoding="utf-8-sig")).get("verification") or {}).get(
+                    "prompt_keywords"
+                )
+                or []
+            )
+        except json.JSONDecodeError:
+            kws = ["<unreadable>"]
+    no_bare = "完成" not in kws
+    results["tests"]["verification_keywords_no_bare_complete"] = finish_case(
+        {"pass": no_bare, "json_ok": True, "stdout": {"prompt_keywords": kws}},
+        behavior=no_bare,
+        note="已部署 prompt_keywords 不得含裸词「完成」",
+    )
 
     timeout_ok = False
     gf_timeout_ok = False
     mcp_timeout_ok = False
     matcher_ok = False
+    se_ok = False
+    tracker_matcher_ok = False
     ss_timeout = None
+    se_timeout = None
     gf_timeout = None
     mcp_timeout = None
     if hooks_json.exists():
@@ -179,6 +199,9 @@ def main() -> int:
             hj = json.loads(hooks_json.read_text(encoding="utf-8-sig"))
             ss_timeout = (hj.get("hooks") or {}).get("sessionStart", [{}])[0].get("timeout")
             timeout_ok = int(ss_timeout or 0) >= 120
+            se_timeout = (hj.get("hooks") or {}).get("sessionEnd", [{}])[0].get("timeout")
+            se_ok = int(se_timeout or 0) >= 45
+            tracker_matcher_ok = False
             gf_timeout = None
             mcp_timeout = None
             gf_timeout_ok = False
@@ -196,24 +219,42 @@ def main() -> int:
                     mcp_timeout = item.get("timeout")
                     mcp_timeout_ok = int(mcp_timeout or 0) >= 90
                     break
+            for item in (hj.get("hooks") or {}).get("postToolUse") or []:
+                if "verify_tracker.py" in str(item.get("command") or ""):
+                    tracker_matcher_ok = "CallDynamicTool" in str(item.get("matcher") or "")
+                    break
         except (OSError, json.JSONDecodeError, TypeError, ValueError):
             timeout_ok = False
             gf_timeout_ok = False
             mcp_timeout_ok = False
             matcher_ok = False
+            se_ok = False
+            tracker_matcher_ok = False
     results["tests"]["graph_freshness_timeouts"] = finish_case(
         {
-            "pass": timeout_ok and gf_timeout_ok and mcp_timeout_ok and matcher_ok,
+            "pass": timeout_ok
+            and gf_timeout_ok
+            and mcp_timeout_ok
+            and matcher_ok
+            and se_ok
+            and tracker_matcher_ok,
             "json_ok": True,
             "stdout": {
                 "sessionStart": ss_timeout,
+                "sessionEnd": se_timeout,
                 "graph_freshness": gf_timeout,
                 "beforeMCPExecution": mcp_timeout,
                 "matcher_ok": matcher_ok,
+                "tracker_matcher_ok": tracker_matcher_ok,
             },
         },
-        behavior=timeout_ok and gf_timeout_ok and mcp_timeout_ok and matcher_ok,
-        note="sessionStart ≥120s, graph_freshness preToolUse/beforeMCP ≥90s, matcher includes CallDynamicTool",
+        behavior=timeout_ok
+        and gf_timeout_ok
+        and mcp_timeout_ok
+        and matcher_ok
+        and se_ok
+        and tracker_matcher_ok,
+        note="sessionStart ≥120s, sessionEnd ≥45s, graph_freshness preToolUse/beforeMCP ≥90s, matcher+verify_tracker include CallDynamicTool",
     )
 
     with tempfile.TemporaryDirectory() as td_nongit:
@@ -310,6 +351,21 @@ def main() -> int:
             behavior="followup_message" not in out90b
             and "【上下文≥90%】" not in stdout_text(r_stop90b),
             note="per-turn session_id must not restart a 90% agent loop",
+        )
+
+        (STATE / "context-nudge.json").unlink(missing_ok=True)
+        counter.write_text(json.dumps({"count": 80, "est_tokens": 180000}), encoding="utf-8")
+        r_stop90_unv = run_hook(
+            "context_stop.py",
+            {"session_id": "gen-unv", "conversation_id": "sess-force-90-unv"},
+        )
+        out90_unv = r_stop90_unv.get("stdout") or {}
+        results["tests"]["context_stop_90pct_unverified_still_hints"] = finish_case(
+            r_stop90_unv,
+            behavior="followup_message" not in out90_unv
+            and "additional_context" in out90_unv
+            and "/summarize" in stdout_text(r_stop90_unv),
+            note="完成门不再 followup 让位，90% 仍注入 additional_context",
         )
 
         clear_transient_state()
@@ -574,9 +630,8 @@ def main() -> int:
         )
         results["tests"]["verification_stop_followup"] = finish_case(
             r_vs,
-            behavior="followup_message" in (r_vs.get("stdout") or {})
-            and "R20" in stdout_text(r_vs),
-            note="有未验证编辑 → 短 followup（含 R20）",
+            behavior="followup_message" not in (r_vs.get("stdout") or {}),
+            note="有未验证编辑 → 不 followup（完成门改规则驱动）",
         )
         with tempfile.TemporaryDirectory() as td_nograph:
             vg_path.write_text(
@@ -604,8 +659,39 @@ def main() -> int:
             )
             results["tests"]["verification_stop_pass"] = finish_case(
                 r_vs_ok,
-                behavior=(r_vs_ok.get("stdout") or {}) == {},
-                note="无 CRG 图时 R20 合格且已有验证命令 → 不 followup",
+                behavior="followup_message" not in (r_vs_ok.get("stdout") or {}),
+                note="有代码改动且 R20/测试已过：仍不 followup（双审由规则驱动）",
+            )
+            vg_path.write_text(
+                json.dumps(
+                    {
+                        sid_vs: {
+                            "ts": time.time(),
+                            "cwd": td_nograph,
+                            "edited_files": [{"path": "a.py", "ts": 1}],
+                            "verify_commands": [{"command": "pytest", "ts": 2}],
+                            "r20_replay_ok": True,
+                            "reviews": [{"agent": "eng-reviewer", "ts": 3}],
+                            "review_rounds": 1,
+                            "review_pass_ok": True,
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            r_vs_reviewed = run_hook(
+                "verification_stop.py",
+                {
+                    "conversation_id": sid_vs,
+                    "status": "completed",
+                    "loop_count": 0,
+                    "cwd": td_nograph,
+                },
+            )
+            results["tests"]["verification_stop_pass_after_review"] = finish_case(
+                r_vs_reviewed,
+                behavior="followup_message" not in (r_vs_reviewed.get("stdout") or {}),
+                note="独立审查 PASS/符合预期 → 不再 followup（省 token）",
             )
 
         with tempfile.TemporaryDirectory() as td_graph:
@@ -637,13 +723,8 @@ def main() -> int:
             )
             results["tests"]["verification_stop_crg_required"] = finish_case(
                 r_vs_crg,
-                behavior="followup_message" in (r_vs_crg.get("stdout") or {})
-                and (
-                    "code-review-graph" in stdout_text(r_vs_crg)
-                    or "CRG" in stdout_text(r_vs_crg)
-                    or "get_impact_radius" in stdout_text(r_vs_crg)
-                ),
-                note="有图且 R20/测试已过但无 crg_calls → followup",
+                behavior="followup_message" not in (r_vs_crg.get("stdout") or {}),
+                note="有图且无 crg_calls → 仍不 followup",
             )
 
         vg_path.write_text(
@@ -669,6 +750,121 @@ def main() -> int:
             behavior="followup_message" not in (r_plan.get("stdout") or {}),
             note="CreatePlan / 计划未批准 → 不 followup",
         )
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_vs: {
+                        "ts": time.time(),
+                        "edited_files": [
+                            {
+                                "path": str(Path.home() / ".cursor" / "plans" / "x.plan.md"),
+                                "ts": 1,
+                            }
+                        ],
+                        "r20_replay_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_plan_file = run_hook(
+            "verification_stop.py",
+            {"conversation_id": sid_vs, "status": "completed", "loop_count": 0},
+        )
+        results["tests"]["verification_stop_plan_file_skip"] = finish_case(
+            r_plan_file,
+            behavior="followup_message" not in (r_plan_file.get("stdout") or {}),
+            note="仅 *.plan.md 编辑 → 不 followup",
+        )
+        sid_prod = "prod-createplan-chain"
+        vg_path.write_text(json.dumps({}), encoding="utf-8")
+        r_dyn = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "CallDynamicTool",
+                "tool_input": {"toolName": "CreatePlan", "name": "x", "overview": "y"},
+                "conversation_id": sid_prod,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        plan_path = str(Path.home() / ".cursor" / "plans" / "prod-chain.plan.md")
+        r_write_plan = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Write",
+                "tool_input": {"path": plan_path},
+                "conversation_id": sid_prod,
+            },
+        )
+        st_prod = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_prod = st_prod.get(sid_prod) or {}
+        results["tests"]["verify_tracker_calldynamic_createplan"] = finish_case(
+            r_dyn if r_dyn.get("exit") != 0 else r_write_plan,
+            behavior=(
+                (r_dyn.get("exit") == 0)
+                and (r_write_plan.get("exit") == 0)
+                and entry_prod.get("awaiting_plan_approval") is True
+            ),
+            note="CallDynamicTool CreatePlan 后写 plan.md 保持 awaiting",
+        )
+        r_prod_stop = run_hook(
+            "verification_stop.py",
+            {"conversation_id": sid_prod, "status": "completed", "loop_count": 0},
+        )
+        results["tests"]["verification_stop_createplan_write_plan_skip"] = finish_case(
+            r_prod_stop,
+            behavior="followup_message" not in (r_prod_stop.get("stdout") or {}),
+            note="CreatePlan 生产链写 plan.md 后 Stop 不 followup",
+        )
+        r_fev_plan = run_hook(
+            "first_edit_verify.py",
+            {
+                "tool_name": "Write",
+                "tool_input": {"path": plan_path},
+                "conversation_id": sid_prod,
+            },
+        )
+        results["tests"]["first_edit_verify_plan_skip"] = finish_case(
+            r_fev_plan,
+            behavior="additional_context" not in (r_fev_plan.get("stdout") or {}),
+            note="计划制品不注入五维验收",
+        )
+        r_sw = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "CallDynamicTool",
+                "tool_input": {
+                    "toolName": "SwitchMode",
+                    "arguments": {"target_mode_id": "agent"},
+                },
+                "conversation_id": sid_prod,
+            },
+        )
+        r_code = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Write",
+                "tool_input": {"path": "src/a.py"},
+                "conversation_id": sid_prod,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        st_prod2 = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_prod2 = st_prod2.get(sid_prod) or {}
+        r_after = run_hook(
+            "verification_stop.py",
+            {"conversation_id": sid_prod, "status": "completed", "loop_count": 0},
+        )
+        results["tests"]["verification_stop_after_switch_agent_code_followup"] = finish_case(
+            r_after if r_after.get("exit") != 0 else r_sw,
+            behavior=(
+                (r_sw.get("exit") == 0)
+                and (r_code.get("exit") == 0)
+                and entry_prod2.get("awaiting_plan_approval") is False
+                and "followup_message" not in (r_after.get("stdout") or {})
+            ),
+            note="SwitchMode→agent 后写 src/a.py 仍不 followup",
+        )
         r_gate_kw = run_hook(
             "verification_gate.py",
             {"conversation_id": "gate-kw-test", "prompt": "所有都完成后执行同步"},
@@ -677,6 +873,30 @@ def main() -> int:
             r_gate_kw,
             behavior=(r_gate_kw.get("stdout") or {}) == {},
             note="「完成后」无未验证编辑 → 不注入",
+        )
+        vg_path.write_text(
+            json.dumps(
+                {
+                    "gate-unverified": {
+                        "ts": time.time(),
+                        "edited_files": [{"path": "a.py", "ts": 1}],
+                        "verify_commands": [],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_gate_unv = run_hook(
+            "verification_gate.py",
+            {
+                "conversation_id": "gate-unverified",
+                "prompt": "请继续实现剩余功能",
+            },
+        )
+        results["tests"]["verification_gate_unverified_no_inject"] = finish_case(
+            r_gate_unv,
+            behavior=(r_gate_unv.get("stdout") or {}) == {},
+            note="有未验证编辑也不注入完成门 additional_context",
         )
         r_gate_echo = run_hook(
             "verification_gate.py",
@@ -759,10 +979,8 @@ def main() -> int:
         )
         results["tests"]["verification_stop_modify_before_rereview"] = finish_case(
             r_modify,
-            behavior="followup_message" in (r_modify.get("stdout") or {})
-            and "禁止只连审不改" in stdout_text(r_modify)
-            and "修改" in stdout_text(r_modify),
-            note="NEEDS-CHANGES 后无新修改 → 要求先改再审，禁止只连审",
+            behavior="followup_message" not in (r_modify.get("stdout") or {}),
+            note="NEEDS-CHANGES 后无新修改 → 仍不 followup（规则要求先改再审）",
         )
         sid_inc = "review-round-increment-test"
         now_inc = time.time()
@@ -804,6 +1022,47 @@ def main() -> int:
                 and len(entry_inc.get("reviews") or []) == 2
             ),
             note="同轮连派 eng-reviewer 只 +1 轮次，禁止提前耗尽 3 轮",
+        )
+        sid_resume = "review-resume-skip-test"
+        now_resume = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_resume: {
+                        "ts": now_resume,
+                        "cwd": str(Path(tempfile.gettempdir())),
+                        "edited_files": [{"path": "a.py", "ts": now_resume - 10}],
+                        "verify_commands": [{"command": "pytest", "ts": now_resume - 9}],
+                        "reviews": [],
+                        "review_rounds": 0,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        resume_payload = {
+            "tool_name": "Task",
+            "tool_input": {
+                "subagent_type": "eng-reviewer",
+                "description": "Review",
+                "prompt": "review",
+                "resume": "prev-reviewer-id",
+            },
+            "conversation_id": sid_resume,
+            "cwd": str(Path(tempfile.gettempdir())),
+        }
+        r_resume = run_hook("verify_tracker.py", resume_payload)
+        st_resume = json.loads(vg_path.read_text(encoding="utf-8"))
+        entry_resume = st_resume.get(sid_resume) or {}
+        results["tests"]["verify_tracker_resume_not_counted"] = finish_case(
+            r_resume,
+            behavior=(
+                (r_resume.get("exit") == 0)
+                and len(entry_resume.get("reviews") or []) == 0
+                and int(entry_resume.get("review_rounds") or 0) == 0
+                and len(entry_resume.get("skipped_resumed_reviews") or []) == 1
+            ),
+            note="resume 上一轮审查者不计入独立审查",
         )
         entry_inc["edited_files"] = list(entry_inc.get("edited_files") or []) + [
             {"path": "b.py", "ts": time.time()}
