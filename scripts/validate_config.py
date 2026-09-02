@@ -30,7 +30,7 @@ try:
 except ImportError:
     yaml = None
 
-BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
+BASE = os.path.join(os.environ.get("USERPROFILE") or os.path.expanduser("~"), ".claude")
 ERRORS = []
 WARNINGS = []
 INFO = []
