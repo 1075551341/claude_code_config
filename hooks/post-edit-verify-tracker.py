@@ -34,7 +34,9 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer", "qa", "code-reviewer", "dx-reviewer", "spec-reviewer",
+]
 
 IMPACT_GATE_KEY = "impact_manifest_gate"
 IMPACT_REMINDER = (
@@ -271,6 +273,11 @@ def main():
                     entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
                 entry["reviews"].append({"agent": reviewer, "ts": now})
                 entry["review_pass_ok"] = False
+                model = str(tool_input.get("model") or "").strip().lower()
+                if model and model != "inherit":
+                    entry.setdefault("review_model_violations", []).append(
+                        {"agent": reviewer, "model": model, "ts": now}
+                    )
                 changed = True
                 break
 

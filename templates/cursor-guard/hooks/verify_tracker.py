@@ -37,7 +37,9 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer", "qa", "code-reviewer", "dx-reviewer", "spec-reviewer",
+]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
 FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
 STALE_SECONDS = 7 * 24 * 3600
@@ -46,6 +48,21 @@ STALE_SECONDS = 7 * 24 * 3600
 def _state_path(claude_home: str) -> Path:
     raw = claude_home or os.path.expanduser("~/.claude")
     return Path(raw) / ".state" / "verification-gate.json"
+
+
+def _reviewer_agents(cfg: dict, claude_home: str) -> list:
+    listed = cfg.get("verification", {}).get("reviewer_agents")
+    if listed:
+        return list(listed)
+    qg_path = Path(claude_home) / "config" / "quality_gates.json"
+    try:
+        qg = json.loads(qg_path.read_text(encoding="utf-8")).get("verification_gate", {})
+        listed = qg.get("reviewer_agents")
+        if listed:
+            return list(listed)
+    except (OSError, json.JSONDecodeError, TypeError):
+        pass
+    return list(DEFAULT_REVIEWER_AGENTS)
 
 
 def load_state(path: Path) -> dict:
@@ -102,7 +119,7 @@ def main() -> None:
             return
 
         patterns = cfg.get("verification", {}).get("verify_command_patterns", DEFAULT_VERIFY_PATTERNS)
-        reviewers = cfg.get("verification", {}).get("reviewer_agents", DEFAULT_REVIEWER_AGENTS)
+        reviewers = _reviewer_agents(cfg, claude_home)
 
         cwd = str(data.get("cwd") or "")
         now = time.time()
@@ -182,6 +199,11 @@ def main() -> None:
                         entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
                     entry["reviews"].append({"agent": reviewer, "ts": now})
                     entry["review_pass_ok"] = False
+                    model = str(tool_input.get("model") or "").strip().lower()
+                    if model and model != "inherit":
+                        entry.setdefault("review_model_violations", []).append(
+                            {"agent": reviewer, "model": model, "ts": now}
+                        )
                     changed = True
                     break
 

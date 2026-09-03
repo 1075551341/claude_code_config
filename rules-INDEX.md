@@ -1,6 +1,6 @@
 # Rules 索引
 
-> 自动生成 | 源：`rules/` | v11.0.0（10 全量；v11：DESIGN 并入 FRONTEND、BESTPRACTICE 并入 GOVERNANCE）
+> 自动生成 | 源：`rules/` | v11.4.20（10 全量；v11：DESIGN 并入 FRONTEND、BESTPRACTICE 并入 GOVERNANCE）
 
 ## alwaysApply — 骨架层
 

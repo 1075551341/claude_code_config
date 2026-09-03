@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.4.12）
+# 门控注入文本 SSOT（v11.4.20）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -11,7 +11,7 @@
 1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读）
 2. 输出分类契约：大类 | 需改文件 | 模型档 | verify_tier | 置信度 | 成功标准
    简单=Phase0+关联需改≤2+白名单+六维全低+模型匹配+attempt=1；否则非简单（按 skill 路由）
-3. 疑难（或/还是/可能、清单≥3、黑名单、跨模块）禁止直接改；重复问题先 claude-mem。
+3. 分类后查 config/scenario-router.yaml（必加载+质量门；INDEX L3 可追加）。分类契约须含 triage_map 键原文（如 非简单|配置类），UserPrompt 会注入该场景 load 块。疑难禁止直接改；重复问题先 claude-mem。
 
 ## 完成验证门
 
@@ -19,7 +19,7 @@
 有未验证编辑时才执行。计划未批准 / 本轮零编辑 / 仅计划文件 → 停止，不要续跑。
 Read verification-before-completion；贴观察输出。
 R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档/注释或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）。
-有代码/配置改动：change-implementer 修改 → 验证 → eng-reviewer 一次找齐。干净 PASS 即停。清单齐后再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件、禁止只连审不改。只读免审。
+有代码/配置改动：开审前双图 ensure；change-implementer 修改 → 验证 → eng-reviewer 一次找齐（并行须 inherit）。干净 PASS 即停。每轮全新开审（禁止 resume），日常最多 3 轮（单任务覆盖须用户显式声明）。只读免审。
 
 ## 变更影响门
 

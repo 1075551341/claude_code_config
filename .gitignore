@@ -94,6 +94,7 @@ plugins/known_marketplaces.json
 skills/_bm_skillid_migration.json
 scripts/test-guard-result.json
 /.codegraph/
+/.code-review-graph/
 /.claude/
 openspec/changes/
 .planning/

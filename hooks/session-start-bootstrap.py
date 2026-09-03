@@ -136,6 +136,12 @@ def main():
         p0_gate = load_p0_gate()
         if p0_gate:
             parts.append(p0_gate)
+        try:
+            from scenario_router import format_session_hint
+
+            parts.append(format_session_hint())
+        except Exception as route_err:
+            print(f"session-start-bootstrap: scenario_router failed: {route_err}", file=sys.stderr)
 
         bootstrap_info = "\n".join(parts)
 

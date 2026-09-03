@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（日常最多 3 轮（单任务覆盖须用户显式声明））。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
@@ -40,6 +40,7 @@ from r20_replay import (  # noqa: E402
 )
 from crg_track import has_crg_since  # noqa: E402
 from graph_freshness import (  # noqa: E402
+    ensure_both,
     load_cfg as load_graph_cfg,
     refresh_incremental,
     resolve_cwd,
@@ -66,6 +67,14 @@ DEFAULT_CFG = {
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
     "review_max_rounds": 3,
+    "require_dual_graph_before_review": True,
+    "parallel_review": {
+        "enabled": True,
+        "when_all": ["reviewers_readonly", "disjoint_concerns", "model_inherit_only"],
+        "forbid_multiplier_models": True,
+        "require_model": "inherit",
+        "max_parallel": 3,
+    },
 }
 
 CODE_EXTENSIONS = {
@@ -76,13 +85,19 @@ CODE_EXTENSIONS = {
 
 
 def load_config() -> dict:
-    cfg = dict(DEFAULT_CFG)
+    cfg = json.loads(json.dumps(DEFAULT_CFG))
     try:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 user_cfg = json.load(f).get("verification_gate", {})
-            for key in cfg:
-                if key in user_cfg:
+            for key in list(cfg):
+                if key not in user_cfg:
+                    continue
+                if isinstance(cfg[key], dict) and isinstance(user_cfg[key], dict):
+                    merged = dict(cfg[key])
+                    merged.update(user_cfg[key])
+                    cfg[key] = merged
+                else:
                     cfg[key] = user_cfg[key]
     except (OSError, json.JSONDecodeError) as e:
         print(f"stop-verification-gate: config read failed: {e}", file=sys.stderr)
@@ -366,6 +381,33 @@ def crg_refresh_and_flag(roots: list, timeout_sec: int, session_id: str = "") ->
     return refresh_incremental(roots, tmo, session_id=session_id)
 
 
+def ensure_dual_graph_before_review(roots: list, session_id: str = "") -> str:
+    """独立开审前再 ensure 双图（非 SessionStart 那一次）。失败返回阻断文案。"""
+    gcfg = load_graph_cfg()
+    tmo = min(45, int(gcfg.get("pretool_ensure_timeout_sec", 90)))
+    missing = []
+    for root in roots:
+        result = ensure_both(root, tmo, session_id=session_id)
+        if not result.get("eligible"):
+            continue
+        if result.get("blocked") or not result.get("ok"):
+            missing.append(os.path.basename(os.path.normpath(root)) or root)
+            continue
+        if gcfg.get("require_both_graphs", True) and not (
+            result.get("codegraph") and result.get("crg")
+        ):
+            missing.append(os.path.basename(os.path.normpath(root)) or root)
+    if not missing:
+        return ""
+    shown = ", ".join(missing[:6])
+    more = f" 等 {len(missing)} 个" if len(missing) > 6 else ""
+    return (
+        "独立审前双图 ensure 未就绪（codegraph + code-review-graph）："
+        f"{shown}{more}。禁止开审；先执行 codegraph init|sync 与 "
+        "code-review-graph build|update"
+    )
+
+
 TEST_FILE_MARKERS = ("test_", "_test.", ".test.", ".spec.", "conftest.py")
 TEST_DIR_MARKERS = (os.sep + "tests" + os.sep, os.sep + "test" + os.sep, os.sep + "__tests__" + os.sep)
 TEST_COMMAND_PATTERNS = (
@@ -582,6 +624,15 @@ def main():
             print("ℹ️ 本会话仅文档类编辑：请重读修改内容确认无误后再声称完成", file=sys.stderr)
 
         has_any_edit = bool(edited) or bool(untracked)
+        if has_any_edit and (code_files or untracked) and not awaiting:
+            try:
+                from scenario_router import missing_scenario_sidecar_warning
+
+                scen_warn = missing_scenario_sidecar_warning(session_id)
+                if scen_warn:
+                    print(f"⚠️ {scen_warn}", file=sys.stderr)
+            except Exception as e:  # noqa: BLE001 — 提醒级，失败不阻断
+                print(f"stop-verification-gate: scenario sidecar warn failed: {e}", file=sys.stderr)
         if has_any_edit:
             blocks = int(entry.get("blocks", 0))
             skip_msg = last_user_message(transcript_path).lower()
@@ -660,9 +711,29 @@ def main():
                     elif phase == "verify":
                         pass
                     elif phase == "review":
+                        if cfg.get("require_dual_graph_before_review", True) and refresh_roots:
+                            graph_reason = ensure_dual_graph_before_review(
+                                refresh_roots, session_id
+                            )
+                            if graph_reason:
+                                reasons.append(graph_reason)
+                        pr = cfg.get("parallel_review") or {}
+                        if pr.get("forbid_multiplier_models") or (
+                            str((pr.get("require_model") or "")).strip().lower() == "inherit"
+                        ):
+                            viol = entry.get("review_model_violations") or []
+                            if viol:
+                                shown = ", ".join(
+                                    f"{v.get('agent')}={v.get('model')}" for v in viol[:6]
+                                )
+                                reasons.append(
+                                    "独立审查子代理须 Task model=inherit（禁止倍率档）；"
+                                    f"检测到非 inherit：{shown}"
+                                )
                         reasons.append(
                             "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
-                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
+                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）。"
+                            " 并行审查仅当只读+维度不重叠+Task model=inherit（禁止倍率档）；否则串行。"
                         )
                     elif (
                         verdict_cfg_on

@@ -1,0 +1,252 @@
+# 场景路由 SSOT — v11.4.20
+# 分类后的【必加载集合】+ 质量门。不是「只能加载这些」：INDEX L3 信号仍可追加 Read。
+# 入口：task-triage 使用类型 → triage_map → 本文件 scenarios。
+# 工具经 harness-capabilities.yaml 解析 capability。文档矩阵只指针，禁止复制第二份表。
+version: "11.4.20"
+updated: "2026-09-03"
+
+# match 语义（机器可读）
+# - 主分类：AND（match 全部 token 都在分类契约中）
+# - 多场景命中：match 最长者胜；同长取文件顺序先出现者（first-win）
+# - overlay=true 不参与主分类竞选，由阶段/意图叠加 load
+# - 未命中：unmatched=interrupt（禁止猜场景）
+match_semantics:
+  mode: and_most_specific_first_win
+  unmatched: interrupt
+
+# task-triage「使用类型」→ 场景 id（主分类唯一入口）
+triage_map:
+  "简单|文档类": simple_docs
+  "简单|实现类": simple_impl
+  "简单|配置值类": simple_config_value
+  "简单|Bug类": simple_bug
+  "非简单|Bug类": bug_unclear
+  "非简单|功能类": feature_nonsimple
+  "非简单|架构类": architecture
+  "非简单|配置类": config_structure
+  "非简单|删除类": delete_move
+  "非简单|调研类": research_l3 # 官方分类调研类一律 L3；L1/L2 仅 overlay（deep-research 三档）
+
+load_defaults:
+  skills:
+    - using-superpowers
+    - task-triage
+    - verification-before-completion
+  capabilities: [memory]
+  quality:
+    hard_gates:
+      - brainstorming_user_approve # HARD-GATE：用户批准设计前禁止实现
+      - plan_unapproved_no_complete
+      - tdd_sdd_explicit_only
+      - r18_memory
+      - cursor_no_followup
+      - claude_stop_exit_2
+
+quality_defaults:
+  r20: true
+  observed_output: true
+  graph: mandate
+  review_on_code_or_config_edit: true # 有改动即双审；纯文档扩展名由 quality_gates.doc_only_extensions 判定只读免审
+  review_max_rounds_global: 3 # 日常护栏；单任务覆盖须用户显式声明
+  independent_review:
+    before:
+      - dual_graph_ensure # 本轮开审前：codegraph init|sync + code-review-graph build|update
+    fresh_each_round: true # 禁止 resume 上一轮审查者
+    reviewer_readonly: true
+    implementer: change-implementer
+    reviewer_model: inherit # 并行/串行独立审查均 inherit；codex-reviewer 跨模型除外
+    parallel:
+      enabled: true # 允许并行的前提；场景还须 quality.parallel_ok
+      when_all:
+        - reviewers_readonly
+        - disjoint_concerns # 维度不重叠（如 eng vs dx vs spec）
+        - model_inherit_only # Task model=inherit，禁止倍率档
+      forbid_multiplier_models: true
+      require_model: inherit
+      max_parallel: 3
+    pass_stops: true
+
+forbidden_global:
+  - codebase-memory
+  - aider-repo-map
+  - sequential-thinking
+  - ralph-loop
+  - serena_as_r17
+  - auto_merge_debug_ops
+  - claude_md_overwrite_agents_md
+
+scenarios:
+  session_start:
+    overlay: true
+    match: [会话开始]
+    load:
+      skills: [using-superpowers, task-triage]
+    capabilities: [memory, code_explore]
+    quality: { graph: ensure }
+
+  simple_docs:
+    match: [简单, 文档类]
+    load:
+      skills: [change-impact-analysis]
+      agents: [doc-writer]
+    capabilities: [code_explore]
+    quality: { verify_tier: 比例 }
+
+  simple_impl:
+    match: [简单, 实现类]
+    load:
+      skills: [change-impact-analysis]
+    capabilities: [code_explore, symbol_edit]
+    quality: { verify_tier: 比例 }
+
+  simple_config_value:
+    match: [简单, 配置值类]
+    load:
+      skills: [change-impact-analysis]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 比例 }
+
+  simple_bug:
+    match: [简单, Bug类]
+    load:
+      skills: [change-impact-analysis, systematic-debugging]
+    capabilities: [code_explore, symbol_edit]
+    quality: { verify_tier: 比例 }
+
+  bug_unclear:
+    match: [非简单, Bug类]
+    load:
+      skills: [systematic-debugging, change-impact-analysis]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  feature_nonsimple:
+    match: [非简单, 功能类]
+    load:
+      skills:
+        [
+          brainstorming,
+          writing-plans,
+          spec-validation,
+          executing-plans,
+          change-impact-analysis,
+        ]
+      agents: [planner, spec-reviewer, eng-reviewer, change-implementer]
+      rules: [OPENSPEC.md]
+    capabilities: [code_explore, impact_review, lib_docs]
+    quality:
+      verify_tier: 全量
+      review: [eng-reviewer]
+      review_catalog_optional:
+        产品: [ceo-reviewer]
+        UI/UX: [designer, dx-reviewer]
+        安全: [security-reviewer]
+
+  architecture:
+    match: [非简单, 架构类]
+    load:
+      skills:
+        [
+          brainstorming,
+          writing-plans,
+          adr-management,
+          improve-codebase-architecture,
+          change-impact-analysis,
+        ]
+      agents: [architect, spec-reviewer, eng-reviewer, change-implementer]
+      rules: [CORE.md, GOVERNANCE.md]
+    capabilities: [code_explore, impact_review]
+    quality:
+      verify_tier: 全量
+      review: [eng-reviewer]
+      review_catalog_optional:
+        产品: [ceo-reviewer]
+        UI/UX: [designer, dx-reviewer]
+        安全: [security-reviewer]
+
+  config_structure:
+    match: [非简单, 配置类]
+    load:
+      skills: [brainstorming, writing-plans, change-impact-analysis]
+      agents: [eng-reviewer, dx-reviewer, spec-reviewer, change-implementer, doc-writer]
+      rules: [MCP.md, GOVERNANCE.md]
+    capabilities: [code_explore, impact_review]
+    quality:
+      verify_tier: 全量
+      review: [eng-reviewer, dx-reviewer, spec-reviewer]
+      parallel_ok: true # 三审查只读、维度不重叠；还须 defaults.parallel.when_all（inherit）
+      r20: true
+
+  delete_move:
+    match: [非简单, 删除类]
+    load:
+      skills: [brainstorming, change-impact-analysis]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  research_l1:
+    overlay: true
+    reachable_from: deep-research
+    match: [调研, L1]
+    capabilities: [lib_docs, web_search, memory]
+    load: {}
+    quality: { verify_tier: 比例 }
+
+  research_l2:
+    overlay: true
+    reachable_from: deep-research
+    match: [调研, L2]
+    capabilities: [web_search, web_scrape, lib_docs, memory]
+    load: {}
+    quality: { verify_tier: 比例 }
+
+  research_l3:
+    match: [非简单, 调研类]
+    capabilities: [web_search, web_scrape, lib_docs, memory]
+    load:
+      skills: [deep-research]
+    quality: { verify_tier: 全量 }
+
+  verify_complete:
+    overlay: true
+    match: [④验证, 完成前]
+    load:
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [impact_review, code_explore]
+    quality:
+      verify_tier: 全量
+      review: [eng-reviewer]
+      parallel_ok: false
+      independent_review:
+        before: [dual_graph_ensure]
+
+  open_pr:
+    overlay: true
+    match: [开PR]
+    load:
+      skills: [pr-workflow, requesting-code-review]
+      agents: [eng-reviewer]
+    capabilities: [impact_review, github]
+    quality:
+      review: [eng-reviewer]
+      independent_review:
+        before: [dual_graph_ensure]
+
+  symbol_refactor:
+    overlay: true
+    match: [符号重构]
+    load:
+      skills: [change-impact-analysis, code-refactoring]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [symbol_edit, code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  debug:
+    overlay: true
+    match: [调试]
+    load:
+      skills: [systematic-debugging, change-impact-analysis]
+    capabilities: [code_explore, browser_debug]
+    quality: { interrupt: [browser_debug] }

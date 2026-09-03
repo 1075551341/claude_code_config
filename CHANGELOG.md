@@ -2,6 +2,62 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.20 场景 load 注入 + capability 解析 + 本机分支落地（2026-09-03）
+
+- **加载**：UserPrompt（`pre-userprompt-issue-tracker`）叠加调用 `inject_for_prompt` → `format_load_block`；分类契约含 triage_map 键或**上一轮** assistant/user 命中后写入 `.state/last_scenario.json`。unmatched 只看当前 prompt；triage 键最长优先（避免 `非简单|Bug类` 误命中 `简单|Bug类`）。禁止用 SessionStart 全表 transcript 尾做匹配。SessionStart 仍注入 triage_map 指针。Stop 对代码/配置脏集缺 sidecar 仅 stderr 提醒，不加入 exit 2 reasons。
+- **能力**：新增 `hooks/_lib/capability_resolver.py`；Cursor `web_scrape` → fallback `web_search`。brainstorming 去掉写死 Firecrawl/Exa。
+- **文档**：`CURSOR_MCP_PROFILE` 区分 Claude firecrawl plugin vs Cursor 无 Plugin；L3「双源」改为 harness 声明源（含降级）。V20：router/harness `version` 必须等于 MANIFEST。
+- **本机**：README/SYNC_GUIDE 改为 fetch **优化分支**（`cursor/v11-config-alignment-04a6`）再 `sync.ps1` + `deploy-editor-graph-hooks.ps1`；云端不能写 `C:\Users\DELL\.claude`。
+- 不删 skill/agent/rule/catalog；`review_max_rounds` 仍为 3；OpenCode AGENTS.md 仍不覆盖。
+
+## v11.4.19 L0/Stop 轮次句与规范括号句同形（2026-09-03）
+
+- **R20**：`CLAUDE.md` 门控④与 `stop-verification-gate.py` 模块说明改为「日常最多 3 轮（单任务覆盖须用户显式声明）」，与同文件 `:64`/`:146` 及注入门一致。`review_max_rounds` 仍为 3。
+
+## v11.4.18 现行操作句与 L0 轮次口径对齐（2026-09-03）
+
+- **R20**：Stop/Guard 注入、Cursor 规则、OpenCode `verify-gate`、verification/executing-plans/task-triage 现行句改为「日常最多 3 轮（单任务覆盖须用户显式声明）」。`review_max_rounds` 仍为 3。
+- 历史 CHANGELOG / skill 版本注记保留绝对「最多 3 轮」。
+
+## v11.4.17 版本映射 + L0/MCP 注释 + 本机落地（2026-09-03）
+
+- **R20**：DSH/OpenCode `version_map` 与 SYNC_GUIDE 对齐现行 Claude 版本；L0 五阶段与审查路由统一「日常最多 3 轮（单任务覆盖须用户显式声明）」；L0 同步段写明 DSH/OpenCode 便携件且禁止 CLAUDE.md 覆盖 AGENTS.md。
+- **MCP**：`MANIFEST` `mcp_loading.always` 注释补 firecrawl/github；`rules/MCP.md` 分组表与 SPEC/`servers.json` 二分对齐；`CURSOR_MCP_PROFILE` 登记 Cursor 无 firecrawl Plugin。
+- **DX**：README/SYNC_GUIDE 写明云端不能写 `C:\Users\DELL\.claude`；落地命令一律 `pwsh -ExecutionPolicy Bypass -File`（含便携件 README / deploy 头注释）。
+- **V20**：`dsh`/`opencode` `version_map` 必须含 MANIFEST 现行版本。`review_max_rounds` 仍为 3。
+
+## v11.4.16 MCP 分组/调研薄壳 + check HOME + Guard inherit 消费（2026-09-03）
+
+- **调研/MCP**：`commands/deep-research.md`、`skills-INDEX`、`MANIFEST` deep-research/mcp_tiering、deer-flow 降级与 CLAUDE.md harness 口径对齐。`mcp/servers.json` plugins 含 firecrawl，`plugins_default_off` 含 github。`mcp-configs/search.json` 改为 plugin 视图（servers 空，禁止再当 `.mcp.json` 常驻）。
+- **DX**：`check.ps1` 与 sync/deploy 共用 `Expand-UserHome`（`USERPROFILE||HOME`）。README TTHW/验证一律 `pwsh -ExecutionPolicy Bypass -File`。
+- **inherit 机械门**：`reviewer_agents` 含 `dx-reviewer`/`spec-reviewer`（quality_gates + Claude tracker 默认 + Guard `verification`）。Guard **1.2.13** Stop 在 review 相位读取 `review_model_violations`（stderr + `user_message`）；`verification_gate` 仍不注入（v11.4.10）。V20 校验上述键。
+- **不改**：`review_max_rounds=3`；OpenCode 不覆盖 `AGENTS.md`。
+
+## v11.4.15 审查清单闭环：harness 文案 + 加载器可执行 + inherit 机械门（2026-09-03）
+
+- **P0**：`CLAUDE.md` `/deep-research` 改为 harness `web_scrape`+`web_search`（含 Cursor fallback），不再写死 Firecrawl+Exa。
+- **加载器**：SessionStart / Cursor Guard 注入含 `triage_map` 的场景指针；`merge_scenario` 并入 `load_defaults.quality.hard_gates`。审查 Task 显式非 inherit 记入 `review_model_violations`，Stop 审查相位阻断。
+- **sync/DX**：README 补 `git pull` + `deploy-editor-graph-hooks.ps1`；`Expand-UserHome` 对齐 CLAUDE_HOME/HOME；OpenCode `enabled=false` 打印 skip；check 断言 `graph-freshness.json` 且 Harness warn 指向 sync。
+- **文档**：SPEC MCP 分组 firecrawl=plugin 启用；CONTEXT/CORE/deep-research 走 harness；MANIFEST `mcp_remote_explore` 去掉重复 `depends_on`；catalog 三断链改为占位 SKILL.md（不删 catalog）。
+- **V20**：必检 qoder-cn/trae-cn；dsh+opencode 均须 `forbid: claude_md_overwrite_agents_md`。
+
+## v11.4.14 场景路由加载器闭环 + 审前双图钩子消费（2026-09-03）
+
+- **加载器**：`hooks/_lib/scenario_router.py` 解析 `triage_map`（AND + 最长 match 胜）。YAML 是分类后**必加载集合**+质量门，INDEX L3 信号仍可追加。`load_defaults` 始终并入 using-superpowers / task-triage / verification / memory。SessionStart 注入短指针；task-triage 路由表交接 YAML。
+- **钩子消费**：`quality_gates.json` 的 `require_dual_graph_before_review` / `parallel_review` 进入 Stop `DEFAULT_CFG`；审查相位再 `ensure_both`。Cursor Guard **1.2.12** 在 review 相位同样 ensure。审查者 `spec-reviewer`/`code-reviewer` 补 `model: inherit`。
+- **sync**：`sync.ps1` 读 `harnesses`，home 存在则复制便携 CLI/插件；缺则复制 `graph-freshness.json`；**永不写 AGENTS.md**。`CLAUDE_HOME`/`HOME` 解析与 `check.ps1` 对齐。
+- **漂移**：SPEC 插件启用12/禁用6 + superpowers 6.3.0；分发器 1；PostToolUse 4；codegraph 1.6.0；GitHub→`gh` CLI；TOOL_MATCHING 去掉第二份矩阵；CLAUDE.md L3 允许 harness fallback。V20 校验 triage_map / IR object / 钩子消费 / inherit。
+- **多端**：DSH 2.12 / OpenCode 1.12 映射到 11.4.14。不精简 skill/agent/rule/catalog。`review_max_rounds` 仍为 3。
+
+## v11.4.13 场景路由 YAML + 审前双图 + inherit 并行审查（2026-09-03）
+
+- **配置驱动**：新增 `config/scenario-router.yaml`（场景→load.skills/agents + quality）与 `config/harness-capabilities.yaml`（capability → 当前端 provider/fallback/interrupt）。分类后只按 YAML 加载；缺能力走声明降级，禁止假装调用。
+- **独立审查**：审前强制双图 ensure（codegraph init|sync + CRG build|update）。只读 + 维度不重叠 + 子代理 `model=inherit`（禁止 max/xhigh/thinking-max 倍率档）时允许并行多审查（最多 3）；否则串行。日常 `review_max_rounds=3` 不变。
+- **Harness 适配**：`sync-manifest.json` 增 `harnesses`（DSH / OpenCode）。`editors.opencode.enabled` 仍 false，禁止 CLAUDE.md 覆盖 AGENTS.md。`check.ps1` 在 home 存在时断言便携 CLI 且 AGENTS.md 非 CLAUDE.md 软链。
+- **漂移清零**：SPEC MCP 常驻 4；hooks 19 注册；Superpowers 6.3.0；INDEX 版本对齐；插件表 hud/exa/context7/firecrawl/playwright/github 与 v11.4.5 一致；workbuddy `enabled=true`（home 缺席跳过）；`validate_config.py` BASE=`CLAUDE_HOME`/仓根回退 + `change-implementer` + V20 校验两份 YAML。
+- **文档**：SYNC_GUIDE 补 DSH 适配层；TOOL_MATCHING_GUIDE / using-superpowers 改为指针。不精简 skill/agent/rule/catalog。
+- **多端**：DSH 2.12 / OpenCode 1.12 映射到 11.4.13。Guard 仍 1.2.11。
+
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 
 - **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。

@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.12
+# 组件唯一归属源 — 防左右手互博 — v11.4.20
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.12"
-updated: "2026-09-01"
+version: "11.4.20"
+updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -136,7 +136,7 @@ horizontal_layers:
     description: 洞察横切层 — 代码图谱 + 外部搜索（UA removed v10.5）
     owners:
       - source: colbymchenry/codegraph
-        version: "1.5.0" # v10.11: MCP daemon 实测；CLI 0.9.7 待对齐（可选 V1）；原记 1.0.1
+        version: "1.6.0" # v11.4.14: 与 .mcp.json @colbymchenry/codegraph@1.6.0 对齐
         concerns:
           [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
       - source: DeusData/codebase-memory-mcp
@@ -168,7 +168,7 @@ loading_tiers:
     - skill/pr-workflow
     - skill/claude-mem-maintenance
   L3_dispatch: [agents/*, mcp/*, rules/* lazy globs] # was L4, merged per v10.2 D4
-  note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
+  note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由。场景加载 SSOT=config/scenario-router.yaml；端能力=config/harness-capabilities.yaml"
 
 phases:
   plan:
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4.12 — 一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。v11.4.11 — 审查者只找问题，修改走 change-implementer；配置/文档/注释必须同步。v11.4.10 — Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留。v11.4.9 — 有改动即双审；独立审查 PASS/符合预期即停，仅结论不一致（NEEDS-CHANGES）才再开一轮最多 3 轮；计划未批准零注入（CallDynamicTool/CreatePlan）。v11.4.8 — 双审=修改→验证→审查循环最多 3 轮（dual_pass_phase）。上游：Claude Stop exit 2。SSOT quality_gates.json + hooks/_lib/r20_replay.py。"
+    note: "v11.4.20 — UserPrompt 注入 format_load_block + capability_resolver。v11.4.14 — 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行。v11.4.13 — 场景路由 YAML SSOT。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -436,7 +436,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.13 — Stop 消费 review_model_violations（review 相位 user_message；gate 仍不注入）。v1.2.12 — review 相位独立审前双图 ensure。v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
@@ -528,7 +528,7 @@ concerns:
         tool/WebSearch,
         catalog/skills/deep-research,
       ]
-    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
+    note: "deep-research = L3 结构化调研(harness web_scrape+web_search+lib_docs；Firecrawl+Exa+Context7 或当前端 fallback)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v11.4.16: 禁止假装双源；Cursor 无 scrape 则 fallback web_search。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
 
   git_workflow:
     owner: skill/git-workflow
@@ -558,7 +558,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright 走 Plugins；chrome-devtools plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
+    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools/github plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
     depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,
@@ -578,9 +578,9 @@ concerns:
       ]
 
   mcp_remote_explore:
-    owner: config/.mcp.json
-    note: github（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN；勿用 api.githubcopilot.com HTTP，Cursor/Claude 会变成 mcp_auth + 0 tools）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
-    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
+    owner: config/harness-capabilities.yaml
+    note: GitHub 操作走 gh CLI（github Plugin/MCP 默认关，不写 .mcp.json）。grep MCP（grep.app 跨公开仓）仍在 .mcp.json 常驻；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow, .mcp.json]
 
   gstack_eng:
     owner: agent/eng-reviewer
@@ -902,7 +902,7 @@ harness:
         code-review-graph,
         serena,
         grep,
-      ] # 常驻：本地代码3 + grep；pw/context7/exa 走插件；chrome-devtools 默认关；无 aider-repo-map/sequential-thinking
+      ] # 常驻：本地代码3 + grep；context7/exa/playwright/firecrawl 走插件；chrome-devtools/github 默认关；无 aider-repo-map/sequential-thinking
     debug: [chrome-devtools] # mcp-configs/debug.json
     fsaccess: [fs] # mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
     ops: [redis, sqlite, docker, postgres]
@@ -913,7 +913,7 @@ sync_targets:
   # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.4: opencode 解耦；v11.4.6：DSH/OpenCode 图谱+R20 走各自 home（CLI/r20_check/verify-gate），仍不投放 CLAUDE.md
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.14: harnesses 段登记 DSH/OpenCode 适配（sync.ps1 + deploy-editor-graph-hooks.ps1）；opencode enabled=false 禁止 CLAUDE.md 覆盖 AGENTS.md
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]

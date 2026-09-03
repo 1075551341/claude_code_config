@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V19 共 19 项静态检查（结构/铁律/hook/MCP/INDEX 一致性）。
+"""配置一致性校验 — V1-V20 共 20 项静态检查（结构/铁律/hook/MCP/INDEX/场景路由）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
@@ -9,7 +9,7 @@
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
-V19 三大 INDEX 与磁盘双向一致。
+V19 三大 INDEX 与磁盘双向一致 / V20 scenario-router + harness-capabilities。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -30,7 +30,25 @@ try:
 except ImportError:
     yaml = None
 
-BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
+def resolve_base() -> str:
+    env = os.environ.get("CLAUDE_HOME")
+    if env and os.path.isfile(os.path.join(env, "CLAUDE.md")):
+        return os.path.normpath(env)
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(here)
+    if os.path.isfile(os.path.join(repo, "CLAUDE.md")) and os.path.isdir(
+        os.path.join(repo, "skills")
+    ):
+        return repo
+    for key in ("USERPROFILE", "HOME"):
+        home = os.environ.get(key) or ""
+        cand = os.path.join(home, ".claude")
+        if home and os.path.isfile(os.path.join(cand, "CLAUDE.md")):
+            return cand
+    return os.path.join(os.environ.get("HOME") or os.environ.get("USERPROFILE") or "", ".claude")
+
+
+BASE = resolve_base()
 ERRORS = []
 WARNINGS = []
 INFO = []
@@ -45,7 +63,7 @@ GSTACK_REVIEW_AGENTS = {
 # v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
 # product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer",
+    "sre", "doc-writer", "change-implementer", "codex-reviewer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
 GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
@@ -338,8 +356,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200 (SPEC ≤200)")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -373,6 +391,7 @@ def main():
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
+    check_v20_scenario_router()
 
     report(
         agents=len(agent_names),
@@ -384,13 +403,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (19 checks) ===")
+    print("=== .claude v11 VALIDATION (20 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
+        "V19", "V20",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -414,7 +434,7 @@ def check_v10_bare_except():
     import re as re_mod
     import glob as glob_mod
     import ast as ast_mod
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     count = 0
     for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
         if "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
@@ -461,7 +481,7 @@ def check_v11_hook_exception_propagation():
         "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     missing = []
     for h in core_hooks:
         if not os.path.exists(os.path.join(hooks_dir, h)):
@@ -481,8 +501,8 @@ def check_v11_hook_exception_propagation():
 
 def check_v12_r16_in_core():
     """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
-    core_path = os.path.expanduser("~/.claude/rules/CORE.md")
-    claude_path = os.path.expanduser("~/.claude/CLAUDE.md")
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    claude_path = os.path.join(BASE, "CLAUDE.md")
     for fpath, label in [(core_path, "CORE.md"), (claude_path, "CLAUDE.md")]:
         try:
             with open(fpath, 'r', encoding='utf-8') as f:
@@ -837,8 +857,8 @@ def check_v17_bare_except_extended():
         "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [
-        os.path.expanduser("~/.claude/hooks"),
-        os.path.expanduser("~/.claude/scripts"),
+        os.path.join(BASE, "hooks"),
+        os.path.join(BASE, "scripts"),
     ]
     violations = []
 
@@ -985,6 +1005,274 @@ def check_v19_index_disk_sync():
         indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
         disk_rules,
     )
+
+
+def _load_yaml(rel: str):
+    path = os.path.join(BASE, rel)
+    if not os.path.isfile(path):
+        ERRORS.append(f"V20: {rel} missing")
+        return None
+    if yaml is None:
+        WARNINGS.append(f"V20: PyYAML missing, skip parse of {rel}")
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return yaml.safe_load(fh)
+    except (OSError, yaml.YAMLError) as exc:
+        ERRORS.append(f"V20: {rel} unreadable: {exc}")
+        return None
+
+
+def check_v20_scenario_router():
+    """V20: scenario-router 语义闭环 + harness fallback + 钩子消费 quality_gates 新键。"""
+    router = _load_yaml(os.path.join("config", "scenario-router.yaml"))
+    caps = _load_yaml(os.path.join("config", "harness-capabilities.yaml"))
+    if not router or not caps:
+        return
+
+    man_ver = ""
+    try:
+        with open(os.path.join(BASE, "MANIFEST.yaml"), encoding="utf-8") as fh:
+            for line in fh:
+                m = re.match(r'version:\s*"([^"]+)"', line)
+                if m:
+                    man_ver = m.group(1)
+                    break
+    except OSError:
+        man_ver = ""
+    if man_ver and str(router.get("version") or "") != man_ver:
+        ERRORS.append(
+            f"V20: scenario-router.yaml version {router.get('version')!r} 须等于 MANIFEST {man_ver!r}"
+        )
+    if man_ver and str(caps.get("version") or "") != man_ver:
+        ERRORS.append(
+            f"V20: harness-capabilities.yaml version {caps.get('version')!r} 须等于 MANIFEST {man_ver!r}"
+        )
+
+    tracker = os.path.join(BASE, "hooks", "pre-userprompt-issue-tracker.py")
+    try:
+        tracker_src = open(tracker, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: issue-tracker unreadable: {exc}")
+        tracker_src = ""
+    if "inject_for_prompt" not in tracker_src:
+        ERRORS.append("V20: pre-userprompt-issue-tracker 未调用 inject_for_prompt")
+    resolver = os.path.join(BASE, "hooks", "_lib", "capability_resolver.py")
+    if not os.path.isfile(resolver):
+        ERRORS.append("V20: capability_resolver.py missing")
+
+    cap_ids = set(caps.get("capability_ids") or [])
+    defaults = caps.get("defaults") or {}
+    missing_default = cap_ids - set(defaults)
+    if missing_default:
+        ERRORS.append(f"V20: harness defaults 缺少 capability: {sorted(missing_default)}")
+
+    for cid, spec in defaults.items():
+        if not isinstance(spec, dict):
+            continue
+        has_fb = "fallback" in spec
+        has_int = spec.get("interrupt") is True or spec.get("provider") == "interrupt"
+        if not has_fb and not has_int:
+            ERRORS.append(f"V20: capability {cid} 缺 fallback 或 interrupt")
+
+    skills_dir = os.path.join(BASE, "skills")
+    agents_dir = os.path.join(BASE, "agents")
+    rules_dir = os.path.join(BASE, "rules")
+    disk_skills = {
+        d for d in os.listdir(skills_dir)
+        if os.path.isdir(os.path.join(skills_dir, d))
+    } if os.path.isdir(skills_dir) else set()
+    disk_agents = {
+        f[:-3] for f in os.listdir(agents_dir)
+        if f.endswith(".md") and f != "README.md"
+    } if os.path.isdir(agents_dir) else set()
+    disk_rules = {
+        f for f in os.listdir(rules_dir)
+        if f.endswith(".md")
+    } if os.path.isdir(rules_dir) else set()
+
+    for name in (router.get("load_defaults") or {}).get("skills") or []:
+        if name not in disk_skills:
+            ERRORS.append(f"V20: load_defaults unknown skill {name}")
+
+    tmap = router.get("triage_map") or {}
+    scenarios = router.get("scenarios") or {}
+    if not tmap:
+        ERRORS.append("V20: triage_map missing")
+    for key, sid in tmap.items():
+        if sid not in scenarios:
+            ERRORS.append(f"V20: triage_map {key} -> unknown scenario {sid}")
+            continue
+        spec = scenarios[sid]
+        if spec.get("overlay"):
+            ERRORS.append(f"V20: triage_map {key} 指向 overlay 场景 {sid}")
+        expected = [p for p in str(key).split("|") if p]
+        got = list(spec.get("match") or [])
+        if sorted(expected) != sorted(got):
+            ERRORS.append(f"V20: scenario {sid} match {got} != triage_map {expected}")
+
+    mapped = set(tmap.values())
+    for sid, spec in scenarios.items():
+        if not isinstance(spec, dict):
+            continue
+        if not spec.get("overlay") and sid not in mapped:
+            ERRORS.append(f"V20: 非 overlay 场景 {sid} 未出现在 triage_map")
+        load = spec.get("load") or {}
+        for name in load.get("skills") or []:
+            if name not in disk_skills:
+                ERRORS.append(f"V20: scenario {sid} unknown skill {name}")
+        for name in load.get("agents") or []:
+            if name not in disk_agents:
+                ERRORS.append(f"V20: scenario {sid} unknown agent {name}")
+        for name in load.get("rules") or []:
+            if name not in disk_rules:
+                ERRORS.append(f"V20: scenario {sid} unknown rule {name}")
+        for cid in spec.get("capabilities") or []:
+            if cid not in cap_ids:
+                ERRORS.append(f"V20: scenario {sid} unknown capability {cid}")
+        q = spec.get("quality")
+        if q is not None and not isinstance(q, dict):
+            ERRORS.append(f"V20: scenario {sid} quality 必须是 object")
+            continue
+        ir = (q or {}).get("independent_review")
+        if ir is not None and not isinstance(ir, dict):
+            ERRORS.append(f"V20: scenario {sid} independent_review 必须是 object")
+        for an in (q or {}).get("review") or []:
+            if an not in disk_agents:
+                ERRORS.append(f"V20: scenario {sid} review unknown agent {an}")
+        opt = (q or {}).get("review_catalog_optional") or {}
+        if opt and not isinstance(opt, dict):
+            ERRORS.append(f"V20: scenario {sid} review_catalog_optional 必须是 object")
+        elif isinstance(opt, dict):
+            for names in opt.values():
+                for an in names if isinstance(names, list) else [names]:
+                    if an not in disk_agents:
+                        ERRORS.append(f"V20: scenario {sid} catalog review unknown agent {an}")
+
+    ir = (router.get("quality_defaults") or {}).get("independent_review") or {}
+    if not isinstance(ir, dict):
+        ERRORS.append("V20: quality_defaults.independent_review 必须是 object")
+    before = ir.get("before") or []
+    if "dual_graph_ensure" not in before:
+        ERRORS.append("V20: independent_review.before 必须含 dual_graph_ensure")
+    parallel = ir.get("parallel") or {}
+    if parallel.get("forbid_multiplier_models") is not True:
+        ERRORS.append("V20: parallel.forbid_multiplier_models 必须为 true")
+    if "model_inherit_only" not in (parallel.get("when_all") or []):
+        ERRORS.append("V20: parallel.when_all 必须含 model_inherit_only")
+    if str(parallel.get("require_model") or "").strip().lower() != "inherit":
+        ERRORS.append("V20: parallel.require_model 必须为 inherit")
+
+    harnesses = caps.get("harnesses") or {}
+    required = {"claude-code", "cursor", "dsh", "opencode", "qoder-cn", "trae-cn"}
+    missing_h = required - set(harnesses)
+    if missing_h:
+        ERRORS.append(f"V20: harness-capabilities 缺少 harness: {sorted(missing_h)}")
+    wb = harnesses.get("workbuddy") or {}
+    ov = wb.get("overrides") or {}
+    fake = set(ov) - cap_ids
+    if fake:
+        ERRORS.append(f"V20: workbuddy.overrides 含非 capability 键: {sorted(fake)}")
+    for hid in ("dsh", "opencode"):
+        extra = (harnesses.get(hid) or {}).get("extra") or {}
+        if extra.get("forbid") != "claude_md_overwrite_agents_md":
+            ERRORS.append(f"V20: {hid}.extra.forbid 必须为 claude_md_overwrite_agents_md")
+        vm = str(extra.get("version_map") or "")
+        if man_ver and man_ver not in vm:
+            ERRORS.append(f"V20: {hid}.extra.version_map 须含现行 {man_ver}")
+
+    qg_path = os.path.join(BASE, "config", "quality_gates.json")
+    try:
+        with open(qg_path, "r", encoding="utf-8") as fh:
+            qg = json.load(fh).get("verification_gate") or {}
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: quality_gates.json unreadable: {exc}")
+        qg = {}
+    for key in ("require_dual_graph_before_review", "parallel_review"):
+        if key not in qg:
+            ERRORS.append(f"V20: quality_gates.verification_gate 缺少 {key}")
+    need_rev = {"eng-reviewer", "dx-reviewer", "spec-reviewer"}
+    missing_rev = need_rev - set(qg.get("reviewer_agents") or [])
+    if missing_rev:
+        ERRORS.append(
+            f"V20: quality_gates.reviewer_agents 缺少并行审查者: {sorted(missing_rev)}"
+        )
+    servers_path = os.path.join(BASE, "mcp", "servers.json")
+    try:
+        with open(servers_path, encoding="utf-8") as fh:
+            toolsets = json.load(fh).get("toolsets") or {}
+        plugins = set(toolsets.get("plugins") or [])
+        if "firecrawl" not in plugins:
+            ERRORS.append("V20: mcp/servers.json plugins 必须含 firecrawl")
+        off = set(toolsets.get("plugins_default_off") or [])
+        if "github" not in off:
+            ERRORS.append("V20: mcp/servers.json plugins_default_off 必须含 github")
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: mcp/servers.json unreadable: {exc}")
+    guard_stop = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "verification_stop.py"
+    )
+    try:
+        gstop = open(guard_stop, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: verification_stop.py unreadable: {exc}")
+        gstop = ""
+    if "review_model_violations" not in gstop:
+        ERRORS.append("V20: Guard verification_stop 未消费 review_model_violations")
+    guard_cfg_path = os.path.join(BASE, "templates", "cursor-guard", "guard-config.json")
+    try:
+        with open(guard_cfg_path, encoding="utf-8-sig") as fh:
+            gver = (json.load(fh).get("verification") or {})
+        g_agents = set(gver.get("reviewer_agents") or [])
+        missing_g = need_rev - g_agents
+        if missing_g:
+            ERRORS.append(
+                f"V20: Guard verification.reviewer_agents 缺少: {sorted(missing_g)}"
+            )
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: guard-config.json unreadable: {exc}")
+    stop_path = os.path.join(BASE, "hooks", "stop-verification-gate.py")
+    try:
+        stop_src = open(stop_path, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: stop-verification-gate.py unreadable: {exc}")
+        stop_src = ""
+    cfg_block = ""
+    start = stop_src.find("DEFAULT_CFG")
+    end = stop_src.find("CODE_EXTENSIONS")
+    if start >= 0 and end > start:
+        cfg_block = stop_src[start:end]
+    for key in ("require_dual_graph_before_review", "parallel_review"):
+        if key not in cfg_block:
+            ERRORS.append(f"V20: stop-verification-gate DEFAULT_CFG 未消费 {key}")
+    if "ensure_dual_graph_before_review" not in stop_src:
+        ERRORS.append("V20: stop-verification-gate 缺少 ensure_dual_graph_before_review")
+
+    reviewers = set()
+    for spec in scenarios.values():
+        if isinstance(spec, dict):
+            reviewers.update((spec.get("quality") or {}).get("review") or [])
+    reviewers.update(qg.get("reviewer_agents") or [])
+    reviewers.discard("codex-reviewer")
+    for name in sorted(reviewers):
+        path = os.path.join(agents_dir, f"{name}.md")
+        if not os.path.isfile(path):
+            continue
+        try:
+            head = open(path, encoding="utf-8").read(800)
+        except OSError:
+            continue
+        fm = ""
+        if head.startswith("---"):
+            parts = head.split("---", 2)
+            fm = parts[1] if len(parts) > 2 else ""
+        else:
+            fm = head
+        if "model: inherit" not in fm:
+            ERRORS.append(f"V20: 审查者 {name} 缺 model: inherit")
+
+    if not any(e.startswith("V20:") for e in ERRORS):
+        print(f"  V20: scenario-router ({len(scenarios)}) + harness-capabilities OK ✓")
 
 
 if __name__ == "__main__":

@@ -24,9 +24,9 @@
 
 .NOTES
     配套命令（本脚本不代跑，按需单独执行）：
-      python scripts/validate_config.py            # 深度校验 V1-V19
-      pwsh -File scripts/sync.ps1                # 修同步/软链问题
-      pwsh -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
+      python scripts/validate_config.py            # 深度校验 V1-V20
+      pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1                # 修同步/软链问题
+      pwsh -ExecutionPolicy Bypass -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 PowerShell 不会把上面的块识别为
 # comment-based help，Get-Help 将读不到这些命令示例。
@@ -37,18 +37,35 @@ param([switch]$Quick)
 Set-StrictMode -Off
 $ErrorActionPreference = "SilentlyContinue"
 
-$CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
+function Resolve-ClaudeDir {
+    if ($env:CLAUDE_HOME -and (Test-Path (Join-Path $env:CLAUDE_HOME "CLAUDE.md"))) {
+        return $env:CLAUDE_HOME
+    }
+    $repo = Split-Path $PSScriptRoot -Parent
+    if (Test-Path (Join-Path $repo "CLAUDE.md")) { return $repo }
+    $up = $env:USERPROFILE
+    if (-not $up) { $up = $env:HOME }
+    return (Join-Path $up ".claude")
+}
+
+function Expand-UserHome([string]$Path) {
+    $root = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { "" }
+    return (("$Path" -replace '^~', $root) -replace '/', [IO.Path]::DirectorySeparatorChar)
+}
+
+$CLAUDE_DIR = Resolve-ClaudeDir
+$CURSOR_DIR = Expand-UserHome "~/.cursor"
 # 根文件集合与编辑器清单单源：config/sync-manifest.json（与 sync.ps1 / impact_sync.py 共用）；读取失败回退内置默认
 $SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 # v11.1 多编辑器（1+N）：managed 编辑器白名单（cursor 走专用校验块；下表为其余编辑器）
 $MANAGED_EDITORS = [ordered]@{
-    "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
-    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
+    "qoder-cn"  = @{ Home = (Expand-UserHome "~/.qoder-cn");     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae-cn"   = @{ Home = (Expand-UserHome "~/.trae-cn");      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "workbuddy" = @{ Home = (Expand-UserHome "~/.workbuddy");    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
+    "qoder"     = @{ Home = (Expand-UserHome "~/.qoder");        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae"      = @{ Home = (Expand-UserHome "~/.trae");         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "codearts"  = @{ Home = (Expand-UserHome "~/.codeartsdoer"); Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "opencode"  = @{ Home = (Expand-UserHome "~/.config/opencode"); Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $syncManifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $syncManifestPath) {
@@ -61,7 +78,7 @@ if (Test-Path $syncManifestPath) {
                 if ($e.Name -eq "_comment" -or $e.Name -eq "cursor") { continue }
                 $v = $e.Value
                 $MANAGED_EDITORS[$e.Name] = @{
-                    Home         = ("$($v.home)" -replace '^~', $env:USERPROFILE -replace '/', '\')
+                    Home         = (Expand-UserHome "$($v.home)")
                     Enabled      = ($v.enabled -ne $false)
                     RulesChannel = "$(if ($v.rules_channel) { $v.rules_channel } else { '' })"
                     RulesExt     = "$(if ($v.rules_ext) { $v.rules_ext } else { '' })"
@@ -196,7 +213,7 @@ function Test-IsReparseLink {
     return [bool]((Get-Item $Path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
 
-$cursorDir = Join-Path $env:USERPROFILE ".cursor"
+$cursorDir = $CURSOR_DIR
 if (-not (Test-Path $cursorDir)) {
     Add-Check "Symlink" ".cursor" "warn" "~/.cursor not found -- Cursor not installed?"
 } else {
@@ -334,6 +351,55 @@ foreach ($edName in @($MANAGED_EDITORS.Keys)) {
     }
 }
 
+# v11.4.13 harness adapter：home 缺席跳过；存在则便携文件在，且 AGENTS.md 不是 CLAUDE.md 软链
+if ($syncMf -and $syncMf.harnesses) {
+    foreach ($hProp in $syncMf.harnesses.PSObject.Properties) {
+        if ($hProp.Name -eq "_comment") { continue }
+        $hv = $hProp.Value
+        $hHome = Expand-UserHome "$($hv.home)"
+        if (-not (Test-Path -LiteralPath $hHome)) {
+            Add-Check "Harness" $hProp.Name "pass" "home absent, skipped"
+            continue
+        }
+        $hIssues = @()
+        $deployDir = "$(if ($hv.deploy_dir) { $hv.deploy_dir } else { 'tools' })"
+        foreach ($f in @($hv.deploy)) {
+            $fp = Join-Path (Join-Path $hHome $deployDir) $f
+            if (-not (Test-Path -LiteralPath $fp)) { $hIssues += "$deployDir/$f(missing)" }
+        }
+        if ($hv.plugins) {
+            $pdir = "$(if ($hv.plugin_dir) { $hv.plugin_dir } else { 'plugins' })"
+            foreach ($f in @($hv.plugins)) {
+                $fp = Join-Path (Join-Path $hHome $pdir) $f
+                if (-not (Test-Path -LiteralPath $fp)) { $hIssues += "$pdir/$f(missing)" }
+            }
+        }
+        if ("$($hv.agents_md)" -eq "self-managed") {
+            $ag = Join-Path $hHome "AGENTS.md"
+            if (Test-Path -LiteralPath $ag) {
+                $item = Get-Item -LiteralPath $ag -Force
+                if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                    $tgt = "$($item.Target)"
+                    if ($tgt -like "*CLAUDE.md") {
+                        $hIssues += "AGENTS.md is symlink to CLAUDE.md (forbidden)"
+                    }
+                }
+            }
+        }
+        if ($hIssues.Count -eq 0) {
+            Add-Check "Harness" $hProp.Name "pass" "portable files OK; AGENTS.md not CLAUDE.md overlay"
+        } else {
+            Add-Check "Harness" $hProp.Name "warn" "$($hIssues -join ', ') -- run sync.ps1 or deploy-editor-graph-hooks.ps1"
+        }
+        if ((Test-Path -LiteralPath $hHome) -and ("$($hv.agents_md)" -eq "self-managed")) {
+            $gfJson = Join-Path $hHome "config\graph-freshness.json"
+            if (-not (Test-Path -LiteralPath $gfJson)) {
+                Add-Check "Harness" "$($hProp.Name) graph-freshness.json" "warn" "missing config/graph-freshness.json (copy on first sync.ps1, never overwrite)"
+            }
+        }
+    }
+}
+
 # =============================================================
 # S4: Hook safety
 # =============================================================
@@ -424,8 +490,8 @@ if (Test-Path $hooksDir) {
 Write-Section "4b" "Cursor Guard"
 
 $guardTemplate = Join-Path $CLAUDE_DIR "templates\cursor-guard\hooks.json"
-$guardDeployed = Join-Path $env:USERPROFILE ".cursor\hooks.json"
-$guardHooksDir = Join-Path $env:USERPROFILE ".cursor\hooks"
+$guardDeployed = Join-Path $CURSOR_DIR "hooks.json"
+$guardHooksDir = Join-Path $CURSOR_DIR "hooks"
 $requiredGuardScripts = @(
     "sync_on_edit.py",
     "sync_on_prompt.py",
@@ -439,7 +505,7 @@ $requiredGuardScripts = @(
     "shell_guard.py",
     "prompt_secret_scan.py"
 )
-$guardEditorRule = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules\CURSOR-EDITOR.mdc"
+$guardEditorRule = Join-Path $CURSOR_DIR "plugins\local\claude-config\rules\CURSOR-EDITOR.mdc"
 $guardEditorRuleTpl = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
 
 if (-not (Test-Path $guardTemplate)) {
@@ -480,7 +546,7 @@ if ($missingGuard.Count -gt 0) {
     Add-Check "CursorGuard" "hook scripts" "fail" "~/.cursor/hooks/ not found"
 }
 
-$guardCfg = Join-Path $env:USERPROFILE ".cursor\guard-config.json"
+$guardCfg = Join-Path $CURSOR_DIR "guard-config.json"
 if (Test-Path $guardCfg) {
     Add-Check "CursorGuard" "guard-config.json" "pass" "user config present"
 } else {
@@ -499,8 +565,8 @@ if (Test-Path $guardEditorRule) {
 }
 
 # S4b-L0: Cursor 个人桥接 = local plugin claude-config（~/.cursor/rules 实测不生效，plugin 永久通道）
-$cursorPluginRulesDir = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"
-$cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
+$cursorPluginRulesDir = Join-Path $CURSOR_DIR "plugins\local\claude-config\rules"
+$cursorRulesDir = Join-Path $CURSOR_DIR "rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
 # v11: ROUTER 并入 CLAUDE.md，插件 L0 承载文件为 00-CLAUDE.mdc
 $l0Bases = @("00-CLAUDE", "CORE", "CURSOR-EDITOR")
@@ -600,7 +666,7 @@ function Test-PeFile([string]$p) {
         return ($b.Length -ge 2 -and $b[0] -eq 0x4D -and $b[1] -eq 0x5A)
     } catch { return $false }
 }
-$nativeClaude = Join-Path $env:USERPROFILE ".local\bin\claude.exe"
+$nativeClaude = Expand-UserHome "~/.local/bin/claude.exe"
 $claudeCmd = Get-Command claude -EA SilentlyContinue
 $claudeSrc = if ($claudeCmd) { [string]$claudeCmd.Source } else { "" }
 if (-not $claudeSrc) {
@@ -633,7 +699,7 @@ if ($auUser -eq "1" -or $auUser -eq "true") {
     Add-Check "Runtime" "DISABLE_AUTOUPDATER User env" "warn" "User env unset; Claude CLI still honors settings.json env"
 }
 
-$ghMcpExe = Join-Path $env:USERPROFILE ".local\bin\github-mcp-server.exe"
+$ghMcpExe = Expand-UserHome "~/.local/bin/github-mcp-server.exe"
 if (Test-PeFile $ghMcpExe) {
     Add-Check "Runtime" "github-mcp-server" "pass" $ghMcpExe
 } else {
@@ -679,8 +745,8 @@ function Test-GithubMcpStdio([string]$mcpFile, [string]$label) {
     }
 }
 Test-GithubMcpStdio (Join-Path $CLAUDE_DIR ".mcp.json") "Claude"
-Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".cursor\mcp.json") "Cursor"
-Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".qoder-cn\mcp.json") "Qoder-cn"
+Test-GithubMcpStdio (Join-Path $CURSOR_DIR "mcp.json") "Cursor"
+Test-GithubMcpStdio (Join-Path (Expand-UserHome "~/.qoder-cn") "mcp.json") "Qoder-cn"
 
 # sync.ps1 永不同步 MCP：manifest 不得列出 mcp.json；脚本不得把 mcp.json 写到编辑器 home
 $syncPs1 = Join-Path $CLAUDE_DIR "scripts\sync.ps1"
@@ -811,8 +877,8 @@ if ($warns.Count -gt 0) {
 
 # Action hints
 $tips = @()
-if ($warns | Where-Object { $_.Cat -eq "Symlink" }) {
-    $tips += "run sync.ps1         -- sync tools to editors"
+if ($warns | Where-Object { $_.Cat -eq "Symlink" -or $_.Cat -eq "Harness" }) {
+    $tips += "run sync.ps1         -- sync tools to editors / copy harness portable files"
 }
 if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*ralph*" }) {
     $tips += "run fix.ps1 -Fix     -- remove ralph-loop Stop hook"

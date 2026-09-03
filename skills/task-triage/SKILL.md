@@ -27,7 +27,7 @@ loading_tier: L1
     ├── 架构类：架构/重构/跨模块设计 → grill → brainstorming
     ├── 配置类：配置结构/hook/rule/skill/agent/MANIFEST/依赖升级/数据迁移 → grill → brainstorming
     ├── 删除类：删除/移动/重命名文件 → grill 确认不可逆性
-    └── 调研类：技术选型/深度调研 → deep-research（L3 双源）
+    └── 调研类：技术选型/深度调研 → deep-research（harness 声明源，含 Cursor 降级）
 ```
 
 > **定义（v10.16 客观化）**：
@@ -145,12 +145,16 @@ loading_tier: L1
 
 ## 路由（按使用类型）
 
-| 大类   | 使用类型                               | 路由                                                                                                      |
-| ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 简单   | 文档/实现/配置值/Bug(关联需改≤2可复现) | Phase0 → change-impact → **一次改齐** → verification（比例；仅 attempt=1）                              |
-| 非简单 | Bug（多文件/根因不明/执行升档）        | （歧义则 grill）→ triage(P0-P3，L3) → systematic-debugging → 全量验证                                    |
-| 非简单 | 功能/架构/配置/删除                    | **grill** → brainstorming → 五阶段全链 → 全量验证 + 修改→审查（PASS 即停；清单齐后集中改；每轮全新开审，最多 3 轮） |
-| 非简单 | 调研                                   | deep-research（L3 双源）                                                                                |
+分类判定完成后 **查 `config/scenario-router.yaml` `triage_map`**（使用类型 → 场景 id），只按该场景 `load.*` 做必加载，质量门按 `quality`（含独立审前 `dual_graph_ensure`）。**分类契约须含 triage_map 键原文**（如 `非简单|配置类`），UserPrompt 钩子据此注入 `format_load_block`。INDEX L3 信号仍可追加 Read，禁止把 YAML 当成「只能加载这些」。
+
+| 大类   | 使用类型                               | 场景 id（YAML）        |
+| ------ | -------------------------------------- | ---------------------- |
+| 简单   | 文档/实现/配置值/Bug(关联需改≤2可复现) | simple_*               |
+| 非简单 | Bug（多文件/根因不明/执行升档）        | bug_unclear            |
+| 非简单 | 功能/架构/配置/删除                    | feature_nonsimple 等   |
+| 非简单 | 调研                                   | research_l3（官方 L3） |
+
+L1/L2 调研、调试、开 PR、符号重构、④验证 为 overlay，不替代上表主分类。
 
 ## 边界
 
@@ -158,5 +162,5 @@ loading_tier: L1
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，最多 3 轮。计划未批准禁止声称完成。Cursor 完成门不 followup。
+- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，日常最多 3 轮（单任务覆盖须用户显式声明）。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

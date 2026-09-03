@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.17 (v11.4.12) | **日期**: 2026-09-01 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.25 (v11.4.20) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -23,13 +23,33 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ---
 
+## DSH / OpenCode 适配层（v11.4.20；手工对齐，不覆盖 AGENTS.md）
+
+> v20.1 起即登记 DSH 消费方。OpenCode `editors.opencode.enabled=false`（v11.4.4）保持：**禁止** `CLAUDE.md` → `AGENTS.md`。
+
+| 项 | DeepSeek Harness (`~/.dsh`) | OpenCode (`~/.config/opencode`) |
+| --- | --- | --- |
+| 总纲 | 自管 `AGENTS.md`（手工对齐版本映射） | 自管 `AGENTS.md` |
+| 便携 CLI | `tools/graph_freshness_cli.py` | `scripts/graph_freshness_cli.py` |
+| R20 机械门 | `tools/r20_check.py` | `scripts/r20_check.py` |
+| 图谱插件 | 无 hook；agent CLI ensure/refresh | `plugins/graph-freshness.ts` + `verify-gate.ts` |
+| 投放 | `sync.ps1`（home 存在则复制便携件）+ `deploy-editor-graph-hooks.ps1` | 同左 |
+| 版本映射 | DSH 2.12 ↔ Claude 11.4.20 | OpenCode 1.12 ↔ Claude 11.4.20 |
+| 禁止 | 把 Cursor `followup_message` / Claude Stop exit 2 原样搬过去；spawn `hooks/_lib/gate_cli.py` | 同左；禁止 CLAUDE.md 覆盖 AGENTS.md |
+
+`config/sync-manifest.json` 的 **`harnesses` 段** 是清单 SSOT。`sync.ps1` 复制便携文件（不写 AGENTS.md；`graph-freshness.json` 仅在缺失时复制）。`check.ps1`：home 缺席跳过；home 存在则断言便携文件在，且 `AGENTS.md` 不是指向 `CLAUDE.md` 的软链。
+
+场景/工具加载仍以 Claude 仓 `config/scenario-router.yaml` + `harness-capabilities.yaml` 为语义 SSOT；各端 AGENTS.md 只做 P0 指针级手工对齐。
+
+---
+
 ## 设计内耦合清单（v11.4.1 声明——以下跨编辑器资产属 SSOT/运行态，保留勿清）
 
 | 资产 | 归属 | 理由 |
 |---|---|---|
 | `templates/cursor-guard/` | Cursor Guard 部署源 | `deploy-cursor-guard.ps1` 消费 |
 | `docs/CURSOR_MCP_PROFILE.md`、`docs/CURSOR_EDITOR_SETUP.md` | 1+N 架构文档 | 多端差异 SSOT |
-| `config/sync-manifest.json` editors 段 | 多端同步常量 | sync/check/fix 三脚本 + impact_sync 共同消费 |
+| `config/sync-manifest.json` editors + harnesses | 多端同步常量 | sync/check/fix 三脚本 + impact_sync 共同消费 |
 | `plugins/marketplaces/*`（含 .windsurf 等子树）| claude-mem 插件运行态 | 插件源码自带，gitignored |
 | `openspec/`（config.yaml + changes/specs 骨架）| OpenSpec CLI 全局工作区 | 删除丢 profile 配置 |
 | `mcp-configs/`（debug/fsaccess）| Claude Code 按需 MCP profile | rules/MCP.md 登记 |
@@ -40,12 +60,23 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ## 常量单源：`config/sync-manifest.json`
 
-根文件集合、插件规则特殊映射与**编辑器清单（editors 段）**只在此文件定义，三个消费方统一读取：
+根文件集合、插件规则特殊映射、**编辑器清单（editors 段）**与 **harnesses 段**只在此文件定义。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。本机落地示例：
+
+```powershell
+cd C:\Users\DELL\.claude
+git fetch origin
+git checkout cursor/v11-config-alignment-04a6
+git pull origin cursor/v11-config-alignment-04a6
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1
+```
+
+已合入 `main` 则 `git checkout main` 后 `git pull`。脱敏核验：`settings.json` enabledPlugins 对照 SPEC；OpenCode `AGENTS.md` 不得为 CLAUDE.md 软链。
 
 | 消费方                                             | 读取内容                                         | 失败回退                       |
 | -------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
-| `scripts/sync.ps1`                                 | `root_files` + `plugin_rule_sources` + `editors` | 内置默认（须与 manifest 一致） |
-| `scripts/check.ps1`                                | `root_files` + `editors`                         | 内置默认（须与 manifest 一致） |
+| `scripts/sync.ps1`                                 | `root_files` + `plugin_rule_sources` + `editors` + `harnesses` | 内置默认（须与 manifest 一致） |
+| `scripts/check.ps1`                                | `root_files` + `editors` + `harnesses`                         | 内置默认（须与 manifest 一致） |
 | `templates/cursor-guard/hooks/_lib/impact_sync.py` | `root_files` + `editors`（规则漂移检测）         | 内置默认（须与 manifest 一致） |
 
 > 改根文件集合或编辑器目标只改 `sync-manifest.json`；`MANIFEST.yaml` 的 `sync_targets` 仅为声明镜像。Guard 部署副本经 `deploy-cursor-guard.ps1` 刷新。editors 段字段：`home`（缺席自动跳过）、`enabled`（false=显式停用并反向扫残留）、`rules_channel` / `rules_ext`（plugin=Cursor 专用；目录名=实体复制）、`root_index`、`special`。
@@ -239,6 +270,14 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.25 (v11.4.20)**：场景 load 注入 + capability_resolver；本机拉取优化分支而非只 `git pull` main。version_map ↔ 11.4.20。
+- **v20.24 (v11.4.19)**：L0/Stop 轮次句括号同形；version_map ↔ 11.4.19。
+- **v20.23 (v11.4.18)**：现行操作句与 L0 轮次口径对齐；version_map ↔ 11.4.18。
+- **v20.22 (v11.4.17)**：本机落地 Bypass + 云端不能写本机 home；DSH/OpenCode version_map ↔ 11.4.17。
+- **v20.21 (v11.4.16)**：check.ps1 Expand-UserHome 与 sync/deploy 对齐；README TTHW/验证 `pwsh -ExecutionPolicy Bypass -File`。
+- **v20.20 (v11.4.15)**：README 本机 `git pull`+deploy；sync Expand-UserHome；harnesses 进常量表；OpenCode enabled=false 显式 skip。
+- **v20.19 (v11.4.14)**：`sync.ps1` 复制 harness 便携件（不写 AGENTS.md）；场景路由加载器；Stop/Guard 消费审前双图键。Guard 1.2.12。
+- **v20.18 (v11.4.13)**：场景路由 YAML + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）；`harnesses` 段；补 DSH 适配层正文；workbuddy enabled=true（home 缺席跳过）。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
 - **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。
 - **v20.15 (v11.4.10)**：Cursor 完成门不再 followup（规则驱动双审）。Guard 1.2.10；DSH 2.9 / OpenCode 1.9。90% 用 `additional_context`（文档与实现对齐）。

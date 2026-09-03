@@ -1,0 +1,142 @@
+# -*- coding: utf-8 -*-
+"""scenario_router 加载语义与 independent_review 形状。"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+HOOKS_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(HOOKS_DIR / "_lib"))
+
+import scenario_router as sr  # noqa: E402
+
+PASSED: list[str] = []
+FAILED: list[str] = []
+
+
+def check(name: str, cond: bool, detail: str = "") -> None:
+    (PASSED if cond else FAILED).append(name)
+    mark = "OK " if cond else "FAIL"
+    print(f"  [{mark}] {name}" + (f" -- {detail}" if detail and not cond else ""))
+
+
+def main() -> int:
+    print("=== scenario_router tests ===")
+    router = sr.load_router()
+    check("yaml loads", router is not None)
+    if not router:
+        print(f"passed={len(PASSED)} failed={len(FAILED)}")
+        return 1 if FAILED else 0
+
+    check("triage_map research is L3", router["triage_map"].get("非简单|调研类") == "research_l3")
+    sid = sr.scenario_by_triage(router, "非简单", "配置类")
+    check("triage config_structure", sid == "config_structure")
+    spec = (router.get("scenarios") or {}).get(sid) or {}
+    merged = sr.merge_scenario(router, spec)
+    skills = merged["load"]["skills"]
+    check("defaults include using-superpowers", "using-superpowers" in skills)
+    check("defaults include task-triage", "task-triage" in skills)
+    check("defaults include verification", "verification-before-completion" in skills)
+    check("memory capability default", "memory" in merged["capabilities"])
+    ir = merged["quality"]["independent_review"]
+    check("IR is object", isinstance(ir, dict))
+    check("IR before dual_graph", "dual_graph_ensure" in (ir.get("before") or []))
+    check("config parallel_ok", merged["quality"].get("parallel_ok") is True)
+    check("parallel inherit ok", sr.parallel_dispatch_ok(merged, ["inherit", "inherit"]))
+    check("parallel rejects max", not sr.parallel_dispatch_ok(merged, ["inherit", "gpt-max"]))
+
+    simple = sr.merge_scenario(router, router["scenarios"]["simple_docs"])
+    check("simple_docs still dual-review default", simple["quality"].get("review_on_code_or_config_edit") is True)
+    check("hard_gates merged", "brainstorming_user_approve" in (simple["quality"].get("hard_gates") or []))
+    check("simple_docs has verification", "verification-before-completion" in simple["load"]["skills"])
+
+    bug = sr.resolve_scenario_id(router, ["非简单", "Bug类"], overlay=False)
+    check("bug_unclear unique", bug == "bug_unclear")
+    dbg = sr.resolve_scenario_id(router, ["非简单", "Bug类", "调试"], overlay=True)
+    check("debug is overlay", dbg == "debug")
+    l1 = sr.resolve_scenario_id(router, ["调研", "L1"], overlay=False)
+    check("research_l1 not primary", l1 is None)
+    l3 = sr.resolve_scenario_id(router, ["非简单", "调研类"], overlay=False)
+    check("research_l3 primary", l3 == "research_l3")
+
+    vc = sr.merge_scenario(router, router["scenarios"]["verify_complete"])
+    check("verify_complete IR object", isinstance(vc["quality"]["independent_review"], dict))
+    check("verify_complete not parallel with implementer", vc["quality"].get("parallel_ok") is not True)
+
+    unmatched = sr.resolve_scenario_id(router, ["未知类型"], overlay=False)
+    check("unmatched interrupt", unmatched is None)
+
+    hint = sr.format_session_hint(router)
+    check("hint mentions yaml", "scenario-router.yaml" in hint)
+    check("hint has triage_map", "非简单|配置类" in hint)
+
+    key = sr.parse_triage_key("分类契约：非简单|配置类 verify_tier=全量", router)
+    check("parse triage_map key", key == "非简单|配置类")
+    check("longest key wins over 简单 substring", sr.parse_triage_key("走 非简单|Bug类", router) == "非简单|Bug类")
+    check(
+        "plain continue does not inject from leftover sidecar other session",
+        sr.inject_for_prompt("继续", session_id="hint-session") is None,
+    )
+    sid, tkey = sr.resolve_scenario_from_text("请按 非简单|配置类 继续", router)
+    check("resolve config_structure", sid == "config_structure" and tkey == "非简单|配置类")
+    merged_cfg = sr.merge_scenario(router, router["scenarios"][sid])
+    load_block = sr.format_load_block(merged_cfg, sid)
+    check("load_block has skills", "brainstorming" in load_block and "change-impact-analysis" in load_block)
+    check(
+        "classify hint without key interrupts",
+        sr.unmatched_interrupt_needed("请给出使用类型后再改", router) is True,
+    )
+    check(
+        "plain text not interrupt",
+        sr.unmatched_interrupt_needed("hello world", router) is False,
+    )
+    injected = sr.inject_for_prompt("开始做 非简单|配置类 优化", session_id="test-session")
+    check("inject_for_prompt production", bool(injected) and "【场景 config_structure】" in (injected or ""))
+    check("sidecar written", (sr.read_sidecar() or {}).get("scenario_id") == "config_structure")
+    check("sidecar warn none when present", sr.missing_scenario_sidecar_warning("test-session") is None)
+
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".jsonl", delete=False) as tf:
+        tf.write(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {"content": "分类契约 非简单|配置类，开始改"},
+                },
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+        tpath = tf.name
+    try:
+        from_turn = sr.inject_for_prompt(
+            "请继续", session_id="jsonl-session", transcript_path=tpath
+        )
+        check(
+            "last assistant triage injects",
+            bool(from_turn) and "【场景 config_structure】" in (from_turn or ""),
+        )
+    finally:
+        os.unlink(tpath)
+
+    tracker_src = (HOOKS_DIR / "pre-userprompt-issue-tracker.py").read_text(encoding="utf-8")
+    check("tracker calls inject_for_prompt", "inject_for_prompt" in tracker_src)
+
+    stop_path = HOOKS_DIR / "stop-verification-gate.py"
+    src = stop_path.read_text(encoding="utf-8")
+    check("stop consumes sidecar warn", "missing_scenario_sidecar_warning" in src)
+    start = src.index("DEFAULT_CFG")
+    end = src.index("CODE_EXTENSIONS")
+    cfg_block = src[start:end]
+    check("stop DEFAULT_CFG dual graph key", "require_dual_graph_before_review" in cfg_block)
+    check("stop DEFAULT_CFG parallel_review", "parallel_review" in cfg_block)
+
+    print(f"passed={len(PASSED)} failed={len(FAILED)}")
+    return 1 if FAILED else 0
+
+
+if __name__ == "__main__":
+    os.environ.setdefault("CLAUDE_HOME", str(HOOKS_DIR.parent))
+    sys.exit(main())

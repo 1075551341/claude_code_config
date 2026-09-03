@@ -1,5 +1,5 @@
 ---
-description: L3 深度调研（Firecrawl+Exa+交叉验证，Read skills/deep-research）
+description: L3 深度调研（harness web_scrape+web_search+交叉验证，Read skills/deep-research）
 ---
 
 # /deep-research — 深度调研
@@ -10,8 +10,8 @@ L3 调研入口：**Read `skills/deep-research/SKILL.md`**（工具链、L1→L2
 
 输出要求：关键结论 ≥2 个独立来源交叉验证；标注时效性与可信度；矛盾信息显式列出；禁止仅凭训练数据断言。
 
-| 类型               | 路由                   |
-| ------------------ | ---------------------- |
-| 网页/竞品/趋势调研 | 本命令 + Firecrawl/Exa |
-| 项目内代码结构     | codegraph_explore      |
-| 库/API 文档        | Context7               |
+| 类型               | 路由                                                                 |
+| ------------------ | -------------------------------------------------------------------- |
+| 网页/竞品/趋势调研 | harness `web_scrape`+`web_search`（Firecrawl+Exa 或当前端 fallback） |
+| 项目内代码结构     | codegraph_explore                                                    |
+| 库/API 文档        | harness `lib_docs`（Context7 plugin）                                |

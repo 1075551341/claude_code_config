@@ -15,12 +15,15 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 ### 1. 单一权威源
 
-`.mcp.json` 是 Claude Code MCP 服务器配置的**唯一权威源**（常驻）。
+`.mcp.json` 是 Claude Code **MCP 服务器配置**的唯一权威源（常驻）。
 
 - 添加常驻服务器 → 只修改 `.mcp.json`
 - 删除服务器 → 只修改 `.mcp.json`
 - settings.json **禁止**定义 mcpServers（v3.0+）
 - Cursor 侧权威：`~/.cursor/mcp.json` + Plugins（见 `docs/CURSOR_MCP_PROFILE.md`）
+- **capability → provider/fallback** 解析权威：`config/harness-capabilities.yaml`（不替代 `.mcp.json` 服务器清单）
+- **场景 → 必加载 skill/agent** 权威：`config/scenario-router.yaml`
+- harness 便携件/是否投放：`config/sync-manifest.json` `harnesses` + `MANIFEST.yaml` `harness.mcp_loading`
 
 ### 2. 常驻架构（内置 > plugin > MCP）
 
@@ -30,8 +33,9 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 | ---------- | ------ | ---- |
 | 本地代码   | codegraph, code-review-graph, serena | `.mcp.json` |
 | 远端探索   | grep | `.mcp.json` |
-| Plugins    | context7、exa、playwright、firecrawl（Claude `enabledPlugins=true`）；chrome-devtools **默认 false** | 禁止再写入 `.mcp.json` |
-| 不对齐 Cursor 面板 | github（plugin=false 且不写 MCP）；firecrawl 不写 MCP（Claude 走 plugin） | 见下 |
+| Plugins    | context7、exa、playwright、firecrawl | `enabledPlugins=true`；禁止再写入 `.mcp.json` |
+| Plugins 默认关 | chrome-devtools、github | plugin=false；不写 MCP |
+| Cursor 差异 | Cursor 无 firecrawl Plugin（Claude Code plugin=true；`web_scrape` fallback `web_search`）；github 用 `gh` CLI | `docs/CURSOR_MCP_PROFILE.md` |
 | debug      | chrome-devtools 回退配方（**禁止自动 merge**；仅用户手动启用后 Plugin 仍不可用时） | `mcp-configs/debug.json` |
 | fsaccess   | fs | `mcp-configs/fsaccess.json` |
 | ops        | redis, sqlite, docker, postgres（默认不加载；postgres 走 DATABASE_URL） | `mcp-configs/ops.json` |

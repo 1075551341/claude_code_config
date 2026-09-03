@@ -6,10 +6,10 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.12**（审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.20**（场景 load 注入 + capability 解析 + 本机分支落地。原 v11.4.19：L0/Stop 轮次句同形。原 v11.4.18：操作句对齐）
 
-**五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
-**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
+**五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
+**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
 
 ## 总纲链（Tool-First Read，禁止凭记忆执行）
 
@@ -18,6 +18,7 @@ layer: router
 3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
 4. **法典** — `SPEC.md`（变更史 → `CHANGELOG.md`）
 5. **按需加载**（任务触发后再 Read，禁止全量扫描）：`skills/<name>/SKILL.md` | `agents/<name>.md` | `rules/<name>.md`（治理详情+最佳实践 → `rules/GOVERNANCE.md`）
+6. **场景路由 SSOT** — 分类后 Read `config/scenario-router.yaml` 对应场景（加载列表+质量门）；工具经 `config/harness-capabilities.yaml` 按当前端解析，缺能力走 fallback/interrupt，禁止假装已调用
 
 ## 优先级链
 
@@ -46,7 +47,7 @@ layer: router
 | L0   | 本文件 + rules/CORE.md                                                            | alwaysApply (~6K tokens)                   |
 | L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming（会话常驻） | L1 按需全文 Read                           |
 | L2   | writing-plans / spec-validation / executing-plans / verification / debugging      | 阶段触发 Read 全文                         |
-| L3   | 所有其他 skills/rules/agents/MCP/Firecrawl/Exa                                    | description 触发词 + slash 路由，按需 Read |
+| L3   | 所有其他 skills/rules/agents/MCP/harness web 工具                                 | description 触发词 + slash 路由，按需 Read |
 
 ## 五阶段流程（SSOT）
 
@@ -60,10 +61,10 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
           有代码/配置改动：修改（change-implementer）→验证→审查（eng-reviewer 只找问题）；
-          干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
+          干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），日常最多 3 轮（单任务覆盖须用户显式声明）；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
           计划未批准 / CreatePlan 等待用户 → 禁止声称完成与审查
           → ⑤学习
-非简单 调研 → deep-research（L3 双源）
+非简单 调研 → deep-research（harness 声明源，含 Cursor 降级）
 ```
 
 > 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理（attempt≥2/首轮未解决）→ **执行升档非简单** + verify_tier=全量。简单旁路不 Read executing-plans/subagent-driven-development。
@@ -78,7 +79,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
   ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
   ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
   ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
-  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（最多 3 轮）；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
+  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（日常最多 3 轮（单任务覆盖须用户显式声明））；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
   ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
 
@@ -112,17 +113,10 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 ## Tool-First 路由与场景-工具映射
 
 ```
-MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
+task-triage → config/scenario-router.yaml → Read load.* → config/harness-capabilities.yaml 解析 capability
 ```
 
-| 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
-| ---------------------- | ------------------- | ------------------- | ------------------------- |
-| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
-| 精准上下文/变更影响/风险/审查/PR | CRG `get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context` | 用 codegraph 做 test-gap；无图仍假装已审 | 有 `.code-review-graph/` 的改前/完成前/开 PR |
-| 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |
-| 网页深度调研           | `Firecrawl+Exa`     | WebFetch            | /deep-research 或调研意图 |
-| Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
-| 输出压缩               | caveman             | 原生输出            | 上下文>70%                |
+场景→技能/工具/质量门 **只在** `config/scenario-router.yaml`；端能力 **只在** `config/harness-capabilities.yaml`。矩阵正文禁止在本文件复制。原则：内置>plugin>MCP>中断启用；codegraph=怎么运作；CRG=影响面/审查；claude-mem=为什么/偏好。
 
 **阈值**：见 CORE.md 三级阈值 | GSD **70%逻辑断点**（任务边界） | ⛔100% | **压缩**：Cursor→`/summarize`；Claude Code→`/compact`（auto-compact 配置 → `rules/CONTEXT.md`）
 **调研三档**（L1→L2→L3决策标准） → `skills/deep-research/SKILL.md` | **规格三轨**（OpenSpec/GSD/轻量，互斥） → `rules/OPENSPEC.md`
@@ -134,7 +128,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 - eligible git 仓无双图时 Grep/Glob/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
 - 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
-- 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
+- 未按当前 harness 的 `web_scrape`+`web_search`（经 capability_resolver；Cursor 等端可 fallback，禁止假装交叉）做调研，只用 WebFetch/WebSearch 并假装已交叉 → 违反L3
 - 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律
 
 **强制场景**（HARD-GATE）：
@@ -147,10 +141,12 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 ## 审查路由
 
 ```
+独立审前：双图 ensure（codegraph init|sync + code-review-graph build|update）
 所有变更→eng-reviewer（只找问题）| 产品→+ceo | UI/UX→+designer+dx-reviewer
-有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐后汇总；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 resume 上一轮审查者，最多 3 轮）；禁止边审边改、禁止审查者改文件、禁止只连审不改。计划未批准禁止声称完成。Cursor 完成门不 followup
-安全→+security-reviewer(全量审计=深度模式) | 跨模型→+codex-reviewer
-iOS/部署/多方案设计→catalog/agents/ 按需启用
+有代码/配置改动：change-implementer 修改→验证→审查一次找齐后汇总；干净 PASS 即停；清单齐后再派修改者集中改齐；每轮全新开审（禁止 resume）；日常最多 3 轮（单任务覆盖须用户显式声明）
+并行审查：仅当只读 + 维度不重叠 + 子代理 model=inherit（禁止 max/xhigh/thinking-max 倍率档）；否则串行
+禁止边审边改、禁止审查者改文件、禁止只连审不改。计划未批准禁止声称完成。Cursor 完成门不 followup
+安全→+security-reviewer(深度模式) | 跨模型→+codex-reviewer | catalog/agents/ 按需
 ```
 
 ## 命令速查
@@ -158,7 +154,7 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 命令                                  | 阶段     | 作用                       |
 | ------------------------------------- | -------- | -------------------------- |
 | /discuss /plan /execute /verify /ship | ①-⑤      | 五阶段                     |
-| /deep-research                        | ①调研 L3 | Firecrawl+Exa+交叉验证     |
+| /deep-research                        | ①调研 L3 | harness `web_scrape`+`web_search`（capability_resolver；含 Cursor 降级）+交叉验证 |
 | /workstream                           | GSD      | 并行任务流                 |
 | /adr                                  | ①        | 架构决策                   |
 | /opsx:sync                            | ②        | OpenSpec delta 同步主 spec |
@@ -175,13 +171,14 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |
-| MCP 规范 SSOT    | rules/MCP.md（矩阵→docs/TOOL_MATCHING_GUIDE.md；Cursor 差异→docs/CURSOR_MCP_PROFILE.md） |
+| 场景路由/端能力  | config/scenario-router.yaml + config/harness-capabilities.yaml                           |
+| MCP 规范 SSOT    | rules/MCP.md（矩阵指针→场景 YAML；Cursor 差异→docs/CURSOR_MCP_PROFILE.md）               |
 | 调研 SSOT        | docs/research/44-repo-deep-research-v10.11.md + repos/                                   |
 | 同步指南         | docs/SYNC_GUIDE.md                                                                       |
 | Git/PR 流程      | skills/git-workflow, skills/pr-workflow                                                  |
 | 记忆搜索         | claude-mem (R18)                                                                         |
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
+**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；DSH/OpenCode 仅复制便携件，**禁止 CLAUDE.md 覆盖 AGENTS.md**；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
 **业务仓库**：SessionStart 对 eligible git 仓 **执行** `codegraph init|sync` 与 `code-review-graph build|update`（无图禁止后续探索/编辑，不是仅提示）；有图后改前/完成前走 CRG 上下文与影响面；探索「怎么运作」一律 codegraph_explore（R17）；验证全绿后才跑 `scripts/sync.ps1`。codebase-memory 已永久禁用。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`。

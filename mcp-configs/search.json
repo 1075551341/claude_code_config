@@ -1,6 +1,7 @@
 {
   "toolset": "search",
-  "description": "网页/文档搜索分组视图（v10.17）— 全部已常驻 .mcp.json，本文件仅为子集视图，非 merge 目标",
-  "servers": ["exa", "context7", "firecrawl"],
-  "note": "调研三档 L1/L2/L3 的工具链见 docs/TOOL_MATCHING_GUIDE.md"
+  "description": "网页/文档搜索分组视图 — context7/exa/firecrawl 走 Claude Plugins，非 .mcp.json 常驻。本文件仅为子集视图，非 merge 目标",
+  "servers": [],
+  "plugins": ["exa", "context7", "firecrawl"],
+  "note": "调研三档与工具链见 config/harness-capabilities.yaml；禁止再写进 .mcp.json"
 }

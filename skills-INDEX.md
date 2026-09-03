@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v11.1.1（36 全量 = L1×4 + L2×5 + L3×27；catalog 变体见 `catalog/INDEX.md`）
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v11.4.20（36 全量 = L1×4 + L2×5 + L3×27；catalog 变体见 `catalog/INDEX.md`）
 
 ## L1 — 会话常驻 (4)
 
@@ -28,7 +28,7 @@
 
 ### 调研与决策
 
-- [deep-research](skills/deep-research/SKILL.md) — L3 深度调研（Firecrawl+Exa+V1-V5验证）
+- [deep-research](skills/deep-research/SKILL.md) — L3 深度调研（harness web_scrape+web_search+V1-V5验证）
 - [adr-management](skills/adr-management/SKILL.md) — 架构决策记录管理
 
 ### 审查与质量

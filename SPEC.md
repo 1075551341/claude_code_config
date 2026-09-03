@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.12 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
+> 版本：11.4.20 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
 
 ---
 
@@ -12,7 +12,7 @@ RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gs
 FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 6审查 + 3补全 + 1跨模型
 OPTIMIZE = RTK(shell token) + caveman(输出token)
-INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
+INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + harness web_scrape/web_search(外部调研；Firecrawl/Exa 或当前端 fallback)  # UA removed v10.5
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -59,9 +59,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
-| 全局 MCP     | 9 常驻 | 本地代码4+远端探索2+Web&文档3；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
-| 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
+| 全局 hooks   | 19     | 注册激活 19 + 未注册 5 + 分发器 1（`_editor_hook_launcher.py`）；Cursor Guard 运行时 23（v1.2.13，resume 审查不计入；Stop 消费 inherit 违例）                                                                                    |
+| 全局 MCP     | 4 常驻 | codegraph + CRG + serena + grep；plugin（context7/exa/playwright/firecrawl）不计入常驻 MCP；debug/fsaccess/ops 见 mcp-configs/                                                          |
+| 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记：启用12 / 禁用6（以 settings.json 为准；plugin=true：context7/exa/playwright/firecrawl）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
 
 ---
@@ -204,8 +204,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ---------- | ---------------------------------------------------- | -------------------------------------- |
 | 本地代码   | codegraph, code-review-graph, serena                 | `.mcp.json` 常驻                       |
 | 远端探索   | grep                                                 | `.mcp.json` 常驻                       |
-| Plugins    | context7, exa, playwright                            | `settings.json` enabledPlugins=true    |
-| Plugins 默认关 | chrome-devtools, github, firecrawl                 | plugin=false；不写 MCP                 |
+| Plugins    | context7, exa, playwright, firecrawl             | `settings.json` enabledPlugins=true    |
+| Plugins 默认关 | chrome-devtools, github                          | plugin=false；不写 MCP                 |
 | debug      | chrome-devtools                                      | `mcp-configs/debug.json` 按需 merge    |
 | fsaccess   | fs                                                   | `mcp-configs/fsaccess.json` 按需 merge |
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json` 按需 merge      |
@@ -265,7 +265,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | --- | ----------------------------- | -------------------------------- | ------------------------- |
 | 12  | rtk-ai/rtk                    | Rust CLI 60-90%压缩+100+命令预置 | hooks/pre-rtk-rewrite     |
 | 13  | JuliusBrussee/caveman         | 四级压缩+仅压输出                | skill/caveman-compress    |
-| 14  | github/github-mcp-server      | 80+工具+17工具集                 | .mcp.json (gh)            |
+| 14  | github/github-mcp-server      | 80+工具+17工具集                 | 不常驻；GitHub 操作用 `gh` CLI |
 | 15  | anthropics/claude-code-action | 4后端CI+结构化JSON               | templates/github-actions/ |
 
 ### 编排增强 (4)
@@ -310,14 +310,14 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-## Plugins（18 安装 / 7 启用 / 9 禁用 / 2 未在 settings 声明）
+## Plugins（18 安装；enabledPlugins 启用12 / 禁用6，以 settings.json 为准）
 
 > v10.17 按 `plugins/installed_plugins.json` × `settings.json.enabledPlugins` 实测重写。
 > 此前本表长期停留在旧快照（声称 15 启用），与运行态严重不符。
 
 | Plugin                     | 状态 | 提供                      | 说明                                                     |
 | -------------------------- | ---- | ------------------------- | -------------------------------------------------------- |
-| superpowers 6.2.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
+| superpowers 6.3.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
 | claude-mem 13.13.1         | ✅   | 6 hooks + 记忆技能        | 五柱之一（R18 记忆优先）                                 |
 | code-review                | ✅   | 审查技能                  | 与 eng-reviewer 互补                                     |
 | commit-commands            | ✅   | Git 快捷命令              | —                                                        |
@@ -325,18 +325,18 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | skill-creator              | ✅   | 技能创建                  | —                                                        |
 | claude-md-management 1.0.0 | ✅   | CLAUDE.md 维护            | 早期因「防覆盖」禁用，现已启用                           |
 | chrome-devtools-mcp 1.6.0  | ❌   | Chrome DevTools           | v10.17 浏览器按需化；需要时走 `mcp-configs/debug.json`   |
-| context7                   | ❌   | 技术文档                  | 能力由 `.mcp.json` 的 context7 MCP 承担，避免同端双挂    |
-| firecrawl 1.0.9            | ❌   | 网页抓取                  | 同上，走 MCP                                             |
-| github                     | ❌   | GitHub 集成               | 同上，走 MCP                                             |
-| playwright                 | ❌   | 浏览器自动化              | Cursor 优先内置 `cursor-ide-browser`                     |
+| context7                   | ✅   | 技术文档                  | Claude/Cursor **plugin**（禁止再写 `.mcp.json`）         |
+| firecrawl 1.0.9            | ✅   | 网页抓取                  | Claude **plugin**（不写 MCP）；Cursor 无常驻则降级 Exa   |
+| github                     | ❌   | GitHub 集成               | plugin=false 且不写 MCP；PR/Issue 用 `gh` CLI            |
+| playwright                 | ✅   | 浏览器自动化              | Claude/Cursor **plugin**；Cursor UI 核验优先内置浏览器   |
 | security-guidance 2.0.6    | ❌   | 安全规则                  | 由 `rules/SECURITY.md` 承担                              |
 | typescript-lsp 1.0.0       | ❌   | TS LSP                    | 由 serena LSP 能力承担                                   |
 | feature-dev                | ❌   | 功能开发                  | 与五阶段流程重叠                                         |
 | ralph-loop                 | ❌   | 自动循环                  | 与五阶段冲突                                             |
-| claude-hud 0.6.0           | ➖   | 上下文 HUD 状态条         | 未在 enabledPlugins 声明（默认行为）                     |
-| exa 3.4.0                  | ➖   | Exa 搜索                  | 未在 enabledPlugins 声明；Claude 侧走 MCP，Cursor 走插件 |
+| claude-hud 0.6.0           | ✅   | 上下文 HUD 状态条         | v11.4.3 enabledPlugins=true                              |
+| exa 3.4.0                  | ✅   | Exa 搜索                  | v11.4.5 **plugin**（禁止与 MCP 双挂；不写 `.mcp.json`）  |
 
-> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。启用的 7 个里仅 2 个含 hooks（superpowers / claude-mem），零冲突。
+> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。enabledPlugins 与 MANIFEST 对齐（启用12/禁用6 以 settings.json 为准）。hooks 仅 superpowers / claude-mem。
 > 同名 skill：本地精简版覆盖插件版（token 省 45-74%，中文适配）。
 
 ---
@@ -349,7 +349,8 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | Cursor：根文件 / skills / agents | 软链接 + Junction（sync.ps1 v20，清单/常量单源 config/sync-manifest.json）       |
 | Cursor：rules                    | local plugin 实体 .mdc（唯一规则通道）                                           |
 | qoder-cn / trae-cn               | 根文件 6 软链 + `rules/*.mdc` / `user_rules/*.md`（实体+`.claude-managed` 台账） |
-| workbuddy                        | 仅 `CLAUDE.md` + `skills/` 联接（SOUL/USER 自有命名空间禁触，跳根索引）          |
+| workbuddy                        | 仅 `CLAUDE.md` + `skills/` 联接（SOUL/USER 自有命名空间禁触，跳根索引；home 缺席跳过） |
+| DSH / OpenCode                   | **适配层**（`sync-manifest.json` `harnesses`）：便携 CLI/R20/图谱插件；**禁止** CLAUDE.md 覆盖 AGENTS.md |
 | hooks/, commands/, MCP, plugins  | 不同步（TRAE R19 守卫为独立通道：AppData hooks_env 副本）                        |
 
 ---
@@ -360,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.12 | 日期：2026-09-01 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20
+> 版本：11.4.20 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20

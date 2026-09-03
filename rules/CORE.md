@@ -15,7 +15,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 ```
 L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排,四模式)
 L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
-L3 洞察 — codegraph(R17 常驻) + Firecrawl/Exa(外部搜索)  # UA removed v10.5；codebase-memory 已禁用（全盘索引爆 CPU/内存，见 R17）
+L3 洞察 — codegraph(R17 常驻) + 外部搜索(harness web_scrape/web_search：Firecrawl/Exa 或当前端 fallback)  # UA removed v10.5；codebase-memory 已禁用（全盘索引爆 CPU/内存，见 R17）
 
 所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
 ```
@@ -128,9 +128,10 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 - **codegraph = R17 探索主位**（符号/调用链/「怎么运作」；无 CRG 图时的 blast-radius）
 - **code-review-graph = 精准上下文 + 变更影响 + 风险门禁 + 审查 + 开 PR**（`get_minimal_context` / `get_impact_radius` / `get_affected_flows` / `detect_changes` / `get_review_context`）
-- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；无图 **deny**，禁止 Grep/编辑/查询 MCP，不得 Grep 兜底。
+- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；**独立审查前必须再 ensure 一次**；无图 **deny**，禁止 Grep/编辑/查询 MCP，不得 Grep 兜底。
+- 场景→技能/工具 SSOT → `config/scenario-router.yaml`；端能力 → `config/harness-capabilities.yaml`。并行审查子代理必须 `model=inherit`（禁止倍率档）。
 
-**索引刷新**：codegraph v1.5 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新。不恢复每次编辑 kg sync hook。
+**索引刷新**：codegraph v1.6 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新；**独立开审前**再 ensure。不恢复每次编辑 kg sync hook。
 
 ### R17 反模式检测
 

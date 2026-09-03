@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.12** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.4.20** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.12）                                                                 |
+| `SPEC.md`       | 配置法典（v11.4.20）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -32,16 +32,25 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 
 ## 同步（v11.1 多编辑器 1+N）
 
-Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
+Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。优化合入后在本机拉取**当前优化分支**（不必等 merge 进 main），再同步编辑器：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
+cd C:\Users\DELL\.claude
+git fetch origin
+git checkout cursor/v11-config-alignment-04a6
+git pull origin cursor/v11-config-alignment-04a6
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1   # TRAE/Qoder hook 合并；DSH/OpenCode 便携件 sync 也会复制
+python scripts/validate_config.py
+pwsh -ExecutionPolicy Bypass -File scripts/check.ps1
 ```
 
+若该分支已合入 `main`，可改为 `git checkout main` 后 `git pull`。
+
+本机脱敏核验（不要把密钥贴进对话）：`settings.json` 的 `enabledPlugins` 对照 SPEC 插件表；`~/.config/opencode/AGENTS.md` 若存在则不得为指向 `CLAUDE.md` 的软链；`python scripts/validate_config.py` 与 `pwsh -ExecutionPolicy Bypass -File scripts/check.ps1`。
+
 - 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
-- **常量单源**：`config/sync-manifest.json`（root_files + editors）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
+- **常量单源**：`config/sync-manifest.json`（root_files + editors + harnesses）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
 - 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md)
 
 hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
@@ -50,12 +59,20 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 
 ```powershell
 python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
-powershell scripts/check.ps1        # 一致性体检
+pwsh -ExecutionPolicy Bypass -File scripts/check.ps1        # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v11.4.12**（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
+- 当前：**v11.4.20**（2026-09-03）— 场景 load 注入 + capability 解析 + 本机优化分支落地。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.19（2026-09-03）— L0/Stop 轮次句与规范括号句同形。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.18（2026-09-03）— 现行操作句与 L0 轮次口径对齐（日常最多 3 轮（单任务覆盖须用户显式声明））。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.17（2026-09-03）— 版本映射/L0 MCP 注释/本机落地 Bypass 与云端 home。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.16（2026-09-03）— MCP 分组/调研薄壳对齐 harness；check Expand-UserHome；Guard inherit 消费并行审查者。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.15（2026-09-03）— 审查清单闭环：harness 文案、加载器可执行、inherit 机械门。Guard 1.2.12；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.14（2026-09-03）— 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行门；sync.ps1 复制 harness 便携件。Guard 1.2.12；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.13（2026-09-03）— 场景路由 YAML SSOT + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.12（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.11（2026-09-01）— 独立审查只找问题；修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。Guard 1.2.10；DSH 2.10 / OpenCode 1.10
 - 前版：v11.4.10（2026-09-01）— Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留；Guard 1.2.10；DSH 2.9 / OpenCode 1.9
 - 前版：v11.4.9（2026-09-01）— 有改动即双审（PASS 即停，仅结论不一致才再开一轮、最多 3 轮）；计划未批准零注入（CallDynamicTool/CreatePlan）；Windows `/X:/` 路径规范化；会话起止双图 ensure/refresh；已有图 CLI 失败不阻断；Guard 1.2.9；DSH 2.8 / OpenCode 1.8

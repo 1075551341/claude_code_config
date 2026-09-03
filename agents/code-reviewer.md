@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
 description: 代码审查。触发词：代码审查、PR审查、review。审查不改代码。
+model: inherit
 layer: supplement
 tools: [Read, Grep, Glob]
 skills:

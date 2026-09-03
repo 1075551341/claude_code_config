@@ -44,6 +44,26 @@ def _quality_gate_cfg(claude_home) -> dict:
     return {}
 
 
+def inherit_violation_msg(entry: dict, qg: dict) -> str:
+    """Cursor 不能 deny；review 相位把非 inherit 审查者写成可见 user_message。"""
+    pr = qg.get("parallel_review") or {}
+    if not (
+        pr.get("forbid_multiplier_models")
+        or str((pr.get("require_model") or "")).strip().lower() == "inherit"
+    ):
+        return ""
+    viol = entry.get("review_model_violations") or []
+    if not viol:
+        return ""
+    shown = ", ".join(
+        f"{v.get('agent')}={v.get('model')}" for v in viol[:6]
+    )
+    return (
+        "独立审查子代理须 Task model=inherit（禁止倍率档）；"
+        f"检测到非 inherit：{shown}"
+    )
+
+
 def _load_entry(path: Path, session_id: str) -> dict:
     if not session_id:
         return {}
@@ -108,11 +128,32 @@ def main() -> None:
                 gcfg = gf.load_cfg()
                 roots = [cwd] if cwd else []
                 if roots:
-                    _has_crg, warns, refresh_result = gf.refresh_incremental(
-                        roots,
-                        int(gcfg.get("stop_refresh_timeout_sec", 30)),
-                        session_id=session_id or "",
+                    phase = r20.dual_pass_phase(entry, qg) if r20 else ""
+                    need_review_ensure = bool(
+                        qg.get("require_dual_graph_before_review", True)
+                        and phase == "review"
                     )
+                    if need_review_ensure and hasattr(gf, "ensure_both"):
+                        refresh_result = gf.ensure_both(
+                            roots[0],
+                            min(45, int(gcfg.get("pretool_ensure_timeout_sec", 90))),
+                            session_id=session_id or "",
+                        )
+                        _has_crg = bool(refresh_result.get("crg"))
+                        warns = list(refresh_result.get("warnings") or [])
+                        if refresh_result.get("eligible") and (
+                            refresh_result.get("blocked") or not refresh_result.get("ok")
+                        ):
+                            print(
+                                "verification_stop: 独立审前双图 ensure 未就绪",
+                                file=sys.stderr,
+                            )
+                    else:
+                        _has_crg, warns, refresh_result = gf.refresh_incremental(
+                            roots,
+                            int(gcfg.get("stop_refresh_timeout_sec", 30)),
+                            session_id=session_id or "",
+                        )
                     for w in warns:
                         print(f"verification_stop: {w}", file=sys.stderr)
                     graph_ui = str((refresh_result or {}).get("ui") or "").strip()
@@ -140,8 +181,20 @@ def main() -> None:
         else:
             print("verification_stop: 完成门不注入 followup_message（规则驱动双审）", file=sys.stderr)
 
+        inherit_msg = ""
+        phase = r20.dual_pass_phase(entry, qg) if r20 else ""
+        if phase == "review":
+            inherit_msg = inherit_violation_msg(entry, qg)
+            if inherit_msg:
+                print(f"verification_stop: {inherit_msg}", file=sys.stderr)
+
+        parts = []
+        if inherit_msg:
+            parts.append(inherit_msg)
         if show_graph_ui and graph_ui:
-            write_json({"user_message": graph_ui})
+            parts.append(graph_ui)
+        if parts:
+            write_json({"user_message": "\n".join(parts)})
     except Exception as e:
         print(f"verification_stop: {e}", file=sys.stderr)
     finally:

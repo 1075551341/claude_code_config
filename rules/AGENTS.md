@@ -47,6 +47,8 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 ## 审查路由规则
 
 ```
+独立审前        → 双图 ensure（codegraph + CRG）；无图不得开审
+并行审查        → 只读 + 维度不重叠 + Task model=inherit（禁止倍率档）；否则串行；禁止 resume
 所有变更        → eng-reviewer（只找问题；修复 → change-implementer）
 产品/新功能     → + ceo-reviewer
 UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）

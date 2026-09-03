@@ -59,8 +59,8 @@ pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun        # 预览不写�
 Claude Code hooks 在 Cursor 内不执行；编辑器侧由 **Cursor Guard** 负责影响驱动同步与上下文 70%/90% 监控。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
-powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
 ```
 
 - 模板：`templates/cursor-guard/`；运行时：`~/.cursor/hooks.json`、`guard-config.json`
@@ -73,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 | ----------------------------------------------- | ------------------------------------------------ |
 | `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
 | `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor          |
-| TRAE/Qoder 图谱 hook + DSH/OpenCode CLI/r20_check/plugin | `deploy-editor-graph-hooks.ps1`（不进 sync.ps1） |
+| TRAE/Qoder 图谱 hook 合并 | `deploy-editor-graph-hooks.ps1`（hook 合并不进 sync；便携 CLI/插件 `sync.ps1` 在 home 存在时也会复制） |
 | `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话）     |
 | `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                           |
 
@@ -97,8 +97,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 检查目录结构、配置文件格式与安全、`~\.claude` 与各编辑器的链接状态、Hook 风险、运行时环境，输出得分与报告。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File check.ps1
-powershell -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
+pwsh -ExecutionPolicy Bypass -File check.ps1
+pwsh -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
 ### `validate_config.py` — 配置校验（V1–V19）
@@ -160,9 +160,9 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ### 修改配置后
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
+pwsh -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
 python scripts\validate_config.py                             # 校验
-powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
+pwsh -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 ```
 
 ### 日常维护
