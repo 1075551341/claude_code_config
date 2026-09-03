@@ -345,8 +345,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -393,7 +393,7 @@ def main():
 def report(agents=0, skills=0, rules=0, claude_lines=0):
     print("=== .claude v11 VALIDATION (19 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",

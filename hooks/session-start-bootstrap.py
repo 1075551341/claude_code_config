@@ -24,29 +24,28 @@ except Exception as e:
 
 
 def detect_package_manager(cwd: str) -> str:
-    """检测项目使用的包管理器"""
-    # 检查锁文件
-    lock_files = {
-        "package-lock.json": "npm",
-        "yarn.lock": "yarn",
-        "pnpm-lock.yaml": "pnpm",
-        "bun.lockb": "bun",
-    }
-    
-    for lock_file, pm in lock_files.items():
-        if os.path.exists(os.path.join(cwd, lock_file)):
-            return pm
-    
-    # 检查 Python 项目
-    if os.path.exists(os.path.join(cwd, "pyproject.toml")):
-        return "pip"
-    if os.path.exists(os.path.join(cwd, "requirements.txt")):
-        return "pip"
-    
-    # 检查 Go 项目
-    if os.path.exists(os.path.join(cwd, "go.mod")):
+    """检测项目使用的包管理器（R15：锁文件优先；pnpm 先于 npm；Python 默认 uv）。"""
+    def has(name: str) -> bool:
+        return os.path.exists(os.path.join(cwd, name))
+
+    if has("pnpm-lock.yaml"):
+        return "pnpm"
+    if has("yarn.lock"):
+        return "yarn"
+    if has("bun.lockb") or has("bun.lock"):
+        return "bun"
+    if has("package-lock.json"):
+        return "npm"
+    if has("uv.lock"):
+        return "uv"
+    if has("poetry.lock"):
+        return "poetry"
+    if has("Cargo.lock") or has("Cargo.toml"):
+        return "cargo"
+    if has("go.mod"):
         return "go"
-    
+    if has("pyproject.toml") or has("requirements.txt"):
+        return "uv"
     return "unknown"
 
 

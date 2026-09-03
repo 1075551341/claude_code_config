@@ -51,6 +51,13 @@ def test_branch_mutate() -> None:
         "GIT_DIR=/tmp git checkout -b x",
         "env GIT_DIR=/tmp git switch -c y",
         "git status && git checkout -b foo",
+        'bash -c "git checkout -b feat"',
+        "eval git checkout -b feat",
+        'eval "git checkout -b feat"',
+        "(git checkout -b feat)",
+        "timeout 5 git checkout -b x",
+        "nice git switch -c x",
+        "git checkout $(echo main)",
     ]
     allow = [
         "git status",
@@ -71,6 +78,8 @@ def test_branch_mutate() -> None:
         "git stash",
         "echo git checkout -b foo",
         "cd /tmp && git status",
+        "git branch --format '%(refname:short)'",
+        "git branch --format='%(refname:short)'",
     ]
     for cmd in deny:
         check(f"deny:{cmd}", match_git_branch_mutate(cmd), "expected mutate=True")
@@ -99,6 +108,7 @@ def test_pm_mix() -> None:
         msg = pm_mix_warning("pip install requests", str(root))
         check("poetry+pip", msg is not None and "poetry" in msg)
         check("poetry+python-m-pip", pm_mix_warning("python3 -m pip install x", str(root)) is not None)
+        check("poetry+uv-pip", pm_mix_warning("uv pip install x", str(root)) is not None)
 
 
 def test_pre_bash_guard_fixtures() -> None:
@@ -109,6 +119,10 @@ def test_pre_bash_guard_fixtures() -> None:
         ("cd /tmp && git checkout -b feat", 2, True),
         ("GIT_DIR=/tmp git checkout -b x", 2, True),
         ("git checkout -", 2, True),
+        ('bash -c "git checkout -b feat"', 2, True),
+        ("eval git checkout -b feat", 2, True),
+        ("(git checkout -b feat)", 2, True),
+        ("timeout 5 git checkout -b x", 2, True),
         ("git checkout -- README.md", 0, False),
         ("git checkout .", 0, False),
         ("git checkout HEAD file", 0, False),
@@ -149,6 +163,13 @@ def test_cursor_shell_patterns_parity() -> None:
         "git checkout -",
         "cd /tmp && git checkout -b feat",
         "GIT_DIR=/tmp git checkout -b x",
+        'bash -c "git checkout -b feat"',
+        "eval git checkout -b feat",
+        "(git checkout -b feat)",
+        "timeout 5 git checkout -b x",
+        "nice git switch -c x",
+        "git checkout $(echo main)",
+        "git branch --format '%(refname:short)'",
         "git branch -a",
         "git status",
         "echo git checkout -b foo",

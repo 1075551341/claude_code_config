@@ -566,6 +566,14 @@ def main() -> int:
         note="R19: 新建分支须 ask（branch_requires_ask）",
     )
 
+    r_wrap = run_hook("shell_guard.py", {"command": 'bash -c "git checkout -b feat"'})
+    results["tests"]["shell_guard_branch_bash_c"] = finish_case(
+        r_wrap,
+        behavior=isinstance(r_wrap.get("stdout"), dict)
+        and r_wrap["stdout"].get("permission") == "ask",
+        note="R19: bash -c 包装建分支须 ask",
+    )
+
     r_compound = run_hook("shell_guard.py", {"command": "cd /tmp && git checkout -b feat"})
     results["tests"]["shell_guard_branch_compound"] = finish_case(
         r_compound,
