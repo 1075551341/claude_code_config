@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v11.4.19（36 全量 = L1×4 + L2×5 + L3×27；catalog 变体见 `catalog/INDEX.md`）
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v11.4.20（36 全量 = L1×4 + L2×5 + L3×27；catalog 变体见 `catalog/INDEX.md`）
 
 ## L1 — 会话常驻 (4)
 

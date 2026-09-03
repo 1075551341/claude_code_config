@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.19**（审查清单闭环：L0/Stop 轮次句同形。原 v11.4.18：操作句对齐。原 v11.4.17：版本映射。原 v11.4.16：MCP 分组）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.20**（场景 load 注入 + capability 解析 + 本机分支落地。原 v11.4.19：L0/Stop 轮次句同形。原 v11.4.18：操作句对齐）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
@@ -64,7 +64,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
           干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），日常最多 3 轮（单任务覆盖须用户显式声明）；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
           计划未批准 / CreatePlan 等待用户 → 禁止声称完成与审查
           → ⑤学习
-非简单 调研 → deep-research（L3 双源）
+非简单 调研 → deep-research（harness 声明源，含 Cursor 降级）
 ```
 
 > 分类 SSOT → `skills/task-triage/SKILL.md`。任意大类完成前均须验证；初判简单但持续处理（attempt≥2/首轮未解决）→ **执行升档非简单** + verify_tier=全量。简单旁路不 Read executing-plans/subagent-driven-development。
@@ -128,7 +128,7 @@ task-triage → config/scenario-router.yaml → Read load.* → config/harness-c
 - eligible git 仓无双图时 Grep/Glob/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
 - 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
-- 未按当前 harness 的 `web_scrape`+`web_search`（Firecrawl+Exa，或 Cursor 等端的 fallback）做 L3 双源，只用 WebFetch/WebSearch 并假装已交叉 → 违反L3
+- 未按当前 harness 的 `web_scrape`+`web_search`（经 capability_resolver；Cursor 等端可 fallback，禁止假装交叉）做调研，只用 WebFetch/WebSearch 并假装已交叉 → 违反L3
 - 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律
 
 **强制场景**（HARD-GATE）：
@@ -154,7 +154,7 @@ task-triage → config/scenario-router.yaml → Read load.* → config/harness-c
 | 命令                                  | 阶段     | 作用                       |
 | ------------------------------------- | -------- | -------------------------- |
 | /discuss /plan /execute /verify /ship | ①-⑤      | 五阶段                     |
-| /deep-research                        | ①调研 L3 | harness `web_scrape`+`web_search`（Firecrawl+Exa 或当前端 fallback）+交叉验证 |
+| /deep-research                        | ①调研 L3 | harness `web_scrape`+`web_search`（capability_resolver；含 Cursor 降级）+交叉验证 |
 | /workstream                           | GSD      | 并行任务流                 |
 | /adr                                  | ①        | 架构决策                   |
 | /opsx:sync                            | ②        | OpenSpec delta 同步主 spec |

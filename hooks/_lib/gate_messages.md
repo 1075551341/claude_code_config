@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.4.14）
+# 门控注入文本 SSOT（v11.4.20）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -11,7 +11,7 @@
 1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读）
 2. 输出分类契约：大类 | 需改文件 | 模型档 | verify_tier | 置信度 | 成功标准
    简单=Phase0+关联需改≤2+白名单+六维全低+模型匹配+attempt=1；否则非简单（按 skill 路由）
-3. 分类后查 config/scenario-router.yaml（必加载+质量门；INDEX L3 可追加）。疑难禁止直接改；重复问题先 claude-mem。
+3. 分类后查 config/scenario-router.yaml（必加载+质量门；INDEX L3 可追加）。分类契约须含 triage_map 键原文（如 非简单|配置类），UserPrompt 会注入该场景 load 块。疑难禁止直接改；重复问题先 claude-mem。
 
 ## 完成验证门
 

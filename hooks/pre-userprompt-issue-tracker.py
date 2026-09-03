@@ -45,17 +45,40 @@ def main():
         sys.exit(0)
 
     cfg = load_config()
-    if not cfg["enabled"]:
-        sys.exit(0)
 
     session_id = str(data.get("session_id") or data.get("conversation_id") or "unknown")
     prompt = str(data.get("prompt", ""))
     cwd = str(data.get("cwd") or "")
+    transcript_path = str(data.get("transcript_path") or "")
 
-    if len(prompt.strip()) < min_prompt_len(prompt, cfg):
+    scenario_inject = None
+    try:
+        from scenario_router import inject_for_prompt
+
+        scenario_inject = inject_for_prompt(
+            prompt, session_id=session_id, transcript_path=transcript_path
+        )
+    except Exception as e:  # noqa: BLE001 — 显式报出后继续（R16）
+        print(f"issue-tracker: scenario inject failed: {e}", file=sys.stderr)
+
+    if not cfg["enabled"]:
+        if scenario_inject:
+            result = {
+                "hookSpecificOutput": {
+                    "hookEventName": "UserPromptSubmit",
+                    "additionalContext": scenario_inject,
+                }
+            }
+            sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
+            sys.stdout.flush()
         sys.exit(0)
 
-    inject = record(prompt, cwd, session_id, cfg)
+    if len(prompt.strip()) < min_prompt_len(prompt, cfg) and not scenario_inject:
+        sys.exit(0)
+
+    inject = None
+    if len(prompt.strip()) >= min_prompt_len(prompt, cfg):
+        inject = record(prompt, cwd, session_id, cfg)
 
     # v11.4 需求指纹留存：与问题指纹同点捕获，供 Stop 门 R20 实质比对（失败不阻断）
     try:
@@ -65,11 +88,12 @@ def main():
     except Exception as e:  # noqa: BLE001 — 显式报出后继续（R16，禁止裸吞）
         print(f"issue-tracker: req fingerprint failed: {e}", file=sys.stderr)
 
-    if inject:
+    parts = [p for p in (inject, scenario_inject) if p]
+    if parts:
         result = {
             "hookSpecificOutput": {
                 "hookEventName": "UserPromptSubmit",
-                "additionalContext": inject,
+                "additionalContext": "\n\n".join(parts),
             }
         }
         sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")

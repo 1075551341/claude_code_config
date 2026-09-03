@@ -46,8 +46,8 @@ source: obra/superpowers
 | 类型 | 工具/加载 |
 |------|-----------|
 | 本地代码 | `codegraph_explore` / `codegraph_impact`（R17 优先） |
-| 外部事实 L1 | Context7 / Exa 单次 |
-| 多角度 L2 | Exa + Firecrawl 单页 |
+| 外部事实 L1 | harness `lib_docs` / `web_search` 单次（`capability_resolver` + [config/harness-capabilities.yaml](../../config/harness-capabilities.yaml) fallback） |
+| 多角度 L2 | `web_search` + `web_scrape`（无 scrape 则 fallback `web_search`；禁止假装 Firecrawl） |
 | 深度 L3 | Read `skills/deep-research/SKILL.md` |
 | 架构选型 | L3 `adr-management` → `docs/ADR/` |
 | 历史 | R18 claude-mem search 先于外部调研 |

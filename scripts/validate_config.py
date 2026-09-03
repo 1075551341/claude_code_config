@@ -1030,6 +1030,37 @@ def check_v20_scenario_router():
     if not router or not caps:
         return
 
+    man_ver = ""
+    try:
+        with open(os.path.join(BASE, "MANIFEST.yaml"), encoding="utf-8") as fh:
+            for line in fh:
+                m = re.match(r'version:\s*"([^"]+)"', line)
+                if m:
+                    man_ver = m.group(1)
+                    break
+    except OSError:
+        man_ver = ""
+    if man_ver and str(router.get("version") or "") != man_ver:
+        ERRORS.append(
+            f"V20: scenario-router.yaml version {router.get('version')!r} 须等于 MANIFEST {man_ver!r}"
+        )
+    if man_ver and str(caps.get("version") or "") != man_ver:
+        ERRORS.append(
+            f"V20: harness-capabilities.yaml version {caps.get('version')!r} 须等于 MANIFEST {man_ver!r}"
+        )
+
+    tracker = os.path.join(BASE, "hooks", "pre-userprompt-issue-tracker.py")
+    try:
+        tracker_src = open(tracker, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: issue-tracker unreadable: {exc}")
+        tracker_src = ""
+    if "inject_for_prompt" not in tracker_src:
+        ERRORS.append("V20: pre-userprompt-issue-tracker 未调用 inject_for_prompt")
+    resolver = os.path.join(BASE, "hooks", "_lib", "capability_resolver.py")
+    if not os.path.isfile(resolver):
+        ERRORS.append("V20: capability_resolver.py missing")
+
     cap_ids = set(caps.get("capability_ids") or [])
     defaults = caps.get("defaults") or {}
     missing_default = cap_ids - set(defaults)
@@ -1142,16 +1173,6 @@ def check_v20_scenario_router():
     fake = set(ov) - cap_ids
     if fake:
         ERRORS.append(f"V20: workbuddy.overrides 含非 capability 键: {sorted(fake)}")
-    man_ver = ""
-    try:
-        with open(os.path.join(BASE, "MANIFEST.yaml"), encoding="utf-8") as fh:
-            for line in fh:
-                m = re.match(r'version:\s*"([^"]+)"', line)
-                if m:
-                    man_ver = m.group(1)
-                    break
-    except OSError:
-        man_ver = ""
     for hid in ("dsh", "opencode"):
         extra = (harnesses.get(hid) or {}).get("extra") or {}
         if extra.get("forbid") != "claude_md_overwrite_agents_md":

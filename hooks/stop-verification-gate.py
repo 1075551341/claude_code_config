@@ -624,6 +624,15 @@ def main():
             print("ℹ️ 本会话仅文档类编辑：请重读修改内容确认无误后再声称完成", file=sys.stderr)
 
         has_any_edit = bool(edited) or bool(untracked)
+        if has_any_edit and (code_files or untracked) and not awaiting:
+            try:
+                from scenario_router import missing_scenario_sidecar_warning
+
+                scen_warn = missing_scenario_sidecar_warning(session_id)
+                if scen_warn:
+                    print(f"⚠️ {scen_warn}", file=sys.stderr)
+            except Exception as e:  # noqa: BLE001 — 提醒级，失败不阻断
+                print(f"stop-verification-gate: scenario sidecar warn failed: {e}", file=sys.stderr)
         if has_any_edit:
             blocks = int(entry.get("blocks", 0))
             skip_msg = last_user_message(transcript_path).lower()

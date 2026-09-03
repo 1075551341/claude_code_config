@@ -11,6 +11,7 @@ source: catalog/skills/deep-research
 # 深度研究方法论
 
 > **L3 调研**：brainstorming 内嵌证据不足时升级，或用户 `/deep-research` 直开。
+> **运行时解析**：`hooks/_lib/capability_resolver.py` 按当前 harness 解析 provider/fallback；`provider: none` 且无 fallback → interrupt，禁止假装已调用。
 > **前置**：R18 claude-mem search → 再外部调研。项目内代码用 codegraph，非本链。
 
 ## 工具链

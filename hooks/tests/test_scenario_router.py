@@ -71,13 +71,37 @@ def main() -> int:
     check("hint mentions yaml", "scenario-router.yaml" in hint)
     check("hint has triage_map", "非简单|配置类" in hint)
 
+    key = sr.parse_triage_key("分类契约：非简单|配置类 verify_tier=全量", router)
+    check("parse triage_map key", key == "非简单|配置类")
+    sid, tkey = sr.resolve_scenario_from_text("请按 非简单|配置类 继续", router)
+    check("resolve config_structure", sid == "config_structure" and tkey == "非简单|配置类")
+    merged_cfg = sr.merge_scenario(router, router["scenarios"][sid])
+    load_block = sr.format_load_block(merged_cfg, sid)
+    check("load_block has skills", "brainstorming" in load_block and "change-impact-analysis" in load_block)
+    check(
+        "classify hint without key interrupts",
+        sr.unmatched_interrupt_needed("请给出使用类型后再改", router) is True,
+    )
+    check(
+        "plain text not interrupt",
+        sr.unmatched_interrupt_needed("hello world", router) is False,
+    )
+    injected = sr.inject_for_prompt("开始做 非简单|配置类 优化", session_id="test-session")
+    check("inject_for_prompt production", bool(injected) and "【场景 config_structure】" in (injected or ""))
+    check("sidecar written", (sr.read_sidecar() or {}).get("scenario_id") == "config_structure")
+    check("sidecar warn none when present", sr.missing_scenario_sidecar_warning("test-session") is None)
+
+    tracker_src = (HOOKS_DIR / "pre-userprompt-issue-tracker.py").read_text(encoding="utf-8")
+    check("tracker calls inject_for_prompt", "inject_for_prompt" in tracker_src)
+
     stop_path = HOOKS_DIR / "stop-verification-gate.py"
     src = stop_path.read_text(encoding="utf-8")
+    check("stop consumes sidecar warn", "missing_scenario_sidecar_warning" in src)
     start = src.index("DEFAULT_CFG")
     end = src.index("CODE_EXTENSIONS")
-    block = src[start:end]
-    check("stop DEFAULT_CFG dual graph key", "require_dual_graph_before_review" in block)
-    check("stop DEFAULT_CFG parallel_review", "parallel_review" in block)
+    cfg_block = src[start:end]
+    check("stop DEFAULT_CFG dual graph key", "require_dual_graph_before_review" in cfg_block)
+    check("stop DEFAULT_CFG parallel_review", "parallel_review" in cfg_block)
 
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0

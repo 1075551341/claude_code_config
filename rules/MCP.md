@@ -35,7 +35,7 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 | 远端探索   | grep | `.mcp.json` |
 | Plugins    | context7、exa、playwright、firecrawl | `enabledPlugins=true`；禁止再写入 `.mcp.json` |
 | Plugins 默认关 | chrome-devtools、github | plugin=false；不写 MCP |
-| Cursor 差异 | firecrawl 无 Plugin（`web_scrape` fallback `web_search`）；github 用 `gh` CLI | `docs/CURSOR_MCP_PROFILE.md` |
+| Cursor 差异 | Cursor 无 firecrawl Plugin（Claude Code plugin=true；`web_scrape` fallback `web_search`）；github 用 `gh` CLI | `docs/CURSOR_MCP_PROFILE.md` |
 | debug      | chrome-devtools 回退配方（**禁止自动 merge**；仅用户手动启用后 Plugin 仍不可用时） | `mcp-configs/debug.json` |
 | fsaccess   | fs | `mcp-configs/fsaccess.json` |
 | ops        | redis, sqlite, docker, postgres（默认不加载；postgres 走 DATABASE_URL） | `mcp-configs/ops.json` |

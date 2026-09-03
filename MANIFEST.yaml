@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.19
+# 组件唯一归属源 — 防左右手互博 — v11.4.20
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.19"
+version: "11.4.20"
 updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4.14 — 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行。v11.4.13 — 场景路由 YAML SSOT。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
+    note: "v11.4.20 — UserPrompt 注入 format_load_block + capability_resolver。v11.4.14 — 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行。v11.4.13 — 场景路由 YAML SSOT。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
 
   debugging:
     owner: skill/systematic-debugging

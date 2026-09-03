@@ -1,8 +1,8 @@
-# 场景路由 SSOT — v11.4.14
+# 场景路由 SSOT — v11.4.20
 # 分类后的【必加载集合】+ 质量门。不是「只能加载这些」：INDEX L3 信号仍可追加 Read。
 # 入口：task-triage 使用类型 → triage_map → 本文件 scenarios。
 # 工具经 harness-capabilities.yaml 解析 capability。文档矩阵只指针，禁止复制第二份表。
-version: "11.4.14"
+version: "11.4.20"
 updated: "2026-09-03"
 
 # match 语义（机器可读）

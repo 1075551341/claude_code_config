@@ -28,7 +28,7 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — plugin 优先（仅 C
 | context7 | 库/API 文档 | 开 |
 | Exa | 语义搜索 | 开 |
 | playwright | E2E 脚本 | 开（UI 核验优先内置浏览器） |
-| firecrawl | 网页抓取 | **无此 Plugin**；禁止补 User MCP；L3 `web_scrape` fallback `web_search`（Exa+Context7） |
+| firecrawl | 网页抓取 | **Cursor 无此 Plugin**（Claude Code 为 plugin=true）。禁止补 User MCP；L3 `web_scrape` fallback `web_search`（Exa+Context7） |
 | github | PR/Issue | **Disabled**（用 `gh` CLI） |
 
 GitKraken User MCP 保持 Disabled，不复制到其他编辑器。

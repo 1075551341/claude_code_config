@@ -27,7 +27,7 @@ loading_tier: L1
     ├── 架构类：架构/重构/跨模块设计 → grill → brainstorming
     ├── 配置类：配置结构/hook/rule/skill/agent/MANIFEST/依赖升级/数据迁移 → grill → brainstorming
     ├── 删除类：删除/移动/重命名文件 → grill 确认不可逆性
-    └── 调研类：技术选型/深度调研 → deep-research（L3 双源）
+    └── 调研类：技术选型/深度调研 → deep-research（harness 声明源，含 Cursor 降级）
 ```
 
 > **定义（v10.16 客观化）**：
@@ -145,7 +145,7 @@ loading_tier: L1
 
 ## 路由（按使用类型）
 
-分类判定完成后 **查 `config/scenario-router.yaml` `triage_map`**（使用类型 → 场景 id），只按该场景 `load.*` 做必加载，质量门按 `quality`（含独立审前 `dual_graph_ensure`）。INDEX L3 信号仍可追加 Read，禁止把 YAML 当成「只能加载这些」。
+分类判定完成后 **查 `config/scenario-router.yaml` `triage_map`**（使用类型 → 场景 id），只按该场景 `load.*` 做必加载，质量门按 `quality`（含独立审前 `dual_graph_ensure`）。**分类契约须含 triage_map 键原文**（如 `非简单|配置类`），UserPrompt 钩子据此注入 `format_load_block`。INDEX L3 信号仍可追加 Read，禁止把 YAML 当成「只能加载这些」。
 
 | 大类   | 使用类型                               | 场景 id（YAML）        |
 | ------ | -------------------------------------- | ---------------------- |

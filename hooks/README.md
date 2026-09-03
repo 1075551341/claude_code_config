@@ -2,6 +2,7 @@
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.18 变更（v11.4.20）**：UserPrompt 叠加注入场景 `format_load_block`；`capability_resolver.py`；Stop sidecar 提醒。`_lib` 13 py。
 > **v5.17 变更（v11.4.14）**：`scenario_router.py` 加载 YAML；Stop/Guard 消费审前双图与 inherit 并行键；`_lib` 12 py。
 > **v5.16 变更（v11.4.13）**：独立审前双图 ensure；并行审查须 inherit、禁倍率档。场景路由见 `config/scenario-router.yaml`。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
@@ -27,7 +28,7 @@
 | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/`             | 19 注册激活                | standard profile（settings.json 已注册）                                                                                  |
 | `hooks/`（未注册 5） | 5                          | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor / stop-graph-freshness（TRAE/Qoder Stop） |
-| `hooks/_lib/`        | 12 py + `gate_messages.md` | 上列 + `graph_freshness.py` + `scenario_router.py`（分类后必加载）                                                       |
+| `hooks/_lib/`        | 13 py + `gate_messages.md` | 上列 + `graph_freshness.py` + `scenario_router.py` + `capability_resolver.py` |
 
 ---
 
@@ -45,7 +46,7 @@
 
 | Hook                              | 功能                                                                                                                                                  | 层   |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `pre-userprompt-issue-tracker.py` | **重复问题追踪**：prompt 指纹命中历史记录时注入「先查上轮结论、禁止从头重做」（状态 `~/.claude/.state/issue-tracker.json`，与 Cursor 共用，永不阻断） | 横切 |
+| `pre-userprompt-issue-tracker.py` | **重复问题追踪** + **场景 load 注入**：prompt/transcript 含 triage_map 键时注入 `format_load_block`（sidecar `~/.claude/.state/last_scenario.json`）；指纹命中时叠加「先查上轮结论」（永不阻断） | 横切 |
 | `pre-userprompt-verify-gate.py`   | **完成验证门**：prompt 命中完成类关键词 **或** 状态显示本轮有未验证编辑 → 注入 verification-before-completion 强制指令（修复关键词盲区）              | 骨架 |
 
 ### PreToolUse (8)
@@ -98,8 +99,9 @@
 | `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
 | `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、六维续轮文案         | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
 | `_lib/graph_freshness.py`    | 双图 ensure / 工具分类 / 验绿后 sync.ps1                | bootstrap、pre-graph-freshness、stop-verification-gate、Cursor Guard、TRAE/Qoder                                                   |
-| `_lib/scenario_router.py`    | 分类后必加载集合 + independent_review 形状              | session-start-bootstrap；validate_config V20                                                                                      |
-| `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
+| `_lib/scenario_router.py`    | 分类后必加载 + UserPrompt `inject_for_prompt` / sidecar | session-start-bootstrap、pre-userprompt-issue-tracker、stop-verification-gate、validate_config V20 |
+| `_lib/capability_resolver.py`| harness capability → provider/fallback/interrupt        | deep-research / brainstorming 指针；单元测试                                                       |
+| `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                       |
 | `_lib/encoding_guard.py`     | 编码守卫核心：快照签名/比对 + 绝对损坏检查              | `pre-encoding-snapshot.py`、`post-encoding-check.py`                                                                               |
 
 ---
@@ -177,4 +179,4 @@ Cursor Guard v1.2.13（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.17（v11.4.14）| 19 注册激活 + 5 未注册；场景路由加载器；审前双图钩子消费；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_
+_版本：5.18（v11.4.20）| 19 注册激活 + 5 未注册；场景 load 注入 + capability_resolver；审前双图钩子消费；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_

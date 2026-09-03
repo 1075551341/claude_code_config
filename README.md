@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.19** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.4.20** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.19）                                                                 |
+| `SPEC.md`       | 配置法典（v11.4.20）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -32,13 +32,19 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 
 ## 同步（v11.1 多编辑器 1+N）
 
-Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）；合并后必须在本机再跑：
+Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。优化合入后在本机拉取**当前优化分支**（不必等 merge 进 main），再同步编辑器：
 
 ```powershell
-git pull
+git fetch origin
+git checkout cursor/v11-config-alignment-04a6
+git pull origin cursor/v11-config-alignment-04a6
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1
 pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1   # TRAE/Qoder hook 合并；DSH/OpenCode 便携件 sync 也会复制
 ```
+
+若该分支已合入 `main`，可改为 `git checkout main` 后 `git pull`。
+
+本机脱敏核验（不要把密钥贴进对话）：`settings.json` 的 `enabledPlugins` 对照 SPEC 插件表；`~/.config/opencode/AGENTS.md` 若存在则不得为指向 `CLAUDE.md` 的软链；`python scripts/validate_config.py` 与 `pwsh -ExecutionPolicy Bypass -File scripts/check.ps1`。
 
 - 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
 - **常量单源**：`config/sync-manifest.json`（root_files + editors + harnesses）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
@@ -55,7 +61,8 @@ pwsh -ExecutionPolicy Bypass -File scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.4.19**（2026-09-03）— L0/Stop 轮次句与规范括号句同形。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 当前：**v11.4.20**（2026-09-03）— 场景 load 注入 + capability 解析 + 本机优化分支落地。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.19（2026-09-03）— L0/Stop 轮次句与规范括号句同形。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.18（2026-09-03）— 现行操作句与 L0 轮次口径对齐（日常最多 3 轮（单任务覆盖须用户显式声明））。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.17（2026-09-03）— 版本映射/L0 MCP 注释/本机落地 Bypass 与云端 home。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.16（2026-09-03）— MCP 分组/调研薄壳对齐 harness；check Expand-UserHome；Guard inherit 消费并行审查者。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
