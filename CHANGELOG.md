@@ -2,6 +2,10 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.19 L0/Stop 轮次句与规范括号句同形（2026-09-03）
+
+- **R20**：`CLAUDE.md` 门控④与 `stop-verification-gate.py` 模块说明改为「日常最多 3 轮（单任务覆盖须用户显式声明）」，与同文件 `:64`/`:146` 及注入门一致。`review_max_rounds` 仍为 3。
+
 ## v11.4.18 现行操作句与 L0 轮次口径对齐（2026-09-03）
 
 - **R20**：Stop/Guard 注入、Cursor 规则、OpenCode `verify-gate`、verification/executing-plans/task-triage 现行句改为「日常最多 3 轮（单任务覆盖须用户显式声明）」。`review_max_rounds` 仍为 3。

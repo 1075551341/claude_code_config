@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.18**（审查清单闭环：现行操作句与 L0 轮次口径对齐。原 v11.4.17：版本映射。原 v11.4.16：MCP 分组。原 v11.4.15：harness 文案）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.19**（审查清单闭环：L0/Stop 轮次句同形。原 v11.4.18：操作句对齐。原 v11.4.17：版本映射。原 v11.4.16：MCP 分组）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
@@ -79,7 +79,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
   ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
   ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
   ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
-  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（日常最多 3 轮，单任务覆盖须用户显式声明）；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
+  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（日常最多 3 轮（单任务覆盖须用户显式声明））；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
   ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
 

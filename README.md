@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.18** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.4.19** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.18）                                                                 |
+| `SPEC.md`       | 配置法典（v11.4.19）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -55,7 +55,8 @@ pwsh -ExecutionPolicy Bypass -File scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.4.18**（2026-09-03）— 现行操作句与 L0 轮次口径对齐（日常最多 3 轮，单任务覆盖须用户显式声明）。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 当前：**v11.4.19**（2026-09-03）— L0/Stop 轮次句与规范括号句同形。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.18（2026-09-03）— 现行操作句与 L0 轮次口径对齐（日常最多 3 轮（单任务覆盖须用户显式声明））。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.17（2026-09-03）— 版本映射/L0 MCP 注释/本机落地 Bypass 与云端 home。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.16（2026-09-03）— MCP 分组/调研薄壳对齐 harness；check Expand-UserHome；Guard inherit 消费并行审查者。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.15（2026-09-03）— 审查清单闭环：harness 文案、加载器可执行、inherit 机械门。Guard 1.2.12；DSH 2.12 / OpenCode 1.12

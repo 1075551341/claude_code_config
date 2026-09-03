@@ -1,7 +1,7 @@
 # Catalog Agents — 按需复制
 
 > 此目录提供领域专用 agent 定义，按需复制到项目 `.claude/agents/` 使用。
-> 全局 agents 在 `~/.claude/agents/`（v11.4.18 为 17），始终可用，无需从此目录复制。
+> 全局 agents 在 `~/.claude/agents/`（v11.4.19 为 17），始终可用，无需从此目录复制。
 > **完整清单（48）以 [../INDEX.md](../INDEX.md) 为唯一权威**（`gen-catalog-index.py` 生成），本文不再复制列表。
 
 ## 使用策略
