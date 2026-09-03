@@ -60,7 +60,18 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ## 常量单源：`config/sync-manifest.json`
 
-根文件集合、插件规则特殊映射、**编辑器清单（editors 段）**与 **harnesses 段**只在此文件定义。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。本机落地：fetch **优化分支**（当前 `cursor/v11-config-alignment-04a6`，已合入 main 则 pull main）后 `pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1`，再 `pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder hook 合并；便携 CLI 亦可由 sync 复制）。脱敏核验：`settings.json` enabledPlugins 对照 SPEC；OpenCode `AGENTS.md` 不得为 CLAUDE.md 软链。
+根文件集合、插件规则特殊映射、**编辑器清单（editors 段）**与 **harnesses 段**只在此文件定义。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。本机落地示例：
+
+```powershell
+cd C:\Users\DELL\.claude
+git fetch origin
+git checkout cursor/v11-config-alignment-04a6
+git pull origin cursor/v11-config-alignment-04a6
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1
+```
+
+已合入 `main` 则 `git checkout main` 后 `git pull`。脱敏核验：`settings.json` enabledPlugins 对照 SPEC；OpenCode `AGENTS.md` 不得为 CLAUDE.md 软链。
 
 | 消费方                                             | 读取内容                                         | 失败回退                       |
 | -------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
