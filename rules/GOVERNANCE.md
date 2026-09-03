@@ -91,7 +91,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、R15 语言/锁文
 - uv/poetry 仓裸 `pip install`（MCP 启动脚本 `python-mcp.ps1` 等包装例外，见下）
 - 与 R14 对齐：不追最新 major；安全补丁同 major
 
-**机械门**：`hooks/pre-bash-guard.py` 与 Cursor Guard 对「pnpm 仓 `npm install`」「uv/poetry 仓裸 `pip install`」**警告不阻断**（避免合法脚本误杀）。豁免：文档示例中的对比命令；编辑器 MCP 启动包装（`scripts/python-mcp.ps1` 等）。
+**机械门**：`hooks/pre-bash-guard.py` 与 Cursor Guard 对「pnpm 仓 `npm install`」「uv/poetry 仓裸 `pip install` / `python -m pip`」**警告不阻断**（避免合法脚本误杀）。豁免：文档示例中的对比命令；编辑器 MCP 启动包装（`scripts/python-mcp.ps1` 等）。
 
 **Node 命令习惯**（在已判定用 pnpm 时）：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`。npm 仅作兜底：本机无 pnpm、pnpm 失败且用户未要求换工具链、或脚本/文档明确写 `npm`。
 

@@ -5,10 +5,11 @@
 ## v11.4.13 铁律 R1–R20 工业落地（2026-09-03）
 
 - **R1–R20 骨架**：`rules/CORE.md` 从「R12–R20 + R1–R11 指针」补成全表「操作要点 + 机械门」；L0 `CLAUDE.md` 仍一行表（≤200）。不新增第 11 条规则、不收缩 L0–L3 / 1+N 同步。
-- **R15**：按语言/锁文件选隔离式包管理器（防 hoist 幻影依赖与幻觉包）。矩阵 SSOT → `rules/GOVERNANCE.md`。机械门：pnpm 仓 `npm install`、uv/poetry 仓裸 `pip install` **警告不阻断**（`hooks/_lib/git_r19.py` + Cursor Guard `pm_mix_warning`）。
-- **R19**：禁止自动新建/切换分支（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b` / `checkout|switch <branch>`）；路径还原 `git checkout -- <path>` 放行。Claude `pre-bash-guard` deny；Cursor Guard `forbid_auto_branch` + `branch_requires_ask`（ask）。Guard **1.2.12**。
+- **R15**：按语言/锁文件选隔离式包管理器（防 hoist 幻影依赖与幻觉包）。矩阵 SSOT → `rules/GOVERNANCE.md`。机械门：pnpm 仓 `npm install`、uv/poetry 仓裸 `pip` / `python -m pip` **警告不阻断**（`hooks/_lib/git_r19.py` + Cursor Guard `pm_mix_warning`）。
+- **R19**：禁止自动新建/切换分支（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b` / `checkout|switch <branch>`）；路径还原 `git checkout -- <path>` / `git checkout .` / `git restore` 放行。复合命令（`&&` / `;` / `GIT_DIR=` 前缀）同样拦截。Claude `pre-bash-guard` deny；Cursor Guard `forbid_auto_branch` + `branch_requires_ask`（ask）。Guard **1.2.12**。
+- **文档戳**：`SPEC.md` / `hooks/README.md`「Cursor 编辑器」/ `docs/CURSOR_EDITOR_SETUP.md` 现行 Guard 版本与模板 `1.2.12` 对齐（V14 扫描）。
 - **TRAE**：R19 守卫仍是 AppData 独立副本（不经 `sync.ps1`）。改 `pre-bash-guard.py` 后须按 `docs/SYNC_GUIDE.md` 既有通道刷新该副本。
-- **测试**：`hooks/tests/test_git_r19.py` + 三份 bash fixture；`test-cursor-guard-hooks.py` 增分支 ask / 路径还原。
+- **测试**：`hooks/tests/test_git_r19.py`（复合命令 / `checkout -` / `.` / `HEAD file` / poetry.lock / `python -m pip`）+ bash fixture；`test-cursor-guard-hooks.py` 分支 ask（含复合命令）与路径还原。
 - **不改**：editors 清单、`global_rules_max: 10`、审查最多 3 轮产品门、图谱保鲜、R20 六字段。
 
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）

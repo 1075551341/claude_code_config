@@ -143,7 +143,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.12（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；R19 `forbid_auto_branch`（ask）+ R15 包管理器混用警告；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 

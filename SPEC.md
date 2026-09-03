@@ -59,7 +59,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
+| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.12，R19 禁自动建/切分支） |
 | 全局 MCP     | 9 常驻 | 本地代码4+远端探索2+Web&文档3；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |

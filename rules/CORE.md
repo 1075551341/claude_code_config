@@ -118,11 +118,11 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 1. **先认项目**：锁文件 / `packageManager` / wrapper 已声明则必须用该工具，禁止混用（双 lock、pnpm 仓跑 `npm i`）。
 2. **无声明时**按语言选「隔离 + 锁文件」的稳定工具（JS/TS→pnpm；Python→uv；Rust→cargo；Go→go mod；其余 → GOVERNANCE 矩阵）。
 3. **禁止**：为未在清单/锁文件中的包写 import；编造 registry 包名；把 npm 扁平化「能 import」当成已声明依赖。
-4. 与 R14 对齐：不追最新 major。机械门：`pre-bash-guard` / Cursor Guard 对 pnpm 仓 `npm install`、uv/poetry 仓裸 `pip install` **警告不阻断**。
+4. 与 R14 对齐：不追最新 major。机械门：`pre-bash-guard` / Cursor Guard 对 pnpm 仓 `npm install`、uv/poetry 仓裸 `pip install` / `python -m pip` **警告不阻断**。
 
 ### R19 Git 禁令（含分支）
 
-禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。仅用户**本条消息**显式要求「提交 / 建分支 / 切分支 / 开 PR 且必须新分支」时才允许。路径还原 `git checkout -- <path>` / `git restore` 与只读 `status` / `diff` / `log` / `branch -a` 放行。机械门：Claude `pre-bash-guard` deny；Cursor Guard ask（`forbid_auto_branch`）。命令表 → `rules/GIT.md`。
+禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。仅用户**本条消息**显式要求「提交 / 建分支 / 切分支 / 开 PR 且必须新分支」时才允许。路径还原 `git checkout -- <path>` / `git checkout .` / `git restore` 与只读 `status` / `diff` / `log` / `branch -a` 放行。复合命令中的建切分支同样拦截。机械门：Claude `pre-bash-guard` deny；Cursor Guard ask（`forbid_auto_branch`）。命令表 → `rules/GIT.md`。
 
 ### R20 会话终验
 

@@ -686,6 +686,21 @@ def check_v14_cursor_guard_v11():
             )
     except OSError as exc:
         ERRORS.append(f"V14: MANIFEST.yaml unreadable: {exc}")
+    stamp = f"v{expected}" if expected else None
+    if stamp:
+        for rel, label in (
+            (os.path.join(BASE, "SPEC.md"), "SPEC.md"),
+            (os.path.join(BASE, "docs", "CURSOR_EDITOR_SETUP.md"), "docs/CURSOR_EDITOR_SETUP.md"),
+            (os.path.join(BASE, "hooks", "README.md"), "hooks/README.md"),
+        ):
+            try:
+                with open(rel, "r", encoding="utf-8") as fh:
+                    text = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: {label} unreadable: {exc}")
+                continue
+            if stamp not in text:
+                ERRORS.append(f"V14: {label} missing current Guard {stamp}")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 

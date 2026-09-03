@@ -39,11 +39,18 @@ def test_branch_mutate() -> None:
         "git switch -c feature/x",
         "git switch main",
         "git checkout main",
+        "git checkout -",
         "git branch feature/x",
         "git worktree add -b topic ../wt",
         "git -C /tmp/repo checkout -b foo",
         "git branch -d old",
         "git branch -m newname",
+        "cd /tmp && git checkout -b feat",
+        "true; git switch -c x",
+        "true;git switch -c z",
+        "GIT_DIR=/tmp git checkout -b x",
+        "env GIT_DIR=/tmp git switch -c y",
+        "git status && git checkout -b foo",
     ]
     allow = [
         "git status",
@@ -55,11 +62,15 @@ def test_branch_mutate() -> None:
         "git branch --list",
         "git checkout -- README.md",
         "git checkout HEAD -- src/a.py",
+        "git checkout .",
+        "git checkout HEAD file",
         "git restore src/a.py",
         "git add CORE.md",
         "python --version",
         "git commit -m msg",
         "git stash",
+        "echo git checkout -b foo",
+        "cd /tmp && git status",
     ]
     for cmd in deny:
         check(f"deny:{cmd}", match_git_branch_mutate(cmd), "expected mutate=True")
@@ -79,7 +90,15 @@ def test_pm_mix() -> None:
         (root / "uv.lock").write_text("version = 1\n", encoding="utf-8")
         msg = pm_mix_warning("pip install requests", str(root))
         check("uv+pip", msg is not None and "uv" in msg)
+        check("uv+python-m-pip", pm_mix_warning("python -m pip install requests", str(root)) is not None)
         check("uv+uv", pm_mix_warning("uv add requests", str(root)) is None)
+        check("uv+uv-pip", pm_mix_warning("uv pip install requests", str(root)) is None)
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        (root / "poetry.lock").write_text("# poetry\n", encoding="utf-8")
+        msg = pm_mix_warning("pip install requests", str(root))
+        check("poetry+pip", msg is not None and "poetry" in msg)
+        check("poetry+python-m-pip", pm_mix_warning("python3 -m pip install x", str(root)) is not None)
 
 
 def test_pre_bash_guard_fixtures() -> None:
@@ -87,7 +106,12 @@ def test_pre_bash_guard_fixtures() -> None:
     cases = [
         ("git checkout -b feature/x", 2, True),
         ("git switch -c topic", 2, True),
+        ("cd /tmp && git checkout -b feat", 2, True),
+        ("GIT_DIR=/tmp git checkout -b x", 2, True),
+        ("git checkout -", 2, True),
         ("git checkout -- README.md", 0, False),
+        ("git checkout .", 0, False),
+        ("git checkout HEAD file", 0, False),
         ("git status", 0, False),
     ]
     for cmd, expect_code, must_block in cases:
@@ -121,8 +145,13 @@ def test_cursor_shell_patterns_parity() -> None:
         "git checkout -b x",
         "git switch main",
         "git checkout -- file",
+        "git checkout .",
+        "git checkout -",
+        "cd /tmp && git checkout -b feat",
+        "GIT_DIR=/tmp git checkout -b x",
         "git branch -a",
         "git status",
+        "echo git checkout -b foo",
     ]
     for cmd in samples:
         a = match_git_branch_mutate(cmd)

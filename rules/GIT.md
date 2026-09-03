@@ -83,11 +83,11 @@ main (生产)
 | **新建分支**（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b`） | **禁止自动**；仅本条消息显式要求「建分支 / 开 PR 且必须新分支」 | 允许 |
 | **切换分支**（`switch <branch>` / `checkout <branch>`，非路径还原） | **禁止自动**；仅本条消息显式要求「切分支」 | 允许 |
 | 只读 `status` / `diff` / `log` / `branch`（无新分支名）/ `branch -a\|-vv` | 允许 | 允许 |
-| `git checkout -- <path>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |
+| `git checkout -- <path>` / `git checkout .` / `git checkout HEAD -- <path>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |
 
 **配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash` / `git.forbid_auto_branch` / `git.branch_requires_ask`；Claude Code → `hooks/pre-bash-guard.py`（deny）+ `hooks/_lib/git_r19.py`。
 
-> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 与**新建/切换分支**仅用户本条消息显式指令后执行（Claude hook deny；Cursor Guard 对 commit/分支为 ask）。Pre-bash-guard 拦截 stash/commit/push/建切分支（`_GIT_OPTS` 覆盖 `-C/--git-dir/--work-tree/-c` 变体；Cursor `shell_patterns.py` 对等）。**改 `pre-bash-guard` 后须按 SYNC_GUIDE 刷新 TRAE AppData 副本**（独立于 `sync.ps1`）。
+> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 与**新建/切换分支**仅用户本条消息显式指令后执行（Claude hook deny；Cursor Guard 对 commit/分支为 ask）。Pre-bash-guard 拦截 stash/commit/push/建切分支（`_GIT_OPTS` 覆盖 `-C/--git-dir/--work-tree/-c` 变体；复合命令 `cd … && git checkout -b` / `GIT_DIR=… git switch -c` 同样拦截；Cursor `shell_patterns.py` 对等）。**改 `pre-bash-guard` 后须按 SYNC_GUIDE 刷新 TRAE AppData 副本**（独立于 `sync.ps1`）。
 
 ## 危险操作防护
 

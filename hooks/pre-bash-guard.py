@@ -85,8 +85,6 @@ DANGER_PATTERNS = [
     # eval 执行下载内容
     (r"eval\s+[\"'`]\$\(curl",                      "禁止 eval 执行 curl 下载内容"),
     (r"eval\s+[\"'`]\$\(wget",                      "禁止 eval 执行 wget 下载内容"),
-    # Git — Agent 禁止 stash；commit 仅用户显式要求（见 rules/GIT.md）
-    (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
 ]
 
 # ── 警告模式（不阻断，注入上下文提示）──────────────────────────────────────────
