@@ -2,6 +2,14 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.14 场景路由加载器闭环 + 审前双图钩子消费（2026-09-03）
+
+- **加载器**：`hooks/_lib/scenario_router.py` 解析 `triage_map`（AND + 最长 match 胜）。YAML 是分类后**必加载集合**+质量门，INDEX L3 信号仍可追加。`load_defaults` 始终并入 using-superpowers / task-triage / verification / memory。SessionStart 注入短指针；task-triage 路由表交接 YAML。
+- **钩子消费**：`quality_gates.json` 的 `require_dual_graph_before_review` / `parallel_review` 进入 Stop `DEFAULT_CFG`；审查相位再 `ensure_both`。Cursor Guard **1.2.12** 在 review 相位同样 ensure。审查者 `spec-reviewer`/`code-reviewer` 补 `model: inherit`。
+- **sync**：`sync.ps1` 读 `harnesses`，home 存在则复制便携 CLI/插件；缺则复制 `graph-freshness.json`；**永不写 AGENTS.md**。`CLAUDE_HOME`/`HOME` 解析与 `check.ps1` 对齐。
+- **漂移**：SPEC 插件启用12/禁用6 + superpowers 6.3.0；分发器 1；PostToolUse 4；codegraph 1.6.0；GitHub→`gh` CLI；TOOL_MATCHING 去掉第二份矩阵；CLAUDE.md L3 允许 harness fallback。V20 校验 triage_map / IR object / 钩子消费 / inherit。
+- **多端**：DSH 2.12 / OpenCode 1.12 映射到 11.4.14。不精简 skill/agent/rule/catalog。`review_max_rounds` 仍为 3。
+
 ## v11.4.13 场景路由 YAML + 审前双图 + inherit 并行审查（2026-09-03）
 
 - **配置驱动**：新增 `config/scenario-router.yaml`（场景→load.skills/agents + quality）与 `config/harness-capabilities.yaml`（capability → 当前端 provider/fallback/interrupt）。分类后只按 YAML 加载；缺能力走声明降级，禁止假装调用。

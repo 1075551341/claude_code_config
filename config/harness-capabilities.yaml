@@ -1,7 +1,8 @@
-# Harness 能力图 SSOT — v11.4.13
+# Harness 能力图 SSOT — v11.4.14
 # capability id → 当前端实际 provider。缺能力必须 fallback 或 interrupt，禁止假装已调用。
-# 各端 plugin/MCP 开关自管；本文件只声明解析规则，sync.ps1 不改 mcp.json。
-version: "11.4.13"
+# MCP 常驻服务器清单仍以 .mcp.json 为 Claude Code 权威；本文件只声明 capability→provider 解析。
+# 各端 plugin/MCP 开关自管；sync.ps1 不改 mcp.json。
+version: "11.4.14"
 updated: "2026-09-03"
 
 capability_ids:
@@ -42,6 +43,7 @@ defaults:
   web_search:
     provider: plugin
     name: exa
+    fallback: builtin_web_search
   web_scrape:
     provider: plugin
     name: firecrawl
@@ -49,27 +51,35 @@ defaults:
   browser_ui:
     provider: plugin
     name: playwright
+    fallback: interrupt
   browser_e2e:
     provider: plugin
     name: playwright
+    fallback: interrupt
   browser_debug:
     provider: interrupt
     name: chrome-devtools
+    interrupt: true
     note: 默认关；中断请用户手动开 Plugin，禁止自动 merge debug.json
   memory:
     provider: plugin
     name: claude-mem
     pin: "13.13.1"
+    fallback: none
   github:
     provider: cli
     name: gh
+    fallback: interrupt
   db:
     provider: interrupt
     name: postgres
+    interrupt: true
     note: 默认关；中断请用户设 DATABASE_URL 后启用
   grep_remote:
     provider: mcp
     name: grep
+    fallback: none
+    note: 仅跨公开仓；本地代码禁止用 grep MCP 替代 codegraph
 
 harnesses:
   claude-code:
@@ -80,6 +90,7 @@ harnesses:
       browser_ui:
         provider: builtin
         name: cursor-ide-browser
+        fallback: interrupt
       web_scrape:
         provider: none
         fallback: web_search
@@ -87,15 +98,16 @@ harnesses:
       github:
         provider: cli
         name: gh
+        fallback: interrupt
         note: github Plugin Disabled
   qoder-cn: &pluginless
     inherits: defaults
     overrides:
-      lib_docs: { provider: mcp, name: context7, note: 无 marketplace plugin，钉版本 MCP }
-      web_search: { provider: mcp, name: exa-mcp-server }
+      lib_docs: { provider: mcp, name: context7, fallback: web_search, note: 无 marketplace plugin，钉版本 MCP }
+      web_search: { provider: mcp, name: exa-mcp-server, fallback: builtin_web_search }
       web_scrape: { provider: mcp, name: firecrawl-mcp, fallback: web_search }
-      browser_ui: { provider: mcp, name: playwright }
-      browser_e2e: { provider: mcp, name: playwright }
+      browser_ui: { provider: mcp, name: playwright, fallback: interrupt }
+      browser_e2e: { provider: mcp, name: playwright, fallback: interrupt }
       browser_debug: { provider: none, interrupt: true, note: 条目保留默认 disabled }
       memory: { provider: none, fallback: none, note: 无 claude-mem 则声明缺口，禁止假装已搜 }
   trae-cn:
@@ -108,7 +120,7 @@ harnesses:
     <<: *pluginless
   workbuddy:
     inherits: defaults
-    overrides:
+    extra:
       note: 仅 CLAUDE.md+skills 联接；无独立 MCP 通道则跟随 Claude Code 真源
   dsh:
     <<: *pluginless
@@ -118,7 +130,8 @@ harnesses:
         - graph_freshness_cli.py
         - r20_check.py
       home: "~/.dsh"
-      version_map: "DSH 2.12 ↔ claude 11.4.13"
+      version_map: "DSH 2.12 ↔ claude 11.4.14"
+      forbid: claude_md_overwrite_agents_md
   opencode:
     <<: *pluginless
     extra:
@@ -129,5 +142,5 @@ harnesses:
         - graph-freshness.ts
         - verify-gate.ts
       home: "~/.config/opencode"
-      version_map: "OpenCode 1.12 ↔ claude 11.4.13"
+      version_map: "OpenCode 1.12 ↔ claude 11.4.14"
       forbid: claude_md_overwrite_agents_md

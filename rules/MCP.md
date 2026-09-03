@@ -15,12 +15,15 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 ### 1. 单一权威源
 
-`.mcp.json` 是 Claude Code MCP 服务器配置的**唯一权威源**（常驻）。
+`.mcp.json` 是 Claude Code **MCP 服务器配置**的唯一权威源（常驻）。
 
 - 添加常驻服务器 → 只修改 `.mcp.json`
 - 删除服务器 → 只修改 `.mcp.json`
 - settings.json **禁止**定义 mcpServers（v3.0+）
 - Cursor 侧权威：`~/.cursor/mcp.json` + Plugins（见 `docs/CURSOR_MCP_PROFILE.md`）
+- **capability → provider/fallback** 解析权威：`config/harness-capabilities.yaml`（不替代 `.mcp.json` 服务器清单）
+- **场景 → 必加载 skill/agent** 权威：`config/scenario-router.yaml`
+- harness 便携件/是否投放：`config/sync-manifest.json` `harnesses` + `MANIFEST.yaml` `harness.mcp_loading`
 
 ### 2. 常驻架构（内置 > plugin > MCP）
 

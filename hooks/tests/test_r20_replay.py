@@ -779,6 +779,14 @@ def test_crg_track() -> None:
     check("block message includes 短 R20", "短 R20" in msg)
 
 
+def test_stop_default_review_keys() -> None:
+    check("DEFAULT_CFG dual graph", mod.DEFAULT_CFG.get("require_dual_graph_before_review") is True)
+    check("DEFAULT_CFG parallel_review", isinstance(mod.DEFAULT_CFG.get("parallel_review"), dict))
+    loaded = mod.load_config()
+    check("load_config dual graph", loaded.get("require_dual_graph_before_review") is True)
+    check("load_config parallel", isinstance(loaded.get("parallel_review"), dict))
+
+
 def main() -> int:
     print("=== R20 replay marker tests ===")
     test_crg_track()
@@ -809,6 +817,7 @@ def main() -> int:
     test_impact_diff_superset_blocked()
     test_impact_diff_subset_passes()
     test_impact_diff_disabled_skip()
+    test_stop_default_review_keys()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0
 

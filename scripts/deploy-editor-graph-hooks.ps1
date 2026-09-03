@@ -67,3 +67,17 @@ if ((Test-Path -LiteralPath $r20Src) -and (Test-Path -LiteralPath (Join-Path $en
     Copy-Item -LiteralPath $r20Src -Destination (Join-Path $dshTools "r20_check.py") -Force
     Write-Host "  [OK] DSH tools/r20_check.py" -ForegroundColor Green
 }
+
+function Copy-GraphFreshnessJsonIfMissing {
+    param([string]$HomeDir)
+    $src = Join-Path $Claude "templates\editor-graph-hooks\graph-freshness.json"
+    $dstDir = Join-Path $HomeDir "config"
+    $dst = Join-Path $dstDir "graph-freshness.json"
+    if ((Test-Path -LiteralPath $src) -and (Test-Path -LiteralPath $HomeDir) -and -not (Test-Path -LiteralPath $dst)) {
+        New-Item -ItemType Directory -Force -Path $dstDir | Out-Null
+        Copy-Item -LiteralPath $src -Destination $dst -Force
+        Write-Host "  [OK] $HomeDir\config\graph-freshness.json (new)" -ForegroundColor Green
+    }
+}
+Copy-GraphFreshnessJsonIfMissing (Join-Path $env:USERPROFILE ".dsh")
+Copy-GraphFreshnessJsonIfMissing (Join-Path $env:USERPROFILE ".config\opencode")

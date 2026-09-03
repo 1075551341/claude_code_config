@@ -17,9 +17,9 @@ source: catalog/skills/deep-research
 
 | 步骤 | 工具 |
 |------|------|
-| 广度/抓取 | Firecrawl MCP（`.mcp.json` 常驻键 `firecrawl`） |
-| 语义搜索 | Exa MCP（`.mcp.json` 常驻键 `exa`；Cursor 侧由 Exa plugin 提供） |
-| 库/API 验证 | Context7 MCP |
+| 广度/抓取 | harness `web_scrape`（Claude=firecrawl **plugin**；Cursor 无则 fallback `web_search`） |
+| 语义搜索 | harness `web_search`（exa plugin；禁止与 `.mcp.json` 双挂） |
+| 库/API 验证 | harness `lib_docs`（context7 plugin） |
 | 项目代码 | codegraph_explore（非网页调研） |
 
 ### 升级决策（L1→L2→L3）

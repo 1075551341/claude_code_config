@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.13 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
+> 版本：11.4.14 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
 
 ---
 
@@ -59,9 +59,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 19     | 注册激活 19 + 未注册 5 + 分发器 2（`_editor_*`）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入）                                                                                    |
+| 全局 hooks   | 19     | 注册激活 19 + 未注册 5 + 分发器 1（`_editor_hook_launcher.py`）；Cursor Guard 运行时 23（v1.2.12，resume 审查不计入）                                                                                    |
 | 全局 MCP     | 4 常驻 | codegraph + CRG + serena + grep；plugin（context7/exa/playwright/firecrawl）不计入常驻 MCP；debug/fsaccess/ops 见 mcp-configs/                                                          |
-| 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
+| 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记：启用12 / 禁用6（以 settings.json 为准；plugin=true：context7/exa/playwright/firecrawl）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
 
 ---
@@ -310,14 +310,14 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-## Plugins（18 安装；enabledPlugins 启用8 / 禁用10，以 settings.json 为准）
+## Plugins（18 安装；enabledPlugins 启用12 / 禁用6，以 settings.json 为准）
 
 > v10.17 按 `plugins/installed_plugins.json` × `settings.json.enabledPlugins` 实测重写。
 > 此前本表长期停留在旧快照（声称 15 启用），与运行态严重不符。
 
 | Plugin                     | 状态 | 提供                      | 说明                                                     |
 | -------------------------- | ---- | ------------------------- | -------------------------------------------------------- |
-| superpowers 6.2.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
+| superpowers 6.3.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
 | claude-mem 13.13.1         | ✅   | 6 hooks + 记忆技能        | 五柱之一（R18 记忆优先）                                 |
 | code-review                | ✅   | 审查技能                  | 与 eng-reviewer 互补                                     |
 | commit-commands            | ✅   | Git 快捷命令              | —                                                        |
@@ -336,7 +336,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | claude-hud 0.6.0           | ✅   | 上下文 HUD 状态条         | v11.4.3 enabledPlugins=true                              |
 | exa 3.4.0                  | ✅   | Exa 搜索                  | v11.4.5 **plugin**（禁止与 MCP 双挂；不写 `.mcp.json`）  |
 
-> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。enabledPlugins 与 MANIFEST 对齐（启用8/禁用10 以 settings.json 为准）。hooks 仅 superpowers / claude-mem。
+> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。enabledPlugins 与 MANIFEST 对齐（启用12/禁用6 以 settings.json 为准）。hooks 仅 superpowers / claude-mem。
 > 同名 skill：本地精简版覆盖插件版（token 省 45-74%，中文适配）。
 
 ---
@@ -361,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.13 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20
+> 版本：11.4.14 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20

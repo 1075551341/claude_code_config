@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.13
+# 组件唯一归属源 — 防左右手互博 — v11.4.14
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.13"
+version: "11.4.14"
 updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -136,7 +136,7 @@ horizontal_layers:
     description: 洞察横切层 — 代码图谱 + 外部搜索（UA removed v10.5）
     owners:
       - source: colbymchenry/codegraph
-        version: "1.5.0" # v10.11: MCP daemon 实测；CLI 0.9.7 待对齐（可选 V1）；原记 1.0.1
+        version: "1.6.0" # v11.4.14: 与 .mcp.json @colbymchenry/codegraph@1.6.0 对齐
         concerns:
           [pre-indexed-knowledge-graph, daemon-watchdog, config-redaction]
       - source: DeusData/codebase-memory-mcp
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4.13 — 场景路由 YAML SSOT；独立审前双图 ensure；只读+维度不重叠+inherit（禁倍率档）可并行多审查。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
+    note: "v11.4.14 — 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行。v11.4.13 — 场景路由 YAML SSOT。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -436,7 +436,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.12 — review 相位独立审前双图 ensure。v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
@@ -578,8 +578,9 @@ concerns:
       ]
 
   mcp_remote_explore:
-    owner: config/.mcp.json
-    note: github（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN；勿用 api.githubcopilot.com HTTP，Cursor/Claude 会变成 mcp_auth + 0 tools）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    owner: config/harness-capabilities.yaml
+    note: GitHub 操作走 gh CLI（github Plugin/MCP 默认关，不写 .mcp.json）。grep MCP（grep.app 跨公开仓）仍在 .mcp.json 常驻；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow, .mcp.json]
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
 
   gstack_eng:
@@ -913,7 +914,7 @@ sync_targets:
   # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.13: harnesses 段登记 DSH/OpenCode 适配（deploy-editor-graph-hooks.ps1）；opencode enabled=false 禁止 CLAUDE.md 覆盖 AGENTS.md
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.14: harnesses 段登记 DSH/OpenCode 适配（sync.ps1 + deploy-editor-graph-hooks.ps1）；opencode enabled=false 禁止 CLAUDE.md 覆盖 AGENTS.md
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]

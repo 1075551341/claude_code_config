@@ -384,7 +384,7 @@ if ($syncMf -and $syncMf.harnesses) {
         if ($hIssues.Count -eq 0) {
             Add-Check "Harness" $hProp.Name "pass" "portable files OK; AGENTS.md not CLAUDE.md overlay"
         } else {
-            Add-Check "Harness" $hProp.Name "warn" "$($hIssues -join ', ') -- run deploy-editor-graph-hooks.ps1"
+            Add-Check "Harness" $hProp.Name "warn" "$($hIssues -join ', ') -- run sync.ps1 or deploy-editor-graph-hooks.ps1"
         }
     }
 }

@@ -70,8 +70,20 @@ if ($Scope -eq "all") { $All = $true }
 # Configuration（根文件集合单源：config/sync-manifest.json）
 # =============================================================
 
-$CLAUDE_DIR = "$env:USERPROFILE\.claude"
-$CURSOR_DIR = "$env:USERPROFILE\.cursor"
+function Resolve-ClaudeDir {
+    if ($env:CLAUDE_HOME -and (Test-Path (Join-Path $env:CLAUDE_HOME "CLAUDE.md"))) {
+        return $env:CLAUDE_HOME
+    }
+    $repo = Split-Path $PSScriptRoot -Parent
+    if (Test-Path (Join-Path $repo "CLAUDE.md")) { return $repo }
+    $up = $env:USERPROFILE
+    if (-not $up) { $up = $env:HOME }
+    return (Join-Path $up ".claude")
+}
+
+$CLAUDE_DIR = Resolve-ClaudeDir
+$CURSOR_HOME = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+$CURSOR_DIR = Join-Path $CURSOR_HOME ".cursor"
 
 # 单源清单读取；缺失/损坏时回退内置默认（与 manifest 内容一致）
 $ROOT_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
@@ -90,10 +102,12 @@ $EDITOR_TARGETS = [ordered]@{
     "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
+$script:SyncManifest = $null
 $manifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $manifestPath) {
     try {
         $mf = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $script:SyncManifest = $mf
         if ($mf.root_files) { $ROOT_FILES = @($mf.root_files) }
         if ($mf.plugin_rule_sources) {
             $PLUGIN_EXTRA = [ordered]@{}
@@ -575,6 +589,78 @@ function Deploy-Templates {
 # 可选 OPT-IN：项目级 Cursor Project Rules（默认关闭）
 # =============================================================
 
+function Sync-HarnessPortable {
+    <#
+    .SYNOPSIS
+        按 sync-manifest.json harnesses 复制便携 CLI/插件；home 缺席跳过；永不写 AGENTS.md。
+    #>
+    $mf = $script:SyncManifest
+    if (-not $mf -or -not $mf.harnesses) { return }
+    $homeRoot = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
+    $tpl = Join-Path $CLAUDE_DIR "templates\editor-graph-hooks"
+    if (-not (Test-Path -LiteralPath $tpl)) {
+        Write-Skip "harnesses: templates/editor-graph-hooks missing"
+        return
+    }
+    foreach ($hProp in $mf.harnesses.PSObject.Properties) {
+        if ($hProp.Name -eq "_comment") { continue }
+        $hv = $hProp.Value
+        $hHome = "$($hv.home)" -replace '^~', $homeRoot
+        $hHome = $hHome -replace '/', [IO.Path]::DirectorySeparatorChar
+        if (-not (Test-Path -LiteralPath $hHome)) {
+            Write-Skip "harness $($hProp.Name): $hHome not found - skipped"
+            $script:STATS.Skipped++
+            continue
+        }
+        Write-Host "  -- harness $($hProp.Name) $('-' * [Math]::Max(1, 36 - $hProp.Name.Length))" -ForegroundColor DarkGray
+        $deployDir = Join-Path $hHome $(if ($hv.deploy_dir) { $hv.deploy_dir } else { "tools" })
+        foreach ($f in @($hv.deploy)) {
+            $src = Join-Path $tpl $f
+            if (-not (Test-Path -LiteralPath $src)) {
+                Write-Fail "harness $($hProp.Name): template $f missing"
+                $script:STATS.Failed++
+                continue
+            }
+            if (-not $DryRun -and -not (Test-Path -LiteralPath $deployDir)) {
+                New-Item -ItemType Directory -Force -Path $deployDir | Out-Null
+            }
+            Sync-File -SrcPath $src -DstPath (Join-Path $deployDir $f) -Label "$f -> $($hProp.Name)/$($hv.deploy_dir)" -PreferCopy
+        }
+        if ($hv.plugins) {
+            $pdir = Join-Path $hHome $(if ($hv.plugin_dir) { $hv.plugin_dir } else { "plugins" })
+            foreach ($f in @($hv.plugins)) {
+                $src = Join-Path $tpl $f
+                if (-not (Test-Path -LiteralPath $src)) {
+                    Write-Fail "harness $($hProp.Name): plugin template $f missing"
+                    $script:STATS.Failed++
+                    continue
+                }
+                if (-not $DryRun -and -not (Test-Path -LiteralPath $pdir)) {
+                    New-Item -ItemType Directory -Force -Path $pdir | Out-Null
+                }
+                Sync-File -SrcPath $src -DstPath (Join-Path $pdir $f) -Label "$f -> $($hProp.Name)/plugins" -PreferCopy
+            }
+        }
+        $cfgDir = Join-Path $hHome "config"
+        $gfSrc = Join-Path $tpl "graph-freshness.json"
+        $gfDst = Join-Path $cfgDir "graph-freshness.json"
+        if ((Test-Path -LiteralPath $gfSrc) -and -not (Test-Path -LiteralPath $gfDst)) {
+            if (-not $DryRun -and -not (Test-Path -LiteralPath $cfgDir)) {
+                New-Item -ItemType Directory -Force -Path $cfgDir | Out-Null
+            }
+            if ($DryRun) {
+                Write-Dry "Would copy graph-freshness.json (missing) -> $($hProp.Name)"
+            } else {
+                Copy-Item -LiteralPath $gfSrc -Destination $gfDst -Force
+                Write-Ok "Copied graph-freshness.json (new) -> $($hProp.Name)"
+                $script:STATS.Synced++
+            }
+        }
+        Write-Skip "harness $($hProp.Name): AGENTS.md not written (self-managed)"
+        Write-Host ""
+    }
+}
+
 function Deploy-ProjectRules {
     param([string]$ProjectRoot)
     $rootFull = [System.IO.Path]::GetFullPath($ProjectRoot)
@@ -719,6 +805,9 @@ if (-not $SKIP_EDITOR_SYNC) {
         }
         Write-Host ""
     }
+
+    # ---- 5. Harness 适配层便携件（home 缺席跳过；永不写 AGENTS.md）----
+    Sync-HarnessPortable
 }
 
 if (($ProjectRules -or $ProjectRulesPath) -and -not $SKIP_EDITOR_SYNC) {
@@ -749,10 +838,10 @@ if ($script:STATS.Failed -gt 0) {
 Write-Host ""
 Write-Host "  Mode        : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Root files  : $($ROOT_FILES -join ', ') (single source: config/sync-manifest.json)" -ForegroundColor DarkGray
-Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn=user_rules/*.md; workbuddy=CLAUDE.md+skills only; opencode=disabled (self-managed AGENTS.md)" -ForegroundColor DarkGray
+Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn=user_rules/*.md; workbuddy=CLAUDE.md+skills only; opencode/dsh=harness portable (self-managed AGENTS.md)" -ForegroundColor DarkGray
 Write-Host "  Editors     : cursor$(if ($presentEditors) { ' + ' + ($presentEditors -join ' + ') }) (absent homes auto-skipped)" -ForegroundColor DarkGray
 Write-Host "  Excluded    : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""
 
-# v11: 知识图谱刷新块已移除 — codegraph v1.5 MCP server 自带文件监听自动同步
+# v11: 知识图谱刷新块已移除 — codegraph v1.6 MCP server 自带文件监听自动同步
 # （watcher + connect-time catch-up），无需脚本触发；codebase-memory 已永久禁用。

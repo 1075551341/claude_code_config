@@ -40,6 +40,7 @@ from r20_replay import (  # noqa: E402
 )
 from crg_track import has_crg_since  # noqa: E402
 from graph_freshness import (  # noqa: E402
+    ensure_both,
     load_cfg as load_graph_cfg,
     refresh_incremental,
     resolve_cwd,
@@ -66,6 +67,14 @@ DEFAULT_CFG = {
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
     "review_max_rounds": 3,
+    "require_dual_graph_before_review": True,
+    "parallel_review": {
+        "enabled": True,
+        "when_all": ["reviewers_readonly", "disjoint_concerns", "model_inherit_only"],
+        "forbid_multiplier_models": True,
+        "require_model": "inherit",
+        "max_parallel": 3,
+    },
 }
 
 CODE_EXTENSIONS = {
@@ -76,13 +85,19 @@ CODE_EXTENSIONS = {
 
 
 def load_config() -> dict:
-    cfg = dict(DEFAULT_CFG)
+    cfg = json.loads(json.dumps(DEFAULT_CFG))
     try:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 user_cfg = json.load(f).get("verification_gate", {})
-            for key in cfg:
-                if key in user_cfg:
+            for key in list(cfg):
+                if key not in user_cfg:
+                    continue
+                if isinstance(cfg[key], dict) and isinstance(user_cfg[key], dict):
+                    merged = dict(cfg[key])
+                    merged.update(user_cfg[key])
+                    cfg[key] = merged
+                else:
                     cfg[key] = user_cfg[key]
     except (OSError, json.JSONDecodeError) as e:
         print(f"stop-verification-gate: config read failed: {e}", file=sys.stderr)
@@ -364,6 +379,33 @@ def crg_refresh_and_flag(roots: list, timeout_sec: int, session_id: str = "") ->
     gcfg = load_graph_cfg()
     tmo = min(int(timeout_sec), int(gcfg.get("stop_refresh_timeout_sec", 30)))
     return refresh_incremental(roots, tmo, session_id=session_id)
+
+
+def ensure_dual_graph_before_review(roots: list, session_id: str = "") -> str:
+    """独立开审前再 ensure 双图（非 SessionStart 那一次）。失败返回阻断文案。"""
+    gcfg = load_graph_cfg()
+    tmo = min(45, int(gcfg.get("pretool_ensure_timeout_sec", 90)))
+    missing = []
+    for root in roots:
+        result = ensure_both(root, tmo, session_id=session_id)
+        if not result.get("eligible"):
+            continue
+        if result.get("blocked") or not result.get("ok"):
+            missing.append(os.path.basename(os.path.normpath(root)) or root)
+            continue
+        if gcfg.get("require_both_graphs", True) and not (
+            result.get("codegraph") and result.get("crg")
+        ):
+            missing.append(os.path.basename(os.path.normpath(root)) or root)
+    if not missing:
+        return ""
+    shown = ", ".join(missing[:6])
+    more = f" 等 {len(missing)} 个" if len(missing) > 6 else ""
+    return (
+        "独立审前双图 ensure 未就绪（codegraph + code-review-graph）："
+        f"{shown}{more}。禁止开审；先执行 codegraph init|sync 与 "
+        "code-review-graph build|update"
+    )
 
 
 TEST_FILE_MARKERS = ("test_", "_test.", ".test.", ".spec.", "conftest.py")
@@ -660,9 +702,23 @@ def main():
                     elif phase == "verify":
                         pass
                     elif phase == "review":
+                        if cfg.get("require_dual_graph_before_review", True) and refresh_roots:
+                            graph_reason = ensure_dual_graph_before_review(
+                                refresh_roots, session_id
+                            )
+                            if graph_reason:
+                                reasons.append(graph_reason)
+                        pr = cfg.get("parallel_review") or {}
+                        parallel_hint = ""
+                        if pr.get("enabled") and pr.get("forbid_multiplier_models"):
+                            parallel_hint = (
+                                " 并行审查仅当只读+维度不重叠+Task model=inherit"
+                                "（禁止倍率档）；否则串行。"
+                            )
                         reasons.append(
                             "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
-                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
+                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）。"
+                            f"{parallel_hint}"
                         )
                     elif (
                         verdict_cfg_on

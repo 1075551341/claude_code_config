@@ -356,8 +356,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200 (SPEC ≤200)")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -405,7 +405,7 @@ def main():
 def report(agents=0, skills=0, rules=0, claude_lines=0):
     print("=== .claude v11 VALIDATION (20 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
@@ -1024,7 +1024,7 @@ def _load_yaml(rel: str):
 
 
 def check_v20_scenario_router():
-    """V20: scenario-router 引用的 skill/agent/capability 必须存在；harness 覆盖全部 capability id。"""
+    """V20: scenario-router 语义闭环 + harness fallback + 钩子消费 quality_gates 新键。"""
     router = _load_yaml(os.path.join("config", "scenario-router.yaml"))
     caps = _load_yaml(os.path.join("config", "harness-capabilities.yaml"))
     if not router or not caps:
@@ -1035,6 +1035,14 @@ def check_v20_scenario_router():
     missing_default = cap_ids - set(defaults)
     if missing_default:
         ERRORS.append(f"V20: harness defaults 缺少 capability: {sorted(missing_default)}")
+
+    for cid, spec in defaults.items():
+        if not isinstance(spec, dict):
+            continue
+        has_fb = "fallback" in spec
+        has_int = spec.get("interrupt") is True or spec.get("provider") == "interrupt"
+        if not has_fb and not has_int:
+            ERRORS.append(f"V20: capability {cid} 缺 fallback 或 interrupt")
 
     skills_dir = os.path.join(BASE, "skills")
     agents_dir = os.path.join(BASE, "agents")
@@ -1052,10 +1060,32 @@ def check_v20_scenario_router():
         if f.endswith(".md")
     } if os.path.isdir(rules_dir) else set()
 
+    for name in (router.get("load_defaults") or {}).get("skills") or []:
+        if name not in disk_skills:
+            ERRORS.append(f"V20: load_defaults unknown skill {name}")
+
+    tmap = router.get("triage_map") or {}
     scenarios = router.get("scenarios") or {}
+    if not tmap:
+        ERRORS.append("V20: triage_map missing")
+    for key, sid in tmap.items():
+        if sid not in scenarios:
+            ERRORS.append(f"V20: triage_map {key} -> unknown scenario {sid}")
+            continue
+        spec = scenarios[sid]
+        if spec.get("overlay"):
+            ERRORS.append(f"V20: triage_map {key} 指向 overlay 场景 {sid}")
+        expected = [p for p in str(key).split("|") if p]
+        got = list(spec.get("match") or [])
+        if sorted(expected) != sorted(got):
+            ERRORS.append(f"V20: scenario {sid} match {got} != triage_map {expected}")
+
+    mapped = set(tmap.values())
     for sid, spec in scenarios.items():
         if not isinstance(spec, dict):
             continue
+        if not spec.get("overlay") and sid not in mapped:
+            ERRORS.append(f"V20: 非 overlay 场景 {sid} 未出现在 triage_map")
         load = spec.get("load") or {}
         for name in load.get("skills") or []:
             if name not in disk_skills:
@@ -1069,14 +1099,28 @@ def check_v20_scenario_router():
         for cid in spec.get("capabilities") or []:
             if cid not in cap_ids:
                 ERRORS.append(f"V20: scenario {sid} unknown capability {cid}")
-
-    harnesses = caps.get("harnesses") or {}
-    required = {"claude-code", "cursor", "dsh", "opencode"}
-    missing_h = required - set(harnesses)
-    if missing_h:
-        ERRORS.append(f"V20: harness-capabilities 缺少 harness: {sorted(missing_h)}")
+        q = spec.get("quality")
+        if q is not None and not isinstance(q, dict):
+            ERRORS.append(f"V20: scenario {sid} quality 必须是 object")
+            continue
+        ir = (q or {}).get("independent_review")
+        if ir is not None and not isinstance(ir, dict):
+            ERRORS.append(f"V20: scenario {sid} independent_review 必须是 object")
+        for an in (q or {}).get("review") or []:
+            if an not in disk_agents:
+                ERRORS.append(f"V20: scenario {sid} review unknown agent {an}")
+        opt = (q or {}).get("review_catalog_optional") or {}
+        if opt and not isinstance(opt, dict):
+            ERRORS.append(f"V20: scenario {sid} review_catalog_optional 必须是 object")
+        elif isinstance(opt, dict):
+            for names in opt.values():
+                for an in names if isinstance(names, list) else [names]:
+                    if an not in disk_agents:
+                        ERRORS.append(f"V20: scenario {sid} catalog review unknown agent {an}")
 
     ir = (router.get("quality_defaults") or {}).get("independent_review") or {}
+    if not isinstance(ir, dict):
+        ERRORS.append("V20: quality_defaults.independent_review 必须是 object")
     before = ir.get("before") or []
     if "dual_graph_ensure" not in before:
         ERRORS.append("V20: independent_review.before 必须含 dual_graph_ensure")
@@ -1085,6 +1129,72 @@ def check_v20_scenario_router():
         ERRORS.append("V20: parallel.forbid_multiplier_models 必须为 true")
     if "model_inherit_only" not in (parallel.get("when_all") or []):
         ERRORS.append("V20: parallel.when_all 必须含 model_inherit_only")
+    if str(parallel.get("require_model") or "").strip().lower() != "inherit":
+        ERRORS.append("V20: parallel.require_model 必须为 inherit")
+
+    harnesses = caps.get("harnesses") or {}
+    required = {"claude-code", "cursor", "dsh", "opencode"}
+    missing_h = required - set(harnesses)
+    if missing_h:
+        ERRORS.append(f"V20: harness-capabilities 缺少 harness: {sorted(missing_h)}")
+    wb = harnesses.get("workbuddy") or {}
+    ov = wb.get("overrides") or {}
+    fake = set(ov) - cap_ids
+    if fake:
+        ERRORS.append(f"V20: workbuddy.overrides 含非 capability 键: {sorted(fake)}")
+    dsh_extra = (harnesses.get("dsh") or {}).get("extra") or {}
+    if dsh_extra.get("forbid") != "claude_md_overwrite_agents_md":
+        ERRORS.append("V20: dsh.extra.forbid 必须为 claude_md_overwrite_agents_md")
+
+    qg_path = os.path.join(BASE, "config", "quality_gates.json")
+    try:
+        with open(qg_path, "r", encoding="utf-8") as fh:
+            qg = json.load(fh).get("verification_gate") or {}
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: quality_gates.json unreadable: {exc}")
+        qg = {}
+    for key in ("require_dual_graph_before_review", "parallel_review"):
+        if key not in qg:
+            ERRORS.append(f"V20: quality_gates.verification_gate 缺少 {key}")
+    stop_path = os.path.join(BASE, "hooks", "stop-verification-gate.py")
+    try:
+        stop_src = open(stop_path, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: stop-verification-gate.py unreadable: {exc}")
+        stop_src = ""
+    cfg_block = ""
+    start = stop_src.find("DEFAULT_CFG")
+    end = stop_src.find("CODE_EXTENSIONS")
+    if start >= 0 and end > start:
+        cfg_block = stop_src[start:end]
+    for key in ("require_dual_graph_before_review", "parallel_review"):
+        if key not in cfg_block:
+            ERRORS.append(f"V20: stop-verification-gate DEFAULT_CFG 未消费 {key}")
+    if "ensure_dual_graph_before_review" not in stop_src:
+        ERRORS.append("V20: stop-verification-gate 缺少 ensure_dual_graph_before_review")
+
+    reviewers = set()
+    for spec in scenarios.values():
+        if isinstance(spec, dict):
+            reviewers.update((spec.get("quality") or {}).get("review") or [])
+    reviewers.update(qg.get("reviewer_agents") or [])
+    reviewers.discard("codex-reviewer")
+    for name in sorted(reviewers):
+        path = os.path.join(agents_dir, f"{name}.md")
+        if not os.path.isfile(path):
+            continue
+        try:
+            head = open(path, encoding="utf-8").read(800)
+        except OSError:
+            continue
+        fm = ""
+        if head.startswith("---"):
+            parts = head.split("---", 2)
+            fm = parts[1] if len(parts) > 2 else ""
+        else:
+            fm = head
+        if "model: inherit" not in fm:
+            ERRORS.append(f"V20: 审查者 {name} 缺 model: inherit")
 
     if not any(e.startswith("V20:") for e in ERRORS):
         print(f"  V20: scenario-router ({len(scenarios)}) + harness-capabilities OK ✓")

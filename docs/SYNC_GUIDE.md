@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.18 (v11.4.13) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.19 (v11.4.14) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -23,9 +23,9 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ---
 
-## DSH / OpenCode 适配层（v11.4.13；手工对齐，不覆盖 AGENTS.md）
+## DSH / OpenCode 适配层（v11.4.14；手工对齐，不覆盖 AGENTS.md）
 
-> v20.1 起即登记 DSH 消费方；此处补回正文。OpenCode `editors.opencode.enabled=false`（v11.4.4）保持：**禁止** `CLAUDE.md` → `AGENTS.md`。
+> v20.1 起即登记 DSH 消费方。OpenCode `editors.opencode.enabled=false`（v11.4.4）保持：**禁止** `CLAUDE.md` → `AGENTS.md`。
 
 | 项 | DeepSeek Harness (`~/.dsh`) | OpenCode (`~/.config/opencode`) |
 | --- | --- | --- |
@@ -33,11 +33,11 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 | 便携 CLI | `tools/graph_freshness_cli.py` | `scripts/graph_freshness_cli.py` |
 | R20 机械门 | `tools/r20_check.py` | `scripts/r20_check.py` |
 | 图谱插件 | 无 hook；agent CLI ensure/refresh | `plugins/graph-freshness.ts` + `verify-gate.ts` |
-| 投放脚本 | `scripts/deploy-editor-graph-hooks.ps1` | 同左 |
-| 版本映射 | DSH 2.12 ↔ Claude 11.4.13 | OpenCode 1.12 ↔ Claude 11.4.13 |
+| 投放 | `sync.ps1`（home 存在则复制便携件）+ `deploy-editor-graph-hooks.ps1` | 同左 |
+| 版本映射 | DSH 2.12 ↔ Claude 11.4.14 | OpenCode 1.12 ↔ Claude 11.4.14 |
 | 禁止 | 把 Cursor `followup_message` / Claude Stop exit 2 原样搬过去；spawn `hooks/_lib/gate_cli.py` | 同左；禁止 CLAUDE.md 覆盖 AGENTS.md |
 
-`config/sync-manifest.json` 的 **`harnesses` 段** 是清单 SSOT。`check.ps1`：home 缺席跳过；home 存在则断言便携文件在，且 `AGENTS.md` 不是指向 `~/.claude/CLAUDE.md` 的软链。
+`config/sync-manifest.json` 的 **`harnesses` 段** 是清单 SSOT。`sync.ps1` 复制便携文件（不写 AGENTS.md；`graph-freshness.json` 仅在缺失时复制）。`check.ps1`：home 缺席跳过；home 存在则断言便携文件在，且 `AGENTS.md` 不是指向 `CLAUDE.md` 的软链。
 
 场景/工具加载仍以 Claude 仓 `config/scenario-router.yaml` + `harness-capabilities.yaml` 为语义 SSOT；各端 AGENTS.md 只做 P0 指针级手工对齐。
 
@@ -259,6 +259,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.19 (v11.4.14)**：`sync.ps1` 复制 harness 便携件（不写 AGENTS.md）；场景路由加载器；Stop/Guard 消费审前双图键。Guard 1.2.12。
 - **v20.18 (v11.4.13)**：场景路由 YAML + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）；`harnesses` 段；补 DSH 适配层正文；workbuddy enabled=true（home 缺席跳过）。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
 - **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。

@@ -76,7 +76,7 @@
     }
   },
   "harnesses": {
-    "_comment": "v11.4.13：DSH/OpenCode 适配层。不进 editors 投放循环；禁止 CLAUDE.md 覆盖 AGENTS.md。便携件由 deploy-editor-graph-hooks.ps1 复制。",
+    "_comment": "v11.4.14：DSH/OpenCode 适配层。不进 editors 投放循环；禁止 CLAUDE.md 覆盖 AGENTS.md。便携件由 sync.ps1（home 存在）与 deploy-editor-graph-hooks.ps1 复制。",
     "dsh": {
       "home": "~/.dsh",
       "agents_md": "self-managed",

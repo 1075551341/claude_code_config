@@ -108,11 +108,32 @@ def main() -> None:
                 gcfg = gf.load_cfg()
                 roots = [cwd] if cwd else []
                 if roots:
-                    _has_crg, warns, refresh_result = gf.refresh_incremental(
-                        roots,
-                        int(gcfg.get("stop_refresh_timeout_sec", 30)),
-                        session_id=session_id or "",
+                    phase = r20.dual_pass_phase(entry, qg) if r20 else ""
+                    need_review_ensure = bool(
+                        qg.get("require_dual_graph_before_review", True)
+                        and phase == "review"
                     )
+                    if need_review_ensure and hasattr(gf, "ensure_both"):
+                        refresh_result = gf.ensure_both(
+                            roots[0],
+                            min(45, int(gcfg.get("pretool_ensure_timeout_sec", 90))),
+                            session_id=session_id or "",
+                        )
+                        _has_crg = bool(refresh_result.get("crg"))
+                        warns = list(refresh_result.get("warnings") or [])
+                        if refresh_result.get("eligible") and (
+                            refresh_result.get("blocked") or not refresh_result.get("ok")
+                        ):
+                            print(
+                                "verification_stop: 独立审前双图 ensure 未就绪",
+                                file=sys.stderr,
+                            )
+                    else:
+                        _has_crg, warns, refresh_result = gf.refresh_incremental(
+                            roots,
+                            int(gcfg.get("stop_refresh_timeout_sec", 30)),
+                            session_id=session_id or "",
+                        )
                     for w in warns:
                         print(f"verification_stop: {w}", file=sys.stderr)
                     graph_ui = str((refresh_result or {}).get("ui") or "").strip()

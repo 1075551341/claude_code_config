@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.13**（场景路由 YAML SSOT + 审前双图 + inherit 并行审查。原 v11.4.12：一次找齐再集中改、每轮全新开审。原 v11.4.11：审查只找问题。原 v11.4.10：Cursor 完成门不 followup。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.14**（场景路由加载器闭环 + 审前双图钩子消费 + inherit 并行。原 v11.4.13：YAML SSOT。原 v11.4.12：一次找齐再集中改、每轮全新开审。原 v11.4.11：审查只找问题。原 v11.4.10：Cursor 完成门不 followup。原 v11.4.6：图谱保鲜硬门）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -128,7 +128,7 @@ task-triage → config/scenario-router.yaml → Read load.* → config/harness-c
 - eligible git 仓无双图时 Grep/Glob/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
 - 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
-- 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
+- 未按当前 harness 的 `web_scrape`+`web_search`（Firecrawl+Exa，或 Cursor 等端的 fallback）做 L3 双源，只用 WebFetch/WebSearch 并假装已交叉 → 违反L3
 - 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律
 
 **强制场景**（HARD-GATE）：

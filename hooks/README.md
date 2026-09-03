@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.16
+# Hooks 钩子系统 v5.17
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.17 变更（v11.4.14）**：`scenario_router.py` 加载 YAML；Stop/Guard 消费审前双图与 inherit 并行键；`_lib` 12 py。
 > **v5.16 变更（v11.4.13）**：独立审前双图 ensure；并行审查须 inherit、禁倍率档。场景路由见 `config/scenario-router.yaml`。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
@@ -26,7 +27,7 @@
 | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/`             | 19 注册激活                | standard profile（settings.json 已注册）                                                                                  |
 | `hooks/`（未注册 5） | 5                          | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor / stop-graph-freshness（TRAE/Qoder Stop） |
-| `hooks/_lib/`        | 11 py + `gate_messages.md` | 上列 + `graph_freshness.py`（双图 ensure / deny / 验绿后 sync.ps1）                                                       |
+| `hooks/_lib/`        | 12 py + `gate_messages.md` | 上列 + `graph_freshness.py` + `scenario_router.py`（分类后必加载）                                                       |
 
 ---
 
@@ -36,7 +37,7 @@
 
 | Hook                         | 功能                                                                                        | 层   |
 | ---------------------------- | ------------------------------------------------------------------------------------------- | ---- |
-| `session-start-bootstrap.py` | **双图 ensure**（init/update）+ P0 分类门注入（读 gate_messages.md）；无图写入 blocked 状态 | 骨架 |
+| `session-start-bootstrap.py` | **双图 ensure**（init/update）+ P0 分类门 + 场景路由短指针；无图写入 blocked 状态 | 骨架 |
 
 > 插件（superpowers/claude-mem）注入与本地 bootstrap 为 additive 叠加，不冲突。
 
@@ -60,7 +61,7 @@
 | `pre-bash-guard.py`         | Bash                                                     | 危险命令拦截 + git --no-verify 阻止 + **stash exit2 硬拦截 + commit WARN 注入**（`-C/--git-dir/--work-tree/-c` 变体防绕过）+ dep check + **编码误用警告组**（echo/tee/Set-Content/Out-File/heredoc 重定向写内容、powershell.exe、sed -i → 提示稳定替代，v11.4.2） | 骨架 |
 | `pre-manifest-validator.py` | Skill/Task                                               | MANIFEST 归属校验防互博                                                                                                                                                                                                                                           | 横切 |
 
-### PostToolUse (5)
+### PostToolUse (4)
 
 | Hook                          | 触发                                                     | 功能                                                                                                                                                                | 层   |
 | ----------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
@@ -97,6 +98,7 @@
 | `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
 | `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、六维续轮文案         | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
 | `_lib/graph_freshness.py`    | 双图 ensure / 工具分类 / 验绿后 sync.ps1                | bootstrap、pre-graph-freshness、stop-verification-gate、Cursor Guard、TRAE/Qoder                                                   |
+| `_lib/scenario_router.py`    | 分类后必加载集合 + independent_review 形状              | session-start-bootstrap；validate_config V20                                                                                      |
 | `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
 | `_lib/encoding_guard.py`     | 编码守卫核心：快照签名/比对 + 绝对损坏检查              | `pre-encoding-snapshot.py`、`post-encoding-check.py`                                                                               |
 
@@ -143,7 +145,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.12（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；review 相位审前双图 ensure / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
@@ -175,4 +177,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.15（v11.4.12）| 19 注册激活 + 5 未注册；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_
+_版本：5.17（v11.4.14）| 19 注册激活 + 5 未注册；场景路由加载器；审前双图钩子消费；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_

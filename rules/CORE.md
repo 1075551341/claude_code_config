@@ -131,7 +131,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 - 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；**独立审查前必须再 ensure 一次**；无图 **deny**，禁止 Grep/编辑/查询 MCP，不得 Grep 兜底。
 - 场景→技能/工具 SSOT → `config/scenario-router.yaml`；端能力 → `config/harness-capabilities.yaml`。并行审查子代理必须 `model=inherit`（禁止倍率档）。
 
-**索引刷新**：codegraph v1.5 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新。不恢复每次编辑 kg sync hook。
+**索引刷新**：codegraph v1.6 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新；**独立开审前**再 ensure。不恢复每次编辑 kg sync hook。
 
 ### R17 反模式检测
 

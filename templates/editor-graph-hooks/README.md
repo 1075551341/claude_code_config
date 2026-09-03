@@ -38,7 +38,7 @@ pwsh -File scripts/deploy-editor-graph-hooks.ps1
       "hooks": [
         {
           "type": "command",
-          "command": "python \"C:/Users/DELL/.claude/hooks/session-start-bootstrap.py\"",
+          "command": "python \"%USERPROFILE%/.claude/hooks/session-start-bootstrap.py\"",
           "timeout": 120
         }
       ]
@@ -50,7 +50,7 @@ pwsh -File scripts/deploy-editor-graph-hooks.ps1
       "hooks": [
         {
           "type": "command",
-          "command": "python \"C:/Users/DELL/.claude/hooks/pre-graph-freshness.py\"",
+          "command": "python \"%USERPROFILE%/.claude/hooks/pre-graph-freshness.py\"",
           "timeout": 90
         }
       ]
@@ -61,7 +61,7 @@ pwsh -File scripts/deploy-editor-graph-hooks.ps1
       "hooks": [
         {
           "type": "command",
-          "command": "python \"C:/Users/DELL/.claude/hooks/stop-graph-freshness.py\"",
+          "command": "python \"%USERPROFILE%/.claude/hooks/stop-graph-freshness.py\"",
           "timeout": 150
         }
       ]

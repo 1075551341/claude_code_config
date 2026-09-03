@@ -70,8 +70,9 @@
       "enabled": true,
       "when_all": ["reviewers_readonly", "disjoint_concerns", "model_inherit_only"],
       "forbid_multiplier_models": true,
+      "require_model": "inherit",
       "max_parallel": 3,
-      "description": "v11.4.13：独立审前双图 ensure；只读+维度不重叠+子代理 inherit（禁止 max/xhigh/thinking-max 倍率档）才允许并行多审查"
+      "description": "v11.4.14：Stop/Guard 消费本键。独立审前双图 ensure；只读+维度不重叠+子代理 inherit（禁止倍率档）才允许并行多审查"
     },
     "doc_only_extensions": [
       ".md",
@@ -89,7 +90,7 @@
     "require_both_graphs": true,
     "subproject_discovery": true,
     "subproject_max_children": 8,
-    "description": "v11.4.9 图谱保鲜硬门：SessionStart/sessionEnd 双图 ensure/refresh；已有图时 CLI 失败记警告不阻断；无图 PreToolUse deny；仅验证全绿后 sync.ps1。子项目 depth-1 封顶。"
+    "description": "v11.4.14 图谱保鲜硬门：SessionStart/Stop 双图 ensure/refresh；独立审前再 ensure；已有图时 CLI 失败记警告不阻断；无图 PreToolUse deny；仅验证全绿后 sync.ps1。子项目 depth-1 封顶。"
   },
   "issue_tracker": {
     "enabled": true,
