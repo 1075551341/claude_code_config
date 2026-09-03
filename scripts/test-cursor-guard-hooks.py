@@ -566,6 +566,14 @@ def main() -> int:
         note="R19: 新建分支须 ask（branch_requires_ask）",
     )
 
+    r_wt = run_hook("shell_guard.py", {"command": "git worktree add ../wt"})
+    results["tests"]["shell_guard_worktree_add"] = finish_case(
+        r_wt,
+        behavior=isinstance(r_wt.get("stdout"), dict)
+        and r_wt["stdout"].get("permission") == "ask",
+        note="R19: worktree add 无 --detach 须 ask",
+    )
+
     r_wrap = run_hook("shell_guard.py", {"command": 'bash -c "git checkout -b feat"'})
     results["tests"]["shell_guard_branch_bash_c"] = finish_case(
         r_wrap,

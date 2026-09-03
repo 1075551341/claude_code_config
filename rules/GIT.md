@@ -80,7 +80,7 @@ main (生产)
 | `git stash` | **禁止**（shell deny） | 允许 |
 | `git commit` | **禁止自动**；仅本条消息显式要求 + Guard 确认 | 允许 |
 | `git push`（非 `--dry-run`） | **禁止自动**（Claude deny） | 允许 |
-| **新建分支**（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b`） | **禁止自动**；仅本条消息显式要求「建分支 / 开 PR 且必须新分支」 | 允许 |
+| **新建分支**（`checkout -b` / `switch -c` / `branch <name>` / `worktree add`（无 `--detach` 亦会建分支）） | **禁止自动**；仅本条消息显式要求「建分支 / 开 PR 且必须新分支」 | 允许 |
 | **切换分支**（`switch <branch>` / `checkout <branch>`，非路径还原） | **禁止自动**；仅本条消息显式要求「切分支」 | 允许 |
 | 只读 `status` / `diff` / `log` / `branch`（无新分支名）/ `branch -a\|-vv` | 允许 | 允许 |
 | `git checkout -- <path>` / `git checkout .` / `git checkout HEAD -- <path>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |

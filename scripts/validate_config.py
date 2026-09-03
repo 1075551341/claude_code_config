@@ -179,7 +179,7 @@ def v4_iron_laws_consistency():
     for tag in ("R15", "R17", "R18", "R19", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
-    for kw in ("锁文件", "幻影依赖", "分支"):
+    for kw in ("锁文件", "幻影依赖", "分支", "操作要点", "机械门"):
         if kw not in core:
             ERRORS.append(f"V4: CORE.md missing R15/R19 keyword {kw!r}")
     if "幻影依赖" not in claude and "隔离式" not in claude:

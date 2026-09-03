@@ -57,7 +57,7 @@ def main() -> None:
                 {
                     "permission": "deny",
                     "user_message": "已禁止 Agent 执行 git stash（请本地手动处理工作区）",
-                    "agent_message": "【Cursor Guard】禁止 git stash。勿自动 stash；请用户本地处理或换用 worktree。",
+                    "agent_message": "【Cursor Guard】禁止 git stash。勿自动 stash；请用户本地处理或换用 git worktree add --detach。",
                 }
             )
             return

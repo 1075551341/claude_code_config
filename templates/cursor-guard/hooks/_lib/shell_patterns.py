@@ -2,6 +2,7 @@
 """精简 Shell 危险模式（Cursor beforeShellExecution，独立于 Claude hooks）。"""
 from __future__ import annotations
 
+import json
 import os
 import re
 import shlex
@@ -45,7 +46,6 @@ def match_git_stash(command: str) -> bool:
 def match_git_commit(command: str) -> bool:
     return bool(_GIT_COMMIT_RE.search(command))
 
-
 # 与 hooks/_lib/git_r19.py 对等（部署副本不 import 该文件）
 _GIT_GLOBAL_WITH_ARG = {
     "-C",
@@ -58,6 +58,8 @@ _GIT_GLOBAL_WITH_ARG = {
 }
 
 _NPM_INSTALL_RE = re.compile(r"\bnpm\s+(?:i|install|add|ci)\b", re.IGNORECASE)
+_YARN_ADD_RE = re.compile(r"\byarn\s+(?:add|install|i)\b", re.IGNORECASE)
+_BUN_ADD_RE = re.compile(r"\bbun\s+(?:add|install|i)\b", re.IGNORECASE)
 _PIP_INSTALL_RE = re.compile(
     r"(?:\bpip(?:3)?\s+install\b|\bpython(?:3(?:\.\d+)?)?\s+-m\s+pip\s+install\b|\bpy\s+-m\s+pip\s+install\b)",
     re.IGNORECASE,
@@ -66,7 +68,11 @@ _UV_PIP_RE = re.compile(r"\buv\s+pip\b", re.IGNORECASE)
 
 _PREFIX_WRAPPERS = {"sudo", "command", "time", "nohup", "env"}
 _SEPARATORS = {"&&", "||", ";", "|", "&"}
-_SHELL_BINS = {"bash", "sh", "zsh", "dash", "ksh", "fish", "pwsh", "bash.exe", "sh.exe"}
+_SHELL_BINS = {
+    "bash", "sh", "zsh", "dash", "ksh", "fish",
+    "pwsh", "pwsh.exe", "powershell", "powershell.exe",
+    "cmd", "cmd.exe", "bash.exe", "sh.exe",
+}
 _MAX_NEST = 8
 _DURATION_RE = re.compile(r"^\d+(?:\.\d+)?[smhd]?$", re.IGNORECASE)
 
@@ -202,11 +208,17 @@ def _extract_shell_c_script(tokens: list[str]) -> str | None:
     n = len(tokens)
     while i < n:
         t = tokens[i]
-        if t in ("-c", "--command"):
-            return tokens[i + 1] if i + 1 < n else None
+        if t in ("-c", "--command", "-Command", "-command", "/c", "/C", "/k", "/K"):
+            if i + 1 >= n:
+                return None
+            rest = tokens[i + 1 :]
+            return rest[0] if len(rest) == 1 else " ".join(rest)
         if t.startswith("-") and not t.startswith("--") and "c" in t[1:]:
-            return tokens[i + 1] if i + 1 < n else None
-        if t.startswith("-"):
+            if i + 1 >= n:
+                return None
+            rest = tokens[i + 1 :]
+            return rest[0] if len(rest) == 1 else " ".join(rest)
+        if t.startswith("-") or (t.startswith("/") and len(t) <= 4):
             i += 1
             continue
         break
@@ -308,7 +320,11 @@ def _checkout_is_mutate(args: list[str]) -> bool:
     ):
         return True
     if "--" in args:
-        return False
+        after = args[args.index("--") + 1 :]
+        if after:
+            return False
+        before = [a for a in args[: args.index("--")] if a == "-" or not a.startswith("-")]
+        return bool(before)
     if any(a in ("--ours", "--theirs", "--conflict") or a.startswith("--conflict=") for a in args):
         return False
     positional: list[str] = []
@@ -370,7 +386,12 @@ def _argv_is_branch_mutate(argv: list[str]) -> bool:
         return bool(positional)
 
     if sub == "worktree" and args and args[0] == "add":
-        return any(a in ("-b", "-B") for a in args[1:])
+        rest = args[1:]
+        if any(a in ("-h", "--help") for a in rest):
+            return False
+        if any(a in ("--detach", "-d") for a in rest):
+            return False
+        return True
 
     return False
 
@@ -397,8 +418,10 @@ def _has_lockfile(cwd: str, names: tuple[str, ...]) -> bool:
 def pm_mix_warning(command: str, cwd: str | None) -> str | None:
     """Warn (do not deny) when mixing package managers against lockfiles (R15)."""
     root = cwd if cwd and os.path.isdir(cwd) else os.getcwd()
-    if _has_lockfile(root, ("pnpm-lock.yaml",)) and _NPM_INSTALL_RE.search(command):
-        return "R15: pnpm 仓禁止混用 npm install（幻影依赖/双 lock）— 改用 pnpm"
+    if _has_lockfile(root, ("pnpm-lock.yaml",)) and (
+        _NPM_INSTALL_RE.search(command) or _YARN_ADD_RE.search(command) or _BUN_ADD_RE.search(command)
+    ):
+        return "R15: pnpm 仓禁止混用 npm/yarn/bun（幻影依赖/双 lock）— 改用 pnpm"
     if _has_lockfile(root, ("uv.lock",)) and _PIP_INSTALL_RE.search(command) and not _UV_PIP_RE.search(
         command
     ):
@@ -408,6 +431,66 @@ def pm_mix_warning(command: str, cwd: str | None) -> str | None:
     ):
         return "R15: uv/poetry 仓禁止裸 pip install — 改用 uv add / poetry add"
     return None
+
+
+def _package_manager_field(pkg: Path) -> str | None:
+    try:
+        data = json.loads(pkg.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    raw = str(data.get("packageManager") or "").lower()
+    for name in ("pnpm", "yarn", "bun", "npm"):
+        if name in raw:
+            return name
+    return None
+
+
+def _iter_roots(cwd: str) -> list[Path]:
+    p = Path(cwd)
+    out: list[Path] = []
+    for _ in range(6):
+        out.append(p)
+        if (p / ".git").exists() or (p / ".git").is_file():
+            break
+        if p.parent == p:
+            break
+        p = p.parent
+    return out
+
+
+def detect_package_manager(cwd: str) -> str:
+    """Lockfile-first package manager (R15). Walks up 6 levels; pnpm before npm."""
+    root = cwd if cwd and os.path.isdir(cwd) else os.getcwd()
+    chain = _iter_roots(root)
+    for p in chain:
+        if (p / "pnpm-lock.yaml").is_file():
+            return "pnpm"
+        if (p / "yarn.lock").is_file():
+            return "yarn"
+        if (p / "bun.lockb").is_file() or (p / "bun.lock").is_file():
+            return "bun"
+        if (p / "package-lock.json").is_file():
+            return "npm"
+        if (p / "uv.lock").is_file():
+            return "uv"
+        if (p / "poetry.lock").is_file():
+            return "poetry"
+    for p in chain:
+        pkg = p / "package.json"
+        if pkg.is_file():
+            got = _package_manager_field(pkg)
+            if got:
+                return got
+    for p in chain:
+        if (p / "Cargo.lock").is_file() or (p / "Cargo.toml").is_file():
+            return "cargo"
+        if (p / "go.mod").is_file():
+            return "go"
+        if (p / "pyproject.toml").is_file() or (p / "requirements.txt").is_file():
+            return "uv"
+    return "unknown"
 
 
 NETWORK_ASK_PATTERN = re.compile(r"\b(curl|wget|nc)\s", re.IGNORECASE)

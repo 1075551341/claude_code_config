@@ -122,7 +122,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 ### R19 Git 禁令（含分支）
 
-禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。仅用户**本条消息**显式要求「提交 / 建分支 / 切分支 / 开 PR 且必须新分支」时才允许。路径还原 `git checkout -- <path>` / `git checkout .` / `git restore` 与只读 `status` / `diff` / `log` / `branch -a` 放行。复合命令与包装（`bash -c` / `eval` / `timeout` / `nice` / 子 shell）中的建切分支同样拦截。机械门：Claude `pre-bash-guard` deny；Cursor Guard ask（`forbid_auto_branch`）。命令表 → `rules/GIT.md`。
+禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。仅用户**本条消息**显式要求「提交 / 建分支 / 切分支 / 开 PR 且必须新分支」时才允许。路径还原 `git checkout -- <path>` / `git checkout .` / `git restore` 与只读 `status` / `diff` / `log` / `branch -a` 放行。`git worktree add` 无 `--detach` 亦会建分支，禁止自动。复合命令与包装（`bash -c` / `eval` / `timeout` / `nice` / 子 shell / `pwsh -Command` / `cmd /c`）中的建切分支同样拦截。机械门：Claude `pre-bash-guard` deny；Cursor Guard ask（`forbid_auto_branch`）。命令表 → `rules/GIT.md`。
 
 ### R20 会话终验
 
