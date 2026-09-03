@@ -6,7 +6,7 @@
 
 - **R1–R20 骨架**：`rules/CORE.md` 从「R12–R20 + R1–R11 指针」补成全表「操作要点 + 机械门」；L0 `CLAUDE.md` 仍一行表（≤200）。不新增第 11 条规则、不收缩 L0–L3 / 1+N 同步。
 - **R15**：按语言/锁文件选隔离式包管理器（防 hoist 幻影依赖与幻觉包）。矩阵 SSOT → `rules/GOVERNANCE.md`。机械门：pnpm 仓 `npm install`、uv/poetry 仓裸 `pip` / `python -m pip` **警告不阻断**（`hooks/_lib/git_r19.py` + Cursor Guard `pm_mix_warning`）。
-- **R19**：禁止自动新建/切换分支（`checkout -b` / `switch -c` / `branch <name>` / `worktree add`（无 `--detach` 亦建分支） / `checkout|switch <branch>`）；路径还原 `git checkout -- <path>` / `git checkout .` / `git restore` 放行。复合命令与包装（`&&` / `;` / `GIT_DIR=` / `bash -c` / `eval` / `timeout` / `pwsh -Command` / `cmd /c`）同样拦截。Claude `pre-bash-guard` deny；Cursor Guard `forbid_auto_branch` + `branch_requires_ask`（ask）。Guard **1.2.12**。
+- **R19**：禁止自动新建/切换分支（含 `checkout -bfeat` 粘连、`--orphan=`、`git branch name -vv`、`worktree add` 无 `--detach`）。路径还原放行。复合/包装（`&&` / `;` / `&` / `{ }` / `env -i` / `bash -c` / `pwsh -Command` / `cmd /c`）同样拦截。Claude deny；Cursor ask。Guard **1.2.12**。
 - **文档戳**：`SPEC.md` / `hooks/README.md`「Cursor 编辑器」/ `docs/CURSOR_EDITOR_SETUP.md` 现行 Guard 版本与模板 `1.2.12` 对齐（V14 扫描）。
 - **TRAE**：R19 守卫仍是 AppData 独立副本（不经 `sync.ps1`）。改 `pre-bash-guard.py` 后须按 `docs/SYNC_GUIDE.md` 既有通道刷新该副本。
 - **测试**：`hooks/tests/test_git_r19.py`（`&&`/`;`/`&` 复合、`bash -c`/`eval`/`timeout`/`pwsh -Command`/`cmd /c`/`{ }`/`env -i`、worktree、poetry.lock、`python -m pip`）+ bash fixture；Guard 抽测分支 ask / worktree / 路径还原。

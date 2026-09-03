@@ -342,11 +342,13 @@ def git_subargv(command: str) -> list[str] | None:
 
 
 def _checkout_is_mutate(args: list[str]) -> bool:
-    if any(
-        a in ("-b", "-B", "--orphan") or a == "--branch" or a.startswith("--branch=")
-        for a in args
-    ):
-        return True
+    for a in args:
+        if a in ("-b", "-B", "--orphan") or a == "--branch" or a.startswith("--branch=") or a.startswith("--orphan="):
+            return True
+        if len(a) > 2 and a.startswith("-b") and not a.startswith("--"):
+            return True
+        if len(a) > 2 and a.startswith("-B") and not a.startswith("--"):
+            return True
     if "--" in args:
         after = args[args.index("--") + 1 :]
         if after:
@@ -402,11 +404,16 @@ def _argv_is_branch_mutate(argv: list[str]) -> bool:
             for a in args
         ):
             return True
+        if any(a == "--list" or a.startswith("--list=") for a in args):
+            return False
         if any(
-            a in _BRANCH_LIST_FLAGS
+            a in ("-a", "--all", "-r", "--remotes", "--contains", "--merged", "--no-merged",
+                  "--points-at", "--show-current", "--column", "--format", "--sort")
             or a.startswith("--format=")
             or a.startswith("--sort=")
             or a.startswith("--column=")
+            or a.startswith("--contains=")
+            or a.startswith("--merged=")
             for a in args
         ):
             return False

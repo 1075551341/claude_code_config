@@ -81,7 +81,7 @@ git worktree add --detach ../feature-b  # 隔离工作区，不建分支
 ### 场景 2: 并行 Code Review
 
 ```bash
-# PR 需要 review，但还想继续开发
+# 须用户本条消息显式要求切到该 PR 分支；否则用 --detach
 git worktree add ../review-PR pr/123-review
 # 在 review-PR 目录进行 review
 # 主目录继续开发
@@ -90,7 +90,7 @@ git worktree add ../review-PR pr/123-review
 ### 场景 3: 隔离测试环境
 
 ```bash
-# 需要在干净环境测试
+# 须用户显式要求；干净快照也可用 --detach
 git worktree add ../test-clean main
 # 在 test-clean 运行测试
 ```

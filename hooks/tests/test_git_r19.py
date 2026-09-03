@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -69,6 +70,14 @@ def test_branch_mutate() -> None:
         "pwsh -Command '& { git checkout -b feat }'",
         "{ git checkout -b feat; }",
         "env -i git checkout -b feat",
+        "git checkout -bfeat",
+        "git checkout -Bfeat",
+        "git checkout --orphan=x",
+        "true & git checkout -bfeat",
+        'bash -c "git checkout -bfeat"',
+        "git branch feat4 -vv",
+        "git branch -vv feat5",
+        "git branch feat6 -v",
     ]
     allow = [
         "git status",
@@ -93,6 +102,9 @@ def test_branch_mutate() -> None:
         "git branch --format='%(refname:short)'",
         "git worktree add --detach ../wt",
         "git worktree list",
+        "git branch --list feat7",
+        "git branch feat7 --list",
+        "git branch -vv",
     ]
     for cmd in deny:
         check(f"deny:{cmd}", match_git_branch_mutate(cmd), "expected mutate=True")
@@ -171,6 +183,10 @@ def test_pre_bash_guard_fixtures() -> None:
         ("pwsh -Command { git checkout -b feat }", 2, True),
         ("env -i git checkout -b feat", 2, True),
         ("{ git checkout -b feat; }", 2, True),
+        ("git checkout -bfeat", 2, True),
+        ("git checkout --orphan=x", 2, True),
+        ("git branch feat4 -vv", 2, True),
+        ("git branch --list feat7", 0, False),
         ("git checkout -- README.md", 0, False),
         ("git worktree add --detach ../wt", 0, False),
         ("git checkout .", 0, False),
@@ -224,6 +240,10 @@ def test_cursor_shell_patterns_parity() -> None:
         "true & git checkout -b feat",
         "pwsh -Command { git checkout -b feat }",
         "env -i git checkout -b feat",
+        "git checkout -bfeat",
+        "git checkout --orphan=x",
+        "git branch feat4 -vv",
+        "git branch --list feat7",
         "git branch --format '%(refname:short)'",
         "git branch -a",
         "git status",
@@ -235,12 +255,54 @@ def test_cursor_shell_patterns_parity() -> None:
         check(f"parity:{cmd}", a == b, f"claude={a} cursor={b}")
 
 
+def test_live_git_creates() -> None:
+    git = shutil.which("git")
+    if not git:
+        check("live-git-skip", True, "git not installed")
+        return
+    env = os.environ.copy()
+    env.update(
+        {
+            "GIT_AUTHOR_NAME": "t",
+            "GIT_AUTHOR_EMAIL": "t@t",
+            "GIT_COMMITTER_NAME": "t",
+            "GIT_COMMITTER_EMAIL": "t@t",
+        }
+    )
+    with tempfile.TemporaryDirectory() as td:
+        subprocess.run([git, "init", "-q"], cwd=td, check=True, capture_output=True, env=env)
+        (Path(td) / "f").write_text("x\n", encoding="utf-8")
+        subprocess.run([git, "add", "f"], cwd=td, check=True, capture_output=True, env=env)
+        subprocess.run([git, "commit", "-qm", "i"], cwd=td, check=True, capture_output=True, env=env)
+        r = subprocess.run([git, "checkout", "-bfeat2"], cwd=td, capture_output=True, text=True, env=env)
+        listed = subprocess.run([git, "branch", "--list", "feat2"], cwd=td, capture_output=True, text=True, env=env)
+        check(
+            "live-git-glued-b-creates",
+            r.returncode == 0 and "feat2" in listed.stdout and match_git_branch_mutate("git checkout -bfeat2"),
+            f"rc={r.returncode} stderr={r.stderr[:200]} out={listed.stdout!r}",
+        )
+        r2 = subprocess.run([git, "branch", "featvv", "-vv"], cwd=td, capture_output=True, text=True, env=env)
+        listed2 = subprocess.run([git, "branch", "--list", "featvv"], cwd=td, capture_output=True, text=True, env=env)
+        check(
+            "live-git-branch-vv-creates",
+            r2.returncode == 0 and "featvv" in listed2.stdout and match_git_branch_mutate("git branch featvv -vv"),
+            f"rc={r2.returncode} stderr={r2.stderr[:200]} out={listed2.stdout!r}",
+        )
+        r3 = subprocess.run([git, "checkout", "--orphan=orphx"], cwd=td, capture_output=True, text=True, env=env)
+        check(
+            "live-git-orphan-eq",
+            r3.returncode == 0 and match_git_branch_mutate("git checkout --orphan=orphx"),
+            f"rc={r3.returncode} stderr={r3.stderr[:200]}",
+        )
+
+
 def main() -> int:
     test_branch_mutate()
     test_pm_mix()
     test_detect_package_manager()
     test_pre_bash_guard_fixtures()
     test_cursor_shell_patterns_parity()
+    test_live_git_creates()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     for item in FAILED:
         print("FAIL", item)
