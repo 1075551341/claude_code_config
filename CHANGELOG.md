@@ -2,6 +2,15 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.13 场景路由 YAML + 审前双图 + inherit 并行审查（2026-09-03）
+
+- **配置驱动**：新增 `config/scenario-router.yaml`（场景→load.skills/agents + quality）与 `config/harness-capabilities.yaml`（capability → 当前端 provider/fallback/interrupt）。分类后只按 YAML 加载；缺能力走声明降级，禁止假装调用。
+- **独立审查**：审前强制双图 ensure（codegraph init|sync + CRG build|update）。只读 + 维度不重叠 + 子代理 `model=inherit`（禁止 max/xhigh/thinking-max 倍率档）时允许并行多审查（最多 3）；否则串行。日常 `review_max_rounds=3` 不变。
+- **Harness 适配**：`sync-manifest.json` 增 `harnesses`（DSH / OpenCode）。`editors.opencode.enabled` 仍 false，禁止 CLAUDE.md 覆盖 AGENTS.md。`check.ps1` 在 home 存在时断言便携 CLI 且 AGENTS.md 非 CLAUDE.md 软链。
+- **漂移清零**：SPEC MCP 常驻 4；hooks 19 注册；Superpowers 6.3.0；INDEX 版本对齐；插件表 hud/exa/context7/firecrawl/playwright/github 与 v11.4.5 一致；workbuddy `enabled=true`（home 缺席跳过）；`validate_config.py` BASE=`CLAUDE_HOME`/仓根回退 + `change-implementer` + V20 校验两份 YAML。
+- **文档**：SYNC_GUIDE 补 DSH 适配层；TOOL_MATCHING_GUIDE / using-superpowers 改为指针。不精简 skill/agent/rule/catalog。
+- **多端**：DSH 2.12 / OpenCode 1.12 映射到 11.4.13。Guard 仍 1.2.11。
+
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 
 - **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。

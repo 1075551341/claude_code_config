@@ -24,7 +24,7 @@
 
 .NOTES
     配套命令（本脚本不代跑，按需单独执行）：
-      python scripts/validate_config.py            # 深度校验 V1-V19
+      python scripts/validate_config.py            # 深度校验 V1-V20
       pwsh -File scripts/sync.ps1                # 修同步/软链问题
       pwsh -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
 #>
@@ -37,7 +37,18 @@ param([switch]$Quick)
 Set-StrictMode -Off
 $ErrorActionPreference = "SilentlyContinue"
 
-$CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
+function Resolve-ClaudeDir {
+    if ($env:CLAUDE_HOME -and (Test-Path (Join-Path $env:CLAUDE_HOME "CLAUDE.md"))) {
+        return $env:CLAUDE_HOME
+    }
+    $repo = Split-Path $PSScriptRoot -Parent
+    if (Test-Path (Join-Path $repo "CLAUDE.md")) { return $repo }
+    $up = $env:USERPROFILE
+    if (-not $up) { $up = $env:HOME }
+    return (Join-Path $up ".claude")
+}
+
+$CLAUDE_DIR = Resolve-ClaudeDir
 # 根文件集合与编辑器清单单源：config/sync-manifest.json（与 sync.ps1 / impact_sync.py 共用）；读取失败回退内置默认
 $SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
 # v11.1 多编辑器（1+N）：managed 编辑器白名单（cursor 走专用校验块；下表为其余编辑器）
@@ -331,6 +342,50 @@ foreach ($edName in @($MANAGED_EDITORS.Keys)) {
         Add-Check "Symlink" $edName "pass" "$edPasses checks OK"
     } else {
         Add-Check "Symlink" $edName "warn" "$($edIssues -join ', ') -- run sync.ps1"
+    }
+}
+
+# v11.4.13 harness adapter：home 缺席跳过；存在则便携文件在，且 AGENTS.md 不是 CLAUDE.md 软链
+if ($syncMf -and $syncMf.harnesses) {
+    foreach ($hProp in $syncMf.harnesses.PSObject.Properties) {
+        if ($hProp.Name -eq "_comment") { continue }
+        $hv = $hProp.Value
+        $hHome = "$($hv.home)" -replace '^~', $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME })
+        $hHome = $hHome -replace '/', [IO.Path]::DirectorySeparatorChar
+        if (-not (Test-Path -LiteralPath $hHome)) {
+            Add-Check "Harness" $hProp.Name "pass" "home absent, skipped"
+            continue
+        }
+        $hIssues = @()
+        $deployDir = "$(if ($hv.deploy_dir) { $hv.deploy_dir } else { 'tools' })"
+        foreach ($f in @($hv.deploy)) {
+            $fp = Join-Path (Join-Path $hHome $deployDir) $f
+            if (-not (Test-Path -LiteralPath $fp)) { $hIssues += "$deployDir/$f(missing)" }
+        }
+        if ($hv.plugins) {
+            $pdir = "$(if ($hv.plugin_dir) { $hv.plugin_dir } else { 'plugins' })"
+            foreach ($f in @($hv.plugins)) {
+                $fp = Join-Path (Join-Path $hHome $pdir) $f
+                if (-not (Test-Path -LiteralPath $fp)) { $hIssues += "$pdir/$f(missing)" }
+            }
+        }
+        if ("$($hv.agents_md)" -eq "self-managed") {
+            $ag = Join-Path $hHome "AGENTS.md"
+            if (Test-Path -LiteralPath $ag) {
+                $item = Get-Item -LiteralPath $ag -Force
+                if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                    $tgt = "$($item.Target)"
+                    if ($tgt -like "*CLAUDE.md") {
+                        $hIssues += "AGENTS.md is symlink to CLAUDE.md (forbidden)"
+                    }
+                }
+            }
+        }
+        if ($hIssues.Count -eq 0) {
+            Add-Check "Harness" $hProp.Name "pass" "portable files OK; AGENTS.md not CLAUDE.md overlay"
+        } else {
+            Add-Check "Harness" $hProp.Name "warn" "$($hIssues -join ', ') -- run deploy-editor-graph-hooks.ps1"
+        }
     }
 }
 

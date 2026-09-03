@@ -43,7 +43,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 
 ## 任务分类
 
-分类树/六维/升档触发 SSOT → `skills/task-triage/SKILL.md`。入口：R18 claude-mem search（相关先查）→ Read task-triage（Phase0 盘点）→ 按分类树路由。**简单旁路**仅 attempt=1（不 Read executing-plans/subagent-driven-development），完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项）。
+分类树/六维/升档触发 SSOT → `skills/task-triage/SKILL.md`。入口：R18 claude-mem search（相关先查）→ Read task-triage（Phase0 盘点）→ **查 `config/scenario-router.yaml` 对应场景** → 显式 Read `load.skills/agents/rules` → 工具经 `config/harness-capabilities.yaml` 按当前 harness 解析 capability（缺则 fallback/interrupt，禁止假装已调用）。**简单旁路**仅 attempt=1（不 Read executing-plans/subagent-driven-development），完成前仍须 Read verification-before-completion。
 
 ## P0 路由集（6）
 
@@ -73,21 +73,17 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 | 3      | 简单(task-triage判定=关联需改≤2)单模块 | 轻量 `spec/` | —                                         |
 | 4      | 默认 多文件（非简单）                  | OpenSpec     | rules/OPENSPEC.md；无目录则创建 change id |
 
-## 调研三档（① brainstorming 内嵌）
+## 调研三档 / 场景→工具
 
-| 档  | 场景                     | 工具                 |
-| --- | ------------------------ | -------------------- |
-| L1  | 单点 API/事实            | Context7 / Exa       |
-| L2  | 方案对比                 | Exa + Firecrawl 单页 |
-| L3  | 深度选型、/deep-research | skills/deep-research |
-
-升级：L1 不足→L2→L3。代码库用 codegraph，禁止先用 Firecrawl。
+权威：`config/scenario-router.yaml` 的 `research_l1|l2|l3` + `config/harness-capabilities.yaml`。升级 L1→L2→L3。代码库用 code_explore（codegraph），禁止先用 Firecrawl 探本地。
 
 ## 调用链
 
 ```
-MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
+task-triage → config/scenario-router.yaml → Read load.* → harness-capabilities 解析 capability
 ```
+
+独立审查前必须双图 ensure。并行审查仅当只读 + 维度不重叠 + Task `model=inherit`（禁止倍率档）。
 
 ## 工作流扩展（L3 信号触发）
 

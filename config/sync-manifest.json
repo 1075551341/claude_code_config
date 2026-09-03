@@ -38,7 +38,7 @@
     },
     "workbuddy": {
       "home": "~/.workbuddy",
-      "enabled": false,
+      "enabled": true,
       "rules_channel": null,
       "rules_ext": null,
       "root_index": false,
@@ -73,6 +73,23 @@
       "rules_ext": null,
       "root_index": false,
       "special": "agents_md"
+    }
+  },
+  "harnesses": {
+    "_comment": "v11.4.13：DSH/OpenCode 适配层。不进 editors 投放循环；禁止 CLAUDE.md 覆盖 AGENTS.md。便携件由 deploy-editor-graph-hooks.ps1 复制。",
+    "dsh": {
+      "home": "~/.dsh",
+      "agents_md": "self-managed",
+      "deploy_dir": "tools",
+      "deploy": ["graph_freshness_cli.py", "r20_check.py"]
+    },
+    "opencode": {
+      "home": "~/.config/opencode",
+      "agents_md": "self-managed",
+      "deploy_dir": "scripts",
+      "plugin_dir": "plugins",
+      "deploy": ["graph_freshness_cli.py", "r20_check.py"],
+      "plugins": ["graph-freshness.ts", "verify-gate.ts"]
     }
   }
 }

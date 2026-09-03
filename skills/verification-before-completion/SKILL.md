@@ -13,6 +13,7 @@ source: obra/superpowers
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
 > **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup（规则驱动双审）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
+> **v11.4.13**：独立审查**之前**必须双图 ensure（`codegraph init|sync` + `code-review-graph build|update`）。多个审查子代理可并行，当且仅当：只读、维度不重叠、`model=inherit`（禁止 max/xhigh/thinking-max 倍率档）；否则串行。场景/工具加载以 `config/scenario-router.yaml` 为准。
 > **v11.4.12**：独立审查一次找齐全部问题再汇总；清单齐后再派修改者集中改齐。**每轮独立审查必须全新开审**（禁止 `resume` 上一轮审查者；对照原始要求全量重扫，上轮清单不得限定范围）。禁止边审边改耗轮次（避免满 3 轮仍有未扫到的问题）。
 > **v11.4.11**：独立审查者只找问题（是否符合预期），禁止改文件；修改必须 `change-implementer`。配置/修改必须与文档/注释同步。验证与审查不一致须立即派修改者，禁止只报不等待。
 > **v11.4.10**：Cursor Stop / beforeSubmitPrompt **不再注入完成门**（followup_message 会刷会话面板）。完成验证改由规则：修改→验证→独立审查；PASS 即停；仅结论不一致才再开一轮，最多 3 轮。Claude Stop exit 2 保留。

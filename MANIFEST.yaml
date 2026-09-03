@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.12
+# 组件唯一归属源 — 防左右手互博 — v11.4.13
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.12"
-updated: "2026-09-01"
+version: "11.4.13"
+updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -168,7 +168,7 @@ loading_tiers:
     - skill/pr-workflow
     - skill/claude-mem-maintenance
   L3_dispatch: [agents/*, mcp/*, rules/* lazy globs] # was L4, merged per v10.2 D4
-  note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
+  note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由。场景加载 SSOT=config/scenario-router.yaml；端能力=config/harness-capabilities.yaml"
 
 phases:
   plan:
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4.12 — 一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。v11.4.11 — 审查者只找问题，修改走 change-implementer；配置/文档/注释必须同步。v11.4.10 — Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留。v11.4.9 — 有改动即双审；独立审查 PASS/符合预期即停，仅结论不一致（NEEDS-CHANGES）才再开一轮最多 3 轮；计划未批准零注入（CallDynamicTool/CreatePlan）。v11.4.8 — 双审=修改→验证→审查循环最多 3 轮（dual_pass_phase）。上游：Claude Stop exit 2。SSOT quality_gates.json + hooks/_lib/r20_replay.py。"
+    note: "v11.4.13 — 场景路由 YAML SSOT；独立审前双图 ensure；只读+维度不重叠+inherit（禁倍率档）可并行多审查。v11.4.12 — 一次找齐再集中改；每轮全新开审。v11.4.11 — 审查者只找问题，修改走 change-implementer。SSOT quality_gates.json + config/scenario-router.yaml + hooks/_lib/r20_replay.py。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -913,7 +913,7 @@ sync_targets:
   # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
   # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
   # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.4: opencode 解耦；v11.4.6：DSH/OpenCode 图谱+R20 走各自 home（CLI/r20_check/verify-gate），仍不投放 CLAUDE.md
+  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.13: harnesses 段登记 DSH/OpenCode 适配（deploy-editor-graph-hooks.ps1）；opencode enabled=false 禁止 CLAUDE.md 覆盖 AGENTS.md
   method: symlink_first_copy_fallback
   script: scripts/sync.ps1
   modes: [default, -Skills, -All, -DryRun]

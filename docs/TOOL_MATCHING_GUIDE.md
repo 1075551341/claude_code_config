@@ -4,8 +4,10 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 # MCP 工具语义匹配指南
 
-> **本文只保留匹配矩阵**（场景→工具 / 决策树 / 调研三档 / 前置条件）。
-> 服务器清单/分组/四工具分工/禁止项 SSOT → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`（v11 三文档去重）。
+> **场景→技能/工具/质量门 SSOT** → `config/scenario-router.yaml`。
+> **端能力（builtin/plugin/mcp/cli/none + fallback）SSOT** → `config/harness-capabilities.yaml`。
+> 本文只留原则、前置条件、禁止项。服务器清单/四工具分工 → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`。
+> 独立审前双图 ensure；并行审查须 inherit、无倍率档。
 
 ## 原则
 

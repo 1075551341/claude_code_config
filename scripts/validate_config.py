@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V19 共 19 项静态检查（结构/铁律/hook/MCP/INDEX 一致性）。
+"""配置一致性校验 — V1-V20 共 20 项静态检查（结构/铁律/hook/MCP/INDEX/场景路由）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
@@ -9,7 +9,7 @@
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
-V19 三大 INDEX 与磁盘双向一致。
+V19 三大 INDEX 与磁盘双向一致 / V20 scenario-router + harness-capabilities。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -30,7 +30,25 @@ try:
 except ImportError:
     yaml = None
 
-BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
+def resolve_base() -> str:
+    env = os.environ.get("CLAUDE_HOME")
+    if env and os.path.isfile(os.path.join(env, "CLAUDE.md")):
+        return os.path.normpath(env)
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(here)
+    if os.path.isfile(os.path.join(repo, "CLAUDE.md")) and os.path.isdir(
+        os.path.join(repo, "skills")
+    ):
+        return repo
+    for key in ("USERPROFILE", "HOME"):
+        home = os.environ.get(key) or ""
+        cand = os.path.join(home, ".claude")
+        if home and os.path.isfile(os.path.join(cand, "CLAUDE.md")):
+            return cand
+    return os.path.join(os.environ.get("HOME") or os.environ.get("USERPROFILE") or "", ".claude")
+
+
+BASE = resolve_base()
 ERRORS = []
 WARNINGS = []
 INFO = []
@@ -45,7 +63,7 @@ GSTACK_REVIEW_AGENTS = {
 # v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
 # product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer",
+    "sre", "doc-writer", "change-implementer", "codex-reviewer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
 GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
@@ -373,6 +391,7 @@ def main():
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
+    check_v20_scenario_router()
 
     report(
         agents=len(agent_names),
@@ -384,13 +403,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (19 checks) ===")
+    print("=== .claude v11 VALIDATION (20 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 500)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
+        "V19", "V20",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -414,7 +434,7 @@ def check_v10_bare_except():
     import re as re_mod
     import glob as glob_mod
     import ast as ast_mod
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     count = 0
     for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
         if "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
@@ -461,7 +481,7 @@ def check_v11_hook_exception_propagation():
         "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     missing = []
     for h in core_hooks:
         if not os.path.exists(os.path.join(hooks_dir, h)):
@@ -481,8 +501,8 @@ def check_v11_hook_exception_propagation():
 
 def check_v12_r16_in_core():
     """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
-    core_path = os.path.expanduser("~/.claude/rules/CORE.md")
-    claude_path = os.path.expanduser("~/.claude/CLAUDE.md")
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    claude_path = os.path.join(BASE, "CLAUDE.md")
     for fpath, label in [(core_path, "CORE.md"), (claude_path, "CLAUDE.md")]:
         try:
             with open(fpath, 'r', encoding='utf-8') as f:
@@ -837,8 +857,8 @@ def check_v17_bare_except_extended():
         "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [
-        os.path.expanduser("~/.claude/hooks"),
-        os.path.expanduser("~/.claude/scripts"),
+        os.path.join(BASE, "hooks"),
+        os.path.join(BASE, "scripts"),
     ]
     violations = []
 
@@ -985,6 +1005,89 @@ def check_v19_index_disk_sync():
         indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
         disk_rules,
     )
+
+
+def _load_yaml(rel: str):
+    path = os.path.join(BASE, rel)
+    if not os.path.isfile(path):
+        ERRORS.append(f"V20: {rel} missing")
+        return None
+    if yaml is None:
+        WARNINGS.append(f"V20: PyYAML missing, skip parse of {rel}")
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return yaml.safe_load(fh)
+    except (OSError, yaml.YAMLError) as exc:
+        ERRORS.append(f"V20: {rel} unreadable: {exc}")
+        return None
+
+
+def check_v20_scenario_router():
+    """V20: scenario-router 引用的 skill/agent/capability 必须存在；harness 覆盖全部 capability id。"""
+    router = _load_yaml(os.path.join("config", "scenario-router.yaml"))
+    caps = _load_yaml(os.path.join("config", "harness-capabilities.yaml"))
+    if not router or not caps:
+        return
+
+    cap_ids = set(caps.get("capability_ids") or [])
+    defaults = caps.get("defaults") or {}
+    missing_default = cap_ids - set(defaults)
+    if missing_default:
+        ERRORS.append(f"V20: harness defaults 缺少 capability: {sorted(missing_default)}")
+
+    skills_dir = os.path.join(BASE, "skills")
+    agents_dir = os.path.join(BASE, "agents")
+    rules_dir = os.path.join(BASE, "rules")
+    disk_skills = {
+        d for d in os.listdir(skills_dir)
+        if os.path.isdir(os.path.join(skills_dir, d))
+    } if os.path.isdir(skills_dir) else set()
+    disk_agents = {
+        f[:-3] for f in os.listdir(agents_dir)
+        if f.endswith(".md") and f != "README.md"
+    } if os.path.isdir(agents_dir) else set()
+    disk_rules = {
+        f for f in os.listdir(rules_dir)
+        if f.endswith(".md")
+    } if os.path.isdir(rules_dir) else set()
+
+    scenarios = router.get("scenarios") or {}
+    for sid, spec in scenarios.items():
+        if not isinstance(spec, dict):
+            continue
+        load = spec.get("load") or {}
+        for name in load.get("skills") or []:
+            if name not in disk_skills:
+                ERRORS.append(f"V20: scenario {sid} unknown skill {name}")
+        for name in load.get("agents") or []:
+            if name not in disk_agents:
+                ERRORS.append(f"V20: scenario {sid} unknown agent {name}")
+        for name in load.get("rules") or []:
+            if name not in disk_rules:
+                ERRORS.append(f"V20: scenario {sid} unknown rule {name}")
+        for cid in spec.get("capabilities") or []:
+            if cid not in cap_ids:
+                ERRORS.append(f"V20: scenario {sid} unknown capability {cid}")
+
+    harnesses = caps.get("harnesses") or {}
+    required = {"claude-code", "cursor", "dsh", "opencode"}
+    missing_h = required - set(harnesses)
+    if missing_h:
+        ERRORS.append(f"V20: harness-capabilities 缺少 harness: {sorted(missing_h)}")
+
+    ir = (router.get("quality_defaults") or {}).get("independent_review") or {}
+    before = ir.get("before") or []
+    if "dual_graph_ensure" not in before:
+        ERRORS.append("V20: independent_review.before 必须含 dual_graph_ensure")
+    parallel = ir.get("parallel") or {}
+    if parallel.get("forbid_multiplier_models") is not True:
+        ERRORS.append("V20: parallel.forbid_multiplier_models 必须为 true")
+    if "model_inherit_only" not in (parallel.get("when_all") or []):
+        ERRORS.append("V20: parallel.when_all 必须含 model_inherit_only")
+
+    if not any(e.startswith("V20:") for e in ERRORS):
+        print(f"  V20: scenario-router ({len(scenarios)}) + harness-capabilities OK ✓")
 
 
 if __name__ == "__main__":

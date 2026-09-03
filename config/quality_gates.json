@@ -65,6 +65,14 @@
     "require_review_verdict": true,
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": true,
+    "require_dual_graph_before_review": true,
+    "parallel_review": {
+      "enabled": true,
+      "when_all": ["reviewers_readonly", "disjoint_concerns", "model_inherit_only"],
+      "forbid_multiplier_models": true,
+      "max_parallel": 3,
+      "description": "v11.4.13：独立审前双图 ensure；只读+维度不重叠+子代理 inherit（禁止 max/xhigh/thinking-max 倍率档）才允许并行多审查"
+    },
     "doc_only_extensions": [
       ".md",
       ".txt",

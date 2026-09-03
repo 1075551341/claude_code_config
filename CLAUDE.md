@@ -6,9 +6,9 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.12**（审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.13**（场景路由 YAML SSOT + 审前双图 + inherit 并行审查。原 v11.4.12：一次找齐再集中改、每轮全新开审。原 v11.4.11：审查只找问题。原 v11.4.10：Cursor 完成门不 followup。原 v11.4.6：图谱保鲜硬门）
 
-**五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
+**五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
 
 ## 总纲链（Tool-First Read，禁止凭记忆执行）
@@ -18,6 +18,7 @@ layer: router
 3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
 4. **法典** — `SPEC.md`（变更史 → `CHANGELOG.md`）
 5. **按需加载**（任务触发后再 Read，禁止全量扫描）：`skills/<name>/SKILL.md` | `agents/<name>.md` | `rules/<name>.md`（治理详情+最佳实践 → `rules/GOVERNANCE.md`）
+6. **场景路由 SSOT** — 分类后 Read `config/scenario-router.yaml` 对应场景（加载列表+质量门）；工具经 `config/harness-capabilities.yaml` 按当前端解析，缺能力走 fallback/interrupt，禁止假装已调用
 
 ## 优先级链
 
@@ -112,17 +113,10 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 ## Tool-First 路由与场景-工具映射
 
 ```
-MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
+task-triage → config/scenario-router.yaml → Read load.* → config/harness-capabilities.yaml 解析 capability
 ```
 
-| 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
-| ---------------------- | ------------------- | ------------------- | ------------------------- |
-| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
-| 精准上下文/变更影响/风险/审查/PR | CRG `get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context` | 用 codegraph 做 test-gap；无图仍假装已审 | 有 `.code-review-graph/` 的改前/完成前/开 PR |
-| 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |
-| 网页深度调研           | `Firecrawl+Exa`     | WebFetch            | /deep-research 或调研意图 |
-| Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
-| 输出压缩               | caveman             | 原生输出            | 上下文>70%                |
+场景→技能/工具/质量门 **只在** `config/scenario-router.yaml`；端能力 **只在** `config/harness-capabilities.yaml`。矩阵正文禁止在本文件复制。原则：内置>plugin>MCP>中断启用；codegraph=怎么运作；CRG=影响面/审查；claude-mem=为什么/偏好。
 
 **阈值**：见 CORE.md 三级阈值 | GSD **70%逻辑断点**（任务边界） | ⛔100% | **压缩**：Cursor→`/summarize`；Claude Code→`/compact`（auto-compact 配置 → `rules/CONTEXT.md`）
 **调研三档**（L1→L2→L3决策标准） → `skills/deep-research/SKILL.md` | **规格三轨**（OpenSpec/GSD/轻量，互斥） → `rules/OPENSPEC.md`
@@ -147,10 +141,12 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 ## 审查路由
 
 ```
+独立审前：双图 ensure（codegraph init|sync + code-review-graph build|update）
 所有变更→eng-reviewer（只找问题）| 产品→+ceo | UI/UX→+designer+dx-reviewer
-有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐后汇总；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 resume 上一轮审查者，最多 3 轮）；禁止边审边改、禁止审查者改文件、禁止只连审不改。计划未批准禁止声称完成。Cursor 完成门不 followup
-安全→+security-reviewer(全量审计=深度模式) | 跨模型→+codex-reviewer
-iOS/部署/多方案设计→catalog/agents/ 按需启用
+有代码/配置改动：change-implementer 修改→验证→审查一次找齐后汇总；干净 PASS 即停；清单齐后再派修改者集中改齐；每轮全新开审（禁止 resume）；日常最多 3 轮（单任务覆盖须用户显式声明）
+并行审查：仅当只读 + 维度不重叠 + 子代理 model=inherit（禁止 max/xhigh/thinking-max 倍率档）；否则串行
+禁止边审边改、禁止审查者改文件、禁止只连审不改。计划未批准禁止声称完成。Cursor 完成门不 followup
+安全→+security-reviewer(深度模式) | 跨模型→+codex-reviewer | catalog/agents/ 按需
 ```
 
 ## 命令速查
@@ -175,7 +171,8 @@ iOS/部署/多方案设计→catalog/agents/ 按需启用
 | 铁律/编码/阈值   | rules/CORE.md                                                                            |
 | 工作流/DAG       | rules/WORKFLOW.md                                                                        |
 | Agent 协作       | rules/AGENTS.md                                                                          |
-| MCP 规范 SSOT    | rules/MCP.md（矩阵→docs/TOOL_MATCHING_GUIDE.md；Cursor 差异→docs/CURSOR_MCP_PROFILE.md） |
+| 场景路由/端能力  | config/scenario-router.yaml + config/harness-capabilities.yaml                           |
+| MCP 规范 SSOT    | rules/MCP.md（矩阵指针→场景 YAML；Cursor 差异→docs/CURSOR_MCP_PROFILE.md）               |
 | 调研 SSOT        | docs/research/44-repo-deep-research-v10.11.md + repos/                                   |
 | 同步指南         | docs/SYNC_GUIDE.md                                                                       |
 | Git/PR 流程      | skills/git-workflow, skills/pr-workflow                                                  |

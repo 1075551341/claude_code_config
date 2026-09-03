@@ -1,0 +1,210 @@
+# 场景路由 SSOT — v11.4.13
+# 分类后只按本文件加载 skill/agent/rule；工具经 harness-capabilities.yaml 解析 capability。
+# 文档（TOOL_MATCHING_GUIDE / using-superpowers 矩阵）只指针，禁止复制第二份表。
+version: "11.4.13"
+updated: "2026-09-03"
+
+quality_defaults:
+  r20: true
+  observed_output: true
+  graph: mandate
+  review_on_code_or_config_edit: true
+  review_max_rounds_global: 3 # 日常护栏；单任务覆盖须用户显式声明
+  independent_review:
+    before:
+      - dual_graph_ensure # codegraph init|sync + code-review-graph build|update
+    fresh_each_round: true # 禁止 resume 上一轮审查者
+    reviewer_readonly: true
+    implementer: change-implementer
+    parallel:
+      enabled: true
+      when_all:
+        - reviewers_readonly
+        - disjoint_concerns # 维度不重叠（如 eng vs dx vs spec）
+        - model_inherit_only # 子代理 model=inherit，禁止倍率档
+      forbid_multiplier_models: true
+      # 倍率档（禁止派给审查子代理）：thinking-max / xhigh / max / opus-thinking-max 等
+      multiplier_model_substrings:
+        - thinking-max
+        - thinking-xhigh
+        - "-max"
+        - "-xhigh"
+        - opus-5-thinking-max
+      max_parallel: 3
+    pass_stops: true
+
+forbidden_global:
+  - codebase-memory
+  - aider-repo-map
+  - sequential-thinking
+  - ralph-loop
+  - serena_as_r17
+  - auto_merge_debug_ops
+  - claude_md_overwrite_agents_md
+
+scenarios:
+  session_start:
+    match: [会话开始, using-superpowers]
+    load:
+      skills: [using-superpowers, task-triage]
+    capabilities: [memory, code_explore]
+    quality: { graph: ensure }
+
+  simple_docs:
+    match: [简单, 文档类]
+    load:
+      skills: [using-superpowers, task-triage, change-impact-analysis, verification-before-completion]
+      agents: [doc-writer]
+    capabilities: [code_explore]
+    quality: { verify_tier: 比例, review_on_code_or_config_edit: false }
+
+  simple_impl:
+    match: [简单, 实现类]
+    load:
+      skills: [using-superpowers, task-triage, change-impact-analysis, verification-before-completion]
+    capabilities: [code_explore, symbol_edit]
+    quality: { verify_tier: 比例 }
+
+  simple_config_value:
+    match: [简单, 配置值类]
+    load:
+      skills: [using-superpowers, task-triage, change-impact-analysis, verification-before-completion]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 比例 }
+
+  simple_bug:
+    match: [简单, Bug类]
+    load:
+      skills: [using-superpowers, task-triage, change-impact-analysis, systematic-debugging, verification-before-completion]
+    capabilities: [code_explore, symbol_edit]
+    quality: { verify_tier: 比例 }
+
+  bug_unclear:
+    match: [非简单, Bug]
+    load:
+      skills: [using-superpowers, task-triage, systematic-debugging, change-impact-analysis, verification-before-completion]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  feature_nonsimple:
+    match: [非简单, 功能类]
+    load:
+      skills:
+        [
+          using-superpowers,
+          task-triage,
+          brainstorming,
+          writing-plans,
+          spec-validation,
+          executing-plans,
+          change-impact-analysis,
+          verification-before-completion,
+        ]
+      agents: [planner, spec-reviewer, eng-reviewer, change-implementer]
+      rules: [OPENSPEC.md]
+    capabilities: [code_explore, impact_review, lib_docs]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  architecture:
+    match: [非简单, 架构类]
+    load:
+      skills:
+        [
+          using-superpowers,
+          task-triage,
+          brainstorming,
+          writing-plans,
+          adr-management,
+          improve-codebase-architecture,
+          change-impact-analysis,
+          verification-before-completion,
+        ]
+      agents: [architect, spec-reviewer, eng-reviewer, change-implementer]
+      rules: [CORE.md, GOVERNANCE.md]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  config_structure:
+    match: [非简单, 配置类]
+    load:
+      skills:
+        [
+          using-superpowers,
+          task-triage,
+          brainstorming,
+          writing-plans,
+          change-impact-analysis,
+          verification-before-completion,
+        ]
+      agents: [eng-reviewer, dx-reviewer, spec-reviewer, change-implementer, doc-writer]
+      rules: [MCP.md, GOVERNANCE.md]
+    capabilities: [code_explore, impact_review]
+    quality:
+      verify_tier: 全量
+      review: [eng-reviewer, dx-reviewer, spec-reviewer]
+      parallel_ok: true # 三审查只读、维度不重叠，条件满足可并行（inherit）
+      r20: true
+
+  delete_move:
+    match: [非简单, 删除类]
+    load:
+      skills: [using-superpowers, task-triage, brainstorming, change-impact-analysis, verification-before-completion]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  research_l1:
+    match: [调研, L1]
+    capabilities: [lib_docs, web_search, memory]
+    load:
+      skills: [using-superpowers, task-triage]
+    quality: { verify_tier: 比例, review_on_code_or_config_edit: false }
+
+  research_l2:
+    match: [调研, L2]
+    capabilities: [web_search, web_scrape, lib_docs, memory]
+    load:
+      skills: [using-superpowers, task-triage]
+    quality: { verify_tier: 比例 }
+
+  research_l3:
+    match: [调研, L3, 非简单]
+    capabilities: [web_search, web_scrape, lib_docs, memory]
+    load:
+      skills: [using-superpowers, task-triage, deep-research]
+    quality: { verify_tier: 全量 }
+
+  verify_complete:
+    match: [④验证, 完成前]
+    load:
+      skills: [verification-before-completion]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [impact_review, code_explore]
+    quality:
+      verify_tier: 全量
+      independent_review: true
+      before: [dual_graph_ensure]
+
+  open_pr:
+    match: [开PR, pr-workflow]
+    load:
+      skills: [pr-workflow, verification-before-completion, requesting-code-review]
+      agents: [eng-reviewer]
+    capabilities: [impact_review, github]
+    quality: { review: [eng-reviewer], before: [dual_graph_ensure] }
+
+  symbol_refactor:
+    match: [符号重构, 重命名]
+    load:
+      skills: [change-impact-analysis, code-refactoring, verification-before-completion]
+      agents: [eng-reviewer, change-implementer]
+    capabilities: [symbol_edit, code_explore, impact_review]
+    quality: { verify_tier: 全量, review: [eng-reviewer] }
+
+  debug:
+    match: [Bug, 调试]
+    load:
+      skills: [systematic-debugging, change-impact-analysis]
+    capabilities: [code_explore, browser_debug]
+    quality: { interrupt: [browser_debug] }
