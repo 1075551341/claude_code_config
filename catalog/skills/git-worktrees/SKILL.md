@@ -41,14 +41,15 @@ Worktree 是独立的工作目录，共享同一个 Git 仓库
 ### 创建 Worktree
 
 ```bash
+# 以下建/切分支配方仅当用户本条消息显式要求时执行（R19）
 # 基于现有分支
 git worktree add ../project-feature-a feature-a
 
 # 基于新分支
 git worktree add -b new-feature ../project-new-feature main
 
-# 基于远程分支
-git worktree add ../project-upstream upstream/main
+# 不建分支（Agent 可用）
+git worktree add --detach ../project-scratch HEAD
 ```
 
 ### 列出 Worktrees

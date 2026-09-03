@@ -109,6 +109,14 @@ def main() -> None:
             gf = import_claude_lib(cfg["sync"]["claude_home"], "graph_freshness")
             gcfg = gf.load_cfg()
             cwd = gf.resolve_cwd(data)
+            try:
+                from shell_patterns import detect_package_manager
+
+                pm = detect_package_manager(cwd)
+                if pm != "unknown":
+                    parts.append(f"- 包管理器: {pm}")
+            except Exception as pm_exc:
+                print(f"session_bootstrap: package manager detect failed: {pm_exc}", file=sys.stderr)
             result = gf.ensure_both(
                 cwd,
                 int(gcfg.get("session_ensure_timeout_sec", 120)),

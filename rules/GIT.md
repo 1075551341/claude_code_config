@@ -83,7 +83,7 @@ main (生产)
 | **新建分支**（`checkout -b` / `switch -c` / `branch <name>` / `worktree add`（无 `--detach` 亦会建分支）） | **禁止自动**；仅本条消息显式要求「建分支 / 开 PR 且必须新分支」 | 允许 |
 | **切换分支**（`switch <branch>` / `checkout <branch>`，非路径还原） | **禁止自动**；仅本条消息显式要求「切分支」 | 允许 |
 | 只读 `status` / `diff` / `log` / `branch`（无新分支名）/ `branch -a\|-vv` | 允许 | 允许 |
-| `git checkout -- <path>` / `git checkout .` / `git checkout HEAD -- <path>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |
+| `git checkout -- <path>` / `git checkout .` / `git checkout HEAD -- <path>` / `git checkout HEAD <file>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |
 
 **配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash` / `git.forbid_auto_branch` / `git.branch_requires_ask`；Claude Code → `hooks/pre-bash-guard.py`（deny）+ `hooks/_lib/git_r19.py`。
 

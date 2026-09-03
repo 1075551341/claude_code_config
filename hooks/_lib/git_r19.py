@@ -31,7 +31,7 @@ _PIP_INSTALL_RE = re.compile(
 )
 _UV_PIP_RE = re.compile(r"\buv\s+pip\b", re.IGNORECASE)
 
-_PREFIX_WRAPPERS = {"sudo", "command", "time", "nohup", "env"}
+_PREFIX_WRAPPERS = {"sudo", "command", "time", "nohup"}
 _SEPARATORS = {"&&", "||", ";", "|", "&"}
 _SHELL_BINS = {
     "bash", "sh", "zsh", "dash", "ksh", "fish",
@@ -153,6 +153,16 @@ def _split_compound(command: str) -> list[str]:
             buf = []
             i += 2
             continue
+        if c == "&":
+            prev = s[i - 1] if i > 0 else ""
+            nxt = s[i + 1] if i + 1 < n else ""
+            if prev != ">" and nxt != ">":
+                part = "".join(buf).strip()
+                if part:
+                    out.append(part)
+                buf = []
+                i += 1
+                continue
         if c == "|":
             part = "".join(buf).strip()
             if part:
@@ -168,6 +178,53 @@ def _split_compound(command: str) -> list[str]:
     return out
 
 
+def _unwrap_script(script: str) -> str:
+    """Strip pwsh `& { ... }` / POSIX `{ ...; }` / `(...)` wrappers."""
+    s = str(script).strip()
+    for _ in range(6):
+        prev = s
+        if s.startswith("&") and not s.startswith("&&"):
+            s = s[1:].strip()
+        s = _strip_subshell(s)
+        if s.startswith("{") and "}" in s:
+            inner = s[1:]
+            if inner.endswith("};"):
+                inner = inner[:-2]
+            elif inner.endswith("}"):
+                inner = inner[:-1]
+            s = inner.strip()
+            if s.endswith(";"):
+                s = s[:-1].strip()
+        if s == prev:
+            break
+    return s
+
+
+def _skip_env_prefix(tokens: list[str], i: int) -> int:
+    """i points at 'env'. Skip env options / assignments; return index of the command."""
+    n = len(tokens)
+    i += 1
+    while i < n:
+        t = tokens[i]
+        if _is_env_assign(t):
+            i += 1
+            continue
+        if t in ("-i", "--ignore-environment", "-0", "--null", "-v", "--debug"):
+            i += 1
+            continue
+        if t in ("-u", "--unset", "-C", "--chdir"):
+            i += 2
+            continue
+        if t.startswith("--unset=") or t.startswith("--chdir="):
+            i += 1
+            continue
+        if t.startswith("-") and not _is_git_bin(t):
+            i += 1
+            continue
+        break
+    return i
+
+
 def _extract_shell_c_script(tokens: list[str]) -> str | None:
     i = 1
     n = len(tokens)
@@ -177,12 +234,14 @@ def _extract_shell_c_script(tokens: list[str]) -> str | None:
             if i + 1 >= n:
                 return None
             rest = tokens[i + 1 :]
-            return rest[0] if len(rest) == 1 else " ".join(rest)
+            raw = rest[0] if len(rest) == 1 else " ".join(rest)
+            return _unwrap_script(raw)
         if t.startswith("-") and not t.startswith("--") and "c" in t[1:]:
             if i + 1 >= n:
                 return None
             rest = tokens[i + 1 :]
-            return rest[0] if len(rest) == 1 else " ".join(rest)
+            raw = rest[0] if len(rest) == 1 else " ".join(rest)
+            return _unwrap_script(raw)
         if t.startswith("-") or (t.startswith("/") and len(t) <= 4):
             i += 1
             continue
@@ -219,6 +278,9 @@ def _git_subargvs_from_tokens(tokens: list[str], depth: int) -> list[list[str]]:
         i += 1
     while i < n:
         base = _cmd_base(tokens[i])
+        if base == "env":
+            i = _skip_env_prefix(tokens, i)
+            continue
         if base in _PREFIX_WRAPPERS:
             i += 1
             while i < n and _is_env_assign(tokens[i]):
@@ -259,9 +321,10 @@ def iter_git_subargvs(command: str, depth: int = 0) -> list[list[str]]:
     """Every git subcommand argv in compound / wrapped commands."""
     if depth > _MAX_NEST or not command or not str(command).strip():
         return []
+    command = _unwrap_script(str(command))
     out: list[list[str]] = []
     for seg in _split_compound(command):
-        seg = _strip_subshell(seg)
+        seg = _unwrap_script(_strip_subshell(seg))
         if not seg:
             continue
         try:

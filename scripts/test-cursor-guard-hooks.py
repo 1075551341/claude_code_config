@@ -582,6 +582,22 @@ def main() -> int:
         note="R19: bash -c 包装建分支须 ask",
     )
 
+    r_amp = run_hook("shell_guard.py", {"command": "true & git checkout -b feat"})
+    results["tests"]["shell_guard_branch_amp"] = finish_case(
+        r_amp,
+        behavior=isinstance(r_amp.get("stdout"), dict)
+        and r_amp["stdout"].get("permission") == "ask",
+        note="R19: & 列表中的建分支须 ask",
+    )
+
+    r_ps = run_hook("shell_guard.py", {"command": "pwsh -Command { git checkout -b feat }"})
+    results["tests"]["shell_guard_branch_pwsh_block"] = finish_case(
+        r_ps,
+        behavior=isinstance(r_ps.get("stdout"), dict)
+        and r_ps["stdout"].get("permission") == "ask",
+        note="R19: pwsh -Command 脚本块须 ask",
+    )
+
     r_compound = run_hook("shell_guard.py", {"command": "cd /tmp && git checkout -b feat"})
     results["tests"]["shell_guard_branch_compound"] = finish_case(
         r_compound,

@@ -10,11 +10,13 @@ loading_tier: L3
 
 # Git Worktree 并行开发
 
+> **R19**：Agent 禁止自动 `git stash` 与无 `--detach` 的 `git worktree add`（后者会新建分支）。仅用户本条消息显式要求时执行；隔离工作区优先 `git worktree add --detach`。
+
 ## @Examples
 
 ```
 用户: "需要在另一个分支上工作，但不想丢失当前更改"
-Claude: /using-git-worktrees → git stash → git worktree add → 切换
+Claude: /using-git-worktrees → git worktree add --detach → 在新目录继续（禁止自动 stash）
 
 用户: "想并行开发两个功能"
 Claude: /using-git-worktrees → 创建多个 worktree → 并行开发
@@ -33,14 +35,14 @@ Claude: /using-git-worktrees → 创建多个 worktree → 并行开发
 ### 创建 Worktree
 
 ```bash
-# 从现有分支创建
+# 从现有分支创建（会检出该分支；须用户显式要求切分支）
 git worktree add ../feature-x feature-branch
 
-# 创建新分支并创建 worktree
+# 创建新分支并创建 worktree（须用户显式要求建分支）
 git worktree add -b new-feature ../new-feature-dir main
 
-# 从远程分支创建
-git worktree add ../hotfix-dir -b hotfix origin/hotfix
+# 不建新分支：detach（Agent 允许作为 stash 替代）
+git worktree add --detach ../scratch HEAD
 ```
 
 ### 列出 Worktrees
@@ -71,8 +73,8 @@ git worktree remove --force ../feature-x
 # 当前在 feature-a 工作，想切换到 feature-b
 # 但有未提交的更改
 
-git stash                     # 暂存更改
-git worktree add ../feature-b feature-b  # 创建 worktree
+git stash                     # Agent 禁止；仅用户本地
+git worktree add --detach ../feature-b  # 隔离工作区，不建分支
 # 在 ../feature-b 继续工作
 ```
 
