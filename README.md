@@ -35,11 +35,14 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）。优化合入后在本机拉取**当前优化分支**（不必等 merge 进 main），再同步编辑器：
 
 ```powershell
+cd C:\Users\DELL\.claude
 git fetch origin
 git checkout cursor/v11-config-alignment-04a6
 git pull origin cursor/v11-config-alignment-04a6
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1
 pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1   # TRAE/Qoder hook 合并；DSH/OpenCode 便携件 sync 也会复制
+python scripts/validate_config.py
+pwsh -ExecutionPolicy Bypass -File scripts/check.ps1
 ```
 
 若该分支已合入 `main`，可改为 `git checkout main` 后 `git pull`。

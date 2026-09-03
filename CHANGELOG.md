@@ -4,7 +4,7 @@
 
 ## v11.4.20 场景 load 注入 + capability 解析 + 本机分支落地（2026-09-03）
 
-- **加载**：UserPrompt（`pre-userprompt-issue-tracker`）叠加调用 `inject_for_prompt` → `format_load_block`；分类契约含 triage_map 键或 transcript 命中后写入 `.state/last_scenario.json`。SessionStart 仍注入 triage_map 指针。Stop 对代码/配置脏集缺 sidecar 仅 stderr 提醒，不加入 exit 2 reasons。
+- **加载**：UserPrompt（`pre-userprompt-issue-tracker`）叠加调用 `inject_for_prompt` → `format_load_block`；分类契约含 triage_map 键或**上一轮** assistant/user 命中后写入 `.state/last_scenario.json`。unmatched 只看当前 prompt；triage 键最长优先（避免 `非简单|Bug类` 误命中 `简单|Bug类`）。禁止用 SessionStart 全表 transcript 尾做匹配。SessionStart 仍注入 triage_map 指针。Stop 对代码/配置脏集缺 sidecar 仅 stderr 提醒，不加入 exit 2 reasons。
 - **能力**：新增 `hooks/_lib/capability_resolver.py`；Cursor `web_scrape` → fallback `web_search`。brainstorming 去掉写死 Firecrawl/Exa。
 - **文档**：`CURSOR_MCP_PROFILE` 区分 Claude firecrawl plugin vs Cursor 无 Plugin；L3「双源」改为 harness 声明源（含降级）。V20：router/harness `version` 必须等于 MANIFEST。
 - **本机**：README/SYNC_GUIDE 改为 fetch **优化分支**（`cursor/v11-config-alignment-04a6`）再 `sync.ps1` + `deploy-editor-graph-hooks.ps1`；云端不能写 `C:\Users\DELL\.claude`。

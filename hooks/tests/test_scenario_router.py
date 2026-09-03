@@ -2,8 +2,10 @@
 """scenario_router 加载语义与 independent_review 形状。"""
 from __future__ import annotations
 
+import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 HOOKS_DIR = Path(__file__).resolve().parent.parent
@@ -73,6 +75,11 @@ def main() -> int:
 
     key = sr.parse_triage_key("分类契约：非简单|配置类 verify_tier=全量", router)
     check("parse triage_map key", key == "非简单|配置类")
+    check("longest key wins over 简单 substring", sr.parse_triage_key("走 非简单|Bug类", router) == "非简单|Bug类")
+    check(
+        "plain continue does not inject from leftover sidecar other session",
+        sr.inject_for_prompt("继续", session_id="hint-session") is None,
+    )
     sid, tkey = sr.resolve_scenario_from_text("请按 非简单|配置类 继续", router)
     check("resolve config_structure", sid == "config_structure" and tkey == "非简单|配置类")
     merged_cfg = sr.merge_scenario(router, router["scenarios"][sid])
@@ -90,6 +97,29 @@ def main() -> int:
     check("inject_for_prompt production", bool(injected) and "【场景 config_structure】" in (injected or ""))
     check("sidecar written", (sr.read_sidecar() or {}).get("scenario_id") == "config_structure")
     check("sidecar warn none when present", sr.missing_scenario_sidecar_warning("test-session") is None)
+
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".jsonl", delete=False) as tf:
+        tf.write(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "message": {"content": "分类契约 非简单|配置类，开始改"},
+                },
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+        tpath = tf.name
+    try:
+        from_turn = sr.inject_for_prompt(
+            "请继续", session_id="jsonl-session", transcript_path=tpath
+        )
+        check(
+            "last assistant triage injects",
+            bool(from_turn) and "【场景 config_structure】" in (from_turn or ""),
+        )
+    finally:
+        os.unlink(tpath)
 
     tracker_src = (HOOKS_DIR / "pre-userprompt-issue-tracker.py").read_text(encoding="utf-8")
     check("tracker calls inject_for_prompt", "inject_for_prompt" in tracker_src)

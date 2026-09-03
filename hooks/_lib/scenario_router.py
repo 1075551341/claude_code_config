@@ -257,6 +257,7 @@ def write_sidecar(
 
 
 def _transcript_tail(path: str, max_bytes: int = 120000) -> str:
+    """保留给调试；注入路径禁止用全文尾，以免 SessionStart 的 triage_map 全表误命中。"""
     if not path or not os.path.isfile(path):
         return ""
     try:
@@ -270,26 +271,76 @@ def _transcript_tail(path: str, max_bytes: int = 120000) -> str:
         return ""
 
 
+def _jsonl_last_role(path: str, role: str, max_lines: int = 120) -> str:
+    if not path or not os.path.isfile(path):
+        return ""
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as fh:
+            lines = fh.readlines()
+    except OSError as exc:
+        print(f"scenario_router: transcript read failed: {exc}", file=sys.stderr)
+        return ""
+    for line in reversed(lines[-max_lines:]):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("type") != role:
+            continue
+        content = (obj.get("message") or {}).get("content")
+        text = ""
+        if isinstance(content, str):
+            text = content
+        elif isinstance(content, list):
+            parts = [
+                c.get("text", "")
+                for c in content
+                if isinstance(c, dict) and c.get("type") == "text"
+            ]
+            text = "\n".join(p for p in parts if p)
+        if text.strip():
+            return text
+    return ""
+
+
+def last_turn_text(transcript_path: str) -> str:
+    return "\n".join(
+        p
+        for p in (
+            _jsonl_last_role(transcript_path, "assistant"),
+            _jsonl_last_role(transcript_path, "user"),
+        )
+        if p
+    )
+
+
 def collect_route_text(
     prompt: str,
     *,
     transcript_path: str = "",
     extra: str = "",
 ) -> str:
-    return "\n".join(p for p in (prompt or "", extra or "", _transcript_tail(transcript_path)) if p)
+    """当前 prompt + 上一轮 user/assistant（不含 SessionStart 全表）。"""
+    return "\n".join(
+        p for p in (prompt or "", extra or "", last_turn_text(transcript_path)) if p
+    )
 
 
 def parse_triage_key(text: str, router: dict[str, Any] | None = None) -> str | None:
-    """返回 triage_map 键（如 非简单|配置类）。"""
+    """返回 triage_map 键（如 非简单|配置类）。最长键优先，避免 非简单|Bug类 误命中 简单|Bug类。"""
     if not text:
         return None
     if router is None:
         router = load_router() or {}
     tmap = router.get("triage_map") or {}
     normalized = text.replace("｜", "|")
-    for key in tmap:
+    keys = sorted((k for k in tmap if isinstance(k, str)), key=len, reverse=True)
+    for key in keys:
         if key in normalized:
-            return key if isinstance(key, str) else None
+            return key
     match = _TRIAGE_PAIR_RE.search(normalized)
     if not match:
         return None
@@ -349,14 +400,18 @@ def inject_for_prompt(
     session_id: str = "",
     transcript_path: str = "",
 ) -> str | None:
-    """UserPrompt 叠加注入：命中则 format_load_block；未命中分类意图则 interrupt 提示。"""
+    """UserPrompt 叠加注入：命中则 format_load_block；未命中分类意图则 interrupt 提示。
+
+    unmatched 只看当前 prompt，避免 SessionStart/门控文案里的「分类契约」误 interrupt。
+    """
     router = load_router()
     if not router:
         return None
-    text = collect_route_text(prompt, transcript_path=transcript_path)
-    if unmatched_interrupt_needed(text, router):
+    if unmatched_interrupt_needed(prompt or "", router):
         return format_unmatched_interrupt()
-    sid, triage_key = resolve_scenario_from_text(text, router)
+    sid, triage_key = resolve_scenario_from_text(prompt or "", router)
+    if not sid:
+        sid, triage_key = resolve_scenario_from_text(last_turn_text(transcript_path), router)
     if not sid:
         side = read_sidecar()
         if (
