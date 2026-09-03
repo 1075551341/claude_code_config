@@ -1,5 +1,5 @@
 {
-  "version": "1.2.11",
+  "version": "1.2.12",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -48,7 +48,9 @@
   "git": {
     "forbid_auto_commit": true,
     "forbid_stash": true,
-    "commit_requires_ask": true
+    "commit_requires_ask": true,
+    "forbid_auto_branch": true,
+    "branch_requires_ask": true
   },
   "secrets": {
     "scan_prompts": true,
@@ -57,7 +59,7 @@
   "verification": {
     "enabled": true,
     "enforce_mode": "off",
-    "_note": "v1.2.11: resume 审查 Task 不计入 reviews。v1.2.10: Stop 不能 deny；followup_message 会刷会话面板。完成门改规则驱动（修改→验证→独立审查），hook 不再注入。",
+    "_note": "v1.2.12: R19 禁自动新建/切换分支（forbid_auto_branch + branch_requires_ask）；R15 包管理器混用警告。v1.2.11: resume 审查 Task 不计入 reviews。v1.2.10: Stop 不能 deny；followup_message 会刷会话面板。完成门改规则驱动（修改→验证→独立审查），hook 不再注入。",
     "unverified_reminder": true,
     "prompt_keywords": ["完成了", "修好了", "测试通过", "声称完成", "done", "搞定", "fixed"]
   },

@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.12
+# 组件唯一归属源 — 防左右手互博 — v11.4.13
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.12"
-updated: "2026-09-01"
+version: "11.4.13"
+updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -436,7 +436,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.12 — R19 禁自动新建/切换分支（forbid_auto_branch + branch_requires_ask）；R15 包管理器混用警告。v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]

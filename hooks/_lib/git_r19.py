@@ -1,41 +1,14 @@
 #!/usr/bin/env python3
-"""精简 Shell 危险模式（Cursor beforeShellExecution，独立于 Claude hooks）。"""
+"""R19 git 分支禁令 + R15 包管理器混用警告（Claude pre-bash-guard 与测试共用）。
+
+Cursor Guard 的 shell_patterns.py 保持对等实现（部署副本不依赖本文件）。
+"""
 from __future__ import annotations
 
 import os
 import re
 import shlex
 from pathlib import Path
-
-# Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过；支持空格/等号分隔，对齐 Claude pre-bash-guard）
-_GIT_OPTS = r"(?:(?:-C|-c|--git-dir|--work-tree)(?:\s+|=)\S+(?:\s+|))*"
-
-DENY_PATTERNS: list[tuple[str, str]] = [
-    (r"rm\s+.*-[rRfF]{1,4}\s+/$", "禁止删除根目录"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+/\*", "禁止删除根目录所有文件"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+~\s*$", "禁止删除用户主目录"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+~/?\*", "禁止删除用户主目录所有文件"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+[\"']?C:\\\\?\*", "禁止删除 C 盘所有文件"),
-    (r"^format\s+[A-Za-z]:", "禁止格式化磁盘"),
-    (r"^mkfs\b", "禁止格式化分区"),
-    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run).*(?:--force|-f)\s+\S*origin\s+(main|master|release|prod)\b", "禁止强制推送到保护分支"),
-    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)", "禁止直接推送到 main/master，请走 PR"),
-    (r"\bDROP\s+DATABASE\b", "禁止删除数据库"),
-    (r"\bDROP\s+TABLE\b", "禁止删除数据表"),
-    (r"redis-cli\s+.*\bFLUSHALL\b", "禁止 FLUSHALL"),
-    (r"curl\s+[^|]+\|\s*(?:sudo\s+)?(?:ba)?sh\b", "禁止 curl 管道直接执行脚本"),
-    (r"wget\s+[^|]+\|\s*(?:sudo\s+)?(?:ba)?sh\b", "禁止 wget 管道直接执行脚本"),
-]
-
-WARN_PATTERNS: list[tuple[str, str]] = [
-    (r"sudo\s+rm\s+.*-[rRfF]", "sudo rm -rf 请确认目标路径"),
-    (r"git\s+reset\s+--hard\b", "git reset --hard 会丢弃工作区修改"),
-    (r"git\s+clean\s+.*-f", "git clean 会删除未跟踪文件"),
-    (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 请确认范围"),
-]
-
-_GIT_STASH_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"stash\b", re.IGNORECASE)
-_GIT_COMMIT_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"commit\b", re.IGNORECASE)
 
 _GIT_GLOBAL_WITH_ARG = {
     "-C",
@@ -46,27 +19,41 @@ _GIT_GLOBAL_WITH_ARG = {
     "--super-prefix",
     "--config-env",
 }
-_BRANCH_MUTATE_FLAGS = {
-    "-d", "-D", "--delete", "-m", "-M", "--move", "-c", "-C", "--copy",
-}
-_BRANCH_LIST_FLAGS = {
-    "-a", "--all", "-r", "--remotes", "-v", "-vv", "--verbose", "--list",
-    "--show-current", "--contains", "--merged", "--no-merged", "--points-at",
-}
+
 _NPM_INSTALL_RE = re.compile(r"\bnpm\s+(?:i|install|add|ci)\b", re.IGNORECASE)
 _PIP_INSTALL_RE = re.compile(r"\bpip(?:3)?\s+install\b", re.IGNORECASE)
 _UV_PIP_RE = re.compile(r"\buv\s+pip\b", re.IGNORECASE)
 
+_BRANCH_MUTATE_FLAGS = {
+    "-d",
+    "-D",
+    "--delete",
+    "-m",
+    "-M",
+    "--move",
+    "-c",
+    "-C",
+    "--copy",
+}
+_BRANCH_LIST_FLAGS = {
+    "-a",
+    "--all",
+    "-r",
+    "--remotes",
+    "-v",
+    "-vv",
+    "--verbose",
+    "--list",
+    "--show-current",
+    "--contains",
+    "--merged",
+    "--no-merged",
+    "--points-at",
+}
 
-def match_git_stash(command: str) -> bool:
-    return bool(_GIT_STASH_RE.search(command))
 
-
-def match_git_commit(command: str) -> bool:
-    return bool(_GIT_COMMIT_RE.search(command))
-
-
-def _git_subargv(command: str) -> list[str] | None:
+def git_subargv(command: str) -> list[str] | None:
+    """Return git subcommand + args, skipping global git options. None if not a git invocation."""
     try:
         tokens = shlex.split(command, posix=True)
     except ValueError:
@@ -90,6 +77,7 @@ def _git_subargv(command: str) -> list[str] | None:
             i += 1
             continue
         if t.startswith("-") and t not in ("-h", "--help"):
+            # --no-pager, -p (paginate), etc. before subcommand
             i += 1
             continue
         break
@@ -98,7 +86,7 @@ def _git_subargv(command: str) -> list[str] | None:
 
 def match_git_branch_mutate(command: str) -> bool:
     """True if the command creates, switches, renames, or deletes a branch (not path restore / list)."""
-    argv = _git_subargv(command)
+    argv = git_subargv(command)
     if not argv:
         return False
     sub, args = argv[0], argv[1:]
@@ -106,6 +94,7 @@ def match_git_branch_mutate(command: str) -> bool:
         a in ("-b", "-B", "-c", "-C") for a in args
     ):
         return False
+
     if sub == "checkout":
         if any(
             a in ("-b", "-B", "--orphan") or a == "--branch" or a.startswith("--branch=")
@@ -118,8 +107,10 @@ def match_git_branch_mutate(command: str) -> bool:
             return False
         positional = [a for a in args if not a.startswith("-")]
         return bool(positional)
+
     if sub == "switch":
         return True
+
     if sub == "branch":
         if any(
             a in _BRANCH_MUTATE_FLAGS
@@ -133,8 +124,10 @@ def match_git_branch_mutate(command: str) -> bool:
             return False
         positional = [a for a in args if not a.startswith("-")]
         return bool(positional)
+
     if sub == "worktree" and args and args[0] == "add":
         return any(a in ("-b", "-B") for a in args[1:])
+
     return False
 
 
@@ -153,6 +146,7 @@ def _has_lockfile(cwd: str, names: tuple[str, ...]) -> bool:
 
 
 def pm_mix_warning(command: str, cwd: str | None) -> str | None:
+    """Warn (do not deny) when mixing package managers against lockfiles (R15)."""
     root = cwd if cwd and os.path.isdir(cwd) else os.getcwd()
     if _has_lockfile(root, ("pnpm-lock.yaml",)) and _NPM_INSTALL_RE.search(command):
         return "R15: pnpm 仓禁止混用 npm install（幻影依赖/双 lock）— 改用 pnpm"
@@ -161,24 +155,3 @@ def pm_mix_warning(command: str, cwd: str | None) -> str | None:
     ) and not _UV_PIP_RE.search(command):
         return "R15: uv/poetry 仓禁止裸 pip install — 改用 uv add / poetry add"
     return None
-
-
-NETWORK_ASK_PATTERN = re.compile(r"\b(curl|wget|nc)\s", re.IGNORECASE)
-
-
-def match_deny(command: str) -> str | None:
-    for pattern, reason in DENY_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
-            return reason
-    return None
-
-
-def match_warn(command: str) -> str | None:
-    for pattern, reason in WARN_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
-            return reason
-    return None
-
-
-def is_network_command(command: str) -> bool:
-    return bool(NETWORK_ASK_PATTERN.search(command))

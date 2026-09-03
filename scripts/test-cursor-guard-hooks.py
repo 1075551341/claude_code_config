@@ -558,6 +558,22 @@ def main() -> int:
         and r_deny["stdout"].get("permission") == "deny",
     )
 
+    r_br = run_hook("shell_guard.py", {"command": "git checkout -b feature/r19"})
+    results["tests"]["shell_guard_branch_ask"] = finish_case(
+        r_br,
+        behavior=isinstance(r_br.get("stdout"), dict)
+        and r_br["stdout"].get("permission") in ("ask", "deny"),
+        note="R19: 新建分支须 ask 或 deny",
+    )
+
+    r_restore = run_hook("shell_guard.py", {"command": "git checkout -- README.md"})
+    results["tests"]["shell_guard_checkout_file"] = finish_case(
+        r_restore,
+        behavior=(r_restore.get("stdout") or {}) == {}
+        or (isinstance(r_restore.get("stdout"), dict) and r_restore["stdout"].get("permission") == "allow"),
+        note="R19: 路径还原不拦截",
+    )
+
     results["tests"]["secret_scan_clean"] = run_hook(
         "prompt_secret_scan.py", {"prompt": "hello world"}
     )

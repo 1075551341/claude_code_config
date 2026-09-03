@@ -6,6 +6,8 @@ triggers: [管理Git分支, 规范提交信息, 处理Git冲突, 设计Git工作
 
 # Git 工作流
 
+> **R19**：以下分支命令配方仅在用户**本条消息显式要求**建分支 / 切分支时使用；Agent 禁止自动 `checkout -b` / `switch` / `branch <name>`。
+
 ## 分支命名规范
 
 ```

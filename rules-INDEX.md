@@ -4,14 +4,14 @@
 
 ## alwaysApply — 骨架层
 
-- [CORE.md](rules/CORE.md) — 三横切 + 阈值 + 编码规范 + 工程原则 + 铁律 R12-R20 + 变更彻底性
+- [CORE.md](rules/CORE.md) — 三横切 + 阈值 + 编码规范 + 工程原则 + 铁律 R1-R20 + 变更彻底性
 
 ## trigger: model_decision — 按需补充
 
 - [AGENTS.md](rules/AGENTS.md) — 多 Agent 协作、委派路由、防互博
 - [CONTEXT.md](rules/CONTEXT.md) — 上下文工程 + 三级阈值策略 + 三态制品
 - [GIT.md](rules/GIT.md) — Git 分支策略 + Commit 规范 + PR 流程
-- [GOVERNANCE.md](rules/GOVERNANCE.md) — 治理详情（R14/R15/R16 适用范围 + 注释模板 + 变更三阶段 + 最佳实践详参 + 工程决策原则）
+- [GOVERNANCE.md](rules/GOVERNANCE.md) — 治理详情（R14/R15/R16 适用范围 + R15 语言/锁文件矩阵 + 注释模板 + 变更三阶段 + 最佳实践详参 + 工程决策原则）
 - [MCP.md](rules/MCP.md) — MCP 服务器配置 SSOT + 分组视图
 - [OPENSPEC.md](rules/OPENSPEC.md) — OpenSpec delta-spec 规范 + /opsx: 命令链
 - [SECURITY.md](rules/SECURITY.md) — OWASP Top 10 + 密钥管理 + ML 注入防御

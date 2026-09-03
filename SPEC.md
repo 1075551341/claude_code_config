@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.12 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
+> 版本：11.4.13 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ 铁律 R1–R20 工业落地（R15 按语言/锁文件防幻影依赖；R19 禁自动新建/切换分支）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
 
 ---
 
@@ -360,4 +360,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.12 | 日期：2026-09-01 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20
+> 版本：11.4.13 | 日期：2026-09-03 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + 铁律 R1–R20 工业落地（R15/R19）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20

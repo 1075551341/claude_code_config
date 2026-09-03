@@ -20,6 +20,12 @@ import io
 import re
 import os
 
+_HOOK_DIR = os.path.dirname(os.path.abspath(__file__))
+_LIB = os.path.join(_HOOK_DIR, "_lib")
+if _LIB not in sys.path:
+    sys.path.insert(0, _LIB)
+from git_r19 import match_git_branch_mutate, pm_mix_warning  # noqa: E402
+
 # ── stdout 安全包装 ───────────────────────────────────────────────────────────
 try:
     if hasattr(sys.stdout, "buffer"):
@@ -50,6 +56,7 @@ DANGER_PATTERNS = [
     (r"dd\s+if=/dev/zero\s+of=",                    "禁止 dd 零写覆盖"),
     (r"shred\s+.*-[zun].*\s+/dev/",                "禁止 shred 覆盖设备"),
     # Git — Agent 禁止自动 commit/push/stash（R19；仅用户手动终端可执行）
+    # 新建/切换分支由 git_r19.match_git_branch_mutate 在 main() 中拦截（避免误杀 checkout -- path）
     (r"\bgit\s+" + _GIT_OPTS + r"commit\b",                        "禁止 Agent 自动 git commit（R19）；仅用户本条消息显式要求时由用户手动执行"),
     (r"\bgit\s+" + _GIT_OPTS + r"push\b(?!.*--dry-run)",           "禁止 Agent 自动 git push（R19）— 自动提交远端的主因；需推送请用户手动执行"),
     (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
@@ -175,6 +182,17 @@ def main():
         if not command:
             sys.exit(0)
 
+        cwd = data.get("cwd") or tool_input.get("cwd") or os.getcwd()
+
+        # ── R19 新建/切换分支（token 解析，放行 checkout -- path）────────
+        if match_git_branch_mutate(command):
+            msg = (
+                "[安全拦截] 禁止 Agent 自动新建或切换 git 分支（R19）；"
+                "仅用户本条消息显式要求「建分支/切分支」时由用户执行。"
+                f"\n命令: {command[:300]}"
+            )
+            _block(msg, is_trae=(tool_name == "RunCommand"))
+
         # ── 危险命令检测 ──────────────────────────────────────────────────
         for pattern, reason in DANGER_PATTERNS:
             try:
@@ -210,6 +228,10 @@ def main():
                     warns.append("[编码] " + msg)
             except re.error:
                 continue
+
+        pm_warn = pm_mix_warning(command, cwd if isinstance(cwd, str) else None)
+        if pm_warn:
+            warns.append("⚠️  " + pm_warn)
 
         if warns:
             result = {

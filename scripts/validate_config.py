@@ -176,9 +176,16 @@ def v4_iron_laws_consistency():
         tag = f"R{i}"
         if tag not in claude and tag not in core:
             ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
-    for tag in ("R17", "R18", "R20"):
+    for tag in ("R15", "R17", "R18", "R19", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
+    for kw in ("锁文件", "幻影依赖", "分支"):
+        if kw not in core:
+            ERRORS.append(f"V4: CORE.md missing R15/R19 keyword {kw!r}")
+    if "幻影依赖" not in claude and "隔离式" not in claude:
+        ERRORS.append("V4: CLAUDE.md R15 未写按语言/锁文件或幻影依赖")
+    if "分支" not in claude:
+        ERRORS.append("V4: CLAUDE.md R19 missing 分支")
     if "Karpathy" not in core or "Karpathy" not in claude:
         ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
     verif_path = os.path.join(BASE, "skills", "verification-before-completion", "SKILL.md")

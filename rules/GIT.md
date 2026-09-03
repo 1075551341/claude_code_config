@@ -73,17 +73,21 @@ main (生产)
 测试：    □ 覆盖充分 □ 边界条件 □ 错误处理
 ```
 
-## Agent Git 禁令（v10）
+## Agent Git 禁令（R19，v11.4.13）
 
 | 操作 | Agent | 用户本地 |
 |------|-------|----------|
 | `git stash` | **禁止**（shell deny） | 允许 |
-| `git commit` | **禁止自动**；仅显式要求 + Guard 确认 | 允许 |
-| `git push` | 按既有危险操作规则 | 允许 |
+| `git commit` | **禁止自动**；仅本条消息显式要求 + Guard 确认 | 允许 |
+| `git push`（非 `--dry-run`） | **禁止自动**（Claude deny） | 允许 |
+| **新建分支**（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b`） | **禁止自动**；仅本条消息显式要求「建分支 / 开 PR 且必须新分支」 | 允许 |
+| **切换分支**（`switch <branch>` / `checkout <branch>`，非路径还原） | **禁止自动**；仅本条消息显式要求「切分支」 | 允许 |
+| 只读 `status` / `diff` / `log` / `branch`（无新分支名）/ `branch -a\|-vv` | 允许 | 允许 |
+| `git checkout -- <path>` / `git restore` | 允许（工作区还原，不是改分支） | 允许 |
 
-**配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash`；Claude Code → `hooks/pre-bash-guard.py`。
+**配置**：`~/.cursor/guard-config.json` → `git.forbid_auto_commit` / `git.forbid_stash` / `git.forbid_auto_branch` / `git.branch_requires_ask`；Claude Code → `hooks/pre-bash-guard.py`（deny）+ `hooks/_lib/git_r19.py`。
 
-> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 仅用户显式指令 + Guard 确认后执行。Pre-bash-guard hook 拦截自动 stash/commit 命令（v10.14 修复：`_GIT_OPTS` 覆盖 `-C/--git-dir/--work-tree/-c` 变体，防 `git -C <dir> commit` 绕过 settings deny 与词位正则；Cursor shell_patterns.py 同步）。
+> **R19 铁律**：详见 `rules/CORE.md`。`git stash` 一律禁止；`git commit` 与**新建/切换分支**仅用户本条消息显式指令后执行（Claude hook deny；Cursor Guard 对 commit/分支为 ask）。Pre-bash-guard 拦截 stash/commit/push/建切分支（`_GIT_OPTS` 覆盖 `-C/--git-dir/--work-tree/-c` 变体；Cursor `shell_patterns.py` 对等）。**改 `pre-bash-guard` 后须按 SYNC_GUIDE 刷新 TRAE AppData 副本**（独立于 `sync.ps1`）。
 
 ## 危险操作防护
 
@@ -99,7 +103,7 @@ git reset --hard HEAD~5             # 硬重置
 ### 安全替代
 
 ```bash
-git branch backup-branch            # 创建备份
+git branch backup-branch            # 用户本地创建备份（Agent 禁止自动执行，R19）
 git reset --soft HEAD~1             # 撤销提交（保留变更）
 git revert <commit-hash>            # 创建撤销提交
 ```

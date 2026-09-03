@@ -7,7 +7,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 
 # CORE — 机器执行层骨架
 
-> SSOT: 三横切、阈值、编码规范、铁律R12-R20、变更彻底性门控
+> SSOT: 三横切、阈值、编码规范、铁律R1-R20、变更彻底性门控
 > 引用: P0路由集/加载等级/五阶段流程 → `CLAUDE.md`（v11: ROUTER 已并入） | 治理详情(R14/R15/R16适用范围/注释模板/变更三阶段/最佳实践详参) → `rules/GOVERNANCE.md`
 
 ## 三横切基础设施
@@ -86,21 +86,43 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 业务逻辑禁止 `new Date()` / `Date.now()` / `datetime.now()` — 用时区库 + Clock 接口依赖注入（TS/JS: dayjs；Python: pendulum；Go/Rust/C# 同理）。CLI 一次性脚本、纯 UI 展示除外。推荐库表 → `rules/GOVERNANCE.md`。
 
-## 铁律 R12–R20
+## 铁律 R1–R20
 
-> R1–R11 → `CLAUDE.md` | 适用范围详情（R14/R15/R16） → `rules/GOVERNANCE.md`
+> 一行表 = 操作要点 + 机械门。R15/R19 短小节见下。详情 R14/R15/R16 → `rules/GOVERNANCE.md`；R19 命令表 → `rules/GIT.md`。L0 一行表 → `CLAUDE.md`。
 
-| #   | 约束          | 核心                                                                                                                                                                                                                                 |
-| --- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态                                                                                                                                                                                     |
-| R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化                                                                                                                                                                              |
-| R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认                                                                                                                                                                       |
-| R15 | 包管理器      | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm`                                                                                                                                                                                |
-| R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告                                                                                                                                                                                   |
-| R17 | 代码探索优先  | 严格：codegraph → claude-mem；codebase-memory **已禁用**；禁止跳级                                                                                                                                                                   |
-| R18 | 记忆优先      | 「为什么/约定/偏好」查 claude-mem；禁止塞入 codegraph/cbm                                                                                                                                                                            |
-| R19 | Git 禁令      | 禁止自动 `git stash`/`git commit`（仅用户显式指令+Guard 确认）；禁止 force push main/master                                                                                                                                          |
-| R20 | 会话终验      | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；核对范围=影响面全部相关项（非仅已编辑文件）；**配置/修改必须与文档/注释同步**；独立审查一次找齐且**每轮全新开审**，修改必须 `change-implementer` 按完整清单集中改；禁止边审边改耗轮次；原功能须证据；「满足」行须覆盖需求指纹关键词。模板与硬门 → verification skill。Claude Stop exit 2；Cursor 无完成门 followup。 |
+| #   | 约束          | 操作要点                                                                                          | 机械门                                              |
+| --- | ------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| R1  | 任务完成      | 验证通过才算完成；须跑 verification 并贴命令/测试/文件证据                                        | verification skill + `r20_replay` + Stop/Guard      |
+| R2  | 修改确认      | 每文件 Read→Edit→Read                                                                             | `pre-read-before-edit`                              |
+| R3  | Bug 修复      | 全关联修齐；Grep 残留 = 0                                                                         | CRG + `codegraph_explore` + Grep                    |
+| R4  | 配置变更      | 引用同步 + 构建/校验；INDEX/MANIFEST 同改                                                         | MANIFEST `depends_on` + `validate_config`           |
+| R5  | 重试上限      | 同方案 ≤2；第 3 次换方案或上报                                                                    | issue-tracker                                       |
+| R6  | 非简单        | ①→⑤ 全流程；禁跳 grill                                                                            | task-triage + 分类门                                |
+| R7  | 交叉验证      | 完成前对照清单，不止 lint                                                                         | verification skill                                  |
+| R8  | 高危确认      | 删数据 / 强推 main / DROP 前确认                                                                  | bash-guard 危险命令                                 |
+| R9  | 命令安全      | Windows 优先 pwsh；禁 `powershell -Command`；禁 shell 重定向写内容                                | encoding 守卫 + `pre-bash-guard`                    |
+| R10 | 简洁优先      | KISS/YAGNI；最小改动集                                                                            | CORE 工程原则                                       |
+| R11 | 安全默认      | 不信任输入、无硬编码密钥                                                                          | SECURITY + `post-secret-detector`                   |
+| R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态                                                  | `rules/AGENTS.md`                                   |
+| R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化                                           | CONTEXT + `pre-compact-state`                       |
+| R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认                                    | GOVERNANCE R14                                      |
+| R15 | 包管理器      | 先认锁文件；按语言选隔离+锁文件工具；禁幻影依赖/幻觉包/混用                                       | bash-guard/Guard **警告**；矩阵 → GOVERNANCE        |
+| R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告                                                | `validate_config` V17                               |
+| R17 | 代码探索优先  | 严格：codegraph → claude-mem；codebase-memory **已禁用**；禁止跳级                                | 图谱保鲜 deny                                       |
+| R18 | 记忆优先      | 「为什么/约定/偏好」查 claude-mem；禁止塞入 codegraph/cbm                                         | issue-tracker + claude-mem                          |
+| R19 | Git 禁令      | 禁自动 stash/commit/非 dry-run push；**禁自动新建或切换分支**（仅用户本条消息显式要求）           | Claude bash-guard **deny**；Cursor Guard **ask**    |
+| R20 | 会话终验      | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；配置/文档/注释必须同步；独立审查一次找齐且每轮全新开审；修改走 `change-implementer` | verification skill + `r20_replay`；Claude Stop exit 2；Cursor 无完成门 followup |
+
+### R15 包管理器（防幻影依赖）
+
+1. **先认项目**：锁文件 / `packageManager` / wrapper 已声明则必须用该工具，禁止混用（双 lock、pnpm 仓跑 `npm i`）。
+2. **无声明时**按语言选「隔离 + 锁文件」的稳定工具（JS/TS→pnpm；Python→uv；Rust→cargo；Go→go mod；其余 → GOVERNANCE 矩阵）。
+3. **禁止**：为未在清单/锁文件中的包写 import；编造 registry 包名；把 npm 扁平化「能 import」当成已声明依赖。
+4. 与 R14 对齐：不追最新 major。机械门：`pre-bash-guard` / Cursor Guard 对 pnpm 仓 `npm install`、uv/poetry 仓裸 `pip install` **警告不阻断**。
+
+### R19 Git 禁令（含分支）
+
+禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。仅用户**本条消息**显式要求「提交 / 建分支 / 切分支 / 开 PR 且必须新分支」时才允许。路径还原 `git checkout -- <path>` / `git restore` 与只读 `status` / `diff` / `log` / `branch -a` 放行。机械门：Claude `pre-bash-guard` deny；Cursor Guard ask（`forbid_auto_branch`）。命令表 → `rules/GIT.md`。
 
 ### R20 会话终验
 

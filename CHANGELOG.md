@@ -2,6 +2,15 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.13 铁律 R1–R20 工业落地（2026-09-03）
+
+- **R1–R20 骨架**：`rules/CORE.md` 从「R12–R20 + R1–R11 指针」补成全表「操作要点 + 机械门」；L0 `CLAUDE.md` 仍一行表（≤200）。不新增第 11 条规则、不收缩 L0–L3 / 1+N 同步。
+- **R15**：按语言/锁文件选隔离式包管理器（防 hoist 幻影依赖与幻觉包）。矩阵 SSOT → `rules/GOVERNANCE.md`。机械门：pnpm 仓 `npm install`、uv/poetry 仓裸 `pip install` **警告不阻断**（`hooks/_lib/git_r19.py` + Cursor Guard `pm_mix_warning`）。
+- **R19**：禁止自动新建/切换分支（`checkout -b` / `switch -c` / `branch <name>` / `worktree add -b` / `checkout|switch <branch>`）；路径还原 `git checkout -- <path>` 放行。Claude `pre-bash-guard` deny；Cursor Guard `forbid_auto_branch` + `branch_requires_ask`（ask）。Guard **1.2.12**。
+- **TRAE**：R19 守卫仍是 AppData 独立副本（不经 `sync.ps1`）。改 `pre-bash-guard.py` 后须按 `docs/SYNC_GUIDE.md` 既有通道刷新该副本。
+- **测试**：`hooks/tests/test_git_r19.py` + 三份 bash fixture；`test-cursor-guard-hooks.py` 增分支 ask / 路径还原。
+- **不改**：editors 清单、`global_rules_max: 10`、审查最多 3 轮产品门、图谱保鲜、R20 六字段。
+
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 
 - **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。
