@@ -271,6 +271,11 @@ def main():
                     entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
                 entry["reviews"].append({"agent": reviewer, "ts": now})
                 entry["review_pass_ok"] = False
+                model = str(tool_input.get("model") or "").strip().lower()
+                if model and model != "inherit":
+                    entry.setdefault("review_model_violations", []).append(
+                        {"agent": reviewer, "model": model, "ts": now}
+                    )
                 changed = True
                 break
 

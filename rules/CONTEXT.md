@@ -103,18 +103,19 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 历史配置见 `mcp-configs/optional-dev.json` → `_archive_codebase_memory`（勿启用；原 `KG_SYNC_CBM` hook 通路已随 v11 kg sync hook 退役删除，如确需 cbm 须显式限定业务仓路径并手动运行）。
 
-## 外部搜索策略（Firecrawl / Exa）
+## 外部搜索策略（harness web_scrape / web_search / lib_docs）
 
 > **来源**: L3 洞察横切 | 深度调研默认走 `/deep-research` 管线
+> **解析 SSOT** → `config/harness-capabilities.yaml`（Claude=Firecrawl/Exa/Context7 plugin；Cursor 无 scrape 则 Exa+Context7）
 
-| 意图                       | 工具                                      |
-| -------------------------- | ----------------------------------------- |
-| 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
-| 语义搜索 / 学术与新闻      | Exa（Cursor 插件 MCP）                    |
-| 库/API 官方文档            | Context7 MCP                              |
-| 多角度交叉验证             | `skills/deep-research` 四阶段流程（L3）   |
+| 意图                       | capability                          |
+| -------------------------- | ----------------------------------- |
+| 网页抓取 / 文档站 / 竞品页 | `web_scrape`（fallback `web_search`） |
+| 语义搜索 / 学术与新闻      | `web_search`                          |
+| 库/API 官方文档            | `lib_docs`                            |
+| 多角度交叉验证             | `skills/deep-research` 四阶段流程（L3） |
 
-禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。
+禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。禁止把 Firecrawl/Exa/Context7 再写进 `.mcp.json`。
 
 ## codegraph MCP 使用策略
 

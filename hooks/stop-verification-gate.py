@@ -709,16 +709,22 @@ def main():
                             if graph_reason:
                                 reasons.append(graph_reason)
                         pr = cfg.get("parallel_review") or {}
-                        parallel_hint = ""
-                        if pr.get("enabled") and pr.get("forbid_multiplier_models"):
-                            parallel_hint = (
-                                " 并行审查仅当只读+维度不重叠+Task model=inherit"
-                                "（禁止倍率档）；否则串行。"
-                            )
+                        if pr.get("forbid_multiplier_models") or (
+                            str((pr.get("require_model") or "")).strip().lower() == "inherit"
+                        ):
+                            viol = entry.get("review_model_violations") or []
+                            if viol:
+                                shown = ", ".join(
+                                    f"{v.get('agent')}={v.get('model')}" for v in viol[:6]
+                                )
+                                reasons.append(
+                                    "独立审查子代理须 Task model=inherit（禁止倍率档）；"
+                                    f"检测到非 inherit：{shown}"
+                                )
                         reasons.append(
                             "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
                             f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）。"
-                            f"{parallel_hint}"
+                            " 并行审查仅当只读+维度不重叠+Task model=inherit（禁止倍率档）；否则串行。"
                         )
                     elif (
                         verdict_cfg_on

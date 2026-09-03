@@ -1133,7 +1133,7 @@ def check_v20_scenario_router():
         ERRORS.append("V20: parallel.require_model 必须为 inherit")
 
     harnesses = caps.get("harnesses") or {}
-    required = {"claude-code", "cursor", "dsh", "opencode"}
+    required = {"claude-code", "cursor", "dsh", "opencode", "qoder-cn", "trae-cn"}
     missing_h = required - set(harnesses)
     if missing_h:
         ERRORS.append(f"V20: harness-capabilities 缺少 harness: {sorted(missing_h)}")
@@ -1142,9 +1142,10 @@ def check_v20_scenario_router():
     fake = set(ov) - cap_ids
     if fake:
         ERRORS.append(f"V20: workbuddy.overrides 含非 capability 键: {sorted(fake)}")
-    dsh_extra = (harnesses.get("dsh") or {}).get("extra") or {}
-    if dsh_extra.get("forbid") != "claude_md_overwrite_agents_md":
-        ERRORS.append("V20: dsh.extra.forbid 必须为 claude_md_overwrite_agents_md")
+    for hid in ("dsh", "opencode"):
+        extra = (harnesses.get(hid) or {}).get("extra") or {}
+        if extra.get("forbid") != "claude_md_overwrite_agents_md":
+            ERRORS.append(f"V20: {hid}.extra.forbid 必须为 claude_md_overwrite_agents_md")
 
     qg_path = os.path.join(BASE, "config", "quality_gates.json")
     try:

@@ -26,9 +26,9 @@ source: catalog/skills/deep-research
 
 | 档 | 场景 | 工具 | 触发条件 |
 |----|------|------|---------|
-| L1 | 单点事实/API | Context7 / Exa 单次 | 确认一个具体参数/签名/版本 |
-| L2 | 方案对比/最佳实践 | Exa + Firecrawl 单页 | 对比 >=2 个方案或需要最新最佳实践 |
-| L3 | 深度选型/完整调研 | Firecrawl + Exa + Context7 三源 + V1-V5 交叉验证 | 影响架构决策、技术选型、或需多角度验证 |
+| L1 | 单点事实/API | harness `lib_docs` / `web_search` 单次 | 确认一个具体参数/签名/版本 |
+| L2 | 方案对比/最佳实践 | `web_search` + `web_scrape`（无 scrape 则 fallback search） | 对比 >=2 个方案或需要最新最佳实践 |
+| L3 | 深度选型/完整调研 | `web_scrape` + `web_search` + `lib_docs`（或当前端 fallback）+ V1-V5 | 影响架构决策、技术选型、或需多角度验证 |
 
 **升级信号**：L1 不足（答案矛盾/过时/不完整）→L2→仍不足→L3。
 
@@ -71,8 +71,9 @@ source: catalog/skills/deep-research
 ## 三源兜底
 
 ```
-Firecrawl 主 → Exa 兜底 → Context7 补文档
-任一源失败自动切换下一源，禁止静默降级为单一源。
+harness web_scrape → web_search → lib_docs
+（Claude：Firecrawl plugin → Exa → Context7；Cursor 无 scrape 则 Exa+Context7）
+缺能力走 harness-capabilities fallback/interrupt，禁止假装已双源。
 ```
 
 ## 质量标准

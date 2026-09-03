@@ -386,6 +386,12 @@ if ($syncMf -and $syncMf.harnesses) {
         } else {
             Add-Check "Harness" $hProp.Name "warn" "$($hIssues -join ', ') -- run sync.ps1 or deploy-editor-graph-hooks.ps1"
         }
+        if ((Test-Path -LiteralPath $hHome) -and ("$($hv.agents_md)" -eq "self-managed")) {
+            $gfJson = Join-Path $hHome "config\graph-freshness.json"
+            if (-not (Test-Path -LiteralPath $gfJson)) {
+                Add-Check "Harness" "$($hProp.Name) graph-freshness.json" "warn" "missing config/graph-freshness.json (copy on first sync.ps1, never overwrite)"
+            }
+        }
     }
 }
 
@@ -866,8 +872,8 @@ if ($warns.Count -gt 0) {
 
 # Action hints
 $tips = @()
-if ($warns | Where-Object { $_.Cat -eq "Symlink" }) {
-    $tips += "run sync.ps1         -- sync tools to editors"
+if ($warns | Where-Object { $_.Cat -eq "Symlink" -or $_.Cat -eq "Harness" }) {
+    $tips += "run sync.ps1         -- sync tools to editors / copy harness portable files"
 }
 if ($fails | Where-Object { $_.Cat -eq "Hooks" -and $_.Item -like "*ralph*" }) {
     $tips += "run fix.ps1 -Fix     -- remove ralph-loop Stop hook"

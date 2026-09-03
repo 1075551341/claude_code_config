@@ -45,19 +45,9 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 - 自动 merge chrome-devtools / postgres profile
 - CLAUDE.md 覆盖 OpenCode/DSH `AGENTS.md`
 
-## 决策树（GitHub → `gh` CLI）
+## 决策树
 
-```
-需要外部信息？
-├─ 库/API 文档 → harness lib_docs（Context7）
-├─ GitHub 操作 → gh CLI（github Plugin/MCP 默认关）
-├─ 跨公开仓找用法 → grep MCP
-├─ 网页内容 → harness web_scrape + web_search
-├─ 浏览器操作/E2E → Cursor 内置浏览器（UI）；Claude=playwright；E2E=playwright
-├─ 性能/调试 → 中断请用户开 chrome-devtools Plugin
-├─ 数据库 → 中断请用户设 DATABASE_URL 后启用 postgres
-└─ 跨会话回忆 → claude-mem（非 memory MCP）
-```
+意图 → capability 解析见 `config/harness-capabilities.yaml`；场景必加载见 `config/scenario-router.yaml`。GitHub 操作 → `gh` CLI。
 
 ## 跨编辑器 MCP 映射（指针）
 

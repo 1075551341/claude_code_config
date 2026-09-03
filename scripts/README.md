@@ -73,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 | ----------------------------------------------- | ------------------------------------------------ |
 | `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
 | `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor          |
-| TRAE/Qoder 图谱 hook + DSH/OpenCode CLI/r20_check/plugin | `deploy-editor-graph-hooks.ps1`（不进 sync.ps1） |
+| TRAE/Qoder 图谱 hook 合并 | `deploy-editor-graph-hooks.ps1`（hook 合并不进 sync；便携 CLI/插件 `sync.ps1` 在 home 存在时也会复制） |
 | `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话）     |
 | `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                           |
 

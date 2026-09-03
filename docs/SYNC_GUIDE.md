@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.19 (v11.4.14) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.20 (v11.4.15) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -49,7 +49,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 |---|---|---|
 | `templates/cursor-guard/` | Cursor Guard 部署源 | `deploy-cursor-guard.ps1` 消费 |
 | `docs/CURSOR_MCP_PROFILE.md`、`docs/CURSOR_EDITOR_SETUP.md` | 1+N 架构文档 | 多端差异 SSOT |
-| `config/sync-manifest.json` editors 段 | 多端同步常量 | sync/check/fix 三脚本 + impact_sync 共同消费 |
+| `config/sync-manifest.json` editors + harnesses | 多端同步常量 | sync/check/fix 三脚本 + impact_sync 共同消费 |
 | `plugins/marketplaces/*`（含 .windsurf 等子树）| claude-mem 插件运行态 | 插件源码自带，gitignored |
 | `openspec/`（config.yaml + changes/specs 骨架）| OpenSpec CLI 全局工作区 | 删除丢 profile 配置 |
 | `mcp-configs/`（debug/fsaccess）| Claude Code 按需 MCP profile | rules/MCP.md 登记 |
@@ -60,12 +60,12 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ## 常量单源：`config/sync-manifest.json`
 
-根文件集合、插件规则特殊映射与**编辑器清单（editors 段）**只在此文件定义，三个消费方统一读取：
+根文件集合、插件规则特殊映射、**编辑器清单（editors 段）**与 **harnesses 段**只在此文件定义。本机落地：`git pull` 后 `pwsh -File scripts/sync.ps1`，再 `pwsh -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder hook 合并；便携 CLI 亦可由 sync 复制）。
 
 | 消费方                                             | 读取内容                                         | 失败回退                       |
 | -------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
-| `scripts/sync.ps1`                                 | `root_files` + `plugin_rule_sources` + `editors` | 内置默认（须与 manifest 一致） |
-| `scripts/check.ps1`                                | `root_files` + `editors`                         | 内置默认（须与 manifest 一致） |
+| `scripts/sync.ps1`                                 | `root_files` + `plugin_rule_sources` + `editors` + `harnesses` | 内置默认（须与 manifest 一致） |
+| `scripts/check.ps1`                                | `root_files` + `editors` + `harnesses`                         | 内置默认（须与 manifest 一致） |
 | `templates/cursor-guard/hooks/_lib/impact_sync.py` | `root_files` + `editors`（规则漂移检测）         | 内置默认（须与 manifest 一致） |
 
 > 改根文件集合或编辑器目标只改 `sync-manifest.json`；`MANIFEST.yaml` 的 `sync_targets` 仅为声明镜像。Guard 部署副本经 `deploy-cursor-guard.ps1` 刷新。editors 段字段：`home`（缺席自动跳过）、`enabled`（false=显式停用并反向扫残留）、`rules_channel` / `rules_ext`（plugin=Cursor 专用；目录名=实体复制）、`root_index`、`special`。
@@ -259,6 +259,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.20 (v11.4.15)**：README 本机 `git pull`+deploy；sync Expand-UserHome；harnesses 进常量表；OpenCode enabled=false 显式 skip。
 - **v20.19 (v11.4.14)**：`sync.ps1` 复制 harness 便携件（不写 AGENTS.md）；场景路由加载器；Stop/Guard 消费审前双图键。Guard 1.2.12。
 - **v20.18 (v11.4.13)**：场景路由 YAML + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）；`harnesses` 段；补 DSH 适配层正文；workbuddy enabled=true（home 缺席跳过）。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。

@@ -2,6 +2,14 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.15 审查清单闭环：harness 文案 + 加载器可执行 + inherit 机械门（2026-09-03）
+
+- **P0**：`CLAUDE.md` `/deep-research` 改为 harness `web_scrape`+`web_search`（含 Cursor fallback），不再写死 Firecrawl+Exa。
+- **加载器**：SessionStart / Cursor Guard 注入含 `triage_map` 的场景指针；`merge_scenario` 并入 `load_defaults.quality.hard_gates`。审查 Task 显式非 inherit 记入 `review_model_violations`，Stop 审查相位阻断。
+- **sync/DX**：README 补 `git pull` + `deploy-editor-graph-hooks.ps1`；`Expand-UserHome` 对齐 CLAUDE_HOME/HOME；OpenCode `enabled=false` 打印 skip；check 断言 `graph-freshness.json` 且 Harness warn 指向 sync。
+- **文档**：SPEC MCP 分组 firecrawl=plugin 启用；CONTEXT/CORE/deep-research 走 harness；MANIFEST `mcp_remote_explore` 去掉重复 `depends_on`；catalog 三断链改为占位 SKILL.md（不删 catalog）。
+- **V20**：必检 qoder-cn/trae-cn；dsh+opencode 均须 `forbid: claude_md_overwrite_agents_md`。
+
 ## v11.4.14 场景路由加载器闭环 + 审前双图钩子消费（2026-09-03）
 
 - **加载器**：`hooks/_lib/scenario_router.py` 解析 `triage_map`（AND + 最长 match 胜）。YAML 是分类后**必加载集合**+质量门，INDEX L3 信号仍可追加。`load_defaults` 始终并入 using-superpowers / task-triage / verification / memory。SessionStart 注入短指针；task-triage 路由表交接 YAML。

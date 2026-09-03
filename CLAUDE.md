@@ -6,10 +6,10 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.14**（场景路由加载器闭环 + 审前双图钩子消费 + inherit 并行。原 v11.4.13：YAML SSOT。原 v11.4.12：一次找齐再集中改、每轮全新开审。原 v11.4.11：审查只找问题。原 v11.4.10：Cursor 完成门不 followup。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.15**（审查清单闭环：harness 文案 + 加载器可执行 + inherit 机械门。原 v11.4.14：加载器闭环。原 v11.4.13：YAML SSOT。原 v11.4.12：一次找齐再集中改）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
-**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
+**三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
 
 ## 总纲链（Tool-First Read，禁止凭记忆执行）
 
@@ -154,7 +154,7 @@ task-triage → config/scenario-router.yaml → Read load.* → config/harness-c
 | 命令                                  | 阶段     | 作用                       |
 | ------------------------------------- | -------- | -------------------------- |
 | /discuss /plan /execute /verify /ship | ①-⑤      | 五阶段                     |
-| /deep-research                        | ①调研 L3 | Firecrawl+Exa+交叉验证     |
+| /deep-research                        | ①调研 L3 | harness `web_scrape`+`web_search`（Firecrawl+Exa 或当前端 fallback）+交叉验证 |
 | /workstream                           | GSD      | 并行任务流                 |
 | /adr                                  | ①        | 架构决策                   |
 | /opsx:sync                            | ②        | OpenSpec delta 同步主 spec |

@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.14 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
+> 版本：11.4.15 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
 
 ---
 
@@ -204,8 +204,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ---------- | ---------------------------------------------------- | -------------------------------------- |
 | 本地代码   | codegraph, code-review-graph, serena                 | `.mcp.json` 常驻                       |
 | 远端探索   | grep                                                 | `.mcp.json` 常驻                       |
-| Plugins    | context7, exa, playwright                            | `settings.json` enabledPlugins=true    |
-| Plugins 默认关 | chrome-devtools, github, firecrawl                 | plugin=false；不写 MCP                 |
+| Plugins    | context7, exa, playwright, firecrawl             | `settings.json` enabledPlugins=true    |
+| Plugins 默认关 | chrome-devtools, github                          | plugin=false；不写 MCP                 |
 | debug      | chrome-devtools                                      | `mcp-configs/debug.json` 按需 merge    |
 | fsaccess   | fs                                                   | `mcp-configs/fsaccess.json` 按需 merge |
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json` 按需 merge      |
@@ -361,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.14 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20
+> 版本：11.4.15 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20

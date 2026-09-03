@@ -14,7 +14,21 @@
 #Requires -Version 5.1
 
 $ErrorActionPreference = "Stop"
-$Claude = Join-Path $env:USERPROFILE ".claude"
+function Resolve-ClaudeDir {
+    if ($env:CLAUDE_HOME -and (Test-Path (Join-Path $env:CLAUDE_HOME "CLAUDE.md"))) {
+        return $env:CLAUDE_HOME
+    }
+    $repo = Split-Path $PSScriptRoot -Parent
+    if (Test-Path (Join-Path $repo "CLAUDE.md")) { return $repo }
+    $up = $env:USERPROFILE
+    if (-not $up) { $up = $env:HOME }
+    return (Join-Path $up ".claude")
+}
+function Expand-UserHome([string]$Path) {
+    $root = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { "" }
+    return (("$Path" -replace '^~', $root) -replace '/', [IO.Path]::DirectorySeparatorChar)
+}
+$Claude = Resolve-ClaudeDir
 $Py = Join-Path $Claude "hooks"
 
 function Get-Python {
@@ -30,19 +44,21 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "  [OK] editor graph hooks merged" -ForegroundColor Green
 
 $cliSrc = Join-Path $Claude "templates\editor-graph-hooks\graph_freshness_cli.py"
-$dshTools = Join-Path $env:USERPROFILE ".dsh\tools"
-$ocScripts = Join-Path $env:USERPROFILE ".config\opencode\scripts"
+$dshHome = Expand-UserHome "~/.dsh"
+$ocHome = Expand-UserHome "~/.config/opencode"
+$dshTools = Join-Path $dshHome "tools"
+$ocScripts = Join-Path $ocHome "scripts"
 if (Test-Path -LiteralPath $cliSrc) {
-    if (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".dsh")) {
+    if (Test-Path -LiteralPath $dshHome) {
         New-Item -ItemType Directory -Force -Path $dshTools | Out-Null
         Copy-Item -LiteralPath $cliSrc -Destination (Join-Path $dshTools "graph_freshness_cli.py") -Force
         Write-Host "  [OK] DSH tools/graph_freshness_cli.py" -ForegroundColor Green
     }
-    if (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".config\opencode")) {
+    if (Test-Path -LiteralPath $ocHome) {
         New-Item -ItemType Directory -Force -Path $ocScripts | Out-Null
         Copy-Item -LiteralPath $cliSrc -Destination (Join-Path $ocScripts "graph_freshness_cli.py") -Force
         Write-Host "  [OK] OpenCode scripts/graph_freshness_cli.py" -ForegroundColor Green
-        $ocPlugins = Join-Path $env:USERPROFILE ".config\opencode\plugins"
+        $ocPlugins = Join-Path $ocHome "plugins"
         $pluginSrc = Join-Path $Claude "templates\editor-graph-hooks\graph-freshness.ts"
         if (Test-Path -LiteralPath $pluginSrc) {
             New-Item -ItemType Directory -Force -Path $ocPlugins | Out-Null
@@ -62,7 +78,7 @@ if (Test-Path -LiteralPath $cliSrc) {
     }
 }
 $r20Src = Join-Path $Claude "templates\editor-graph-hooks\r20_check.py"
-if ((Test-Path -LiteralPath $r20Src) -and (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".dsh"))) {
+if ((Test-Path -LiteralPath $r20Src) -and (Test-Path -LiteralPath $dshHome)) {
     New-Item -ItemType Directory -Force -Path $dshTools | Out-Null
     Copy-Item -LiteralPath $r20Src -Destination (Join-Path $dshTools "r20_check.py") -Force
     Write-Host "  [OK] DSH tools/r20_check.py" -ForegroundColor Green
@@ -79,5 +95,5 @@ function Copy-GraphFreshnessJsonIfMissing {
         Write-Host "  [OK] $HomeDir\config\graph-freshness.json (new)" -ForegroundColor Green
     }
 }
-Copy-GraphFreshnessJsonIfMissing (Join-Path $env:USERPROFILE ".dsh")
-Copy-GraphFreshnessJsonIfMissing (Join-Path $env:USERPROFILE ".config\opencode")
+Copy-GraphFreshnessJsonIfMissing $dshHome
+Copy-GraphFreshnessJsonIfMissing $ocHome

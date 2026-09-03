@@ -97,6 +97,7 @@ def merge_scenario(router: dict[str, Any], spec: dict[str, Any]) -> dict[str, An
     if not isinstance(sq, dict):
         raise TypeError("scenario.quality must be a mapping")
     ir_def = qdef.get("independent_review") if isinstance(qdef, dict) else {}
+    ldq = defaults.get("quality") or {}
     for key, val in sq.items():
         if key == "independent_review":
             quality[key] = merge_independent_review(ir_def, val)
@@ -104,6 +105,10 @@ def merge_scenario(router: dict[str, Any], spec: dict[str, Any]) -> dict[str, An
             quality[key] = val
     if "independent_review" not in quality:
         quality["independent_review"] = merge_independent_review(ir_def, None)
+    if ldq.get("hard_gates"):
+        quality["hard_gates"] = _unique(
+            list(ldq.get("hard_gates") or []) + list(quality.get("hard_gates") or [])
+        )
     return {
         "load": {"skills": skills, "agents": agents, "rules": rules},
         "capabilities": caps,
@@ -172,9 +177,12 @@ def format_session_hint(router: dict[str, Any] | None = None) -> str:
             "INDEX L3 信号可追加）。独立审前双图 ensure；并行审查须 model=inherit。"
         )
     n = len(router.get("scenarios") or {})
+    tmap = router.get("triage_map") or {}
+    map_line = "；".join(f"{k}→{v}" for k, v in tmap.items())
     return (
-        f"【场景路由】task-triage 使用类型 → config/scenario-router.yaml（{n} 场景；"
-        "必加载+质量门，L3 INDEX 可追加）。工具经 harness-capabilities.yaml。"
+        f"【场景路由】task-triage 使用类型 → 下列场景（必加载+质量门，L3 INDEX 可追加；"
+        f"{n} 场景）。{map_line}。"
+        "分类后 Read config/scenario-router.yaml 该场景 load.*；工具经 harness-capabilities.yaml。"
         "独立审前 dual_graph_ensure；并行审查仅只读+维度不重叠+model=inherit。"
     )
 

@@ -48,6 +48,7 @@ def main() -> int:
 
     simple = sr.merge_scenario(router, router["scenarios"]["simple_docs"])
     check("simple_docs still dual-review default", simple["quality"].get("review_on_code_or_config_edit") is True)
+    check("hard_gates merged", "brainstorming_user_approve" in (simple["quality"].get("hard_gates") or []))
     check("simple_docs has verification", "verification-before-completion" in simple["load"]["skills"])
 
     bug = sr.resolve_scenario_id(router, ["非简单", "Bug类"], overlay=False)
@@ -68,6 +69,7 @@ def main() -> int:
 
     hint = sr.format_session_hint(router)
     check("hint mentions yaml", "scenario-router.yaml" in hint)
+    check("hint has triage_map", "非简单|配置类" in hint)
 
     stop_path = HOOKS_DIR / "stop-verification-gate.py"
     src = stop_path.read_text(encoding="utf-8")

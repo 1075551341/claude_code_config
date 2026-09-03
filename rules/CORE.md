@@ -15,7 +15,7 @@ description: 代码开发时始终启用 — 骨架层：编码规范 + 铁律 +
 ```
 L1 治理 — ECC(MANIFEST防互博+hook分级+loop防护) + deer-flow 2.0(LangGraph编排,四模式)
 L2 优化 — RTK(shell压缩,60-90%) + caveman(输出压缩,~75%) + 三级阈值(上下文治理)
-L3 洞察 — codegraph(R17 常驻) + Firecrawl/Exa(外部搜索)  # UA removed v10.5；codebase-memory 已禁用（全盘索引爆 CPU/内存，见 R17）
+L3 洞察 — codegraph(R17 常驻) + 外部搜索(harness web_scrape/web_search：Firecrawl/Exa 或当前端 fallback)  # UA removed v10.5；codebase-memory 已禁用（全盘索引爆 CPU/内存，见 R17）
 
 所有阶段自动注入 L1/L2/L3。柱驱动阶段，横切保障执行。
 ```

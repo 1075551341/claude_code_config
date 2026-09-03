@@ -104,6 +104,11 @@ def main() -> None:
             )
 
         parts.append(load_gate("p0", cfg["sync"]["claude_home"]))
+        try:
+            sr = import_claude_lib(cfg["sync"]["claude_home"], "scenario_router")
+            parts.append(sr.format_session_hint())
+        except Exception as route_err:
+            print(f"session_bootstrap: scenario_router failed: {route_err}", file=sys.stderr)
 
         try:
             gf = import_claude_lib(cfg["sync"]["claude_home"], "graph_freshness")

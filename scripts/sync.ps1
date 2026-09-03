@@ -82,8 +82,11 @@ function Resolve-ClaudeDir {
 }
 
 $CLAUDE_DIR = Resolve-ClaudeDir
-$CURSOR_HOME = if ($env:USERPROFILE) { $env:USERPROFILE } else { $env:HOME }
-$CURSOR_DIR = Join-Path $CURSOR_HOME ".cursor"
+function Expand-UserHome([string]$Path) {
+    $root = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { "" }
+    return (("$Path" -replace '^~', $root) -replace '/', [IO.Path]::DirectorySeparatorChar)
+}
+$CURSOR_DIR = Expand-UserHome "~/.cursor"
 
 # 单源清单读取；缺失/损坏时回退内置默认（与 manifest 内容一致）
 $ROOT_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
@@ -94,13 +97,13 @@ $PLUGIN_EXTRA = [ordered]@{
 # 编辑器目标（v11.1 恢复；cursor 走专用 plugin 通道，此表用于其余编辑器循环）
 # 内置默认与 manifest editors 段一致；home 缺席自动跳过
 $EDITOR_TARGETS = [ordered]@{
-    "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
-    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
+    "qoder-cn"  = @{ Home = (Expand-UserHome "~/.qoder-cn");     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae-cn"   = @{ Home = (Expand-UserHome "~/.trae-cn");      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "workbuddy" = @{ Home = (Expand-UserHome "~/.workbuddy");    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
+    "qoder"     = @{ Home = (Expand-UserHome "~/.qoder");        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "trae"      = @{ Home = (Expand-UserHome "~/.trae");         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
+    "codearts"  = @{ Home = (Expand-UserHome "~/.codeartsdoer"); Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
+    "opencode"  = @{ Home = (Expand-UserHome "~/.config/opencode"); Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $script:SyncManifest = $null
 $manifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
@@ -122,7 +125,7 @@ if (Test-Path $manifestPath) {
             foreach ($e in $mf.editors.PSObject.Properties) {
                 if ($e.Name -eq "_comment" -or $e.Name -eq "cursor") { continue }
                 $v = $e.Value
-                $home_ = "$($v.home)" -replace '^~', $env:USERPROFILE -replace '/', '\'
+                $home_ = Expand-UserHome "$($v.home)"
                 $EDITOR_TARGETS[$e.Name] = @{
                     Home         = $home_
                     Enabled      = ($v.enabled -ne $false)
@@ -605,8 +608,7 @@ function Sync-HarnessPortable {
     foreach ($hProp in $mf.harnesses.PSObject.Properties) {
         if ($hProp.Name -eq "_comment") { continue }
         $hv = $hProp.Value
-        $hHome = "$($hv.home)" -replace '^~', $homeRoot
-        $hHome = $hHome -replace '/', [IO.Path]::DirectorySeparatorChar
+        $hHome = Expand-UserHome "$($hv.home)"
         if (-not (Test-Path -LiteralPath $hHome)) {
             Write-Skip "harness $($hProp.Name): $hHome not found - skipped"
             $script:STATS.Skipped++
@@ -768,7 +770,11 @@ if (-not $SKIP_EDITOR_SYNC) {
     # ---- 4. 其他编辑器（v11.1 恢复；清单单源 sync-manifest.json editors 段，home 缺席自动跳过）----
     foreach ($ed in @($EDITOR_TARGETS.Keys)) {
         $cfg = $EDITOR_TARGETS[$ed]
-        if (-not $cfg.Enabled) { continue }
+        if (-not $cfg.Enabled) {
+            Write-Skip "$ed`: enabled=false — skipped (AGENTS.md not overwritten)"
+            $script:STATS.Skipped++
+            continue
+        }
         if (-not (Test-Path $cfg.Home)) {
             Write-Skip "$ed`: $($cfg.Home) not found - skipped"
             $script:STATS.Skipped++
