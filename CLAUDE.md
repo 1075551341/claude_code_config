@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.12**（审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.13**（铁律 R1–R20 工业落地：R15 按语言/锁文件防幻影依赖；R19 禁自动新建/切换分支。原 v11.4.12：审查一次找齐再集中改 + 每轮全新开审。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.6：图谱保鲜硬门）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -100,11 +100,11 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
 | R12 | 子Agent隔离 | fresh context+制品通信                                                                                                                              | CORE.md |
 | R13 | 制品存活    | 跨会话持久化                                                                                                                                        | CORE.md |
 | R14 | 版本克制    | 非必要不升major                                                                                                                                     | CORE.md |
-| R15 | 包管理器    | pnpm优先；npm兜底                                                                                                                                   | CORE.md |
+| R15 | 包管理器    | 按语言/锁文件选隔离式包管理器；禁幻影依赖                                                                                                             | CORE.md |
 | R16 | 错误暴漏    | 禁止裸except:pass                                                                                                                                   | CORE.md |
 | R17 | 代码探索    | codegraph 首选；cbm 已禁用；禁跳级                                                                                                                  | CORE.md |
 | R18 | 记忆优先    | 为什么/约定/偏好→claude-mem                                                                                                                         | CORE.md |
-| R19 | Git 禁令    | 禁自动stash/commit                                                                                                                                  | CORE.md |
+| R19 | Git 禁令    | 禁自动stash/commit/push/新建或切换分支                                                                                                               | CORE.md |
 | R20 | 会话终验    | 改前优先成熟方案；完成后逐条回放满足/遗漏/错改/漏改/原功能/影响范围；核对范围=影响面全部相关项；**配置/修改必须与文档/注释同步**；独立审查一次找齐且**每轮全新开审**，修改必须 `change-implementer` 按完整清单集中改；禁止边审边改耗轮次；**验证证据须观察输出**。模板→verification skill | CORE.md |
 
 > 工程原则（第一性原理/YAGNI/依赖克制/删除过时优先）→ `rules/CORE.md` 工程原则节 + `rules/GOVERNANCE.md` 最佳实践详参章

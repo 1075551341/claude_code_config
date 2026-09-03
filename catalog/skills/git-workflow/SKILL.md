@@ -6,6 +6,8 @@ triggers: [管理Git分支, 规范提交信息, 处理Git冲突, 设计Git工作
 
 # Git 工作流
 
+> **R19**：以下分支命令配方仅在用户**本条消息显式要求**建分支 / 切分支时使用；Agent 禁止自动 `checkout -b` / `switch` / `branch <name>`。路径还原用 `git checkout -- <path>` / `git checkout .` / `git restore`（不改分支）。`git stash` 一律禁止（仅用户本地）。
+
 ## 分支命名规范
 
 ```
@@ -70,6 +72,7 @@ Closes #123
 
 ### 分支操作
 ```bash
+# 以下仅当用户本条消息显式要求「建分支/切分支」时执行（R19）
 # 创建并切换分支
 git checkout -b feature/user-auth
 
@@ -89,8 +92,10 @@ git push origin --delete feature/user-auth
 
 ### 撤销操作
 ```bash
-# 撤销工作区修改
+# 撤销工作区修改（路径还原，Agent 允许；不是切分支）
 git checkout -- <file>
+git checkout .
+git restore <file>
 
 # 撤销暂存
 git reset HEAD <file>
@@ -107,6 +112,7 @@ git commit --amend -m "新的提交信息"
 
 ### 暂存工作
 ```bash
+# Agent 禁止 git stash（任何子命令）。以下仅供用户本地终端。
 # 暂存当前修改
 git stash save "描述信息"
 

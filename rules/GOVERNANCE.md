@@ -1,15 +1,16 @@
 ---
 trigger: model_decision
-description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、变更彻底性三阶段、codegraph 工具集细节、最佳实践详参（提示词/API/日志/会话/编排，v11 并入原 BESTPRACTICE）。触发：改配置/改 hook/依赖升级/版本升级/写注释/审查治理/最佳实践。
+description: 治理详情规则 — R14/R15/R16 适用范围、R15 语言/锁文件矩阵、注释模板、变更彻底性三阶段、codegraph 工具集细节、最佳实践详参（提示词/API/日志/会话/编排，v11 并入原 BESTPRACTICE）。触发：改配置/改 hook/依赖升级/版本升级/写注释/审查治理/最佳实践。
 ---
 
 # GOVERNANCE — 治理详情（骨架 → `rules/CORE.md`）
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v11.4.12 — 一次找齐再集中改；每轮全新开审）
+## 门控强度（v11.4.13 — R15 语言/锁文件 + R19 禁自动建/切分支；一次找齐再集中改；每轮全新开审）
 
 > 原则：不依赖模型自觉。门控文本 SSOT = `hooks/_lib/gate_messages.md`（短指针，完整清单在 skill）。R20 机械检测 SSOT = `hooks/_lib/r20_replay.py`。
+> v11.4.13：R15 按语言/锁文件选隔离式包管理器（防幻影依赖）；R19 禁止自动新建/切换分支（Claude deny / Cursor ask）。R1–R20 操作+机械门骨架在 CORE。
 > v11.4.12：审查一次找齐全部未满足项，清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 resume 上一轮审查者）；禁止边审边改耗轮次。
 > v11.4.11：审查者只找问题，修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。
 > v11.4.10：Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留。
@@ -49,12 +50,50 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 - **允许 major**：用户明确要求；CVE 无同 major 修复；阻塞缺陷且 changelog 已评估
 - **禁止**：`npm-check-updates -u` 无差别 major、无 changelog/无验证的批量升级
 
-## R15 适用范围（Node / JS 包管理器）
+## R15 适用范围（按语言 / 锁文件选隔离式包管理器；防幻影依赖）
 
-- **默认**：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`
-- **尊重项目**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 `pnpm` → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm
-- **npm 兜底**：本机无 pnpm、pnpm 执行失败且用户未要求换工具链、或脚本/文档明确写 `npm` 时
-- **禁止**：在 pnpm 项目中混用 `npm install` 生成/改写 lock（避免双 lock 漂移）
+**判定顺序**：① 项目已有锁文件 / `packageManager` / wrapper → 必须用该工具，禁止混用；② 无声明时按语言选「隔离 + 锁文件」的稳定工具；③ 禁止幻觉包名与未声明 import。
+
+### 先认项目（禁止混用）
+
+| 已存在 | 必须使用 | 禁止 |
+| ------ | -------- | ---- |
+| `pnpm-lock.yaml` 或 `packageManager` 含 pnpm | `pnpm` | `npm i` / `yarn` 写第二份 lock |
+| 仅 `package-lock.json`（无 pnpm 配置） | `npm` | 再生成 `pnpm-lock.yaml` |
+| 仅 `yarn.lock` | `yarn` | 混用 npm/pnpm 改 lock |
+| `bun.lock` / `bun.lockb` | `bun` | 用 npm 覆盖 |
+| `uv.lock` | `uv` | 裸 `pip install` 进系统/项目 |
+| `poetry.lock` | `poetry` | 裸 `pip install` |
+| `Cargo.lock` | `cargo` | 手拷 crate 当依赖 |
+| `go.sum` / `go.mod` | `go` | 绕过 module 下载 |
+| `mvnw` / `gradlew` | 仓库 wrapper | 全局 `mvn`/`gradle` 版本漂移 |
+| `Gemfile.lock` | `bundle` | 系统 `gem install` |
+| `composer.lock` | `composer` | 无 lock 乱装 |
+
+### 无声明时的语言默认（隔离 + 锁文件，防 hoist 幻影依赖）
+
+| 语言 | 默认 | 次选 | 说明 |
+| ---- | ---- | ---- | ---- |
+| JS/TS | **pnpm**（strict `node_modules`） | 仅 npm 生态脚本写死时用 npm | 禁止把扁平化「能 import」当成已声明依赖 |
+| Python | **uv** | poetry → pip+venv+冻结合 | 禁止无隔离 `pip install` 进系统 |
+| Rust | **cargo** | — | 以 `Cargo.toml` 为清单 |
+| Go | **go mod** | — | 官方模块 |
+| Java/Kotlin | 仓库 **mvnw/gradlew** | — | 不另装全局工具链充当真相 |
+| .NET | **dotnet** | — | `*.csproj` / `Directory.Packages.props` |
+| Ruby | **bundler** | — | `Gemfile` |
+| PHP | **composer** | — | `composer.json` |
+
+### 禁止（幻影依赖 / 幻觉包）
+
+- 为未在清单或锁文件中的包写 import / require
+- 编造 registry 包名（幻觉包、typosquat）
+- pnpm 仓执行 `npm install` 生成/改写 `package-lock.json`
+- uv/poetry 仓裸 `pip install`（MCP 启动脚本 `python-mcp.ps1` 等包装例外，见下）
+- 与 R14 对齐：不追最新 major；安全补丁同 major
+
+**机械门**：`hooks/pre-bash-guard.py` 与 Cursor Guard 对「pnpm 仓 `npm install`」「uv/poetry 仓裸 `pip install` / `python -m pip`」**警告不阻断**（避免合法脚本误杀）。豁免：文档示例中的对比命令；编辑器 MCP 启动包装（`scripts/python-mcp.ps1` 等）。
+
+**Node 命令习惯**（在已判定用 pnpm 时）：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`。npm 仅作兜底：本机无 pnpm、pnpm 失败且用户未要求换工具链、或脚本/文档明确写 `npm`。
 
 ## 注释规则与模板
 

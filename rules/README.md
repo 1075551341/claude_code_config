@@ -8,7 +8,7 @@
 
 | 文件 | 适用 | 加载 | layer |
 |------|------|------|-------|
-| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R12–R20（R1–R20 见 CLAUDE.md） | ✅ alwaysApply | skeleton |
+| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R1–R20（操作+机械门；L0 一行表见 CLAUDE.md） | ✅ alwaysApply | skeleton |
 | `FRONTEND.md` | ESLint/Prettier/Stylelint + Vue/React + 设计系统 DESIGN.md 规范（glob 匹配前端文件） | glob | supplement |
 | `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
 | `GIT.md` | 分支策略（commit → `skills/git-workflow`） | lazy | supplement |

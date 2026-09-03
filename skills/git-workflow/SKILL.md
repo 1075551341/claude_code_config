@@ -14,9 +14,12 @@ source: user-rules-migration
 
 ## 安全协议
 
-- **禁止** Agent **自动** `git commit` / `git stash`（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard`）
-- **禁止** `git stash`（任何形式）；换用 `git worktree` 或用户本地处理
+- **禁止** Agent **自动** `git commit` / `git stash` / 非 dry-run `git push` / **新建或切换分支**（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard` deny）
+- **禁止** `git stash`（任何形式）；工作区隔离用 `git worktree add --detach` 或用户本地处理（无 `--detach` 的 `worktree add` 会新建分支，禁止自动）
 - **仅当**用户本条消息**显式**要求「提交/commit」时才可 `git commit`（Cursor 会弹窗确认）
+- **仅当**用户本条消息**显式**要求「建分支 / 切分支 / 开 PR 且必须新分支」时才可 `checkout -b` / `switch -c` / `switch <branch>` / `worktree add`
+- 路径还原允许：`git checkout -- <path>`、`git checkout .`、`git checkout HEAD -- <path>`、`git restore`（不是改分支）
+- 复合命令与包装中的建切分支同样拦截（`cd … && git checkout -b` / `true & git checkout -b` / `GIT_DIR=… git switch -c` / `bash -c` / `eval` / `timeout` / `nice` / `{ }` / `env -i` / 子 shell / `pwsh -Command` / `cmd /c`）
 - **禁止**修改 git config
 - **禁止**破坏性命令（`push --force`、`hard reset` 等），除非用户明确要求
 - **禁止**跳过 hooks（`--no-verify`、`--no-gpg-sign` 等），除非用户明确要求
@@ -59,4 +62,5 @@ EOF
 - 无变更时 empty commit
 - 用户未要求时不主动 commit
 - **禁止** Agent 执行 `git stash`（任何子命令）
+- **禁止** Agent 自动 `git checkout -b` / `git switch` / `git branch <name>` / `git worktree add`（无 `--detach`）（R19；须用户本条消息显式要求）
 - `git` 带 `-i` 交互标志

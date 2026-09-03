@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.15
+# Hooks 钩子系统 v5.16
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.16 变更（v11.4.13）**：R19 禁自动新建/切换分支（`git_r19.py` + pre-bash-guard deny）；R15 包管理器混用警告。Cursor Guard 1.2.12。改本守卫后须刷新 TRAE AppData 副本。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
 > **v5.13 变更（v11.4.9）**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；写 plan.md 不计完成门。Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断。Cursor Guard 1.2.9（sessionEnd 刷双图 timeout 45s）。
@@ -142,7 +143,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.12（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；R19 `forbid_auto_branch`（ask）+ R15 包管理器混用警告；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
@@ -174,4 +175,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.15（v11.4.12）| 19 注册激活 + 5 未注册；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_
+_版本：5.16（v11.4.13）| 19 注册激活 + 5 未注册；R19 禁自动建/切分支；R15 包管理器混用警告；每轮独立审查必须全新开审；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_

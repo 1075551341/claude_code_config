@@ -14,6 +14,7 @@ import subprocess
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
 from context_thresholds import sync_settings_compact_window  # noqa: E402
+from git_r19 import detect_package_manager  # noqa: E402
 from graph_freshness import ensure_both, format_status, format_ui_banner, load_cfg, resolve_cwd  # noqa: E402
 
 try:
@@ -23,44 +24,17 @@ except Exception as e:
     print(f"⚠️ {e}", file=sys.stderr)
 
 
-def detect_package_manager(cwd: str) -> str:
-    """检测项目使用的包管理器"""
-    # 检查锁文件
-    lock_files = {
-        "package-lock.json": "npm",
-        "yarn.lock": "yarn",
-        "pnpm-lock.yaml": "pnpm",
-        "bun.lockb": "bun",
-    }
-    
-    for lock_file, pm in lock_files.items():
-        if os.path.exists(os.path.join(cwd, lock_file)):
-            return pm
-    
-    # 检查 Python 项目
-    if os.path.exists(os.path.join(cwd, "pyproject.toml")):
-        return "pip"
-    if os.path.exists(os.path.join(cwd, "requirements.txt")):
-        return "pip"
-    
-    # 检查 Go 项目
-    if os.path.exists(os.path.join(cwd, "go.mod")):
-        return "go"
-    
-    return "unknown"
-
-
 def load_previous_context(cwd: str) -> dict:
     """加载之前的上下文信息"""
     context = {}
-    
+
     # 尝试读取项目特定的上下文文件
     context_files = [
         ".claude/context.json",
         ".claude/session-context.json",
         "CLAUDE.md",
     ]
-    
+
     for context_file in context_files:
         file_path = os.path.join(cwd, context_file)
         if os.path.exists(file_path):
@@ -73,7 +47,7 @@ def load_previous_context(cwd: str) -> dict:
                 break
             except Exception as e:
                 print(f"⚠️ {e}", file=sys.stderr)
-    
+
     return context
 
 

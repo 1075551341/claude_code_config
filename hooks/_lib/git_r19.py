@@ -1,52 +1,17 @@
 #!/usr/bin/env python3
-"""精简 Shell 危险模式（Cursor beforeShellExecution，独立于 Claude hooks）。"""
+"""R19 git 分支禁令 + R15 包管理器混用警告（Claude pre-bash-guard 与测试共用）。
+
+Cursor Guard 的 shell_patterns.py 保持对等实现（部署副本不依赖本文件）。
+改本文件后必须同步 templates/cursor-guard/hooks/_lib/shell_patterns.py。
+"""
 from __future__ import annotations
 
-import json
 import os
 import re
+import json
 import shlex
 from pathlib import Path
 
-# Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过；支持空格/等号分隔，对齐 Claude pre-bash-guard）
-_GIT_OPTS = r"(?:(?:-C|-c|--git-dir|--work-tree)(?:\s+|=)\S+(?:\s+|))*"
-
-DENY_PATTERNS: list[tuple[str, str]] = [
-    (r"rm\s+.*-[rRfF]{1,4}\s+/$", "禁止删除根目录"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+/\*", "禁止删除根目录所有文件"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+~\s*$", "禁止删除用户主目录"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+~/?\*", "禁止删除用户主目录所有文件"),
-    (r"rm\s+.*-[rRfF]{1,4}\s+[\"']?C:\\\\?\*", "禁止删除 C 盘所有文件"),
-    (r"^format\s+[A-Za-z]:", "禁止格式化磁盘"),
-    (r"^mkfs\b", "禁止格式化分区"),
-    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run).*(?:--force|-f)\s+\S*origin\s+(main|master|release|prod)\b", "禁止强制推送到保护分支"),
-    (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run)\S*origin\s+(main|master)\b(?!\s*--force)", "禁止直接推送到 main/master，请走 PR"),
-    (r"\bDROP\s+DATABASE\b", "禁止删除数据库"),
-    (r"\bDROP\s+TABLE\b", "禁止删除数据表"),
-    (r"redis-cli\s+.*\bFLUSHALL\b", "禁止 FLUSHALL"),
-    (r"curl\s+[^|]+\|\s*(?:sudo\s+)?(?:ba)?sh\b", "禁止 curl 管道直接执行脚本"),
-    (r"wget\s+[^|]+\|\s*(?:sudo\s+)?(?:ba)?sh\b", "禁止 wget 管道直接执行脚本"),
-]
-
-WARN_PATTERNS: list[tuple[str, str]] = [
-    (r"sudo\s+rm\s+.*-[rRfF]", "sudo rm -rf 请确认目标路径"),
-    (r"git\s+reset\s+--hard\b", "git reset --hard 会丢弃工作区修改"),
-    (r"git\s+clean\s+.*-f", "git clean 会删除未跟踪文件"),
-    (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 请确认范围"),
-]
-
-_GIT_STASH_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"stash\b", re.IGNORECASE)
-_GIT_COMMIT_RE = re.compile(r"\bgit\s+" + _GIT_OPTS + r"commit\b", re.IGNORECASE)
-
-
-def match_git_stash(command: str) -> bool:
-    return bool(_GIT_STASH_RE.search(command))
-
-
-def match_git_commit(command: str) -> bool:
-    return bool(_GIT_COMMIT_RE.search(command))
-
-# 与 hooks/_lib/git_r19.py 对等（部署副本不 import 该文件）
 _GIT_GLOBAL_WITH_ARG = {
     "-C",
     "-c",
@@ -561,24 +526,3 @@ def detect_package_manager(cwd: str) -> str:
         if (p / "pyproject.toml").is_file() or (p / "requirements.txt").is_file():
             return "uv"
     return "unknown"
-
-
-NETWORK_ASK_PATTERN = re.compile(r"\b(curl|wget|nc)\s", re.IGNORECASE)
-
-
-def match_deny(command: str) -> str | None:
-    for pattern, reason in DENY_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
-            return reason
-    return None
-
-
-def match_warn(command: str) -> str | None:
-    for pattern, reason in WARN_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
-            return reason
-    return None
-
-
-def is_network_command(command: str) -> bool:
-    return bool(NETWORK_ASK_PATTERN.search(command))

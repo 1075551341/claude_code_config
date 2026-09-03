@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.4.12）
+# 门控注入文本 SSOT（v11.4.13）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。

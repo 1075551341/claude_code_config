@@ -558,6 +558,78 @@ def main() -> int:
         and r_deny["stdout"].get("permission") == "deny",
     )
 
+    r_br = run_hook("shell_guard.py", {"command": "git checkout -b feature/r19"})
+    results["tests"]["shell_guard_branch_ask"] = finish_case(
+        r_br,
+        behavior=isinstance(r_br.get("stdout"), dict)
+        and r_br["stdout"].get("permission") == "ask",
+        note="R19: 新建分支须 ask（branch_requires_ask）",
+    )
+
+    r_wt = run_hook("shell_guard.py", {"command": "git worktree add ../wt"})
+    results["tests"]["shell_guard_worktree_add"] = finish_case(
+        r_wt,
+        behavior=isinstance(r_wt.get("stdout"), dict)
+        and r_wt["stdout"].get("permission") == "ask",
+        note="R19: worktree add 无 --detach 须 ask",
+    )
+
+    r_wrap = run_hook("shell_guard.py", {"command": 'bash -c "git checkout -b feat"'})
+    results["tests"]["shell_guard_branch_bash_c"] = finish_case(
+        r_wrap,
+        behavior=isinstance(r_wrap.get("stdout"), dict)
+        and r_wrap["stdout"].get("permission") == "ask",
+        note="R19: bash -c 包装建分支须 ask",
+    )
+
+    r_amp = run_hook("shell_guard.py", {"command": "true & git checkout -b feat"})
+    results["tests"]["shell_guard_branch_amp"] = finish_case(
+        r_amp,
+        behavior=isinstance(r_amp.get("stdout"), dict)
+        and r_amp["stdout"].get("permission") == "ask",
+        note="R19: & 列表中的建分支须 ask",
+    )
+
+    r_ps = run_hook("shell_guard.py", {"command": "pwsh -Command { git checkout -b feat }"})
+    results["tests"]["shell_guard_branch_pwsh_block"] = finish_case(
+        r_ps,
+        behavior=isinstance(r_ps.get("stdout"), dict)
+        and r_ps["stdout"].get("permission") == "ask",
+        note="R19: pwsh -Command 脚本块须 ask",
+    )
+
+    r_compound = run_hook("shell_guard.py", {"command": "cd /tmp && git checkout -b feat"})
+    results["tests"]["shell_guard_branch_compound"] = finish_case(
+        r_compound,
+        behavior=isinstance(r_compound.get("stdout"), dict)
+        and r_compound["stdout"].get("permission") == "ask",
+        note="R19: 复合命令中的建分支须 ask",
+    )
+
+    r_prev = run_hook("shell_guard.py", {"command": "git checkout -"})
+    results["tests"]["shell_guard_checkout_prev"] = finish_case(
+        r_prev,
+        behavior=isinstance(r_prev.get("stdout"), dict)
+        and r_prev["stdout"].get("permission") == "ask",
+        note="R19: checkout -（上一分支）须 ask",
+    )
+
+    r_restore = run_hook("shell_guard.py", {"command": "git checkout -- README.md"})
+    results["tests"]["shell_guard_checkout_file"] = finish_case(
+        r_restore,
+        behavior=(r_restore.get("stdout") or {}) == {}
+        or (isinstance(r_restore.get("stdout"), dict) and r_restore["stdout"].get("permission") == "allow"),
+        note="R19: 路径还原不拦截",
+    )
+
+    r_dot = run_hook("shell_guard.py", {"command": "git checkout ."})
+    results["tests"]["shell_guard_checkout_dot"] = finish_case(
+        r_dot,
+        behavior=(r_dot.get("stdout") or {}) == {}
+        or (isinstance(r_dot.get("stdout"), dict) and r_dot["stdout"].get("permission") == "allow"),
+        note="R19: checkout . 是路径还原，不拦截",
+    )
+
     results["tests"]["secret_scan_clean"] = run_hook(
         "prompt_secret_scan.py", {"prompt": "hello world"}
     )

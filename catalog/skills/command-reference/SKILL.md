@@ -6,6 +6,8 @@ triggers: [常用CLI命令速查表]
 
 # 常用命令速查
 
+> **R19**：Agent 禁止自动 `git stash` / `git commit` / 非 dry-run `git push` / **新建或切换分支**。`git checkout -b` / `git switch` / `git stash` 仅当用户**本条消息显式要求**（stash 则仅用户本地终端）。路径还原用 `git checkout -- <path>` / `git checkout .` / `git restore`。
+
 ## Git 命令
 
 ### 基础操作
@@ -25,17 +27,17 @@ git add -p                   # 交互式添加
 git commit -m "message"
 git commit --amend           # 修改上次提交
 
-# 分支操作
-git branch [-a]              # 查看分支
-git checkout -b <branch>     # 创建并切换
+# 分支操作（建/切分支须用户本条消息显式要求，R19）
+git branch [-a]              # 查看分支（只读，允许）
+git checkout -b <branch>     # 创建并切换（禁止自动）
 git merge <branch>           # 合并分支
-git branch -d <branch>       # 删除分支
+git branch -d <branch>       # 删除分支（禁止自动）
 ```
 
 ### 高级操作
 
 ```bash
-# 暂存工作区
+# 暂存工作区（Agent 禁止 git stash 任何子命令；仅用户本地）
 git stash [push -m "msg"]
 git stash pop
 git stash list

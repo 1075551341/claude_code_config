@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.17 (v11.4.12) | **日期**: 2026-09-01 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.18 (v11.4.13) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -85,7 +85,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 | --------- | ----------------- | :---------: | -------------------------------- | ----------------------------------------------- |
 | cursor    | `~/.cursor`       |     ✅      | local plugin `*.mdc`（唯一生效） | skills/agents 联接（-Skills/-All）              |
 | qoder-cn  | `~/.qoder-cn`     |     ✅      | `rules/*.mdc`（实体+台账）       | —                                               |
-| trae-cn   | `~/.trae-cn`      |     ✅      | `user_rules/*.md`（实体+台账）   | R19 守卫另经 TRAE AppData hook（独立于同步链）  |
+| trae-cn   | `~/.trae-cn`      |     ✅      | `user_rules/*.md`（实体+台账）   | R19 守卫另经 TRAE AppData hook（独立于同步链）。**改 `hooks/pre-bash-guard.py` 后须刷新该副本**，`sync.ps1` 不会复制 hooks。 |
 | workbuddy | `~/.workbuddy`    |     ❌      | 无                               | 仅 `CLAUDE.md` + `skills/` 联接；SOUL/USER 禁触 |
 | qoder     | `~/.qoder`        |     ✅      | `rules/*.mdc`                    | 未安装，缺席自动跳过                            |
 | trae      | `~/.trae`         |     ✅      | `user_rules/*.md`                | 未安装，缺席自动跳过                            |
@@ -239,6 +239,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.18 (v11.4.13)**：铁律 R1–R20 工业落地（R15 语言/锁文件；R19 禁自动建/切分支）。Guard 1.2.12。**不改** editors 清单。改 `pre-bash-guard.py` 后须手工刷新 TRAE AppData R19 副本（不经 sync.ps1）。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
 - **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。
 - **v20.15 (v11.4.10)**：Cursor 完成门不再 followup（规则驱动双审）。Guard 1.2.10；DSH 2.9 / OpenCode 1.9。90% 用 `additional_context`（文档与实现对齐）。

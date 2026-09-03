@@ -2,6 +2,7 @@
 """beforeShellExecution: Shell 危险命令守卫。"""
 from __future__ import annotations
 
+import os
 import sys
 
 import _path  # noqa: F401
@@ -15,9 +16,11 @@ from config import load_guard_config
 from shell_patterns import (
     is_network_command,
     match_deny,
+    match_git_branch_mutate,
     match_git_commit,
     match_git_stash,
     match_warn,
+    pm_mix_warning,
 )
 
 
@@ -27,6 +30,14 @@ def extract_command(data: dict) -> str:
         if isinstance(val, str) and val.strip():
             return val.strip()
     return ""
+
+
+def extract_cwd(data: dict) -> str | None:
+    for key in ("cwd", "working_directory", "workspace_root"):
+        val = data.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return None
 
 
 def main() -> None:
@@ -46,7 +57,7 @@ def main() -> None:
                 {
                     "permission": "deny",
                     "user_message": "已禁止 Agent 执行 git stash（请本地手动处理工作区）",
-                    "agent_message": "【Cursor Guard】禁止 git stash。勿自动 stash；请用户本地处理或换用 worktree。",
+                    "agent_message": "【Cursor Guard】禁止 git stash。勿自动 stash；请用户本地处理或换用 git worktree add --detach。",
                 }
             )
             return
@@ -66,6 +77,25 @@ def main() -> None:
                     "permission": "deny",
                     "user_message": "已禁止 Agent 执行 git commit（请本地手动提交）",
                     "agent_message": "【Cursor Guard】禁止 git commit。请用户本地执行。",
+                }
+            )
+            return
+
+        if git_cfg.get("forbid_auto_branch") and match_git_branch_mutate(command):
+            if git_cfg.get("branch_requires_ask"):
+                write_json(
+                    {
+                        "permission": "ask",
+                        "user_message": "Agent 拟新建或切换 git 分支 — 仅在你本条消息已明确要求「建分支/切分支」时批准",
+                        "agent_message": "【Cursor Guard】禁止自动新建/切换分支（R19）。用户未显式要求时不得执行。",
+                    }
+                )
+                return
+            write_json(
+                {
+                    "permission": "deny",
+                    "user_message": "已禁止 Agent 新建或切换 git 分支（请本地处理）",
+                    "agent_message": "【Cursor Guard】禁止自动新建/切换分支（R19）。",
                 }
             )
             return
@@ -91,12 +121,18 @@ def main() -> None:
             )
             return
 
+        notes = []
         warn = match_warn(command)
         if warn:
+            notes.append(warn)
+        pm_warn = pm_mix_warning(command, extract_cwd(data) or os.getcwd())
+        if pm_warn:
+            notes.append(pm_warn)
+        if notes:
             write_json(
                 {
                     "permission": "allow",
-                    "agent_message": f"【Cursor Guard · Shell 警告】{warn}",
+                    "agent_message": "【Cursor Guard · Shell 警告】" + "；".join(notes),
                 }
             )
     except Exception as e:

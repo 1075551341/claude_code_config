@@ -6,6 +6,8 @@ triggers: [并行开发多个功能, 隔离开发环境, 同时处理多个分�
 
 # Git Worktrees 使用
 
+> **R19**：Agent 禁止自动 `git worktree add`（无 `--detach` 会按路径新建分支）。仅用户本条消息显式要求，或使用 `git worktree add --detach`。
+
 ## 核心能力
 
 **创建隔离的Git工作树，支持多分支并行开发。**
@@ -39,14 +41,15 @@ Worktree 是独立的工作目录，共享同一个 Git 仓库
 ### 创建 Worktree
 
 ```bash
+# 以下建/切分支配方仅当用户本条消息显式要求时执行（R19）
 # 基于现有分支
 git worktree add ../project-feature-a feature-a
 
 # 基于新分支
 git worktree add -b new-feature ../project-new-feature main
 
-# 基于远程分支
-git worktree add ../project-upstream upstream/main
+# 不建分支（Agent 可用）
+git worktree add --detach ../project-scratch HEAD
 ```
 
 ### 列出 Worktrees

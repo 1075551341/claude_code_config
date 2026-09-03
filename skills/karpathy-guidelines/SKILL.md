@@ -58,7 +58,7 @@ loading_tier: L3
 
 ## 铁律关联
 
-R1–R11 → `CLAUDE.md` | R12(子Agent隔离) R13(制品存活) R14(版本克制) R15(pnpm优先) → `rules/CORE.md`
+R1–R20 操作+机械门 → `rules/CORE.md`（L0 `CLAUDE.md` 一行表）；R15 按语言/锁文件；R19 含禁自动建/切分支
 
 ## 效果指标
 

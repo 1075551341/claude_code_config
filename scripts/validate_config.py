@@ -176,9 +176,16 @@ def v4_iron_laws_consistency():
         tag = f"R{i}"
         if tag not in claude and tag not in core:
             ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
-    for tag in ("R17", "R18", "R20"):
+    for tag in ("R15", "R17", "R18", "R19", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
+    for kw in ("锁文件", "幻影依赖", "分支", "操作要点", "机械门"):
+        if kw not in core:
+            ERRORS.append(f"V4: CORE.md missing R15/R19 keyword {kw!r}")
+    if "幻影依赖" not in claude and "隔离式" not in claude:
+        ERRORS.append("V4: CLAUDE.md R15 未写按语言/锁文件或幻影依赖")
+    if "分支" not in claude:
+        ERRORS.append("V4: CLAUDE.md R19 missing 分支")
     if "Karpathy" not in core or "Karpathy" not in claude:
         ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
     verif_path = os.path.join(BASE, "skills", "verification-before-completion", "SKILL.md")
@@ -338,8 +345,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -386,7 +393,7 @@ def main():
 def report(agents=0, skills=0, rules=0, claude_lines=0):
     print("=== .claude v11 VALIDATION (19 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
@@ -679,6 +686,21 @@ def check_v14_cursor_guard_v11():
             )
     except OSError as exc:
         ERRORS.append(f"V14: MANIFEST.yaml unreadable: {exc}")
+    stamp = f"v{expected}" if expected else None
+    if stamp:
+        for rel, label in (
+            (os.path.join(BASE, "SPEC.md"), "SPEC.md"),
+            (os.path.join(BASE, "docs", "CURSOR_EDITOR_SETUP.md"), "docs/CURSOR_EDITOR_SETUP.md"),
+            (os.path.join(BASE, "hooks", "README.md"), "hooks/README.md"),
+        ):
+            try:
+                with open(rel, "r", encoding="utf-8") as fh:
+                    text = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: {label} unreadable: {exc}")
+                continue
+            if stamp not in text:
+                ERRORS.append(f"V14: {label} missing current Guard {stamp}")
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 
