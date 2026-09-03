@@ -2,6 +2,13 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.17 版本映射 + L0/MCP 注释 + 本机落地（2026-09-03）
+
+- **R20**：DSH/OpenCode `version_map` 与 SYNC_GUIDE 对齐现行 Claude 版本；L0 五阶段与审查路由统一「日常最多 3 轮（单任务覆盖须用户显式声明）」；L0 同步段写明 DSH/OpenCode 便携件且禁止 CLAUDE.md 覆盖 AGENTS.md。
+- **MCP**：`MANIFEST` `mcp_loading.always` 注释补 firecrawl/github；`rules/MCP.md` 分组表与 SPEC/`servers.json` 二分对齐；`CURSOR_MCP_PROFILE` 登记 Cursor 无 firecrawl Plugin。
+- **DX**：README/SYNC_GUIDE 写明云端不能写 `C:\Users\DELL\.claude`；落地命令一律 `pwsh -ExecutionPolicy Bypass -File`（含便携件 README / deploy 头注释）。
+- **V20**：`dsh`/`opencode` `version_map` 必须含 MANIFEST 现行版本。`review_max_rounds` 仍为 3。
+
 ## v11.4.16 MCP 分组/调研薄壳 + check HOME + Guard inherit 消费（2026-09-03）
 
 - **调研/MCP**：`commands/deep-research.md`、`skills-INDEX`、`MANIFEST` deep-research/mcp_tiering、deer-flow 降级与 CLAUDE.md harness 口径对齐。`mcp/servers.json` plugins 含 firecrawl，`plugins_default_off` 含 github。`mcp-configs/search.json` 改为 plugin 视图（servers 空，禁止再当 `.mcp.json` 常驻）。

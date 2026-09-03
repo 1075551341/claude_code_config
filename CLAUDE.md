@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.16**（审查清单闭环：MCP 分组/调研薄壳、check HOME、Guard inherit 消费。原 v11.4.15：harness 文案。原 v11.4.14：加载器闭环。原 v11.4.13：YAML SSOT）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.17**（审查清单闭环：版本映射、L0/MCP 注释、本机落地。原 v11.4.16：MCP 分组。原 v11.4.15：harness 文案。原 v11.4.14：加载器闭环）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
@@ -61,7 +61,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
        → ③执行(Read skills/executing-plans/SKILL.md)
        → ④验证(Read skills/verification-before-completion/SKILL.md；全量)
           有代码/配置改动：修改（change-implementer）→验证→审查（eng-reviewer 只找问题）；
-          干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
+          干净 PASS 即停；审查一次找齐后汇总清单再派修改者集中改齐；每轮独立审查必须全新开审（禁止 resume），日常最多 3 轮（单任务覆盖须用户显式声明）；禁止边审边改、禁止审查者改文件、禁止只连审不改；满轮未过 → BLOCKED/DONE_WITH_CONCERNS
           计划未批准 / CreatePlan 等待用户 → 禁止声称完成与审查
           → ⑤学习
 非简单 调研 → deep-research（L3 双源）
@@ -79,7 +79,7 @@ Bug(多文件/根因不明/执行升档) → triage(L3 P0-P3) → L2 systematic-
   ① 规划: HARD-GATE 用户批准设计 ✓（未批准 → 回到①）
   ② 规格: spec-validation通过 + 任务有成功标准 + 无静默缩scope（失败 → BLOCKED，禁止 execute）
   ③ 执行: 子任务完成 + 构建/类型/Lint通过 + 子Agent异常已处理(R16)（失败 → BLOCKED + R16 报告）
-  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（最多 3 轮）；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
+  ④ 验证: 质量门全通过 + 交叉验证通过 + 会话终验(R20)按原始要求逐条回放（满足/遗漏/错改/漏改/原功能/影响范围；配置/修改必须与文档/注释同步；未全绿 → DONE_WITH_CONCERNS 需说明）。有代码/配置改动：change-implementer 修改→验证→eng-reviewer 一次找齐；干净 PASS 即停；清单齐后集中改；每轮全新开审（日常最多 3 轮，单任务覆盖须用户显式声明）；只读免审；计划未批准禁止声称完成。Claude Stop exit 2；Cursor 无完成门 followup
   ⑤ 学习: 模式提取完成（claude-mem pattern）
 ```
 
@@ -179,6 +179,6 @@ task-triage → config/scenario-router.yaml → Read load.* → config/harness-c
 | 记忆搜索         | claude-mem (R18)                                                                         |
 
 **插件**：见 `plugins/installed_plugins.json` + `settings.json` enabledPlugins（Cursor 禁用 compound-engineering，与本地 agents 重叠）。
-**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
+**同步**：`scripts/sync.ps1` — v11.1 多编辑器 1+N：Claude Code 原生读 `~/.claude`（零同步）；Cursor 软链 L0 入口（6 根文件）+ local plugin 实体规则（唯一规则通道，`~/.cursor/rules` 不生效）；qoder-cn rules（.mdc 实体+台账）、trae-cn user_rules（.md 实体+台账）、workbuddy 仅 CLAUDE.md+skills 联接；qoder/trae/codearts 定义保留待装；DSH/OpenCode 仅复制便携件，**禁止 CLAUDE.md 覆盖 AGENTS.md**；清单/常量单源 `config/sync-manifest.json`（home 缺席自动跳过）。
 **业务仓库**：SessionStart 对 eligible git 仓 **执行** `codegraph init|sync` 与 `code-review-graph build|update`（无图禁止后续探索/编辑，不是仅提示）；有图后改前/完成前走 CRG 上下文与影响面；探索「怎么运作」一律 codegraph_explore（R17）；验证全绿后才跑 `scripts/sync.ps1`。codebase-memory 已永久禁用。
 **Karpathy 四原则** → `skills/karpathy-guidelines/SKILL.md`（L3 按需）。**RTK**（shell 输出压缩）由 `pre-rtk-rewrite.py` hook 自动执行 → 详见 `RTK.md`。

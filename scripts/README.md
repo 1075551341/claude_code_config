@@ -59,8 +59,8 @@ pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun        # 预览不写�
 Claude Code hooks 在 Cursor 内不执行；编辑器侧由 **Cursor Guard** 负责影响驱动同步与上下文 70%/90% 监控。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
-powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
 ```
 
 - 模板：`templates/cursor-guard/`；运行时：`~/.cursor/hooks.json`、`guard-config.json`

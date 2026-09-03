@@ -9,7 +9,7 @@
     已有相同脚本路径的条目则更新 timeout，不重复添加。
 
 .EXAMPLE
-    pwsh -File scripts/deploy-editor-graph-hooks.ps1
+    pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1
 #>
 #Requires -Version 5.1
 

@@ -54,7 +54,7 @@
 .NOTES
     修复后核对：
       python scripts/audit_hooks.py       # 确认每个 hook 都经 launcher 调用
-      powershell -File scripts/check.ps1  # S4 段落检查 hook 安全
+      pwsh -ExecutionPolicy Bypass -File scripts/check.ps1  # S4 段落检查 hook 安全
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
 #Requires -Version 5.1

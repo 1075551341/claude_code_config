@@ -1,7 +1,7 @@
 {
   "name": "claude-config",
   "private": true,
-  "version": "11.4.16",
+  "version": "11.4.17",
   "volta": {
     "node": "22.22.3"
   }

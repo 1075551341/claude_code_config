@@ -1142,10 +1142,23 @@ def check_v20_scenario_router():
     fake = set(ov) - cap_ids
     if fake:
         ERRORS.append(f"V20: workbuddy.overrides 含非 capability 键: {sorted(fake)}")
+    man_ver = ""
+    try:
+        with open(os.path.join(BASE, "MANIFEST.yaml"), encoding="utf-8") as fh:
+            for line in fh:
+                m = re.match(r'version:\s*"([^"]+)"', line)
+                if m:
+                    man_ver = m.group(1)
+                    break
+    except OSError:
+        man_ver = ""
     for hid in ("dsh", "opencode"):
         extra = (harnesses.get(hid) or {}).get("extra") or {}
         if extra.get("forbid") != "claude_md_overwrite_agents_md":
             ERRORS.append(f"V20: {hid}.extra.forbid 必须为 claude_md_overwrite_agents_md")
+        vm = str(extra.get("version_map") or "")
+        if man_ver and man_ver not in vm:
+            ERRORS.append(f"V20: {hid}.extra.version_map 须含现行 {man_ver}")
 
     qg_path = os.path.join(BASE, "config", "quality_gates.json")
     try:

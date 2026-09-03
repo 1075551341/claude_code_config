@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.16** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.4.17** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.16）                                                                 |
+| `SPEC.md`       | 配置法典（v11.4.17）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -32,7 +32,7 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 
 ## 同步（v11.1 多编辑器 1+N）
 
-Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
+Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）。**云端 Agent 不能写本机 `C:\Users\DELL\.claude`**（仓根即该目录）；合并后必须在本机再跑：
 
 ```powershell
 git pull
@@ -55,7 +55,8 @@ pwsh -ExecutionPolicy Bypass -File scripts/check.ps1        # 一致性体检
 
 ## 版本
 
-- 当前：**v11.4.16**（2026-09-03）— MCP 分组/调研薄壳对齐 harness；check Expand-UserHome；Guard inherit 消费并行审查者。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 当前：**v11.4.17**（2026-09-03）— 版本映射/L0 MCP 注释/本机落地 Bypass 与云端 home。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
+- 前版：v11.4.16（2026-09-03）— MCP 分组/调研薄壳对齐 harness；check Expand-UserHome；Guard inherit 消费并行审查者。Guard 1.2.13；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.15（2026-09-03）— 审查清单闭环：harness 文案、加载器可执行、inherit 机械门。Guard 1.2.12；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.14（2026-09-03）— 场景路由加载器闭环；Stop/Guard 消费审前双图与 inherit 并行门；sync.ps1 复制 harness 便携件。Guard 1.2.12；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.13（2026-09-03）— 场景路由 YAML SSOT + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
