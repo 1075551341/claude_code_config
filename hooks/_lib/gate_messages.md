@@ -19,7 +19,7 @@
 有未验证编辑时才执行。计划未批准 / 本轮零编辑 / 仅计划文件 → 停止，不要续跑。
 Read verification-before-completion；贴观察输出。
 R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档/注释或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）。
-有代码/配置改动：开审前双图 ensure；change-implementer 修改 → 验证 → eng-reviewer 一次找齐（并行须 inherit）。干净 PASS 即停。每轮全新开审（禁止 resume），最多 3 轮。只读免审。
+有代码/配置改动：开审前双图 ensure；change-implementer 修改 → 验证 → eng-reviewer 一次找齐（并行须 inherit）。干净 PASS 即停。每轮全新开审（禁止 resume），日常最多 3 轮（单任务覆盖须用户显式声明）。只读免审。
 
 ## 变更影响门
 

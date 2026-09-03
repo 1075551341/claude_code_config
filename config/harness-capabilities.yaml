@@ -1,8 +1,8 @@
-# Harness 能力图 SSOT — v11.4.17
+# Harness 能力图 SSOT — v11.4.18
 # capability id → 当前端实际 provider。缺能力必须 fallback 或 interrupt，禁止假装已调用。
 # MCP 常驻服务器清单仍以 .mcp.json 为 Claude Code 权威；本文件只声明 capability→provider 解析。
 # 各端 plugin/MCP 开关自管；sync.ps1 不改 mcp.json。
-version: "11.4.17"
+version: "11.4.18"
 updated: "2026-09-03"
 
 capability_ids:
@@ -130,7 +130,7 @@ harnesses:
         - graph_freshness_cli.py
         - r20_check.py
       home: "~/.dsh"
-      version_map: "DSH 2.12 ↔ claude 11.4.17"
+      version_map: "DSH 2.12 ↔ claude 11.4.18"
       forbid: claude_md_overwrite_agents_md
   opencode:
     <<: *pluginless
@@ -142,5 +142,5 @@ harnesses:
         - graph-freshness.ts
         - verify-gate.ts
       home: "~/.config/opencode"
-      version_map: "OpenCode 1.12 ↔ claude 11.4.17"
+      version_map: "OpenCode 1.12 ↔ claude 11.4.18"
       forbid: claude_md_overwrite_agents_md

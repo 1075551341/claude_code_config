@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（日常最多 3 轮，单任务覆盖须用户显式声明）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。

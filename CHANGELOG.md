@@ -2,6 +2,11 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.18 现行操作句与 L0 轮次口径对齐（2026-09-03）
+
+- **R20**：Stop/Guard 注入、Cursor 规则、OpenCode `verify-gate`、verification/executing-plans/task-triage 现行句改为「日常最多 3 轮（单任务覆盖须用户显式声明）」。`review_max_rounds` 仍为 3。
+- 历史 CHANGELOG / skill 版本注记保留绝对「最多 3 轮」。
+
 ## v11.4.17 版本映射 + L0/MCP 注释 + 本机落地（2026-09-03）
 
 - **R20**：DSH/OpenCode `version_map` 与 SYNC_GUIDE 对齐现行 Claude 版本；L0 五阶段与审查路由统一「日常最多 3 轮（单任务覆盖须用户显式声明）」；L0 同步段写明 DSH/OpenCode 便携件且禁止 CLAUDE.md 覆盖 AGENTS.md。

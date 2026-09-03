@@ -162,5 +162,5 @@ L1/L2 调研、调试、开 PR、符号重构、④验证 为 overlay，不替�
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，最多 3 轮。计划未批准禁止声称完成。Cursor 完成门不 followup。
+- 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，日常最多 3 轮（单任务覆盖须用户显式声明）。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

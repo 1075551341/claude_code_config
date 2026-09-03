@@ -251,7 +251,7 @@ Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / Cre
 □ 验证（主会话贴观察输出）→ Task eng-reviewer 只找问题：必须扫完影响面后再给结论，一次列全未满足项
 □ 每轮审查必须全新 Task/Agent（禁止 resume 上一轮审查者）；上轮清单仅参考，不得限定本轮扫描范围
 □ 干净 PASS 且与验证一致 → 立即结束，禁止再派审查
-□ NEEDS-CHANGES → 汇总完整清单后再派一次 change-implementer 集中改齐（禁止发现一条立刻改再审）；再验证后全新开审（禁止只对照旧清单核销）；最多 3 轮；禁止只连审不改、禁止只汇报等用户；满轮未过不得声称完成
+□ NEEDS-CHANGES → 汇总完整清单后再派一次 change-implementer 集中改齐（禁止发现一条立刻改再审）；再验证后全新开审（禁止只对照旧清单核销）；日常最多 3 轮（单任务覆盖须用户显式声明）；禁止只连审不改、禁止只汇报等用户；满轮未过不得声称完成
 □ 有代码文件即要求审查（min_files=1）；只读/仅计划文件 skip
 □ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
 ```

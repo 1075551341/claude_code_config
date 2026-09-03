@@ -1,6 +1,6 @@
 # Agents 索引
 
-> 自动生成 | 源：`agents/` | v11.4.17（17 全量；catalog 变体见 `catalog/agents/`）
+> 自动生成 | 源：`agents/` | v11.4.18（17 全量；catalog 变体见 `catalog/agents/`）
 
 ## 核心 7
 

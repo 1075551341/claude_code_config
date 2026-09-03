@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.22 (v11.4.17) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.23 (v11.4.18) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -23,7 +23,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 ---
 
-## DSH / OpenCode 适配层（v11.4.17；手工对齐，不覆盖 AGENTS.md）
+## DSH / OpenCode 适配层（v11.4.18；手工对齐，不覆盖 AGENTS.md）
 
 > v20.1 起即登记 DSH 消费方。OpenCode `editors.opencode.enabled=false`（v11.4.4）保持：**禁止** `CLAUDE.md` → `AGENTS.md`。
 
@@ -34,7 +34,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 | R20 机械门 | `tools/r20_check.py` | `scripts/r20_check.py` |
 | 图谱插件 | 无 hook；agent CLI ensure/refresh | `plugins/graph-freshness.ts` + `verify-gate.ts` |
 | 投放 | `sync.ps1`（home 存在则复制便携件）+ `deploy-editor-graph-hooks.ps1` | 同左 |
-| 版本映射 | DSH 2.12 ↔ Claude 11.4.17 | OpenCode 1.12 ↔ Claude 11.4.17 |
+| 版本映射 | DSH 2.12 ↔ Claude 11.4.18 | OpenCode 1.12 ↔ Claude 11.4.18 |
 | 禁止 | 把 Cursor `followup_message` / Claude Stop exit 2 原样搬过去；spawn `hooks/_lib/gate_cli.py` | 同左；禁止 CLAUDE.md 覆盖 AGENTS.md |
 
 `config/sync-manifest.json` 的 **`harnesses` 段** 是清单 SSOT。`sync.ps1` 复制便携文件（不写 AGENTS.md；`graph-freshness.json` 仅在缺失时复制）。`check.ps1`：home 缺席跳过；home 存在则断言便携文件在，且 `AGENTS.md` 不是指向 `CLAUDE.md` 的软链。
@@ -259,6 +259,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.23 (v11.4.18)**：现行操作句与 L0 轮次口径对齐；version_map ↔ 11.4.18。
 - **v20.22 (v11.4.17)**：本机落地 Bypass + 云端不能写本机 home；DSH/OpenCode version_map ↔ 11.4.17。
 - **v20.21 (v11.4.16)**：check.ps1 Expand-UserHome 与 sync/deploy 对齐；README TTHW/验证 `pwsh -ExecutionPolicy Bypass -File`。
 - **v20.20 (v11.4.15)**：README 本机 `git pull`+deploy；sync Expand-UserHome；harnesses 进常量表；OpenCode enabled=false 显式 skip。

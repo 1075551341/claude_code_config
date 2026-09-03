@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.17**（审查清单闭环：版本映射、L0/MCP 注释、本机落地。原 v11.4.16：MCP 分组。原 v11.4.15：harness 文案。原 v11.4.14：加载器闭环）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.18**（审查清单闭环：现行操作句与 L0 轮次口径对齐。原 v11.4.17：版本映射。原 v11.4.16：MCP 分组。原 v11.4.15：harness 文案）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`

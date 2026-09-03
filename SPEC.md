@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.17 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
+> 版本：11.4.18 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
 
 ---
 
@@ -361,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.17 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20
+> 版本：11.4.18 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20
