@@ -34,7 +34,9 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer", "qa", "code-reviewer", "dx-reviewer", "spec-reviewer",
+]
 
 IMPACT_GATE_KEY = "impact_manifest_gate"
 IMPACT_REMINDER = (

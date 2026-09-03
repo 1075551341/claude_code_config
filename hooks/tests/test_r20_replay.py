@@ -665,6 +665,38 @@ def test_claude_tracker_first_edit_injects() -> None:
             counted = len(entry.get("reviews") or []) == 0
         check("tracker resume not counted as review", skipped and counted)
 
+        dx_payload = json.dumps(
+            {
+                "session_id": "fe-tracker-test",
+                "tool_name": "Task",
+                "tool_input": {
+                    "subagent_type": "dx-reviewer",
+                    "description": "DX review",
+                    "model": "gpt-5.6-sol-max",
+                },
+                "cwd": tmp,
+            }
+        )
+        dx_run = subprocess.run(
+            cmd,
+            input=dx_payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        check("tracker dx-reviewer exit 0", dx_run.returncode == 0)
+        viol_ok = False
+        if state_path.exists():
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            entry = state.get("fe-tracker-test") or {}
+            viol = entry.get("review_model_violations") or []
+            viol_ok = any(
+                v.get("agent") == "dx-reviewer" and v.get("model") == "gpt-5.6-sol-max"
+                for v in viol
+            )
+        check("tracker records dx-reviewer inherit violation", viol_ok)
+
 
 def test_impact_diff_superset_blocked() -> None:
     """清单外变更（脏集−基线−声明 ≠ ∅）→ 返回额外文件列表。"""
@@ -785,6 +817,15 @@ def test_stop_default_review_keys() -> None:
     loaded = mod.load_config()
     check("load_config dual graph", loaded.get("require_dual_graph_before_review") is True)
     check("load_config parallel", isinstance(loaded.get("parallel_review"), dict))
+    qg_path = HOOKS_DIR.parent / "config" / "quality_gates.json"
+    qg = json.loads(qg_path.read_text(encoding="utf-8")).get("verification_gate") or {}
+    agents = set(qg.get("reviewer_agents") or [])
+    check("qg reviewer_agents has dx-reviewer", "dx-reviewer" in agents)
+    check("qg reviewer_agents has spec-reviewer", "spec-reviewer" in agents)
+    gstop = (
+        HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks" / "verification_stop.py"
+    ).read_text(encoding="utf-8")
+    check("guard stop consumes review_model_violations", "review_model_violations" in gstop)
 
 
 def main() -> int:

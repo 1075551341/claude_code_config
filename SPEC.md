@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.15 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
+> 版本：11.4.16 | 五柱×五阶段×三横切 | L0–L3 分级加载 + 场景路由 YAML SSOT + harness 能力图 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 独立审前双图 ensure + inherit 并行审查（禁倍率档）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 多编辑器 1+N + DSH/OpenCode 适配层 | UA removed | cbm 已禁用
 
 ---
 
@@ -12,7 +12,7 @@ RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gs
 FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
 REVIEW   = gstack 6审查 + 3补全 + 1跨模型
 OPTIMIZE = RTK(shell token) + caveman(输出token)
-INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
+INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + harness web_scrape/web_search(外部调研；Firecrawl/Exa 或当前端 fallback)  # UA removed v10.5
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -59,7 +59,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 19     | 注册激活 19 + 未注册 5 + 分发器 1（`_editor_hook_launcher.py`）；Cursor Guard 运行时 23（v1.2.12，resume 审查不计入）                                                                                    |
+| 全局 hooks   | 19     | 注册激活 19 + 未注册 5 + 分发器 1（`_editor_hook_launcher.py`）；Cursor Guard 运行时 23（v1.2.13，resume 审查不计入；Stop 消费 inherit 违例）                                                                                    |
 | 全局 MCP     | 4 常驻 | codegraph + CRG + serena + grep；plugin（context7/exa/playwright/firecrawl）不计入常驻 MCP；debug/fsaccess/ops 见 mcp-configs/                                                          |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记：启用12 / 禁用6（以 settings.json 为准；plugin=true：context7/exa/playwright/firecrawl）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -361,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.15 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20
+> 版本：11.4.16 | 日期：2026-09-03 | 五柱×五阶段×三横切 | 场景路由 YAML + harness 能力图 | MCP 常驻 4 | 审前双图 + inherit 并行审查（禁倍率档） | 图谱保鲜硬门 | 审查一次找齐 | L0–L3 | 同步 1+N + DSH/OpenCode 适配层 | R20

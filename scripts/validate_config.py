@@ -1157,6 +1157,46 @@ def check_v20_scenario_router():
     for key in ("require_dual_graph_before_review", "parallel_review"):
         if key not in qg:
             ERRORS.append(f"V20: quality_gates.verification_gate 缺少 {key}")
+    need_rev = {"eng-reviewer", "dx-reviewer", "spec-reviewer"}
+    missing_rev = need_rev - set(qg.get("reviewer_agents") or [])
+    if missing_rev:
+        ERRORS.append(
+            f"V20: quality_gates.reviewer_agents 缺少并行审查者: {sorted(missing_rev)}"
+        )
+    servers_path = os.path.join(BASE, "mcp", "servers.json")
+    try:
+        with open(servers_path, encoding="utf-8") as fh:
+            toolsets = json.load(fh).get("toolsets") or {}
+        plugins = set(toolsets.get("plugins") or [])
+        if "firecrawl" not in plugins:
+            ERRORS.append("V20: mcp/servers.json plugins 必须含 firecrawl")
+        off = set(toolsets.get("plugins_default_off") or [])
+        if "github" not in off:
+            ERRORS.append("V20: mcp/servers.json plugins_default_off 必须含 github")
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: mcp/servers.json unreadable: {exc}")
+    guard_stop = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "verification_stop.py"
+    )
+    try:
+        gstop = open(guard_stop, encoding="utf-8").read()
+    except OSError as exc:
+        ERRORS.append(f"V20: verification_stop.py unreadable: {exc}")
+        gstop = ""
+    if "review_model_violations" not in gstop:
+        ERRORS.append("V20: Guard verification_stop 未消费 review_model_violations")
+    guard_cfg_path = os.path.join(BASE, "templates", "cursor-guard", "guard-config.json")
+    try:
+        with open(guard_cfg_path, encoding="utf-8-sig") as fh:
+            gver = (json.load(fh).get("verification") or {})
+        g_agents = set(gver.get("reviewer_agents") or [])
+        missing_g = need_rev - g_agents
+        if missing_g:
+            ERRORS.append(
+                f"V20: Guard verification.reviewer_agents 缺少: {sorted(missing_g)}"
+            )
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V20: guard-config.json unreadable: {exc}")
     stop_path = os.path.join(BASE, "hooks", "stop-verification-gate.py")
     try:
         stop_src = open(stop_path, encoding="utf-8").read()

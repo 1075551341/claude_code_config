@@ -26,6 +26,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.13**：`verification_stop` 在双审 `review` 相位读取 `review_model_violations`（stderr + `user_message`，不 `followup_message`）。`guard-config.verification.reviewer_agents` 含 dx/spec。`verification_gate` 仍不注入。
 **v1.2.12**：`verification_stop` 在双审 `review` 相位调用 `ensure_both`（`require_dual_graph_before_review`）。
 **v1.2.11**：`verify_tracker` 对带 `resume` 的审查 Task 不计入 `reviews`（每轮须全新开审）。
 **v1.2.10**：完成门不再 `followup_message`（会刷会话面板）。Stop 只刷图谱 / 全绿 sync；双审改规则驱动。`enforce_mode=off`。

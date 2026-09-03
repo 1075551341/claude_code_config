@@ -50,4 +50,4 @@ source: bytedance/deer-flow
 
 ## 失败处理（R16）
 
-deer-flow 不可用 → 报告错误 + 降级 `/deep-research`（Firecrawl+Exa）+ 询问用户是否继续
+deer-flow 不可用 → 报告错误 + 降级 `/deep-research`（harness `web_scrape`+`web_search`，或当前端 fallback）+ 询问用户是否继续

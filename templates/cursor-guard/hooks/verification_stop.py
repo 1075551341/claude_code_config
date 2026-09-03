@@ -44,6 +44,26 @@ def _quality_gate_cfg(claude_home) -> dict:
     return {}
 
 
+def inherit_violation_msg(entry: dict, qg: dict) -> str:
+    """Cursor 不能 deny；review 相位把非 inherit 审查者写成可见 user_message。"""
+    pr = qg.get("parallel_review") or {}
+    if not (
+        pr.get("forbid_multiplier_models")
+        or str((pr.get("require_model") or "")).strip().lower() == "inherit"
+    ):
+        return ""
+    viol = entry.get("review_model_violations") or []
+    if not viol:
+        return ""
+    shown = ", ".join(
+        f"{v.get('agent')}={v.get('model')}" for v in viol[:6]
+    )
+    return (
+        "独立审查子代理须 Task model=inherit（禁止倍率档）；"
+        f"检测到非 inherit：{shown}"
+    )
+
+
 def _load_entry(path: Path, session_id: str) -> dict:
     if not session_id:
         return {}
@@ -161,8 +181,20 @@ def main() -> None:
         else:
             print("verification_stop: 完成门不注入 followup_message（规则驱动双审）", file=sys.stderr)
 
+        inherit_msg = ""
+        phase = r20.dual_pass_phase(entry, qg) if r20 else ""
+        if phase == "review":
+            inherit_msg = inherit_violation_msg(entry, qg)
+            if inherit_msg:
+                print(f"verification_stop: {inherit_msg}", file=sys.stderr)
+
+        parts = []
+        if inherit_msg:
+            parts.append(inherit_msg)
         if show_graph_ui and graph_ui:
-            write_json({"user_message": graph_ui})
+            parts.append(graph_ui)
+        if parts:
+            write_json({"user_message": "\n".join(parts)})
     except Exception as e:
         print(f"verification_stop: {e}", file=sys.stderr)
     finally:

@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.15**（审查清单闭环：harness 文案 + 加载器可执行 + inherit 机械门。原 v11.4.14：加载器闭环。原 v11.4.13：YAML SSOT。原 v11.4.12：一次找齐再集中改）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.16**（审查清单闭环：MCP 分组/调研薄壳、check HOME、Guard inherit 消费。原 v11.4.15：harness 文案。原 v11.4.14：加载器闭环。原 v11.4.13：YAML SSOT）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+外部搜索（harness web_scrape/web_search）— 详见 `rules/CORE.md`
@@ -47,7 +47,7 @@ layer: router
 | L0   | 本文件 + rules/CORE.md                                                            | alwaysApply (~6K tokens)                   |
 | L1   | using-superpowers, task-triage, change-impact-analysis, brainstorming（会话常驻） | L1 按需全文 Read                           |
 | L2   | writing-plans / spec-validation / executing-plans / verification / debugging      | 阶段触发 Read 全文                         |
-| L3   | 所有其他 skills/rules/agents/MCP/Firecrawl/Exa                                    | description 触发词 + slash 路由，按需 Read |
+| L3   | 所有其他 skills/rules/agents/MCP/harness web 工具                                 | description 触发词 + slash 路由，按需 Read |
 
 ## 五阶段流程（SSOT）
 

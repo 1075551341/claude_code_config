@@ -55,7 +55,9 @@
     "reviewer_agents": [
       "eng-reviewer",
       "qa",
-      "code-reviewer"
+      "code-reviewer",
+      "dx-reviewer",
+      "spec-reviewer"
     ],
     "require_reviewer_min_files": 1,
     "review_max_rounds": 3,

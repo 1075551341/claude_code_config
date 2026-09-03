@@ -97,8 +97,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 检查目录结构、配置文件格式与安全、`~\.claude` 与各编辑器的链接状态、Hook 风险、运行时环境，输出得分与报告。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File check.ps1
-powershell -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
+pwsh -ExecutionPolicy Bypass -File check.ps1
+pwsh -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
 ### `validate_config.py` — 配置校验（V1–V19）
@@ -160,9 +160,9 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ### 修改配置后
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
+pwsh -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
 python scripts\validate_config.py                             # 校验
-powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
+pwsh -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 ```
 
 ### 日常维护

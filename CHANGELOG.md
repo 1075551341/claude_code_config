@@ -2,6 +2,13 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.16 MCP 分组/调研薄壳 + check HOME + Guard inherit 消费（2026-09-03）
+
+- **调研/MCP**：`commands/deep-research.md`、`skills-INDEX`、`MANIFEST` deep-research/mcp_tiering、deer-flow 降级与 CLAUDE.md harness 口径对齐。`mcp/servers.json` plugins 含 firecrawl，`plugins_default_off` 含 github。`mcp-configs/search.json` 改为 plugin 视图（servers 空，禁止再当 `.mcp.json` 常驻）。
+- **DX**：`check.ps1` 与 sync/deploy 共用 `Expand-UserHome`（`USERPROFILE||HOME`）。README TTHW/验证一律 `pwsh -ExecutionPolicy Bypass -File`。
+- **inherit 机械门**：`reviewer_agents` 含 `dx-reviewer`/`spec-reviewer`（quality_gates + Claude tracker 默认 + Guard `verification`）。Guard **1.2.13** Stop 在 review 相位读取 `review_model_violations`（stderr + `user_message`）；`verification_gate` 仍不注入（v11.4.10）。V20 校验上述键。
+- **不改**：`review_max_rounds=3`；OpenCode 不覆盖 `AGENTS.md`。
+
 ## v11.4.15 审查清单闭环：harness 文案 + 加载器可执行 + inherit 机械门（2026-09-03）
 
 - **P0**：`CLAUDE.md` `/deep-research` 改为 harness `web_scrape`+`web_search`（含 Cursor fallback），不再写死 Firecrawl+Exa。

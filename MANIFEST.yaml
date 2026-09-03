@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.15
+# 组件唯一归属源 — 防左右手互博 — v11.4.16
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.15"
+version: "11.4.16"
 updated: "2026-09-03"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -436,7 +436,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.12 — review 相位独立审前双图 ensure。v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.13 — Stop 消费 review_model_violations（review 相位 user_message；gate 仍不注入）。v1.2.12 — review 相位独立审前双图 ensure。v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
@@ -528,7 +528,7 @@ concerns:
         tool/WebSearch,
         catalog/skills/deep-research,
       ]
-    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
+    note: "deep-research = L3 结构化调研(harness web_scrape+web_search+lib_docs；Firecrawl+Exa+Context7 或当前端 fallback)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v11.4.16: 禁止假装双源；Cursor 无 scrape 则 fallback web_search。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
 
   git_workflow:
     owner: skill/git-workflow
@@ -558,7 +558,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright 走 Plugins；chrome-devtools plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
+    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools/github plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
     depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,

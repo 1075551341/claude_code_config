@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.20 (v11.4.15) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.21 (v11.4.16) | **日期**: 2026-09-03 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -259,6 +259,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.21 (v11.4.16)**：check.ps1 Expand-UserHome 与 sync/deploy 对齐；README TTHW/验证 `pwsh -ExecutionPolicy Bypass -File`。
 - **v20.20 (v11.4.15)**：README 本机 `git pull`+deploy；sync Expand-UserHome；harnesses 进常量表；OpenCode enabled=false 显式 skip。
 - **v20.19 (v11.4.14)**：`sync.ps1` 复制 harness 便携件（不写 AGENTS.md）；场景路由加载器；Stop/Guard 消费审前双图键。Guard 1.2.12。
 - **v20.18 (v11.4.13)**：场景路由 YAML + harness 能力图；独立审前双图；inherit 并行审查（禁倍率档）；`harnesses` 段；补 DSH 适配层正文；workbuddy enabled=true（home 缺席跳过）。
