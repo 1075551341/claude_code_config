@@ -3,12 +3,7 @@
 PostToolUse Hook: 密钥泄露检测器
 文件写入后扫描是否包含硬编码的密钥、Token、密码
 
-修复记录：
-- FIX: json.loads 替代 json.load(sys.stdin) 避免 stdin 流问题
-- FIX: BaseException/SystemExit 分离捕获
-- FIX: sys.stdout.flush() 确保输出缓冲刷新
-- FIX: 补充 Vercel/Clerk/Resend/PlanetScale 等新兴平台密钥
-- FIX: 改进 JWT 检测（减少 base64 误报）
+模式表 SSOT → hooks/_lib/secret_patterns.py（v12 与 Cursor Guard 共用）
 """
 # source: shanraisshan/claude-code-best-practice
 import json
@@ -17,92 +12,18 @@ import io
 import os
 import re
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
+from secret_patterns import (  # noqa: E402
+    SAFE_FILE_PATTERNS,
+    SECRET_PATTERNS,
+    is_safe_context,
+)
+
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except Exception as e:
     print(f"⚠️ {e}", file=sys.stderr)
-
-SECRET_PATTERNS = [
-    # Anthropic
-    (r"sk-ant-[A-Za-z0-9_\-]{20,}",             "Anthropic API Key",          "critical"),
-    # OpenAI
-    (r"sk-[A-Za-z0-9]{48}",                      "OpenAI API Key",             "critical"),
-    (r"sk-proj-[A-Za-z0-9_\-]{40,}",             "OpenAI Project API Key",     "critical"),
-    # AWS
-    (r"AKIA[0-9A-Z]{16}",                         "AWS Access Key ID",          "critical"),
-    (r"(?i)aws[_\-]?secret[_\-]?(?:access[_\-]?)?key\s*[=:]\s*[\"']([A-Za-z0-9/+=]{40})[\"']",
-     "AWS Secret Key",                                                           "critical"),
-    # GitHub
-    (r"gh[pousr]_[A-Za-z0-9]{36,}",              "GitHub Token",               "critical"),
-    (r"github_pat_[A-Za-z0-9_]{82}",             "GitHub Fine-grained PAT",    "critical"),
-    # Stripe
-    (r"sk_live_[A-Za-z0-9]{24,}",               "Stripe Live Secret Key",     "critical"),
-    (r"rk_live_[A-Za-z0-9]{24,}",               "Stripe Restricted Key",      "critical"),
-    # Firebase / GCP
-    (r"AIza[0-9A-Za-z\-_]{35}",                 "Google/Firebase API Key",    "high"),
-    # Supabase Service Role
-    (r"(?i)supabase[^=\n]{0,30}[=:]\s*[\"'](eyJ[A-Za-z0-9_\-]{50,})",
-     "Supabase Service Role Key",                                               "critical"),
-    # Vercel
-    (r"vercel_[A-Za-z0-9_]{24,}",               "Vercel Token",               "high"),
-    # Clerk
-    (r"sk_(?:live|test)_[A-Za-z0-9_]{32,}",     "Clerk Secret Key",           "critical"),
-    # Resend
-    (r"re_[A-Za-z0-9_]{32,}",                    "Resend API Key",             "high"),
-    # Slack
-    (r"xox[baprs]-[A-Za-z0-9\-]{10,}",          "Slack Token",                "high"),
-    # Twilio
-    (r"SK[a-f0-9]{32}",                          "Twilio API Key SID",         "high"),
-    # SendGrid
-    (r"SG\.[A-Za-z0-9_\-]{22}\.[A-Za-z0-9_\-]{43}",
-     "SendGrid API Key",                                                         "critical"),
-    # 通用 API Key / Token / Secret
-    (r"(?i)(?:api[_\-]?key|apikey)\s*[=:]\s*[\"']([A-Za-z0-9_\-]{20,})[\"']",
-     "API Key 硬编码",                                                           "high"),
-    (r"(?i)(?:access[_\-]?token|auth[_\-]?token|bearer[_\-]?token)\s*[=:]\s*[\"']([A-Za-z0-9_\-\.]{20,})[\"']",
-     "Token 硬编码",                                                             "high"),
-    (r"(?i)(?:secret[_\-]?key|client[_\-]?secret)\s*[=:]\s*[\"']([A-Za-z0-9_\-\.+/=]{16,})[\"']",
-     "Secret Key 硬编码",                                                        "high"),
-    # 密码
-    (r"(?i)(?:password|passwd|pwd)\s*[=:]\s*[\"']([^\"\\']{8,})[\"']",
-     "密码硬编码",                                                               "medium"),
-    # JWT Secret
-    (r"(?i)jwt[_\-]?secret\s*[=:]\s*[\"']([^\"\\']{10,})[\"']",
-     "JWT Secret 硬编码",                                                        "high"),
-    # 私钥
-    (r"-----BEGIN\s+(?:RSA\s+|EC\s+|OPENSSH\s+)?PRIVATE KEY-----",
-     "私钥内容",                                                                  "critical"),
-    # 数据库连接串含密码
-    (r"(?i)(?:mysql|postgresql|postgres|mongodb|redis|mssql|oracle)://[^:@\s]+:([^@\s\"\']{8,})@",
-     "数据库连接串含密码",                                                        "high"),
-    # 微信/支付宝
-    (r"(?i)(?:wx|wechat|wxpay)[_\-]?(?:secret|key|appsecret)\s*[=:]\s*[\"']([A-Za-z0-9]{16,})[\"']",
-     "微信密钥硬编码",                                                            "high"),
-]
-
-SAFE_CONTEXTS = [
-    r"\.test\.",         r"\.spec\.",      r"__test__",      r"_test\.py",
-    r"\bexample\b",      r"\bsample\b",    r"\bmock\b",      r"\bfixture\b",
-    r"\bfake\b",         r"\bdummy\b",     r"placeholder",
-    r"your[_\-]?",       r"xxx+",          r"yyy+",          r"zzz+",
-    r"\$\{",             r"process\.env\.", r"os\.environ",   r"os\.getenv",
-    r"import\.meta\.env",r"env\[",
-    r"<YOUR_",           r"<your_",        r"YOUR_API",       r"your-api",
-    r"\*{4,}",           r"<REPLACE>",     r"CHANGEME",       r"TODO:",
-]
-
-SAFE_FILE_PATTERNS = [
-    r"\.example$", r"\.sample$", r"\.template$",
-    r"example\.",  r"sample\.",  r"mock\.",
-    r"\.test\.",   r"\.spec\.",  r"_test\.",
-    r"\.md$",
-]
-
-
-def is_safe_context(line: str, surrounding: str) -> bool:
-    combined = (line + " " + surrounding).lower()
-    return any(re.search(p, combined, re.IGNORECASE) for p in SAFE_CONTEXTS)
 
 
 def scan_file(file_path: str) -> list[dict]:

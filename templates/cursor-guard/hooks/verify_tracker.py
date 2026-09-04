@@ -37,7 +37,7 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa"]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
 FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
 STALE_SECONDS = 7 * 24 * 3600

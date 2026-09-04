@@ -3,7 +3,7 @@
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
-    powershell -File scripts/check.ps1       # 上层健康检查，内部会调用本脚本
+    pwsh -File scripts/check.ps1       # 上层健康检查，内部会调用本脚本
 
 检查项：V1 触发词冲突 / V2 agent 职责重叠 / V3 CORE.md / V4 铁律一致 /
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
@@ -36,19 +36,17 @@ WARNINGS = []
 INFO = []
 
 CORE_AGENTS = {
-    "planner", "code-explorer", "code-reviewer", "build-error-resolver",
-    "architect", "spec-reviewer", "agentic-orchestrator",
+    "planner", "build-error-resolver", "spec-reviewer",
+    "agentic-orchestrator", "change-implementer", "explore",
 }
 GSTACK_REVIEW_AGENTS = {
     "eng-reviewer", "ceo-reviewer", "designer", "dx-reviewer", "qa", "security-reviewer",
 }
-# v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
-# product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer",
+    "codex-reviewer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
+GLOBAL_AGENTS_MAX = 19  # v12: 审查/实现者 + Cursor 包装 + 低频变体
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
@@ -62,8 +60,8 @@ WORKFLOW_SKILLS = {
 META_SKILLS = {
     "memory-compression", "spec-validation", "karpathy-guidelines", "caveman-compress",
 }
-# v11: office-hours/browser-qa/instinct-learning/onboarding-guide/claude-to-deerflow/taste-memory 降级 catalog/skills/；
-# context-engineering 删除（rules/CONTEXT.md 为唯一正文）；frontend-refactor-proposer 并入 code-refactoring
+# v12: office-hours/browser-qa/instinct-learning/onboarding-guide/claude-to-deerflow/taste-memory 已迁入 skills/
+# context-engineering 删除（正文 skills/context-policy）；frontend-refactor-proposer 并入 code-refactoring
 EXTENSION_SKILLS = {
     "autoplan", "design-pipeline", "ship", "structured-artifacts",
 }
@@ -75,13 +73,10 @@ REQUIRED_SKILLS = (
     P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
     | MATTPOCOCK_SKILLS | V9_SKILLS
 )
-GLOBAL_SKILLS_MAX = 36  # v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
+GLOBAL_SKILLS_MAX = 60  # v12: 规则转 skill + catalog 9 变体迁入
 
-# v11: DESIGN.md 并入 FRONTEND.md（设计系统节）；BESTPRACTICE.md 并入 GOVERNANCE.md（最佳实践详参章）
 GLOBAL_RULES = {
-    "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
-    "AGENTS.md", "MCP.md", "CONTEXT.md", "OPENSPEC.md",
-    "FRONTEND.md", "GOVERNANCE.md",
+    "CORE.md", "FRONTEND.md",
 }
 
 
@@ -338,15 +333,14 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 100:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 100")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
         required_commands = {
             "discuss", "plan", "execute", "verify", "ship", "review",
-            "compact", "clear", "status", "propose", "apply", "archive",
-            "autoplan", "office-hours", "workstream", "adr", "deep-research", "sync",
+            "clear", "status", "propose", "apply", "archive", "sync",
         }
         cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
         missing_cmds = required_commands - cmd_files
@@ -373,6 +367,7 @@ def main():
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
+    check_v20_hooks_triple()
 
     report(
         agents=len(agent_names),
@@ -384,13 +379,13 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (19 checks) ===")
+    print("=== .claude v12 VALIDATION ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 100)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
-        "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
+        "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -447,18 +442,17 @@ def check_v11_hook_exception_propagation():
         "session-start-bootstrap.py", "pre-userprompt-verify-gate.py",
         "pre-userprompt-issue-tracker.py",
         "pre-bash-guard.py", "pre-rtk-rewrite.py",
-        "pre-graph-freshness.py",
+        "pre-graph-freshness.py", "pre-explore-router.py",
         "pre-read-before-edit.py", "pre-edit-impact-nudge.py",
         "pre-context-injector.py", "pre-manifest-validator.py",
-        "pre-compact-state.py",
+        "pre-compact-state.py", "pre-encoding-snapshot.py",
         "post-secret-detector.py", "post-edit-format.py",
+        "post-encoding-check.py",
         "post-edit-verify-tracker.py",
         "stop-verification-gate.py",
         "stop-session-summary.py", "stop-readme-updater.py",
     ]
     optional_hooks = [
-        "pre-tmux-reminder.py", "pre-loop-guard.py",
-        "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
     hooks_dir = os.path.expanduser("~/.claude/hooks")
@@ -985,6 +979,72 @@ def check_v19_index_disk_sync():
         indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
         disk_rules,
     )
+
+
+def _hook_basenames_from_obj(hooks_obj) -> set:
+    found = set()
+    if not isinstance(hooks_obj, dict):
+        return found
+    for _event, groups in hooks_obj.items():
+        if not isinstance(groups, list):
+            continue
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            for hook in group.get("hooks") or []:
+                cmd = str(hook.get("command") or "")
+                names = re.findall(r"hooks[/\\]([A-Za-z0-9_-]+\.py)", cmd)
+                for name in names:
+                    if name.startswith("_"):
+                        continue
+                    found.add(name.replace(".py", ""))
+    return found
+
+
+def check_v20_hooks_triple():
+    """V20: settings.json ↔ hooks.snippet.json ↔ MANIFEST harness.hooks.core 三方一致。"""
+    snippet_path = os.path.join(BASE, "templates", "claude-settings", "hooks.snippet.json")
+    settings_path = os.path.join(BASE, "settings.json")
+    manifest_path = os.path.join(BASE, "MANIFEST.yaml")
+    if not os.path.isfile(snippet_path):
+        ERRORS.append("V20: hooks.snippet.json missing")
+        return
+    with open(snippet_path, encoding="utf-8") as fh:
+        snippet = json.loads(fh.read())
+    snippet_hooks = _hook_basenames_from_obj(snippet.get("hooks") or {})
+    settings_hooks = set()
+    if os.path.isfile(settings_path):
+        settings = json.loads(open(settings_path, encoding="utf-8").read())
+        settings_hooks = _hook_basenames_from_obj(settings.get("hooks") or {})
+        if "ANTHROPIC_AUTH_TOKEN" in json.dumps(settings.get("env") or {}):
+            ERRORS.append("V20: settings.json contains ANTHROPIC_AUTH_TOKEN")
+        dangling = re.findall(r"hooks[/\\]([A-Za-z0-9_-]+\.py)", json.dumps(settings.get("hooks") or {}))
+        for name in dangling:
+            if not os.path.isfile(os.path.join(BASE, "hooks", name)):
+                ERRORS.append(f"V20: settings.json dangling hook {name}")
+    else:
+        WARNINGS.append("V20: settings.json missing (machine-local?)")
+    manifest_core = set()
+    if yaml and os.path.isfile(manifest_path):
+        manifest = yaml.safe_load(open(manifest_path, encoding="utf-8"))
+        core = (((manifest or {}).get("harness") or {}).get("hooks") or {}).get("core") or []
+        manifest_core = {str(x).replace(".py", "") for x in core}
+    if settings_hooks and snippet_hooks != settings_hooks:
+        ERRORS.append(
+            f"V20: settings vs snippet mismatch extra={sorted(settings_hooks-snippet_hooks)} "
+            f"missing={sorted(snippet_hooks-settings_hooks)}"
+        )
+    if manifest_core and snippet_hooks != manifest_core:
+        ERRORS.append(
+            f"V20: MANIFEST core vs snippet extra={sorted(manifest_core-snippet_hooks)} "
+            f"missing={sorted(snippet_hooks-manifest_core)}"
+        )
+    encoding = {"pre-encoding-snapshot", "post-encoding-check"}
+    if not encoding <= snippet_hooks:
+        ERRORS.append("V20: encoding guard hooks missing from snippet")
+    if "pre-explore-router" not in snippet_hooks:
+        ERRORS.append("V20: pre-explore-router missing from snippet")
+    print(f"  V20: hook triple-check snippet={len(snippet_hooks)} ✓")
 
 
 if __name__ == "__main__":

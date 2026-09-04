@@ -21,7 +21,7 @@ loading_tier: L3
 
 ## 触发
 
-- 上下文 >70% → `/compact` 或委派 agent/context-manager
+- 上下文 >70% → `/summarize`（Cursor）或 `/compact`（Claude Code）
 - 逻辑断点（子目标完成）→ 摘要后释放
 - 会话结束 → claude-mem plugin 持久化
 

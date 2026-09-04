@@ -12,7 +12,7 @@
 | 本地代码 | codegraph \| code-review-graph \| serena |
 | 远端探索 | grep |
 
-三工具分工 → `rules/MCP.md` §4（CRG = 精准上下文/影响面/风险/审查/PR）。
+三工具分工 → `skills/mcp-config/SKILL.md`（CRG = 精准上下文/影响面/风险/审查/PR）。
 
 context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plugin **默认 false**。github 不常驻。
 
@@ -42,4 +42,4 @@ context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plu
 
 ## 验证
 
-见 `rules/MCP.md` 验证清单与 `docs/CURSOR_MCP_PROFILE.md`。
+见 `skills/mcp-config/SKILL.md` 验证清单与 `docs/CURSOR_MCP_PROFILE.md`。

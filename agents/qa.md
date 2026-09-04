@@ -42,7 +42,7 @@ source: garrytan/gstack
 本 agent 不负责：
 - 覆盖率评估 → `agent/eng-reviewer`（eng-reviewer 审"是否写了必要测试"）
 - 测试代码编写 → `qa-engineer`
-- 代码风格审查 → `agent/code-reviewer`
+- 代码风格审查 → `agent/eng-reviewer`
 - 安全审查 → `agent/security-reviewer`
 
 **分工边界**：

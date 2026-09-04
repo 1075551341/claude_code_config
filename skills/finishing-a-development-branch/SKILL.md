@@ -170,5 +170,5 @@ git fetch -p && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r gi
 
 - `git-workflow` - Git 工作流管理
 - `git-worktrees` - 并行开发隔离
-- `code-review-workflow` - 代码审查工作流
+- `eng-reviewer` - 独立工程审查（每轮全新开审）
 - `verification-checklist` - 完成验证

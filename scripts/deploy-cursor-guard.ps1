@@ -11,13 +11,13 @@
 
 .EXAMPLE
     # 全部命令（本脚本仅一个开关）
-    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1          # 增量合并部署
-    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1 -Force   # 整体覆盖配置
+    pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1          # 增量合并部署
+    pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1 -Force   # 整体覆盖配置
 
 .NOTES
     部署后回归（必须全绿）：
-      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
-      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy
+      pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+      pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
 #Requires -Version 5.1

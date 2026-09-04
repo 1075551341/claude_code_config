@@ -1,10 +1,10 @@
 ---
-description: Cursor MCP 常驻/按需 + Plugins 边界 — plugin 优先（仅 Cursor 差异；Claude 侧 SSOT 在 rules/MCP.md）
+description: Cursor MCP 常驻/按需 + Plugins 边界 — plugin 优先（仅 Cursor 差异；Claude 侧 SSOT 在 skills/mcp-config）
 ---
 
 # Cursor MCP Profile
 
-> **本文只保留 Cursor 侧差异**（User MCP + Plugins）。Claude 侧 SSOT → [rules/MCP.md](../rules/MCP.md)。
+> **本文只保留 Cursor 侧差异**（User MCP + Plugins）。Claude 侧 SSOT → [skills/mcp-config/SKILL.md](../skills/mcp-config/SKILL.md)。
 
 > **优先级**：编辑器内置 > 同名 plugin > MCP。同名能力只留 Plugin，禁止写入 `mcp.json`。本文件**不经 sync 改**用户 Plugin 面板或 `mcp.json`。
 

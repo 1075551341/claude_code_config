@@ -4,7 +4,7 @@ description: 同步 OpenSpec delta specs 到主规格（core profile + /opsx:syn
 
 # /sync — OpenSpec delta 同步
 
-> **正文**：`rules/OPENSPEC.md` | CLI：`/opsx:sync` 或 `openspec sync`
+> **正文**：`skills/openspec-rules/SKILL.md` | CLI：`/opsx:sync` 或 `openspec sync`
 
 将 `openspec/changes/<id>/specs/` 中的 delta 合并到项目主 spec。
 

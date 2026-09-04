@@ -69,9 +69,9 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 | 优先级 | 条件                                   | 轨道         | L3 追加                                   |
 | ------ | -------------------------------------- | ------------ | ----------------------------------------- |
 | 1      | `/workstream` 或「并行流」             | GSD          | workstream-management                     |
-| 2      | `openspec/changes/` 或 brownfield      | OpenSpec     | rules/OPENSPEC.md                         |
+| 2      | `openspec/changes/` 或 brownfield      | OpenSpec     | skills/openspec-rules/SKILL.md            |
 | 3      | 简单(task-triage判定=关联需改≤2)单模块 | 轻量 `spec/` | —                                         |
-| 4      | 默认 多文件（非简单）                  | OpenSpec     | rules/OPENSPEC.md；无目录则创建 change id |
+| 4      | 默认 多文件（非简单）                  | OpenSpec     | skills/openspec-rules；无目录则创建 change id |
 
 ## 调研三档（① brainstorming 内嵌）
 
@@ -86,7 +86,7 @@ v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射
 ## 调用链
 
 ```
-MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
+MANIFEST.yaml → P0路由集 → 全局 skill → agent → MCP
 ```
 
 ## 工作流扩展（L3 信号触发）
@@ -97,7 +97,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | TDD      | test-driven-development (默认关闭,用户显式要求时触发)           |
 | 代码审查 | requesting-code-review → eng-reviewer                           |
 | 架构决策 | adr-management                                                  |
-| 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
+| 长时自主 | claude-to-deerflow |
 | Git 提交 | git-workflow                                                    |
 | 开 PR    | pr-workflow                                                     |
 | 输出冗长 | caveman-compress                                                |

@@ -1,0 +1,5 @@
+{
+  "_comment": "Codex hooks.json 快照 | 由 scripts/apply-codex-config.py 写入 ~/.codex/hooks.json。真源 = ~/.claude/hooks/*.py（禁止拷贝分叉）。所有条目经 hooks/_codex_hook_runner.py 启动：入口归一化 + 出口翻译，主干 hook 原文复用。",
+  "_matcher_note": "matcher 用宽并集（Codex 与 Claude 工具名混排），真正的判定在 hook 内部按 tool_name 早退；留空 matcher = 全事件触发，与 create-hook 建议一致（避免复杂正则失配导致门控静默失效）。timeout 单位=秒（Codex 语义，非 Claude 的毫秒）。",
+  "_skip_note": "stop-graph-freshness 不投放：它只为未注册完整链路的 TRAE/Qoder 兜底；Codex 已有 session-start-bootstrap + pre-graph-freshness。"
+}

@@ -14,7 +14,7 @@ loading_tier: L3
 
 ```
 用户: "需要在另一个分支上工作，但不想丢失当前更改"
-Claude: /using-git-worktrees → git stash → git worktree add → 切换
+Claude: /using-git-worktrees → git worktree add（禁止 git stash；未提交改动留在当前工作区或由用户本地处理）
 
 用户: "想并行开发两个功能"
 Claude: /using-git-worktrees → 创建多个 worktree → 并行开发
@@ -22,25 +22,21 @@ Claude: /using-git-worktrees → 创建多个 worktree → 并行开发
 
 ## 为什么用 Worktree
 
-| 方式 | 优点 | 缺点 |
-|------|------|------|
-| git checkout | 简单 | 需要切换，丢失更改 |
-| git stash | 保留更改 | 堆栈管理复杂 |
-| git worktree | 并行，保留状态 | 需要管理多个目录 |
+| 方式         | 优点                                          | 缺点               |
+| ------------ | --------------------------------------------- | ------------------ |
+| git checkout | 简单                                          | 需要切换，丢失更改 |
+| git stash    | **禁止**（R19）；改用 worktree 或用户本地处理 | 堆栈管理复杂       |
+| git worktree | 并行，保留状态                                | 需要管理多个目录   |
 
 ## 基础操作
 
 ### 创建 Worktree
 
 ```bash
-# 从现有分支创建
+# 从现有分支创建 worktree（不新建分支）
 git worktree add ../feature-x feature-branch
 
-# 创建新分支并创建 worktree
-git worktree add -b new-feature ../new-feature-dir main
-
-# 从远程分支创建
-git worktree add ../hotfix-dir -b hotfix origin/hotfix
+# 若需同时新建分支：由用户本地执行 git worktree add -b …（Agent 禁止，R19）
 ```
 
 ### 列出 Worktrees
@@ -68,11 +64,10 @@ git worktree remove --force ../feature-x
 ### 场景 1: 切换分支开发
 
 ```bash
-# 当前在 feature-a 工作，想切换到 feature-b
-# 但有未提交的更改
+# 当前在 feature-a 工作，想同时看 feature-b
+# 有未提交更改时禁止 git stash（R19）；用 worktree 并行，或请用户本地处理
 
-git stash                     # 暂存更改
-git worktree add ../feature-b feature-b  # 创建 worktree
+git worktree add ../feature-b feature-b  # 须用户本条消息显式要求建/切分支或 worktree
 # 在 ../feature-b 继续工作
 ```
 
@@ -96,11 +91,13 @@ git worktree add ../test-clean main
 ## 最佳实践
 
 1. **命名规范**: 使用有意义的目录名
+
    ```bash
    git worktree add ../wt-feature-user-auth feature/user-auth
    ```
 
 2. **定期清理**: 完成工作后移除不需要的 worktree
+
    ```bash
    git worktree prune  # 清理已失效的 worktree
    ```

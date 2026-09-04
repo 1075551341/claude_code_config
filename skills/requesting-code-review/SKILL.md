@@ -17,7 +17,7 @@ loading_tier: L3
 Claude: /requesting-code-review → 准备提交范围 → 派发审查代理 → 填写审查模板
 
 用户: "PR #123 需要审查"
-Claude: 获取变更 → 识别关键文件 → 提供上下文 → 派发 code-review-workflow
+Claude: 获取变更 → 识别关键文件 → 提供上下文 → 派发 eng-reviewer
 ```
 
 ## 核心原则
@@ -46,7 +46,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 步骤 2: 派发审查代理
 
-使用 Task 工具派发 `code-review-workflow` 代理
+使用 Task 工具派发全新 `eng-reviewer`（禁止 resume 上一轮审查者）
 
 ### 步骤 3: 填写审查模板
 

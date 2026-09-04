@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
     Claude config multi-editor sync v20.0 (v11.1：1+N — Claude Code 原生零同步 + N 编辑器落点)
-    Claude Code 原生读 ~/.claude（无需同步）；本脚本维护 Cursor + qoder-cn/trae-cn/workbuddy 等编辑器落点。
+    Claude Code 原生读 ~/.claude（无需同步）；本脚本维护 Cursor + qoder-cn / trae-cn / trae 四端落点。
 
 .DESCRIPTION
     默认执行（幂等，hash/link 跳过无变更项）：
@@ -13,7 +13,7 @@
       3. 去重 ~/.cursor/rules 中与 plugin 同 basename 的文件（防双份 Always-Apply）
       4. 其他编辑器（v11.1 恢复，编辑器清单单源 sync-manifest.json editors 段，home 缺席自动跳过）：
          qoder-cn -> 根 6 软链 + rules/*.mdc；trae-cn -> 根 6 软链 + user_rules/*.md；
-         workbuddy -> 仅 CLAUDE.md + skills/ 联接（SOUL/USER/IDENTITY/BOOTSTRAP 自有命名空间禁触，跳根索引）；
+         trae -> user_rules 实体 + 台账；
          规则实体复制带 .claude-managed 台账，孤儿清除只删自己管理过的文件（不动用户自有规则）
     -Skills:  另同步 skills/ junction -> ~/.cursor/skills
     -All:     skills/ + agents/ junction
@@ -34,7 +34,7 @@
     跳过变更检测（hash/link 对比）强制重写。
 
 .EXAMPLE
-    pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则（要求 pwsh ≥ 7.5）
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/ junction
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预演
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules   # 投放当前项目 .cursor/rules
@@ -43,8 +43,8 @@
 
 .NOTES
     验证：scripts/check.ps1 | 回归：scripts/test-sync-dedup.ps1
-    v11 曾收敛为仅 Cursor；v11.1 按用户决策恢复多编辑器（qoder-cn/trae-cn/workbuddy，
-    以 config/sync-manifest.json editors 段为单源），sync.sh（Linux/macOS）维持已删。
+    v12 编辑器清单：cursor / qoder-cn / trae-cn / trae（config/sync-manifest.json 单源）；
+    sync.sh（Linux/macOS）维持已删。
 #>
 #Requires -Version 5.1
 
@@ -84,11 +84,7 @@ $PLUGIN_EXTRA = [ordered]@{
 $EDITOR_TARGETS = [ordered]@{
     "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
-    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $manifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $manifestPath) {
@@ -420,7 +416,18 @@ function Deploy-CursorLocalPlugin {
         }
         if (-not $needCopy) { continue }
         Remove-SameBasenameVariants -Directory $installRules -BaseName $base -LabelPrefix "plugin-rules"
-        Copy-Item -LiteralPath $p.Src -Destination $dstPath -Force
+        $converter = Join-Path $CLAUDE_DIR "scripts\sync_frontmatter.py"
+        $always = @("CORE", "00-CLAUDE", "CURSOR-EDITOR") -contains $base
+        if (Test-Path $converter) {
+            $pyArgs = @($converter, "--src", $p.Src, "--dst", $dstPath, "--editor", "cursor")
+            if ($always) { $pyArgs += "--always" }
+            & python @pyArgs
+            if ($LASTEXITCODE -ne 0) {
+                Copy-Item -LiteralPath $p.Src -Destination $dstPath -Force
+            }
+        } else {
+            Copy-Item -LiteralPath $p.Src -Destination $dstPath -Force
+        }
         $copied++
     }
 
@@ -504,7 +511,18 @@ function Deploy-EditorRules {
         }
         if ($needCopy) {
             Remove-SameBasenameVariants -Directory $rulesDst -BaseName $_.BaseName -LabelPrefix "$EditorName-rules"
-            Copy-Item -LiteralPath $_.FullName -Destination $dstPath -Force
+            $converter = Join-Path $CLAUDE_DIR "scripts\sync_frontmatter.py"
+            $always = ($_.BaseName -eq "CORE")
+            if (Test-Path $converter) {
+                $pyArgs = @($converter, "--src", $_.FullName, "--dst", $dstPath, "--editor", $EditorName)
+                if ($always) { $pyArgs += "--always" }
+                & python @pyArgs
+                if ($LASTEXITCODE -ne 0) {
+                    Copy-Item -LiteralPath $_.FullName -Destination $dstPath -Force
+                }
+            } else {
+                Copy-Item -LiteralPath $_.FullName -Destination $dstPath -Force
+            }
             $copied++
         }
     }
@@ -691,7 +709,7 @@ if (-not $SKIP_EDITOR_SYNC) {
         Write-Host "  -- $ed $('-' * [Math]::Max(1, 45 - $ed.Length))" -ForegroundColor DarkGray
 
         if ($cfg.Special -eq "claude_md_plus_skills") {
-            # workbuddy：仅 CLAUDE.md + skills/ 联接；SOUL/USER/IDENTITY/BOOTSTRAP 自有命名空间禁触
+            # 遗留 special=claude_md_plus_skills（v12 已无 workbuddy）：仅 CLAUDE.md + skills 联接
             Sync-File -SrcPath (Join-Path $CLAUDE_DIR "CLAUDE.md") `
                 -DstPath (Join-Path $cfg.Home "CLAUDE.md") -Label "CLAUDE.md -> $ed"
             Sync-Directory -SrcPath (Join-Path $CLAUDE_DIR "skills") `
@@ -749,7 +767,7 @@ if ($script:STATS.Failed -gt 0) {
 Write-Host ""
 Write-Host "  Mode        : $MODE_LABEL" -ForegroundColor DarkGray
 Write-Host "  Root files  : $($ROOT_FILES -join ', ') (single source: config/sync-manifest.json)" -ForegroundColor DarkGray
-Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn=user_rules/*.md; workbuddy=CLAUDE.md+skills only; opencode=disabled (self-managed AGENTS.md)" -ForegroundColor DarkGray
+Write-Host "  Rules       : cursor=local plugin .mdc; qoder-cn=rules/*.mdc; trae-cn/trae=user_rules/*.md" -ForegroundColor DarkGray
 Write-Host "  Editors     : cursor$(if ($presentEditors) { ' + ' + ($presentEditors -join ' + ') }) (absent homes auto-skipped)" -ForegroundColor DarkGray
 Write-Host "  Excluded    : hooks/ scripts/ MCP configs plugins/ commands/ settings.json" -ForegroundColor DarkGray
 Write-Host ""

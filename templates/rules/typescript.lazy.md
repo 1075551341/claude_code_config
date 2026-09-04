@@ -8,7 +8,7 @@ paths:
 
 # TypeScript 规则（lazy-load 示例）
 
-> 完整规则见 `~/.claude/catalog/rules/RULES_TYPESCRIPT.md`，复制到项目后按需编辑。
+> TypeScript 项目约定按需写到项目 `.cursor/rules/`（v12 已删除 catalog 规则库）。
 
 ## 要点
 
@@ -19,5 +19,5 @@ paths:
 
 ## 启用方式
 
-1. 复制 `catalog/rules/RULES_TYPESCRIPT.md` → 项目 `.claude/rules/typescript.md`
+1. 在项目 `.cursor/rules/typescript.mdc` 写 `paths` 匹配 `*.ts` / `*.tsx`
 2. 保留 `paths:` frontmatter 匹配 `*.ts` / `*.tsx`

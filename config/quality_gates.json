@@ -17,7 +17,11 @@
     },
     "impact_manifest_gate": {
       "enabled": true,
-      "platforms": ["claude-code", "cursor"],
+      "platforms": [
+        "claude-code",
+        "cursor",
+        "codex"
+      ],
       "description": "清单制品+diff差集校验（design-v2 方案A）：PostToolUse 记 git 基线并提醒落盘 IMPACT 制品；Stop 门比对 当前脏集−基线集 ⊆ 清单集，超集=followup（错改/漏改硬证据）。非git仓库静默降级 DONE_WITH_CONCERNS"
     }
   },
@@ -25,6 +29,7 @@
     "enabled": true,
     "max_blocks": 3,
     "auto_check_timeout_sec": 25,
+    "_comment_review_exemptions": "skip_keywords 与 max_blocks 只豁免测试/CRG/R20 证据（标 DONE_WITH_CONCERNS）；fresh_independent_review_ok 仍硬门，缺失则 Stop exit 2。禁止 resume 上轮审查者。",
     "skip_keywords": [
       "跳过验证",
       "不用验证",
@@ -54,9 +59,9 @@
     ],
     "reviewer_agents": [
       "eng-reviewer",
-      "qa",
-      "code-reviewer"
+      "qa"
     ],
+    "require_review_all_edits": true,
     "require_reviewer_min_files": 1,
     "review_max_rounds": 3,
     "review_cycle": "modify-verify-review",

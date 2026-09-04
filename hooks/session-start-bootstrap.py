@@ -10,44 +10,22 @@ import json
 import sys
 import io
 import os
-import subprocess
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_lib"))
 from context_thresholds import sync_settings_compact_window  # noqa: E402
 from graph_freshness import ensure_both, format_status, format_ui_banner, load_cfg, resolve_cwd  # noqa: E402
+from r15_detect import (  # noqa: E402
+    detect_package_manager,
+    detect_project_language,
+    detect_r15_os,
+    format_r15_lang,
+)
 
 try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except Exception as e:
     print(f"⚠️ {e}", file=sys.stderr)
-
-
-def detect_package_manager(cwd: str) -> str:
-    """检测项目使用的包管理器"""
-    # 检查锁文件
-    lock_files = {
-        "package-lock.json": "npm",
-        "yarn.lock": "yarn",
-        "pnpm-lock.yaml": "pnpm",
-        "bun.lockb": "bun",
-    }
-    
-    for lock_file, pm in lock_files.items():
-        if os.path.exists(os.path.join(cwd, lock_file)):
-            return pm
-    
-    # 检查 Python 项目
-    if os.path.exists(os.path.join(cwd, "pyproject.toml")):
-        return "pip"
-    if os.path.exists(os.path.join(cwd, "requirements.txt")):
-        return "pip"
-    
-    # 检查 Go 项目
-    if os.path.exists(os.path.join(cwd, "go.mod")):
-        return "go"
-    
-    return "unknown"
 
 
 def load_previous_context(cwd: str) -> dict:
@@ -102,7 +80,9 @@ def main():
             sync_result = {"updated": False, "error": str(sync_err)}
             print(f"session-start-bootstrap: compact window sync failed: {sync_err}", file=sys.stderr)
 
-        # 检测包管理器
+        # R15：OS CLI + 语言标准包管理器
+        r15_os = detect_r15_os()
+        r15_lang = format_r15_lang(cwd)
         package_manager = detect_package_manager(cwd)
 
         session_id = str(data.get("session_id") or data.get("conversation_id") or "")
@@ -126,7 +106,10 @@ def main():
                 f"  • 上下文窗口已同步: autoCompactWindow={sync_result.get('resolved_window')} "
                 f"({sync_result.get('model')})"
             )
-        if package_manager != "unknown":
+        parts.append(f"  • {r15_os}")
+        if r15_lang:
+            parts.append(f"  • {r15_lang}")
+        elif package_manager != "unknown":
             parts.append(f"  • 包管理器: {package_manager}")
         if codegraph_status:
             parts.append(f"  • {codegraph_status}")

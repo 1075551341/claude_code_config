@@ -64,7 +64,7 @@ design_system:
 
 1. **Token 优先** — 组件引用 token（`var(--color-primary)`），不硬编码色值
 2. **单一来源** — 项目根 `DESIGN.md` 为设计系统 SSOT
-3. **与 catalog skill 配合** — 复杂 UI 可启用 `catalog/skills/ui-ux-pro-max`
+3. **与 skill 配合** — 复杂 UI 可启用 `skills/browser-qa` 或 `agents/design-shotgun.md`
 4. **DESIGN.md 是 AI 的"设计系统说明书"** — Claude 通过 Read 获取 token 定义
 
 ## 工具链

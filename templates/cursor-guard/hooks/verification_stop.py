@@ -140,8 +140,26 @@ def main() -> None:
         else:
             print("verification_stop: 完成门不注入 followup_message（规则驱动双审）", file=sys.stderr)
 
+        review_msg = ""
+        if r20 and not awaiting:
+            try:
+                ok, reason = r20.fresh_independent_review_ok(entry)
+                if not ok:
+                    review_msg = (
+                        "【审查硬门】" + reason
+                        + "。下一 prompt 须全新委派 eng-reviewer（禁止 resume）。"
+                    )
+                    print("verification_stop: " + review_msg, file=sys.stderr)
+            except Exception as e:
+                print(f"verification_stop: review gate failed: {e}", file=sys.stderr)
+
+        payload = {}
         if show_graph_ui and graph_ui:
-            write_json({"user_message": graph_ui})
+            payload["user_message"] = graph_ui
+        if review_msg:
+            payload["additional_context"] = review_msg
+        if payload:
+            write_json(payload)
     except Exception as e:
         print(f"verification_stop: {e}", file=sys.stderr)
     finally:

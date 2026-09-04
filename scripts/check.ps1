@@ -19,7 +19,7 @@
 
 .EXAMPLE
     # 全部命令（本脚本仅一个开关）
-    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性（要求 pwsh ≥ 7.5）
     pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick    # 跳过 MCP 探测，最快
 
 .NOTES
@@ -44,11 +44,7 @@ $SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "age
 $MANAGED_EDITORS = [ordered]@{
     "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
-    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
     "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
 }
 $syncManifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $syncManifestPath) {
@@ -274,7 +270,7 @@ foreach ($edName in @($MANAGED_EDITORS.Keys)) {
     $edPasses = 0
 
     if ($ed.Special -eq "claude_md_plus_skills") {
-        # workbuddy：仅 CLAUDE.md + skills/ 联接；SOUL/USER 等自有命名空间不校验
+        # 遗留 special=claude_md_plus_skills（v12 已无 workbuddy）：仅 CLAUDE.md + skills
         $cm = Join-Path $ed.Home "CLAUDE.md"
         $cmSrc = Join-Path $CLAUDE_DIR "CLAUDE.md"
         if (-not (Test-Path $cm)) { $edIssues += "CLAUDE.md(missing)" }

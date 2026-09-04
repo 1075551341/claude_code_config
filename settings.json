@@ -1,0 +1,368 @@
+{
+  "_comment": "Claude Code 主配置 v12 | MCP 权威源: .mcp.json | hooks 由 templates/claude-settings/hooks.snippet.json 生成",
+  "_model_section": "模型配置（同步时保留，不覆盖其他编辑器）",
+  "_permissions_note": "source: trailofbits/claude-code-config — deny 须配合 /sandbox 才防 Bash 绕过",
+  "_plugin_note": "superpowers 插件 13 技能被本地 skills/ 同名覆盖(优先级:本地>插件)；dispatching-parallel-agents 仅插件提供",
+  "_plugins_section": "插件配置",
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 1000000,
+  "autoUpdaterStatus": "disabled",
+  "autoUpdatesChannel": "stable",
+  "cleanupPeriodDays": 30,
+  "effortLevel": "high",
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "claude-hud@jarrodwatts": true,
+    "claude-md-management@claude-plugins-official": false,
+    "claude-mem@thedotmack": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "exa@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+    "ANTHROPIC_DEFAULT_FABLE_MODEL": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_DEFAULT_FABLE_MODEL_NAME": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "deepseek-v4-flash[1M]",
+    "ANTHROPIC_MODEL": "deepseek-v4-flash[1M]",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
+    "CLAUDE_CODE_DISABLE_AUTOUPDATER": "1",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-flash[1M]",
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
+    "CLAUDE_CODE_VERSION": "2.1.153",
+    "CLAUDE_COMPACT_FORCE_PCT": "90",
+    "CLAUDE_COMPACT_WARN_PCT": "70",
+    "CLAUDE_MEM_CHROMA_ENABLED": "false",
+    "CLAUDE_MEM_FOLDER_CLAUDEMD_ENABLED": "true",
+    "CLAUDE_MEM_MODE": "code--zh",
+    "CLAUDE_MEM_MODEL": "deepseek-v4-flash[1M]",
+    "CLAUDE_MEM_SEMANTIC_INJECT": "false",
+    "CLAUDE_MEM_TIER_SIMPLE_MODEL": "deepseek-v4-flash[1M]",
+    "CLAUDE_MEM_TIER_SUMMARY_MODEL": "deepseek-v4-pro[1M]",
+    "CLAUDE_MEM_WORKER_PORT": "37778",
+    "DISABLE_AUTOUPDATER": "1",
+    "ENABLE_TOOL_SEARCH": "true",
+    "FORCE_AUTOUPDATE_PLUGINS": "1"
+  },
+  "extraKnownMarketplaces": {
+    "thedotmack": {
+      "source": {
+        "repo": "thedotmack/claude-mem",
+        "source": "github"
+      }
+    }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-format.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-encoding-check.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-verify-tracker.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "_comment": "v10.17: MCP 写工具（serena/fs）此前完全绕过验证追踪链，Stop 硬门因此误判「本会话未改代码」而放行回归。matcher 必须带 .*，裸 mcp__serena 会被当精确名而永不触发。此组不含 post-edit-format：符号级编辑后自动格式化属新增行为，保持既有语义不变。v11.4.2: 编码校验纳入此组。",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-encoding-check.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-secret-detector.py",
+            "timeout": 10000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-verify-tracker.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__serena__.*|mcp__fs__.*"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/post-edit-verify-tracker.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Task"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-compact-state.py",
+            "timeout": 15000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "_comment": "v11.4.6 图谱保鲜：查询/Grep/写工具前 ensure；建图类 MCP 放行。timeout 90s 覆盖首次 init。",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-graph-freshness.py",
+            "timeout": 90000,
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__codegraph__.*|mcp__code-review-graph__.*|mcp__serena__.*|mcp__fs__.*|Grep|Glob|Edit|Write|MultiEdit|Bash"
+      },
+      {
+        "_comment": "v12 R17 软门：结构探索前须 codegraph_explore；CLAUDE_R17_MODE=deny 可升级阻断。",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-explore-router.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Grep|Glob|Read|mcp__codegraph__.*"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-edit-impact-nudge.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-read-before-edit.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-encoding-snapshot.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "_comment": "v10.17: MCP 写工具的变更影响门（每文件首次编辑注入）。不含 pre-read-before-edit：serena 符号级编辑自带定位语义，强制先 Read 会误伤。v11.4.2: 编码快照纳入此组。",
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-edit-impact-nudge.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-encoding-snapshot.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__serena__.*|mcp__fs__.*"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-manifest-validator.py",
+            "timeout": 10000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Skill|Task"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-context-injector.py",
+            "timeout": 8000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Task|Bash|Write|Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-rtk-rewrite.py",
+            "timeout": 12000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-bash-guard.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/session-start-bootstrap.py",
+            "timeout": 120000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-verification-gate.py",
+            "timeout": 180000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-session-summary.py",
+            "timeout": 30000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/stop-readme-updater.py",
+            "timeout": 30000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-userprompt-issue-tracker.py",
+            "timeout": 5000,
+            "type": "command"
+          },
+          {
+            "command": "python C:/Users/DELL/.claude/hooks/_editor_hook_launcher.py C:/Users/DELL/.claude/hooks/pre-userprompt-verify-gate.py",
+            "timeout": 5000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
+  "language": "Chinese",
+  "model": "deepseek-v4-pro",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "LS",
+      "Task",
+      "WebFetch",
+      "WebSearch",
+      "TodoRead",
+      "TodoWrite",
+      "NotebookRead",
+      "NotebookEdit",
+      "Bash(*)"
+    ],
+    "defaultMode": "acceptEdits",
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf ~/)",
+      "Bash(rm -rf C:*)",
+      "Bash(rm -rf D:*)",
+      "Bash(format *)",
+      "Bash(mkfs *)",
+      "Bash(dd if=* of=/dev/*)",
+      "Bash(chmod 777 *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git push --force)",
+      "Bash(git push -f)",
+      "Bash(git push -f origin main*)",
+      "Bash(git push -f origin master*)",
+      "Bash(git push --force origin main*)",
+      "Bash(git push --force origin master*)",
+      "Bash(git push --force-with-lease origin main*)",
+      "Bash(git push --force-with-lease origin master*)",
+      "Bash(npm publish)",
+      "Bash(npm publish *)",
+      "Bash(pip install --break-system-packages *)",
+      "Bash(kubectl delete namespace *)",
+      "Bash(kubectl drain *)",
+      "Bash(terraform destroy)",
+      "Bash(terraform destroy *)",
+      "Bash(aws s3 rb *)",
+      "Bash(aws ec2 terminate-instances *)",
+      "Bash(redis-cli FLUSHALL)",
+      "Bash(redis-cli FLUSHDB)",
+      "Bash(DROP DATABASE *)",
+      "Bash(DROP TABLE *)",
+      "Read(.env.production)",
+      "Read(.env.prod)",
+      "Read(.env.staging)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.pfx)",
+      "Read(**/*.p12)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.kube/config)"
+    ]
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "statusLine": {
+    "command": "cols=${COLUMNS:-}; case \"$cols\" in \"\"|*[!0-9]*) cols=$(stty size </dev/tty 2>/dev/null | awk '{print $2}');; esac; case \"$cols\" in \"\"|*[!0-9]*) cols=120;; esac; export COLUMNS=$(( cols > 4 ? cols - 4 : 1 )); plugin_dir=$(ls -1d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/*/claude-hud/*/ 2>/dev/null | sort -V | tail -1); exec \"/d/config_sys/dev-cache/volta/tools/image/node/18.20.8/node\" \"${plugin_dir}dist/index.js\"",
+    "type": "command"
+  }
+}

@@ -82,12 +82,11 @@ if ($collisions.Count -gt 0) {
 }
 Ok "~/.cursor/rules free of plugin-shadowing rules"
 
-# 3) 内容新鲜度：被污染成 stale 的 CORE.mdc 必须刷回 SSOT 原文
-$srcCore = Get-Content (Join-Path $CLAUDE_DIR "rules\CORE.md") -Raw -Encoding utf8
+# 3) 内容新鲜度：被污染成 stale 的 CORE.mdc 必须刷回（前言可由生成器改写，正文须含 CORE 标题）
 $dstCore = Get-Content (Join-Path $pluginRules "CORE.mdc") -Raw -Encoding utf8
 if ($dstCore.Trim() -eq "stale") { Fail "plugin CORE.mdc still stale content" }
-if ($srcCore -ne $dstCore) { Fail "plugin CORE.mdc content != ~/.claude/rules/CORE.md" }
-Ok "plugin CORE.mdc content matches SSOT"
+if ($dstCore -notmatch '# CORE') { Fail "plugin CORE.mdc missing CORE heading after generate" }
+Ok "plugin CORE.mdc regenerated from SSOT"
 
 # 4) 多编辑器通道（v11.1）：变体去重 + 内容刷新 + 用户自有规则存活
 $RULE_BASES = @(Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -Filter "*.md" -File |
@@ -95,6 +94,7 @@ $RULE_BASES = @(Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -Filter "*.md" -Fi
 $editorChannels = @(
     @{ Name = "qoder-cn"; Dir = Join-Path $env:USERPROFILE ".qoder-cn\rules";      Ext = ".mdc"; AltExt = ".md"  }
     @{ Name = "trae-cn";  Dir = Join-Path $env:USERPROFILE ".trae-cn\user_rules";  Ext = ".md";  AltExt = ".mdc" }
+    @{ Name = "trae";     Dir = Join-Path $env:USERPROFILE ".trae\user_rules";     Ext = ".md";  AltExt = ".mdc" }
 )
 foreach ($ch in $editorChannels) {
     if (-not (Test-Path (Split-Path $ch.Dir -Parent))) {
@@ -115,9 +115,9 @@ foreach ($ch in $editorChannels) {
         if ($hits.Count -ne 1) { Fail "$($ch.Name)/$base has $($hits.Count) files: $($hits.Name -join ', ')" }
         if ($hits[0].Extension -ne $ch.Ext) { Fail "$($ch.Name)/$base expected $($ch.Ext) got $($hits[0].Name)" }
     }
-    $srcCore2 = Get-Content (Join-Path $CLAUDE_DIR "rules\CORE.md") -Raw -Encoding utf8
     $dstCore2 = Get-Content (Join-Path $ch.Dir "CORE$($ch.Ext)") -Raw -Encoding utf8
-    if ($srcCore2 -ne $dstCore2) { Fail "$($ch.Name)/CORE$($ch.Ext) content != SSOT" }
+    if ($dstCore2.Trim() -eq "stale") { Fail "$($ch.Name)/CORE$($ch.Ext) still stale" }
+    if ($dstCore2 -notmatch '# CORE') { Fail "$($ch.Name)/CORE$($ch.Ext) missing CORE heading" }
     # 用户自有规则必须存活（台账外文件不受孤儿清除影响）
     if (-not (Test-Path (Join-Path $ch.Dir "MY-CUSTOM$($ch.Ext)"))) {
         Fail "$($ch.Name): user-own rule was deleted by orphan cleanup"

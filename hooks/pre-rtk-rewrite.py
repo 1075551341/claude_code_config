@@ -23,6 +23,28 @@ def passthrough() -> None:
     print(json.dumps({"continue": True, "note": "rtk not installed, passthrough"}))
 
 
+_PROTOCOL_BY_PLATFORM = {
+    # rtk hook 子命令：claude | cursor | gemini | copilot | droid。
+    # Codex 的 hook 契约（permission/user_message/agent_message/updated_input）与 Cursor 一致。
+    "codex": "cursor",
+    "cursor": "cursor",
+    "trae": "cursor",
+    "opencode": "cursor",
+}
+
+
+def hook_protocol(stdin_data: str) -> str:
+    """按载荷 platform 选择 rtk 输出协议；未知平台保持 claude。"""
+    try:
+        parsed = json.loads(stdin_data)
+    except (json.JSONDecodeError, ValueError):
+        return "claude"
+    if not isinstance(parsed, dict):
+        return "claude"
+    platform = str(parsed.get("platform") or "").strip().lower()
+    return _PROTOCOL_BY_PLATFORM.get(platform, "claude")
+
+
 def main() -> int:
     stdin_data = sys.stdin.read()
     rtk = rtk_path()
@@ -32,7 +54,7 @@ def main() -> int:
 
     try:
         result = subprocess.run(
-            [rtk, "hook", "claude"],
+            [rtk, "hook", hook_protocol(stdin_data)],
             input=stdin_data,
             capture_output=True,
             text=True,

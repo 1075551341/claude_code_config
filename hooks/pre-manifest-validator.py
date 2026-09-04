@@ -64,10 +64,7 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/structured-artifacts": "gsd_context",
     # Agents — 核心 7
     "agent/planner": "planning",
-    "agent/code-explorer": "multi_agent",
-    "agent/code-reviewer": "code_review_receive",
     "agent/build-error-resolver": "debugging",
-    "agent/architect": "brainstorming",
     "agent/spec-reviewer": "spec_review",
     "agent/agentic-orchestrator": "multi_agent",
     # Agents — gstack 审查 (6)
@@ -77,8 +74,7 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/dx-reviewer": "gstack_dx",
     "agent/qa": "gstack_qa",
     "agent/security-reviewer": "gstack_security",
-    # Agents — gstack 补全 3 + catalog 变体（v11: cso/release-engineer/product-manager/design-engineer
-    # 已删或并入；catalog 降级 agent 保留映射——项目内复制启用时仍受归属校验）
+    # Agents — gstack 补全 + 低频变体（v12：sre/doc-writer 已删，映射仅防回潮拷贝）
     "agent/sre": "gstack_sre",
     "agent/doc-writer": "gstack_eng",
     "agent/codex-reviewer": "gstack_codex",
@@ -130,7 +126,7 @@ def load_excludes():
 # plugin vs skill 互斥检测
 PLUGIN_SKILL_CONFLICTS: dict[str, str] = {
     "security-guidance": "security-reviewer 已覆盖安全审查",
-    "code-review": "requesting-code-review + code-reviewer 已覆盖",
+    "code-review": "requesting-code-review + eng-reviewer 已覆盖",
 }
 
 

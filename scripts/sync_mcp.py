@@ -4,7 +4,7 @@
 命令：
     python scripts/sync_mcp.py      # 唯一用法，无参数；只读校验，不写任何文件
 
-历史版本把 .mcp.json 的 mcpServers 写进 settings.json，这违反 rules/MCP.md §1
+历史版本把 .mcp.json 的 mcpServers 写进 settings.json，这违反 skills/mcp-config（settings.json 禁止定义 mcpServers）
 「settings.json 禁止定义 mcpServers（v3.0+）」。现改为只读校验：
   1. settings.json 不得含 mcpServers
   2. mcp/servers.json 的 always_* 并集必须与 .mcp.json 的键集完全一致
@@ -32,7 +32,7 @@ def main():
 
     settings = load("settings.json")
     if "mcpServers" in settings:
-        problems.append("settings.json 含 mcpServers（rules/MCP.md §1 禁止），请删除该键")
+        problems.append("settings.json 含 mcpServers（skills/mcp-config 禁止），请删除该键")
 
     servers = load("mcp/servers.json")
     toolsets = servers.get("toolsets", {})

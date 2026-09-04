@@ -39,7 +39,7 @@
 | 记忆 | claude-mem（R18） | 跨会话记忆 SSOT，为什么/约定/偏好优先查记忆 |
 | 探索 | MCP 分层 9 项 | 本地代码 4（codegraph 常驻 R17）+ 远端 2 + Web 3；code-review-graph 专用 test-gap |
 | 审查 | 审查路由 | eng-reviewer 必审 + ceo/designer/dx/qa/security 按类型 + codex 跨模型验证 |
-| 同步 | 多编辑器 1+N | sync.ps1 SSOT → Cursor/qoder-cn/trae-cn/workbuddy；DSH 手工对齐协议 |
+| 同步 | 多编辑器 1+N | sync.ps1 SSOT → cursor / qoder-cn / trae-cn / trae |
 
 ---
 

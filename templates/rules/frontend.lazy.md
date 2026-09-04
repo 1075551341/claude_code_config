@@ -14,7 +14,7 @@ paths:
 
 # 前端规则（lazy-load 示例）
 
-> 完整规则见 `~/.claude/catalog/rules/RULES_FRONTEND.md`，复制到项目后按需编辑。
+> 完整规则见 `~/.claude/rules/FRONTEND.md`，项目级覆盖写到项目 `.cursor/rules/`。
 
 ## 工具分工（teoms-web 风格）
 
@@ -26,6 +26,6 @@ paths:
 
 ## 启用方式
 
-1. 复制 `catalog/rules/RULES_FRONTEND.md` → 项目 `.claude/rules/frontend.md` 或 `.cursor/rules/frontend.mdc`
+1. 以 `rules/FRONTEND.md` 为源，按需覆盖到项目 `.cursor/rules/frontend.mdc`
 2. 保留 `paths:` frontmatter 匹配前端文件
 3. 项目内补齐 `.eslintrc.js`、`prettier.config.js`、`stylelint.config.js`、`.vscode/settings.json`（见完整规则模板）

@@ -30,10 +30,11 @@ loading_tier: L3
 
 ```
 1. /workstream new feature-a
-   → git worktree add ../ws-feature-a -b ws/feature-a
+   → 用户本地建好分支后：git worktree add ../ws-feature-a ws/feature-a
+     （禁止 Agent 执行 worktree add -b；R19）
    → mkdir .planning/phases/feature-a/{STATE.md,tasks.md}
 
-2. 各 workstream 独立分支 + 独立 claude-mem platform_source
+2. 各 workstream 使用用户已建的独立分支 + 独立 claude-mem platform_source
 
 3. /workstream merge feature-a
    → verification-before-completion
@@ -42,7 +43,7 @@ loading_tier: L3
 
 ## 约束
 
-- 每个 workstream 独立 git branch
+- 每个 workstream 对应一条**已存在**的独立 git branch（由用户本地创建；Agent 禁止 `worktree add -b` / `checkout -b`）
 - 同一制品路径禁止并行写入（R12）
 - 合并前必须 eng-reviewer + verification-before-completion
 - 详见 `skill/using-git-worktrees`

@@ -145,8 +145,15 @@ def main():
         sys.exit(2)
     target = os.path.abspath(sys.argv[1])
     if not os.path.isfile(target):
-        # 失效引用（脚本已移除/迁移至 _archive 等）：优雅跳过，与超时/编辑器上下文一致，不阻断工具调用
-        print("launcher: skip missing hook: " + target, file=sys.stderr)
+        cep = (os.environ.get("CLAUDE_CODE_ENTRYPOINT") or "").strip().lower()
+        allow_missing = (os.environ.get("CLAUDE_HOOK_ALLOW_MISSING") or "").strip().lower() in (
+            "1", "true", "yes", "on",
+        )
+        print("launcher: missing hook: " + target, file=sys.stderr)
+        if allow_missing or should_skip_editor(b""):
+            sys.exit(0)
+        if cep in ("cli", "terminal", "tui", "headless", "ci", "batch") or not cep:
+            sys.exit(2)
         sys.exit(0)
     raw = b""
     try:

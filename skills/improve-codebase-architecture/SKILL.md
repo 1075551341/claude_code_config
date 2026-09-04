@@ -94,5 +94,5 @@ loading_tier: L3
 ## 边界
 
 - 与 brainstorming 的边界：brainstorming 设计新功能，本 skill 改进已有代码
-- 与 code-reviewer 的边界：code-reviewer 审查单次 PR，本 skill 做跨文件的架构层面改进
+- 与 eng-reviewer 的边界：eng-reviewer 审查单次变更/PR，本 skill 做跨文件的架构层面改进
 - 一次最多改 5 个文件，更大重构分多次渐进

@@ -32,15 +32,29 @@ def ensure_lib_path() -> None:
 def import_claude_lib(claude_home, module_name):
     """载入 Claude 侧共享库（`<claude_home>/hooks/_lib/<module>.py`）。
 
-    指纹算法、写工具路径解析等逻辑双端共用一份实现，避免 Cursor 与 Claude Code
-    行为漂移；调用方负责 try/except 并在不可用时降级（R16 不静默）。
+    用独立模块名按文件加载，避免与 Cursor `_lib` 同名文件互相覆盖；
+    同时把 Claude `_lib` 插入 sys.path，供被加载模块 import 同目录依赖。
     """
-    import importlib
+    import importlib.util
 
     lib = Path(claude_home) / "hooks" / "_lib"
-    if str(lib) not in sys.path:
-        sys.path.insert(0, str(lib))
-    return importlib.import_module(module_name)
+    path = lib / f"{module_name}.py"
+    if not path.is_file():
+        raise ImportError(f"claude lib missing: {path}")
+    lib_s = str(lib)
+    if lib_s not in sys.path:
+        sys.path.insert(0, lib_s)
+    alias = f"claude_shared_{module_name}"
+    cached = sys.modules.get(alias)
+    if cached is not None:
+        return cached
+    spec = importlib.util.spec_from_file_location(alias, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load claude lib: {path}")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[alias] = mod
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _decode_blob(blob: bytes) -> str:

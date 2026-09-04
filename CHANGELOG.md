@@ -2,6 +2,21 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v12.0.1 纠偏过度精简 + R15/R19（2026-09-02）
+
+- **L0**：CORE 恢复工业级 R1–R20 可执行表、编码约束、R17 优先级、R3/R4 彻底性；R20 六字段仍只在 verification skill。CLAUDE.md 补回 P0/加载/工具/门控表且 ≤120 行。
+- **R15 两层**：语言统一标准包管理器（JS pnpm→npm、Python uv→pip 等），不可用再兜底；OS 稳定 CLI（Windows **pwsh ≥ 7.5**，禁止回落 PS5.1）。SessionStart 注入 `R15 OS` / `R15 lang`。
+- **R19**：禁自动新建/切换分支（`checkout -b` / `switch` / `git branch <name>` / `worktree add -b` / 无 `--` 的 checkout）；stash/commit/push 维持 deny。using-git-worktrees 去掉 stash 步骤。
+- 不回滚 catalog 删除；agents/skills 不再继续砍。
+
+## v12.0.0 精简重构（配置驱动 · 一源多端 · 全任务独立审查）（2026-09-02）
+
+- **L0**：CLAUDE.md ≤100 行纯路由；CORE 唯一 always-on；FRONTEND 加 `paths:`；8 个 model_decision 规则转为 skill。
+- **Hook**：`settings.json` hooks 由 snippet 生成；断链删除；launcher 缺失报错；Stop 审查硬门；`pre-explore-router`；模式表抽 `_lib` 与 Cursor Guard 共用。
+- **精简**：commands 12 薄壳；删 architect/sre/doc-writer/code-explorer；code-reviewer 并入 eng-reviewer；删 catalog/research-repos/archive。
+- **同步**：仅 cursor / qoder-cn / trae-cn / trae；`sync.ps1` 前言生成器；计数/版本单源 MANIFEST。
+- **审查**：全任务不可跳过独立审查（删除只读/简单免审）；claude-mem 跟随上游 13.23.1。
+
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 
 - **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。

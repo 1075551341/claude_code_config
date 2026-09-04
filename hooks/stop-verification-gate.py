@@ -32,11 +32,13 @@ from r20_replay import (  # noqa: E402
     apply_review_verdict,
     counted_edit_items,
     dual_pass_phase,
+    fresh_independent_review_ok,
     impact_diff_check,
     is_awaiting_plan,
     is_plan_artifact,
     replay_ok,
     review_verdict_ok,
+    write_review_record,
 )
 from crg_track import has_crg_since  # noqa: E402
 from graph_freshness import (  # noqa: E402
@@ -602,15 +604,24 @@ def main():
                 for w in crg_warnings:
                     print(f"⚠️ {w}", file=sys.stderr)
 
+            reasons = []
+            check_warnings = []
+            evidence_exempt = False
             if user_skipped:
-                print("⚠️ 用户显式跳过验证 — 本次放行，完成声明按 DONE_WITH_CONCERNS 处理", file=sys.stderr)
-            elif blocks >= int(cfg["max_blocks"]):
+                evidence_exempt = True
                 print(
-                    f"⚠️ 验证硬门已达上限（{blocks} 次）— 放行并标 DONE_WITH_CONCERNS："
-                    "验证证据仍不完整，请用户人工复核",
+                    "⚠️ 用户显式跳过验证 — 测试/CRG/R20 证据本次放行（DONE_WITH_CONCERNS）；"
+                    "独立审查硬门仍执行（禁止 resume）",
                     file=sys.stderr,
                 )
-            else:
+            elif blocks >= int(cfg["max_blocks"]):
+                evidence_exempt = True
+                print(
+                    f"⚠️ 验证硬门已达上限（{blocks} 次）— 测试/CRG 证据放行并标 DONE_WITH_CONCERNS；"
+                    "独立审查硬门仍执行",
+                    file=sys.stderr,
+                )
+            if not evidence_exempt:
                 check_warnings = []
                 reasons = []
                 if code_files or untracked:
@@ -716,18 +727,25 @@ def main():
                             "验证命令不能代替本项）"
                         )
 
-                if reasons:
-                    entry["blocks"] = blocks + 1
-                    entry["scope_nudged"] = True
-                    entry["ts"] = time.time()
-                    state[session_id] = entry
-                    save_state(state)
-                    for w in check_warnings:
-                        print(f"⚠️ {w}", file=sys.stderr)
-                    print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
-                    _emit_graph_ui(session_id, graph_refresh)
-                    sys.exit(2)
+            review_ok, review_why = fresh_independent_review_ok(entry)
+            if not review_ok:
+                reasons.append(f"全任务独立审查硬门：{review_why}")
+            else:
+                write_review_record(session_id, entry)
 
+            if reasons:
+                entry["blocks"] = blocks + 1
+                entry["scope_nudged"] = True
+                entry["ts"] = time.time()
+                state[session_id] = entry
+                save_state(state)
+                for w in check_warnings:
+                    print(f"⚠️ {w}", file=sys.stderr)
+                print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
+                _emit_graph_ui(session_id, graph_refresh)
+                sys.exit(2)
+
+            if not evidence_exempt:
                 mark_issues_resolved(session_id)
                 _ok_sync, sync_msg = run_sync_ps1_if_verified(has_edits=True, verified_green=True)
                 print(f"graph_freshness: {sync_msg}", file=sys.stderr)

@@ -484,10 +484,18 @@ def test_cursor_should_followup() -> None:
         is True,
     )
     check(
-        "md only not dual pass",
+        "md only dual pass v12",
         r20_replay.dual_pass_in_scope(
             {"edited_files": [{"path": "README.md", "ts": 1}]},
             {"require_reviewer_min_files": 1},
+        )
+        is True,
+    )
+    check(
+        "md only skip when require_review_all_edits false",
+        r20_replay.dual_pass_in_scope(
+            {"edited_files": [{"path": "README.md", "ts": 1}]},
+            {"require_reviewer_min_files": 1, "require_review_all_edits": False},
         )
         is False,
     )
@@ -779,6 +787,65 @@ def test_crg_track() -> None:
     check("block message includes 短 R20", "短 R20" in msg)
 
 
+def test_fresh_independent_review_ok() -> None:
+    ok, why = r20_replay.fresh_independent_review_ok({})
+    check("no edits allows", ok is True and why == "no-edits")
+    missing = {
+        "edited_files": [{"path": "a.py", "ts": 10}],
+    }
+    ok, why = r20_replay.fresh_independent_review_ok(missing)
+    check("edits without reviews fail", ok is False and "无独立审查" in why)
+    resumed = {
+        "edited_files": [{"path": "a.py", "ts": 10}],
+        "skipped_resumed_reviews": [{"agent": "eng-reviewer", "ts": 11}],
+        "reviews": [],
+    }
+    ok, why = r20_replay.fresh_independent_review_ok(resumed)
+    check("resume only fails", ok is False and "禁止 resume" in why)
+    passing = {
+        "edited_files": [{"path": "a.py", "ts": 10}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 20}],
+        "review_pass_ok": True,
+    }
+    ok, why = r20_replay.fresh_independent_review_ok(passing)
+    check("fresh PASS allows", ok is True and why == "ok")
+    stale = {
+        "edited_files": [{"path": "a.py", "ts": 30}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 20}],
+        "review_pass_ok": True,
+    }
+    ok, why = r20_replay.fresh_independent_review_ok(stale)
+    check("edit after review fails", ok is False and "新鲜" in why)
+    with tempfile.TemporaryDirectory() as td:
+        old = r20_replay.review_state_dir
+        r20_replay.review_state_dir = lambda: td  # type: ignore[method-assign]
+        try:
+            path = r20_replay.write_review_record("sess-test", passing)
+            check("write_review_record path", os.path.isfile(path))
+        finally:
+            r20_replay.review_state_dir = old
+
+
+def test_review_hard_gate_outside_evidence_exempt() -> None:
+    src = (HOOKS_DIR / "stop-verification-gate.py").read_text(encoding="utf-8")
+    exempt_lines = [ln for ln in src.splitlines() if ln.strip() == "if not evidence_exempt:"]
+    review_lines = [
+        ln for ln in src.splitlines()
+        if "review_ok, review_why = fresh_independent_review_ok" in ln
+    ]
+    check("evidence_exempt if present", bool(exempt_lines))
+    check("fresh_independent_review_ok call present", bool(review_lines))
+    if exempt_lines and review_lines:
+        exempt_indent = len(exempt_lines[0]) - len(exempt_lines[0].lstrip())
+        review_indent = len(review_lines[0]) - len(review_lines[0].lstrip())
+        check(
+            "review hard-gate sibling of skip/max_blocks exempt",
+            review_indent == exempt_indent,
+        )
+
+
+
+
 def main() -> int:
     print("=== R20 replay marker tests ===")
     test_crg_track()
@@ -809,6 +876,8 @@ def main() -> int:
     test_impact_diff_superset_blocked()
     test_impact_diff_subset_passes()
     test_impact_diff_disabled_skip()
+    test_fresh_independent_review_ok()
+    test_review_hard_gate_outside_evidence_exempt()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0
 

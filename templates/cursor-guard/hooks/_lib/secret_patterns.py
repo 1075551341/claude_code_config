@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
-"""提交前密钥/令牌轻量检测。"""
+"""Cursor 侧 re-export Claude SSOT secret_patterns（import_claude_lib）。"""
 from __future__ import annotations
 
-import re
+import os
+from pathlib import Path
 
-SECRET_PATTERNS: list[tuple[str, str]] = [
-    (r"\bsk-[a-zA-Z0-9]{20,}\b", "疑似 API key (sk-)"),
-    (r"\bAKIA[0-9A-Z]{16}\b", "疑似 AWS Access Key"),
-    (r"-----BEGIN (?:RSA )?PRIVATE KEY-----", "疑似私钥"),
-    (r"\bghp_[a-zA-Z0-9]{36,}\b", "疑似 GitHub token"),
-    (r"\bxox[baprs]-[a-zA-Z0-9-]{10,}\b", "疑似 Slack token"),
-    (r"\bAIza[0-9A-Za-z_-]{35}\b", "疑似 Google API key"),
-]
+from hook_io import import_claude_lib
 
-
-def find_secrets(text: str) -> list[str]:
-    if not text:
-        return []
-    found: list[str] = []
-    for pattern, label in SECRET_PATTERNS:
-        if re.search(pattern, text):
-            found.append(label)
-    return found
+_mod = import_claude_lib(
+    os.environ.get("CLAUDE_HOME") or str(Path.home() / ".claude"),
+    "secret_patterns",
+)
+SECRET_PATTERNS = [(p, d) for p, d, *_rest in _mod.SECRET_PATTERNS]
+find_secrets = _mod.find_secrets
+is_safe_context = _mod.is_safe_context
+SAFE_CONTEXTS = _mod.SAFE_CONTEXTS
+SAFE_FILE_PATTERNS = _mod.SAFE_FILE_PATTERNS

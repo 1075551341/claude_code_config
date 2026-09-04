@@ -5,14 +5,14 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 # MCP 工具语义匹配指南
 
 > **本文只保留匹配矩阵**（场景→工具 / 决策树 / 调研三档 / 前置条件）。
-> 服务器清单/分组/四工具分工/禁止项 SSOT → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`（v11 三文档去重）。
+> 服务器清单/分组/四工具分工/禁止项 SSOT → `skills/mcp-config/SKILL.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`。
 
 ## 原则
 
 1. **语义优先** — 按意图匹配，非关键词堆砌
 2. **Tool-First** — MANIFEST → skill → agent → MCP
 3. **memory MCP ≠ claude-mem** — 勿启用 memory MCP；跨会话仅 claude-mem（R18）
-4. **本地代码三工具不可互相替代** — 分工见 `rules/MCP.md` §4；禁止用 serena 替代 codegraph 做 R17 探索
+4. **本地代码三工具不可互相替代** — 分工见 `skills/mcp-config/SKILL.md`；禁止用 serena 替代 codegraph 做 R17 探索
 5. **工具优先级** — 编辑器内置 > 同名 plugin > MCP > 按需中断启用（chrome-devtools / postgres 禁止自动 merge）
 
 ## 前置条件
@@ -30,7 +30,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 
 ## 分组与四工具分工（指针）
 
-- 本地代码三工具分工（codegraph / serena / code-review-graph 何时用）→ `rules/MCP.md` §4
+- 本地代码三工具分工（codegraph / serena / code-review-graph 何时用）→ `skills/mcp-config/SKILL.md`
 - 跨会话记忆仅 claude-mem plugin（R18）；浏览器 Claude=playwright 插件、Cursor=内置浏览器（UI）+ playwright plugin（E2E）；chrome-devtools / postgres 默认关，需要时**中断请用户手动启用**
 
 ## 场景 → 工具
@@ -43,7 +43,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 | 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`   | eng-reviewer        |
 | 语义找代码                  | codegraph_search                              | grep MCP（跨公开仓）|
 | 符号级重命名/替换           | serena `rename_symbol` / `replace_symbol_body` | 内置 Edit + Grep 校验 |
-| OpenSpec 规格变更           | openspec CLI + `/opsx:*`                      | rules/OPENSPEC.md   |
+| OpenSpec 规格变更           | openspec CLI + `/opsx:*`                      | skills/openspec-rules/SKILL.md |
 | 查库文档/API (L1)           | Context7：`resolve-library-id` → `query-docs` | Exa 单次            |
 | GitHub PR/Issue             | `gh` CLI                                      | pr-workflow skill   |
 | 本地 Git 历史               | `git` CLI（经 Bash）                          | git-workflow skill  |
@@ -81,7 +81,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 
 ## 跨编辑器 MCP 映射（指针）
 
-- Claude Code 常驻 4（codegraph / CRG / serena / grep）+ 按需 profile → `rules/MCP.md` §2–§3；双平台工具对照 → `rules/MCP.md` §双平台
+- Claude Code 常驻 4（codegraph / CRG / serena / grep）+ 按需 profile → `skills/mcp-config/SKILL.md`；双平台工具对照 → 同 skill
 - Cursor User MCP 4+postgres(disabled) + Plugins → [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
 
 ## Shell / Agent Token

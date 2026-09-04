@@ -14,9 +14,10 @@ source: user-rules-migration
 
 ## 安全协议
 
-- **禁止** Agent **自动** `git commit` / `git stash`（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard`）
+- **禁止** Agent **自动** `git commit` / `git stash` / `git push`（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard`）
 - **禁止** `git stash`（任何形式）；换用 `git worktree` 或用户本地处理
-- **仅当**用户本条消息**显式**要求「提交/commit」时才可 `git commit`（Cursor 会弹窗确认）
+- **禁止自动新增/改动分支**：Agent 不得执行 `checkout -b` / `switch` / `git branch <name>` / `branch -c` / `worktree add -b`；切分支由用户本地执行（hook deny）
+- **仅当**用户本条消息**显式**要求「提交/commit」时才可 `git commit`（Cursor 会弹窗确认）；建/切分支同样由用户本地执行，Agent 不代跑
 - **禁止**修改 git config
 - **禁止**破坏性命令（`push --force`、`hard reset` 等），除非用户明确要求
 - **禁止**跳过 hooks（`--no-verify`、`--no-gpg-sign` 等），除非用户明确要求
@@ -59,4 +60,5 @@ EOF
 - 无变更时 empty commit
 - 用户未要求时不主动 commit
 - **禁止** Agent 执行 `git stash`（任何子命令）
+- **禁止** 无用户本条显式指令时新建或切换分支（R19）
 - `git` 带 `-i` 交互标志

@@ -5,9 +5,11 @@ Claude Stop 与 Cursor 记账共用，禁止再复制一份正则。Cursor 完�
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
+import time
 
 _VERDICT_RE = re.compile(r"\b(PASS|NEEDS-CHANGES)\b")
 _UNCLEAN_PASS_RE = re.compile(
@@ -332,12 +334,14 @@ def _last_item_ts(items) -> float:
 
 
 def dual_pass_in_scope(entry: dict, cfg: dict | None = None) -> bool:
-    """是否走修改→验证→独立审查循环（有代码/配置编辑即启用）。"""
+    """是否走修改→验证→独立审查循环。v12：任意写入（含文档）均须独立审查。"""
     cfg = cfg or {}
     if is_awaiting_plan(entry):
         return False
     if not counted_edit_items(entry):
         return False
+    if cfg.get("require_review_all_edits", True):
+        return True
     min_files = int(cfg.get("require_reviewer_min_files", 1))
     non_simple = bool(entry.get("non_simple"))
     code_n = unique_code_edit_count(entry, cfg.get("doc_only_extensions"))
@@ -511,3 +515,47 @@ def impact_diff_check(entry: dict, session_id: str, cwd: str = "") -> list:
                     relaxed.add(cur)
         extra -= relaxed
     return sorted(extra)
+
+
+def review_state_dir() -> str:
+    return os.path.join(os.path.expanduser("~"), ".claude", ".state", "review")
+
+
+def write_review_record(session_id: str, entry: dict) -> str:
+    """把本会话审查快照落到 .state/review/<session>.json，供 Stop 硬门核对。"""
+    sid = str(session_id or "unknown").replace("\\", "_").replace("/", "_")
+    folder = review_state_dir()
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, f"{sid}.json")
+    payload = {
+        "session_id": sid,
+        "reviews": list(entry.get("reviews") or []),
+        "skipped_resumed_reviews": list(entry.get("skipped_resumed_reviews") or []),
+        "review_pass_ok": bool(entry.get("review_pass_ok")),
+        "edited_files": [
+            {"path": i.get("path"), "ts": i.get("ts")} for i in counted_edit_items(entry)
+        ],
+        "ts": time.time(),
+    }
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=2)
+    return path
+
+
+def fresh_independent_review_ok(entry: dict) -> tuple[bool, str]:
+    """有写入时须存在新鲜、非 resume、PASS 的独立审查。"""
+    edited = counted_edit_items(entry)
+    if not edited:
+        return True, "no-edits"
+    if entry.get("skipped_resumed_reviews") and not (entry.get("reviews") or []):
+        return False, "独立审查禁止 resume：本会话仅有 resume 审查，须全新开审"
+    reviews = entry.get("reviews") or []
+    if not reviews:
+        return False, "有写入但无独立审查记录（须委派全新 eng-reviewer，禁止 resume）"
+    last_rev = _last_item_ts(reviews)
+    last_edit = _last_item_ts(edited)
+    if last_edit > last_rev + 0.5:
+        return False, "最后一次编辑之后无新鲜独立审查（须全新开审覆盖全部已改文件）"
+    if not entry.get("review_pass_ok"):
+        return False, "独立审查尚未干净 PASS"
+    return True, "ok"

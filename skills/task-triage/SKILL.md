@@ -157,6 +157,6 @@ loading_tier: L1
 - **默认不执行 TDD/SDD（v10.15）**：仅用户显式要求（TDD/测试驱动/先写测试/子Agent派发）时才 Read `test-driven-development` / `subagent-driven-development`；非简单任务默认由主会话按五阶段骨架直接执行，不强制测试先行、不强制子Agent派发。
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
-- catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
+- skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
 - 验证细节 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件；有代码/配置改动完成前须 修改（`change-implementer`）→验证→审查（`eng-reviewer` 一次找齐、**每轮全新开审**）；干净 PASS 即停；清单齐后集中改，最多 3 轮。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

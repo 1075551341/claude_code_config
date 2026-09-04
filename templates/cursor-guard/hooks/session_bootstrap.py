@@ -106,6 +106,22 @@ def main() -> None:
         parts.append(load_gate("p0", cfg["sync"]["claude_home"]))
 
         try:
+            r15 = import_claude_lib(cfg["sync"]["claude_home"], "r15_detect")
+            cwd_guess = None
+            try:
+                gf_pre = import_claude_lib(cfg["sync"]["claude_home"], "graph_freshness")
+                cwd_guess = gf_pre.resolve_cwd(data)
+            except Exception as cwd_exc:
+                print(f"session_bootstrap: r15 cwd: {cwd_exc}", file=sys.stderr)
+            parts.append(f"- {r15.detect_r15_os()}")
+            if cwd_guess:
+                lang_line = r15.format_r15_lang(cwd_guess)
+                if lang_line:
+                    parts.append(f"- {lang_line}")
+        except Exception as r15_exc:
+            print(f"session_bootstrap: r15 inject failed: {r15_exc}", file=sys.stderr)
+
+        try:
             gf = import_claude_lib(cfg["sync"]["claude_home"], "graph_freshness")
             gcfg = gf.load_cfg()
             cwd = gf.resolve_cwd(data)

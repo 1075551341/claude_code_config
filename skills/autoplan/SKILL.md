@@ -14,7 +14,7 @@ loading_tier: L3
 - 手动：`/autoplan`
 
 ## 流程
-1. 读取 design doc（来自 brainstorming 或 catalog/skills/office-hours 六问框架）
+1. 读取 design doc（来自 brainstorming 或 skills/office-hours 六问框架）
 2. 自动运行 CEO Review（范围挑战）
 3. 自动运行 Design Review（评分 + AI slop 检测）
 4. 自动运行 Eng Review（架构 + 测试矩阵）

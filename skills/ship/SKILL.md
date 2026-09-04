@@ -22,7 +22,7 @@ loading_tier: L3
 4. 运行 /document-release 更新文档
 5. 推送变更
 6. 创建/更新 PR
-7. 可选：完整部署闭环（approved PR→verified production）用 `catalog/agents/land-and-deploy.md`（v11 降级 catalog，按需复制启用）
+7. 可选：完整部署闭环（approved PR→verified production）用 `agents/land-and-deploy.md`
 8. 可选：/canary 启动监控循环
 
 ## CI 模板引用（原 release-engineer 附注）

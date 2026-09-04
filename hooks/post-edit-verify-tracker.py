@@ -20,7 +20,12 @@ from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 from crg_track import record_crg_call  # noqa: E402
-from r20_replay import is_plan_artifact, is_resumed_subagent, record_plan_tool  # noqa: E402
+from r20_replay import (  # noqa: E402
+    is_plan_artifact,
+    is_resumed_subagent,
+    record_plan_tool,
+    write_review_record,
+)
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -34,7 +39,7 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa"]
 
 IMPACT_GATE_KEY = "impact_manifest_gate"
 IMPACT_REMINDER = (
@@ -52,6 +57,9 @@ RESUMED_REVIEW_REMINDER = (
 def detect_platform() -> str:
     if os.environ.get("CLAUDECODE"):
         return "claude-code"
+    declared = (os.environ.get("CLAUDE_PLATFORM") or "").strip().lower()
+    if declared:
+        return declared
     for key in os.environ:
         if key.upper().startswith("CURSOR"):
             return "cursor"
@@ -269,9 +277,10 @@ def main():
                     last_edit = max(last_edit, float(item.get("ts", 0) or 0))
                 if last_edit > last_rev:
                     entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
-                entry["reviews"].append({"agent": reviewer, "ts": now})
+                entry["reviews"].append({"agent": reviewer, "ts": now, "resume": False})
                 entry["review_pass_ok"] = False
                 changed = True
+                write_review_record(session_id, entry)
                 break
 
     if record_crg_call(entry, tool_name, now, tool_input):

@@ -1,4 +1,6 @@
 ---
+layer: supplement
+source: huawei
 name: code-refactoring
 description: '代码重构技能：在不改变代码行为的前提下优化代码结构。包括抽取函数、重命名变量、拆分超大函数、提升类型安全、消除代码异味、应用设计模式等。适用于渐进式代码改进。**触发场景**：当用户说"重构"、"重构这个函数"、"优化这个函数"、"清理这段代码"、"拆分过长函数"、"优化类结构"、"消除代码异味"、"使用设计模式重构"、"类型不安全"、"参数过多"等类似表达时使用此技能。前端单文件"只要方案不改码"场景（圈复杂度高/难以测试/逻辑耦合）走本技能内 frontend-refactor-proposal.md 提案模式（原 frontend-refactor-proposer，v11 并入）'
 license: Huawei Inner Source License (HISL)

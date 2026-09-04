@@ -938,6 +938,10 @@ def should_deny_tool(tool_name: str, tool_input=None) -> bool:
 
 def detect_platform(data: dict) -> str:
     env = os.environ
+    # Codex 经 hooks/_codex_hook_runner.py 注入 platform=codex（载荷优先，其次环境变量）。
+    declared = str(data.get("platform") or env.get("CLAUDE_PLATFORM") or "").strip().lower()
+    if declared in {"codex", "cursor", "trae", "claude", "claude-code", "opencode"}:
+        return declared
     if env.get("CURSOR_APP_VERSION") or env.get("CURSOR_CHANNEL"):
         return "cursor"
     if env.get("TRAE_ENV_FILE") or "trae" in (env.get("TERM_PROGRAM") or "").lower():
@@ -951,7 +955,8 @@ def detect_platform(data: dict) -> str:
 
 
 def deny_payload(msg: str, platform: str) -> dict:
-    if platform == "cursor":
+    # Cursor 与 Codex 共用 permission/user_message/agent_message 词表。
+    if platform in {"cursor", "codex"}:
         return {
             "permission": "deny",
             "user_message": "已拦截：图谱未就绪",
@@ -1075,7 +1080,7 @@ def refresh_incremental(
 
 
 def which_pwsh() -> str | None:
-    return which_tool("pwsh") or which_tool("powershell")
+    return which_tool("pwsh")
 
 
 def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
@@ -1088,7 +1093,7 @@ def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
         return False, f"sync.ps1 不存在: {script}"
     exe = which_pwsh()
     if not exe:
-        return False, "pwsh/powershell 未找到"
+        return False, "pwsh 未找到（R15：禁止回落 powershell.exe）"
     args = [
         exe,
         "-NoProfile",

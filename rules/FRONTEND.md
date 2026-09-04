@@ -1,13 +1,15 @@
 ---
 trigger: glob
 description: 前端代码开发时启用。触发：vue/tsx/jsx/css/html
-globs: **/*.{vue,jsx,tsx,js,css,less,scss,html}
+globs: **/*.{vue,jsx,tsx,ts,js,css,less,scss,html}
+paths:
+  - "**/*.{vue,jsx,tsx,ts,js,css,less,scss,html}"
 ---
 
 # 前端规则（专用）
 
-> 配合核心规则使用，仅在前端文件 glob 匹配时加载（sync → `~/.cursor/rules/FRONTEND.mdc`）。
-> 项目级覆盖：复制 `catalog/rules/RULES_FRONTEND.md` → 项目 `.cursor/rules/`。
+> 配合核心规则使用，仅在前端文件 glob/`paths` 匹配时加载。
+> 项目级覆盖：在项目 `.cursor/rules/` 写 FRONTEND 覆盖即可。
 
 ## 技术选型
 
@@ -264,7 +266,7 @@ ComponentName/
 
 ## 安全
 
-> 详见 `rules/SECURITY.md`（XSS、CSP 等）
+> 详见 `skills/security-policy/SKILL.md`（XSS、CSP 等）
 
 ## 何时必须写 README
 
@@ -311,6 +313,6 @@ design_system:
 
 1. **Token 优先** — 组件引用 token，不硬编码色值
 2. **单一来源** — 项目根 `DESIGN.md` 为 SSOT
-3. **与 skill 配合** — 复杂 UI 可启用 `catalog/skills/ui-ux-pro-max`
+3. **与 skill 配合** — 复杂 UI 可启用 `skills/browser-qa`（浏览器核验）或 `agents/design-shotgun.md`（多方案 mockup）
 
 模板：`~/.claude/templates/DESIGN.md`｜详解：`docs/DESIGN.md`

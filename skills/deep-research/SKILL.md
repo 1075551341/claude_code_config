@@ -5,7 +5,7 @@ triggers: [深度研究, 技术选型调研, 竞品分析, 学术调查, 多角�
 layer: supplement
 disable-model-invocation: true
 loading_tier: L3
-source: catalog/skills/deep-research
+source: internal
 ---
 
 # 深度研究方法论

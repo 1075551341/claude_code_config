@@ -72,7 +72,7 @@ $HOOKS_DIR    = Join-Path $CLAUDE_DIR "hooks"
 $SETTINGS     = Join-Path $CLAUDE_DIR "settings.json"
 # v11.1 多编辑器（1+N）：managed 清单与 sync-manifest.json editors 段对齐；
 # 目录缺席自动跳过（launcher 内嵌的 trae/qoder/windsurf 探测串是运行时防御，独立于此表）
-$ALL_EDITORS  = @("cursor", "qoder-cn", "trae-cn", "workbuddy", "qoder", "trae", "codeartsdoer")
+$ALL_EDITORS  = @("cursor", "qoder-cn", "trae-cn", "trae")
 $LAUNCHER_NAME = "_editor_hook_launcher.py"
 $LAUNCHER_PATH = Join-Path $HOOKS_DIR $LAUNCHER_NAME
 

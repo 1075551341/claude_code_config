@@ -1,4 +1,6 @@
 ---
+layer: supplement
+source: huawei
 name: test-edge-case-analyzer
 description: 深度扫描业务代码的分支路径，识别并推荐开发人员容易遗漏的极端边界测试场景。
 triggers: [边界测试, 极端场景, 测试盲区, 分支扫描]

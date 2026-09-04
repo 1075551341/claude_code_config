@@ -14,7 +14,7 @@ __pycache__/
 *$py.class
 
 # Cache & State (root-runtime dirs anchored to repo root so nested
-# legit content like catalog/skills/*/data and docs/**/plans is NOT ignored)
+# nested skill data and docs/**/plans is NOT ignored)
 /plans/
 /projects/
 /cache/
@@ -32,7 +32,7 @@ context_cache.json
 plan_cache.json
 /config.json
 .claude.json
-settings.json
+# settings.json 无密钥骨架可版本化；机器密钥/权限覆盖仍本地
 settings.local.json
 settings.json.bak_*
 .last-cleanup
@@ -67,7 +67,6 @@ history.jsonl
 .devin
 .qoder
 .trae
-.qoder
 .workbuddy
 .codebuddy
 

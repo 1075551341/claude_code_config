@@ -1,16 +1,14 @@
 # `.claude\scripts` 工具说明
 
-本目录存放 Claude Code 环境维护与辅助脚本（PowerShell）。默认在 **Windows** 下通过 `pwsh -ExecutionPolicy Bypass -File <脚本名>` 执行（优先 PowerShell 7+ 稳定版；PS5.1 环境回退用 `powershell`）。
+本目录存放 Claude Code 环境维护与辅助脚本（PowerShell）。默认在 **Windows** 下通过 `pwsh -ExecutionPolicy Bypass -File <脚本名>` 执行（要求 pwsh ≥ 7.5；禁止回落 Windows PowerShell 5.1）。
 
 ---
 
-## 同步与验证（v11.1 多编辑器 1+N）
+## 同步与验证（v12 四端）
 
-**1+N 模型**：Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `config/sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
+**1+N**：Claude Code 原生读 `~/.claude`。编辑器 = **cursor / qoder-cn / trae-cn / trae**。Codex/OpenCode 自管，不生成 AGENTS.md。清单单源 `config/sync-manifest.json`。hooks 由 `python scripts/apply-settings.py` 从 snippet 写入。
 
-> **opencode（v11.4.4 解耦）**：不进 `sync.ps1` 投放、不进 `fix.ps1` 的 `$ALL_EDITORS`。配置与验证门由 `~/.config/opencode` 自管，禁止 spawn 本仓 `hooks/_lib/gate_cli.py`。**托盘伴侣（v11.4.1 v3）**：桌面版点 X 即退出且 close-to-tray 上游未实现（#35775/#18134）→ `~/.config/opencode/tray/opencode-tray.ps1`。手动启动：`pwsh -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ~\.config\opencode\tray\opencode-tray.ps1`；**有意不写开机自启**。
-
-### `sync.ps1` — 多编辑器同步（v20.0）
+### `sync.ps1` — 多编辑器同步（生成器）
 
 **Cursor 落点（默认模式全含）**：
 
@@ -59,8 +57,8 @@ pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun        # 预览不写�
 Claude Code hooks 在 Cursor 内不执行；编辑器侧由 **Cursor Guard** 负责影响驱动同步与上下文 70%/90% 监控。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
-powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  # TRAE/Qoder hook 合并 + DSH/OpenCode CLI + r20_check + OpenCode plugin
 ```
 
 - 模板：`templates/cursor-guard/`；运行时：`~/.cursor/hooks.json`、`guard-config.json`
@@ -69,13 +67,13 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 
 ### 同步触发规则（v10.7.0）
 
-| 改动                                            | 必跑                                             |
-| ----------------------------------------------- | ------------------------------------------------ |
-| `rules/*.md` / `skills/` / `agents/` 任何增删改 | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
-| `templates/cursor-guard/**`                     | `deploy-cursor-guard.ps1` + 重启 Cursor          |
+| 改动                                                     | 必跑                                             |
+| -------------------------------------------------------- | ------------------------------------------------ |
+| `rules/*.md` / `skills/` / `agents/` 任何增删改          | `sync.ps1 -All`（默认模式只同步根文件+插件规则） |
+| `templates/cursor-guard/**`                              | `deploy-cursor-guard.ps1` + 重启 Cursor          |
 | TRAE/Qoder 图谱 hook + DSH/OpenCode CLI/r20_check/plugin | `deploy-editor-graph-hooks.ps1`（不进 sync.ps1） |
-| `hooks/`（Claude 侧）                           | 无需同步；settings.json 注册即生效（新会话）     |
-| `hooks/_lib/gate_messages.md`                   | 双端运行时直读，零操作                           |
+| `hooks/`（Claude 侧）                                    | 无需同步；settings.json 注册即生效（新会话）     |
+| `hooks/_lib/gate_messages.md`                            | 双端运行时直读，零操作                           |
 
 > **多项目适配（全局/个人优先）**：默认只同步到 Cursor 个人目录 `~/.cursor/`（rules 软链、skills/agents Junction），**不写入业务项目**。
 >
@@ -97,8 +95,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-editor-graph-hooks.ps1  
 检查目录结构、配置文件格式与安全、`~\.claude` 与各编辑器的链接状态、Hook 风险、运行时环境，输出得分与报告。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File check.ps1
-powershell -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
+pwsh -ExecutionPolicy Bypass -File check.ps1
+pwsh -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
 ### `validate_config.py` — 配置校验（V1–V19）
@@ -124,8 +122,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File python-mcp.ps1 C:\Users\DELL
 Windows 上 Volta/npm 全局包的 `bin/claude.exe` 会被自更新改名为 `claude.exe.old.*`，shim 仍指向已消失的 exe，表现为「不是内部或外部命令」。官方已弃用 npm 安装。本脚本幂等：卸 Volta/npm shim、把 `~/.local\bin` 放到 User PATH 最前、安装 native `claude.exe`、**关闭 CLI 自动更新**（`DISABLE_AUTOUPDATER=1` + `autoUpdaterStatus=disabled`；插件仍可用 `FORCE_AUTOUPDATE_PLUGINS=1`）、同步 `GITHUB_PERSONAL_ACCESS_TOKEN`、下载 `github-mcp-server.exe`。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File fix-claude-cli.ps1              # 修复
-powershell -ExecutionPolicy Bypass -File fix-claude-cli.ps1 -DiagnoseOnly # 只诊断
+pwsh -ExecutionPolicy Bypass -File fix-claude-cli.ps1              # 修复
+pwsh -ExecutionPolicy Bypass -File fix-claude-cli.ps1 -DiagnoseOnly # 只诊断
 ```
 
 禁止再执行 `npm i -g @anthropic-ai/claude-code`、`volta install @anthropic-ai/claude-code` 或 `claude update`。GitHub MCP 必须用本地 stdio，不要改回 `api.githubcopilot.com`（会变成 `mcp_auth` + 0 tools）。修复后需**完全退出** Cursor / Claude Code 再开。
@@ -135,9 +133,9 @@ powershell -ExecutionPolicy Bypass -File fix-claude-cli.ps1 -DiagnoseOnly # 只�
 部署 `hooks/_editor_hook_launcher.py`（以 GetConsoleWindow() 判定编辑器/终端），并将 `settings.json` 中 Hook 命令改为 launcher 包装。
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File fix.ps1          # 诊断
-powershell -ExecutionPolicy Bypass -File fix.ps1 -Fix     # 应用修复（后需重启编辑器）
-powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
+pwsh -ExecutionPolicy Bypass -File fix.ps1          # 诊断
+pwsh -ExecutionPolicy Bypass -File fix.ps1 -Fix     # 应用修复（后需重启编辑器）
+pwsh -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ```
 
 ### `search-github-tools.ps1` — GitHub 工具检索
@@ -151,7 +149,6 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 - `audit_hooks.py` — 只读审计 settings.json 的 hook 注册（launcher 覆盖率 + 超时）
 - codegraph 索引同步：v11 起由 codegraph v1.5 MCP server 原生监听自动完成（`_lib/knowledge_graph_sync.py` 与双侧 sync hook 已退役；cbm 已永久禁用，`cbm-index.ps1` 已删除）
 - `sync_mcp.py`、`sync-compact-window.py` — MCP/压缩窗口同步
-- `gen-catalog-index.py` — 重新生成 `catalog/INDEX.md`（含与顶层同名项的权威/变体消歧表）；新增或删除 `catalog/` 条目后必跑
 
 ---
 
@@ -160,9 +157,9 @@ powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore # 撤销包装
 ### 修改配置后
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
+pwsh -ExecutionPolicy Bypass -File scripts\sync.ps1    # 重新同步 L0
 python scripts\validate_config.py                             # 校验
-powershell -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
+pwsh -ExecutionPolicy Bypass -File scripts\check.ps1 -Quick
 ```
 
 ### 日常维护
@@ -192,5 +189,5 @@ python scripts\audit_hooks.py    # 核对 20 个注册项与 matcher（含 mcp__
 ## 说明
 
 - 脚本内注释与界面文案以中文为主；部分技术字段名保持英文。
-- `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文。
+- `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8** 保存，供 pwsh ≥ 7.5 正确解析中文（禁止以 PS5.1 为运行目标）。
 - **文档与脚本版本对齐（v11.1.0）**：`sync.ps1` **v20.0**（多编辑器 1+N，`sync.sh` 已删除），`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。

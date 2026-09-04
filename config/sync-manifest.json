@@ -1,5 +1,5 @@
 {
-  "_comment": "同步链常量单源（v11.1 多编辑器 1+N）。消费方：scripts/sync.ps1、scripts/check.ps1、templates/cursor-guard/hooks/_lib/impact_sync.py（Guard 部署副本经 deploy-cursor-guard.ps1 刷新）。改根文件集合或编辑器目标只改本文件。",
+  "_comment": "同步链常量单源（v12：cursor / qoder-cn / trae-cn / trae）。消费方：scripts/sync.ps1、scripts/check.ps1、impact_sync.py。Codex/OpenCode 解耦，不生成 AGENTS.md。",
   "root_files": [
     "CLAUDE.md",
     "SPEC.md",
@@ -9,70 +9,88 @@
     "rules-INDEX.md"
   ],
   "plugin_rule_sources": {
-    "_comment": "Cursor local plugin claude-config 的规则来源：rules/*.md（除 README）全量 + 下列特殊映射",
+    "_comment": "Cursor local plugin claude-config：rules/*.md（除 README）+ 特殊映射",
     "00-CLAUDE": "CLAUDE.md",
     "CURSOR-EDITOR": "templates/cursor-guard/rules/CURSOR-EDITOR.mdc"
   },
+  "frontmatter_map": {
+    "cursor": {
+      "keep": ["description", "name", "alwaysApply", "globs", "paths", "trigger", "layer"],
+      "always_key": "alwaysApply",
+      "always_value": "true",
+      "lazy_trigger_key": "description"
+    },
+    "claude": {
+      "keep": ["description", "paths"],
+      "drop": ["alwaysApply", "globs", "trigger"]
+    },
+    "qoder-cn": {
+      "keep": ["description", "alwaysApply", "globs", "paths"],
+      "always_key": "alwaysApply",
+      "always_value": "true"
+    },
+    "trae-cn": {
+      "keep": ["description", "alwaysApply", "globs", "paths"],
+      "always_key": "alwaysApply",
+      "always_value": "true"
+    },
+    "trae": {
+      "keep": ["description", "alwaysApply", "globs", "paths"],
+      "always_key": "alwaysApply",
+      "always_value": "true"
+    }
+  },
   "editors": {
-    "_comment": "v11.1 恢复多编辑器：Claude Code 原生读 ~/.claude 零同步；home 目录缺席自动跳过（enabled=false 显式停用）。rules_channel: plugin=Cursor local plugin 专用通道；其余为 home 下实体复制目录名；null=无规则通道。special=claude_md_plus_skills 表示仅 CLAUDE.md 副本 + skills/ 联接（workbuddy 的 SOUL/USER/IDENTITY/BOOTSTRAP 为其自有命名空间禁触，root_index=false）。",
+    "_comment": "v12 仅四端。Claude Code 原生读 ~/.claude 零同步。home 缺席自动跳过。",
     "cursor": {
       "home": "~/.cursor",
       "enabled": true,
       "rules_channel": "plugin",
       "rules_ext": ".mdc",
-      "root_index": true
+      "root_index": true,
+      "channels": {
+        "root": true,
+        "always_rules": true,
+        "lazy_rules": true,
+        "skills": "junction",
+        "agents": "junction"
+      }
     },
     "qoder-cn": {
       "home": "~/.qoder-cn",
       "enabled": true,
       "rules_channel": "rules",
       "rules_ext": ".mdc",
-      "root_index": true
+      "root_index": true,
+      "channels": {
+        "root": true,
+        "always_rules": true,
+        "lazy_rules": true
+      }
     },
     "trae-cn": {
       "home": "~/.trae-cn",
       "enabled": true,
       "rules_channel": "user_rules",
       "rules_ext": ".md",
-      "root_index": true
-    },
-    "workbuddy": {
-      "home": "~/.workbuddy",
-      "enabled": false,
-      "rules_channel": null,
-      "rules_ext": null,
-      "root_index": false,
-      "special": "claude_md_plus_skills"
-    },
-    "qoder": {
-      "home": "~/.qoder",
-      "enabled": true,
-      "rules_channel": "rules",
-      "rules_ext": ".mdc",
-      "root_index": true
+      "root_index": true,
+      "channels": {
+        "root": true,
+        "always_rules": true,
+        "lazy_rules": true
+      }
     },
     "trae": {
       "home": "~/.trae",
       "enabled": true,
       "rules_channel": "user_rules",
       "rules_ext": ".md",
-      "root_index": true
-    },
-    "codearts": {
-      "home": "~/.codeartsdoer",
-      "enabled": true,
-      "rules_channel": "rule",
-      "rules_ext": ".mdc",
-      "root_index": true
-    },
-    "opencode": {
-      "_comment": "v11.4.4 解耦：AGENTS.md 由 OpenCode 自管，禁止 CLAUDE.md 覆盖。enabled=false 反向只扫残留软链；实体 AGENTS.md 保留。MCP/plugin/skills 均在 ~/.config/opencode 自管",
-      "home": "~/.config/opencode",
-      "enabled": false,
-      "rules_channel": null,
-      "rules_ext": null,
-      "root_index": false,
-      "special": "agents_md"
+      "root_index": true,
+      "channels": {
+        "root": true,
+        "always_rules": true,
+        "lazy_rules": true
+      }
     }
   }
 }
