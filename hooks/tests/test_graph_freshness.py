@@ -178,6 +178,35 @@ def test_tool_classify() -> None:
         )
         is False,
     )
+    tp = __import__("tool_paths", fromlist=["is_edit_tool", "extract_edit_paths"])
+    check(
+        "CallDynamicTool serena is edit via tool_input",
+        tp.is_edit_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "CallDynamicTool everything is not edit",
+        tp.is_edit_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is False,
+    )
+    nested_paths = tp.extract_edit_paths(
+        {
+            "namespace": "user-serena",
+            "toolName": "replace_symbol_body",
+            "arguments": {"relative_path": "hooks/_lib/tool_paths.py"},
+        },
+        cwd="/tmp/ws",
+    )
+    check(
+        "extract_edit_paths unwraps CallDynamicTool arguments",
+        nested_paths == [__import__("os").path.normpath("/tmp/ws/hooks/_lib/tool_paths.py")],
+    )
 
 
 def test_ensure_cache_and_deny(monkey_cmds: list | None = None) -> None:

@@ -126,7 +126,7 @@ def main() -> None:
         if not isinstance(tool_input, dict):
             tool_input = {}
 
-        is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
+        is_edit = tool_paths.is_edit_tool(tool_name, tool_input) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
 
         changed = False
         try:

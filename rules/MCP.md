@@ -68,7 +68,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 | codegraph         | **R17 探索主位**（怎么运作）                 | 符号/调用链/依赖/「这段代码如何工作」；默认 4 工具：`explore`/`node`/`search`/`callers`；无 CRG 图时的 blast-radius | test-gap；git-diff 风险评分；调用未暴露的 `impact`/`trace`/`context` |
 | serena            | 符号级精确编辑 + LSP 诊断                    | 跨文件重命名/插入/替换符号体、取 `get_diagnostics_for_file`                                    | 只读探索（应走 codegraph）       |
 | code-review-graph | **精准上下文 / 变更影响 / 风险 / 审查 / PR** | `get_minimal_context`、`get_impact_radius`、`get_affected_flows`、`detect_changes`、`get_review_context`、开 PR 前风险门 | 替代 R17「怎么运作」的日常探索   |
-| everything        | **本机文件名秒级搜索**（只读 5 工具）        | Windows 全盘/跨仓按文件名定位：`everything_search` / `search_by_type` / `find_recent` / `file_details` / `count_stats`。需 Everything.exe 运行中 | 工作区 Glob；R17 结构探索；替代 CRG `detect_changes`（勿用 `everything_find_recent`） |
+| everything        | **本机文件名秒级搜索**（只读 5 工具）        | Windows 全盘/跨仓按文件名定位：`everything_search` / `everything_search_by_type` / `everything_find_recent` / `everything_file_details` / `everything_count_stats`。需 Everything.exe 运行中 | 工作区 Glob；R17 结构探索；替代 CRG `detect_changes`（勿用 `everything_find_recent`） |
 
 > 有 `.code-review-graph/` 时：改前强制 CRG 上下文+影响面，再叠加 codegraph blast-radius + Grep。无图 → SessionStart/PreToolUse 先 ensure；仍无图则 **deny**，禁止 Grep/Glob/everything/编辑/查询 MCP。
 > serena 写操作会被 `settings.json` 的 `mcp__serena__.*` matcher 纳入验证追踪链；勿绕过。

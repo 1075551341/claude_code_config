@@ -23,7 +23,7 @@ layer: router
 
 ```
 用户显式指令 > CLAUDE.md > 激活skill > lazy规则 > alwaysApply > 默认
-工具路由: codegraph → Grep（codebase-memory 已禁用）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
+工具路由: codegraph →（双图就绪后）Grep；本机文件名 → everything（禁止替代 Glob/R17）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
 ```
 
 ## P0 路由集（6）= L1×4 + L2 门控×2

@@ -142,7 +142,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 > 详见 `rules/CORE.md` 变更彻底性保障章节
 
 ```
-变更前: codegraph_impact(target) + Grep 全项目 + MANIFEST depends_on → 清单
+变更前: CRG get_impact_radius（有图）+ codegraph_explore blast-radius + Grep + MANIFEST depends_on → 清单
 变更中: 按依赖图顺序 → Read→Edit→Read
 变更后: Grep 残留引用 → 构建/类型/Lint → MANIFEST 一致性
 ```

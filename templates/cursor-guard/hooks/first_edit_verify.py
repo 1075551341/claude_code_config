@@ -75,11 +75,10 @@ def main() -> None:
         except Exception as e:
             print(f"first_edit_verify: tool_paths unavailable: {e}", file=sys.stderr)
 
-        is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
+        tool_input = data.get("tool_input") or data.get("input") or {}
+        is_edit = tool_paths.is_edit_tool(tool_name, tool_input) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
         if not is_edit:
             return
-
-        tool_input = data.get("tool_input") or data.get("input") or {}
         paths = tool_paths.extract_edit_paths(tool_input, cwd) if tool_paths else []
         if not paths:
             single = extract_file_path(data)

@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.12
+# 组件唯一归属源 — 防左右手互博 — v11.4.13
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.12"
-updated: "2026-09-01"
+version: "11.4.13"
+updated: "2026-09-07"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -247,7 +247,7 @@ concerns:
     owner: skill/change-impact-analysis
     source: local
     stage: execute
-    note: 改前 codegraph_impact + Grep 全项目；改后残留引用检测
+    note: 改前 CRG impact（有图）+ codegraph_explore blast-radius + Grep；改后残留引用检测
     depends_on: [rules/CORE.md]
 
   tdd:

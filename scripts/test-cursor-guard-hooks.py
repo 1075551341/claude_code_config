@@ -29,7 +29,9 @@ CURSOR = Path(os.environ.get("USERPROFILE", Path.home())) / ".cursor"
 HOOKS = CURSOR / "hooks"
 STATE = CURSOR / ".state"
 CLAUDE = Path(os.environ.get("USERPROFILE", Path.home())) / ".claude"
+REPO_ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE_GUARD = CLAUDE / "templates" / "cursor-guard" / "guard-config.json"
+REPO_TEMPLATE_HOOKS = REPO_ROOT / "templates" / "cursor-guard" / "hooks.json"
 
 TRANSIENT_STATE_FILES = (
     "compress-pending.json",
@@ -125,6 +127,19 @@ def finish_case(case: dict[str, Any], *, behavior: bool, note: str = "") -> dict
 
 def stdout_text(case: dict[str, Any]) -> str:
     return json.dumps(case.get("stdout") or {}, ensure_ascii=False)
+
+
+def matcher_from_hooks(hooks_path: Path, event: str, command_substr: str) -> str:
+    if not hooks_path.exists():
+        return ""
+    try:
+        hj = json.loads(hooks_path.read_text(encoding="utf-8-sig"))
+        for item in (hj.get("hooks") or {}).get(event) or []:
+            if command_substr in str(item.get("command") or ""):
+                return str(item.get("matcher") or "")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return ""
+    return ""
 
 
 def main() -> int:
@@ -287,6 +302,36 @@ def main() -> int:
         r_off,
         behavior=(r_off.get("stdout") or {}) == {},
         note="CURSOR_GUARD_CODEGRAPH_FIRST=0 → no nudge",
+    )
+
+    explore_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "preToolUse", "explore_router.py")
+    deployed_explore = matcher_from_hooks(hooks_json, "preToolUse", "explore_router.py")
+    explore_ok = "CallDynamicTool" in explore_matcher and "everything" in explore_matcher
+    if hooks_json.exists():
+        explore_ok = explore_ok and "CallDynamicTool" in deployed_explore and "everything" in deployed_explore
+    results["tests"]["explore_router_everything_matcher"] = finish_case(
+        {
+            "pass": explore_ok,
+            "json_ok": True,
+            "stdout": {"template": explore_matcher, "deployed": deployed_explore},
+        },
+        behavior=explore_ok,
+        note="explore_router matcher must catch everything MCP (CallDynamicTool + mcp__everything)",
+    )
+
+    first_edit_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "postToolUse", "first_edit_verify.py")
+    deployed_first_edit = matcher_from_hooks(hooks_json, "postToolUse", "first_edit_verify.py")
+    first_edit_ok = "CallDynamicTool" in first_edit_matcher
+    if hooks_json.exists():
+        first_edit_ok = first_edit_ok and "CallDynamicTool" in deployed_first_edit
+    results["tests"]["first_edit_verify_calldynamic_matcher"] = finish_case(
+        {
+            "pass": first_edit_ok,
+            "json_ok": True,
+            "stdout": {"template": first_edit_matcher, "deployed": deployed_first_edit},
+        },
+        behavior=first_edit_ok,
+        note="first_edit_verify matcher must catch CallDynamicTool so is_edit_tool unwrap runs",
     )
 
     counter = STATE / "tool-counter.json"

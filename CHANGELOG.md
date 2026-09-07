@@ -8,9 +8,10 @@
 - **分工 SSOT**（`rules/MCP.md` §4）：codegraph=R17；CRG=上下文/影响面/风险/审查；serena=符号编辑；everything=本机文件名。禁止 everything 替代 Glob / codegraph / CRG `detect_changes`。
 - **语义名**：规则与钩子按 `codegraph_explore` / `everything_search` 匹配，禁止 `mcp0_`/`mcp1_`。Cursor User MCP 可能带 `user-` 前缀。
 - **CONTEXT F1**：删除未暴露的 `codegraph_context`/`trace`/`impact`/`callees`/`status`；默认仅 explore/node/search/callers。不启用 `CODEGRAPH_MCP_TOOLS`。
-- **硬门**：无图时 everything 与 Glob 同级 deny；`is_write_tool` 解包 `CallDynamicTool`+serena。Claude matcher 加 `mcp__everything__.*`。
+- **硬门**：无图时 everything 与 Glob 同级 deny；`is_write_tool` / `is_edit_tool` 解包 `CallDynamicTool`+serena；`extract_edit_paths` 读内层 `arguments`。Claude matcher 加 `mcp__everything__.*`。Cursor `explore_router` matcher 含 CallDynamicTool + everything（有图时也拦 everything 当 Glob 后门）。`first_edit_verify` matcher 含 CallDynamicTool。
+- **现行入口纠偏**：SPEC/MANIFEST/brainstorming/user-rules-snippet 不再把未暴露的 `codegraph_impact` 当必调用。
 - **Cursor `mcp.json`**：不经 `sync.ps1` 复制；粘贴片段见 `docs/CURSOR_MCP_PROFILE.md`。
-- **计数**：常驻 4→5。Guard 仍 1.2.11。
+- **计数**：常驻 4→5。Guard 仍 1.2.11（matcher 增量，不升 Guard 版本）。
 
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 

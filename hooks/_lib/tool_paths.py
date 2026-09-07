@@ -58,18 +58,29 @@ def is_mcp_tool(tool_name: str) -> bool:
     return tool_name.startswith("mcp__") or tool_name.startswith("mcp_")
 
 
-def is_edit_tool(tool_name: str) -> bool:
+def is_edit_tool(tool_name: str, tool_input=None) -> bool:
     """原生编辑工具，或名字里带写动词的 MCP / 解包后的 serena 符号写工具。"""
-    if tool_name in NATIVE_EDIT_TOOLS:
-        return True
-    lowered = (tool_name or "").lower()
-    if is_mcp_tool(tool_name):
-        return any(verb in lowered for verb in MCP_WRITE_VERBS)
-    # Cursor CallDynamicTool 解包后常为 replace_symbol_body（无 mcp__ 前缀）
-    if any(verb in lowered for verb in MCP_WRITE_VERBS) and (
-        "symbol" in lowered or "serena" in lowered
-    ):
-        return True
+    names = [tool_name] if tool_name else []
+    if isinstance(tool_input, dict):
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
+            val = tool_input.get(key)
+            if isinstance(val, str) and val:
+                names.append(val)
+        nested = tool_input.get("arguments")
+        if isinstance(nested, dict):
+            val = nested.get("name") or nested.get("toolName")
+            if isinstance(val, str) and val:
+                names.append(val)
+    for name in names:
+        if name in NATIVE_EDIT_TOOLS:
+            return True
+        lowered = (name or "").lower()
+        if is_mcp_tool(name) and any(verb in lowered for verb in MCP_WRITE_VERBS):
+            return True
+        if any(verb in lowered for verb in MCP_WRITE_VERBS) and (
+            "symbol" in lowered or "serena" in lowered
+        ):
+            return True
     return False
 
 
@@ -78,19 +89,26 @@ def extract_edit_paths(tool_input: dict, cwd: str = "") -> list[str]:
 
     serena 用 `relative_path`、fs 用 `path`、原生工具用 `file_path`，
     统一在这里处理，避免各 hook 各写一套解析。
+    Cursor CallDynamicTool 路径常在 `arguments` 内层。
     """
     if not isinstance(tool_input, dict):
         return []
 
+    blobs = [tool_input]
+    nested = tool_input.get("arguments")
+    if isinstance(nested, dict):
+        blobs.append(nested)
+
     raw: list[str] = []
-    for key in PATH_KEYS:
-        value = tool_input.get(key)
-        if isinstance(value, str) and value.strip():
-            raw.append(value.strip())
-    for key in PATH_LIST_KEYS:
-        value = tool_input.get(key)
-        if isinstance(value, list):
-            raw.extend(v.strip() for v in value if isinstance(v, str) and v.strip())
+    for blob in blobs:
+        for key in PATH_KEYS:
+            value = blob.get(key)
+            if isinstance(value, str) and value.strip():
+                raw.append(value.strip())
+        for key in PATH_LIST_KEYS:
+            value = blob.get(key)
+            if isinstance(value, list):
+                raw.extend(v.strip() for v in value if isinstance(v, str) and v.strip())
 
     out: list[str] = []
     for path in raw:

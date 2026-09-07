@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.9）。
+"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.13）。
 
 SessionStart/sessionEnd 真正 init/update；已有图时 CLI 失败记警告不阻断。
 无图 blocked → PreToolUse deny。Stop 增量刷新；仅验证全绿后跑 sync.ps1。

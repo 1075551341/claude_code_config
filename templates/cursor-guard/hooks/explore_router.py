@@ -107,15 +107,27 @@ def _norm(name: str) -> str:
     return (name or "").lower().replace("-", "_")
 
 
-def _is_everything_tool(tool_name: str, data: dict | None = None) -> bool:
-    names = [tool_name]
-    blob = (data or {}).get("tool_input") or (data or {}).get("arguments") or (data or {}).get("input")
-    if isinstance(blob, dict):
+def _collect_tool_names(tool_name: str, data: dict | None = None) -> list[str]:
+    names = [tool_name] if tool_name else []
+    blobs = []
+    payload = data or {}
+    for key in ("tool_input", "arguments", "input"):
+        blob = payload.get(key)
+        if isinstance(blob, dict):
+            blobs.append(blob)
+            nested = blob.get("arguments")
+            if isinstance(nested, dict):
+                blobs.append(nested)
+    for blob in blobs:
         for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
             val = blob.get(key)
-            if isinstance(val, str) and val:
+            if isinstance(val, str) and val and val not in names:
                 names.append(val)
-    for name in names:
+    return names
+
+
+def _is_everything_tool(tool_name: str, data: dict | None = None) -> bool:
+    for name in _collect_tool_names(tool_name, data):
         n = _norm(name)
         if "everything_claude_code" in n:
             continue
@@ -132,14 +144,7 @@ def _is_everything_tool(tool_name: str, data: dict | None = None) -> bool:
 
 
 def _mark_codegraph_if_needed(tool_name: str, state: dict, data: dict | None = None) -> None:
-    names = [tool_name or ""]
-    blob = (data or {}).get("tool_input") or (data or {}).get("arguments") or {}
-    if isinstance(blob, dict):
-        for key in ("name", "toolName", "namespace"):
-            val = blob.get(key)
-            if isinstance(val, str):
-                names.append(val)
-    if any("codegraph" in _norm(n) for n in names):
+    if any("codegraph" in _norm(n) for n in _collect_tool_names(tool_name, data)):
         state["codegraph_seen"] = True
         _save_state(state)
 
