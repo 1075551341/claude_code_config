@@ -117,7 +117,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 | 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
 | ---------------------- | ------------------- | ------------------- | ------------------------- |
-| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read/everything；调用 cbm | 任何代码结构理解          |
+| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read/Glob/everything；调用 cbm | 任何代码结构理解          |
 | 精准上下文/变更影响/风险/审查/PR | CRG `get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context` | 用 codegraph 做 test-gap；无图仍假装已审 | 有 `.code-review-graph/` 的改前/完成前/开 PR |
 | 本机按文件名（跨仓/全盘） | `everything_search` | 工作区 Glob；R17 探索 | Windows + Everything 运行中 |
 | 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |

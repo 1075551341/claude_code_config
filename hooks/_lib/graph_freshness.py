@@ -955,6 +955,7 @@ def is_write_tool(tool_name: str, tool_input=None) -> bool:
 
 
 def is_explore_fallback(tool_name: str, tool_input=None) -> bool:
+    """无图时与 Grep/Glob 同级拦截的探索类工具（everything 属此类，不是产品上的 Grep/Glob fallback）。"""
     if _norm_tool(tool_name) in EXPLORE_FALLBACK:
         return True
     return is_everything_tool(tool_name, tool_input)

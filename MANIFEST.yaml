@@ -582,7 +582,7 @@ concerns:
 
   mcp_remote_explore:
     owner: config/.mcp.json
-    note: github（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN；勿用 api.githubcopilot.com HTTP，Cursor/Claude 会变成 mcp_auth + 0 tools）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    note: grep（grep.app 跨公开仓搜索）在 `.mcp.json` 常驻；github **不写 MCP**（plugin 关，用 gh CLI）。本地代码搜索一律 codegraph，勿用 grep MCP 替代
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
 
   gstack_eng:

@@ -140,7 +140,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 **规则**：
 
 - codegraph 返回的源码视为已读取，不重复 grep/Read
-- 无 `.codegraph/` 时回退到 explore agent
+- 无 `.codegraph/` 时由 hook ensure；仍无则 **BLOCKED**，禁止 explore agent / Grep / Glob / everything
 - 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
 
 ## 架构导览替代链
@@ -151,9 +151,9 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | ----------------- | --------------------------------------------- |
 | 代码结构/调用链   | codegraph_explore                             |
 | 架构/ADR          | codegraph_explore + docs/ADR/                 |
-| 变更影响          | codegraph blast-radius                        |
+| 变更影响          | codegraph_explore blast-radius                |
 | 为什么/偏好       | claude-mem                                    |
-| 新人 onboarding   | codegraph explore                             |
+| 新人 onboarding   | codegraph_explore                             |
 
 ## claude-mem 三层搜索工作流
 

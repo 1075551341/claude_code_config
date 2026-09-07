@@ -14,6 +14,7 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_file_path,
+    extract_tool_input,
     extract_tool_name,
     import_claude_lib,
     read_stdin,
@@ -75,7 +76,7 @@ def main() -> None:
         except Exception as e:
             print(f"first_edit_verify: tool_paths unavailable: {e}", file=sys.stderr)
 
-        tool_input = data.get("tool_input") or data.get("input") or {}
+        tool_input = extract_tool_input(data)
         is_edit = tool_paths.is_edit_tool(tool_name, tool_input) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
         if not is_edit:
             return

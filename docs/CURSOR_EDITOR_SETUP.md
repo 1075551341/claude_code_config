@@ -92,7 +92,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | Cursor 原生压缩      | **`/summarize`** 或「压缩上下文」 | 降低上下文环；触发 `preCompact` hook                                                                           |
 | Compact 前快照       | `/summarize` 或自动满窗时         | `pre_compact_snapshot` + `cursor-context.json`                                                                 |
 | 新会话交接           | 新 conversation_id                | `sessionEnd`/`stop` 写 handoff → `sessionStart` 注入                                                           |
-| codegraph 优先       | soft_block（默认）                | `explore_router` + `graph_freshness`；无索引 **deny**（禁止 Grep 兜底）                                        |
+| codegraph 优先       | soft_block（默认）                | `explore_router` + `graph_freshness`；无索引 **deny**（禁止 Grep/Glob/everything 兜底）                                        |
 | Shell 危险命令       | 自动拦截                          | `shell_guard`                                                                                                  |
 | 密钥粘贴             | 自动警告                          | `prompt_secret_scan`                                                                                           |
 | 会话状态一览         | 自动                              | `session_bootstrap`（ensure 双图；用户 hook cwd 是 `~/.cursor` 时用 `workspace_roots` / `.workspace-trusted`） |
@@ -169,7 +169,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 **codegraph 优先三层**（两侧一致，v10.5）：
 
 1. 规则：`CORE` R17 + `CURSOR-EDITOR.mdc`（Cursor alwaysApply，plugin 通道）
-2. Hook：`explore_router` — `enforce_mode: soft_block`（Grep/Glob 无先 codegraph 则 deny；无 `.codegraph` 降级 nudge）
+2. Hook：`explore_router` — `enforce_mode: soft_block`（Grep/Glob/everything 无先 codegraph 则 deny；无 `.codegraph` 同样 deny，不降级 nudge）
 3. MCP：`codegraph` 在 Cursor Settings 启用（**codebase-memory 已禁用**：全盘索引爆 CPU/内存）；项目已 `codegraph init`
 
 ## 勿做

@@ -172,15 +172,30 @@ def ensure_hook_output() -> None:
         write_json({})
 
 
+def extract_tool_input(data: dict) -> dict:
+    """CallDynamicTool 入参可能在 tool_input / arguments / input。"""
+    if not isinstance(data, dict):
+        return {}
+    for key in ("tool_input", "arguments", "input"):
+        blob = data.get(key)
+        if isinstance(blob, dict):
+            return blob
+    return {}
+
+
 def extract_file_path(data: dict) -> str:
     for key in ("file_path", "path"):
         val = data.get(key)
         if isinstance(val, str) and val:
             return val
-    tool_input = data.get("tool_input") or data.get("input") or {}
-    if isinstance(tool_input, dict):
-        for key in ("file_path", "path", "target_file"):
-            val = tool_input.get(key)
+    tool_input = extract_tool_input(data)
+    blobs = [tool_input]
+    nested = tool_input.get("arguments")
+    if isinstance(nested, dict):
+        blobs.append(nested)
+    for blob in blobs:
+        for key in ("file_path", "path", "target_file", "relative_path"):
+            val = blob.get(key)
             if isinstance(val, str) and val:
                 return val
     return ""

@@ -115,11 +115,11 @@ def test_tool_classify() -> None:
         gf.should_deny_tool("Bash", {"command": "rg foo"}) is True,
     )
     check(
-        "everything_search is fallback",
+        "everything_search is no-graph blocked (with Grep/Glob class)",
         gf.is_explore_fallback("everything_search") is True,
     )
     check(
-        "claude everything mcp is fallback",
+        "claude everything mcp is no-graph blocked",
         gf.is_explore_fallback("mcp__everything__everything_search") is True,
     )
     check(
@@ -155,7 +155,7 @@ def test_tool_classify() -> None:
         is True,
     )
     check(
-        "CallDynamicTool everything is fallback",
+        "CallDynamicTool everything is no-graph blocked",
         gf.is_explore_fallback(
             "CallDynamicTool",
             {"namespace": "user-everything", "toolName": "everything_search"},

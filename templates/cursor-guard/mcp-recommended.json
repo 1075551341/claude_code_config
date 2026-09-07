@@ -13,7 +13,8 @@
     },
     {
       "name": "serena",
-      "intent": "符号级精确编辑 + LSP；只读探索仍走 codegraph"
+      "intent": "符号级精确编辑 + LSP；只读探索仍走 codegraph",
+      "setup": "serena start-mcp-server --context ide --project ${workspaceFolder}"
     },
     {
       "name": "everything",

@@ -118,7 +118,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 需求                        | 首选                                                    | 次选                          | 禁止                                 |
 | --------------------------- | ------------------------------------------------------- | ----------------------------- | ------------------------------------ |
-| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read/everything |
+| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read/Glob/everything |
 | 语义模糊 / 跨服务 / ADR     | codegraph_explore                                       | docs/ADR/ 手写                | 启用/调用 codebase-memory（已禁用）  |
 | 为什么/约定/偏好/决策原因   | claude-mem search→get_observations                      | —                             | 往 codegraph 塞偏好；重复 Read       |
 | 精准上下文 / 变更影响面     | CRG `get_minimal_context` + `get_impact_radius`（有图） | codegraph blast-radius + Grep | 只靠直觉估范围；用 serena 探索       |
@@ -138,7 +138,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | 行为                                             | 判定     | 后果                              |
 | ------------------------------------------------ | -------- | --------------------------------- |
 | 改文件前未查 blast-radius（`codegraph_explore`） | 违反 R17 | 变更范围不可信                    |
-| 跳过 codegraph 直接 Grep 搜函数                  | 违反 R17 | ~47% token / ~58% 工具调用浪费    |
+| 跳过 codegraph 直接 Grep/Read/Glob/everything 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费    |
 | 结构问题未用 codegraph 就上 cbm                  | 违反 R17 | cbm 已禁用；标 DONE_WITH_CONCERNS |
 | 启用/调用 codebase-memory                        | 禁止     | 全盘索引爆内存；用 codegraph      |
 | codegraph 已返回结果仍 Read 同文件               | 违反 R17 | 重复 token 消耗                   |
