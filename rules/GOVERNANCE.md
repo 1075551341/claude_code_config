@@ -93,7 +93,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 | Rust   | chrono / time crate |
 | C#     | NodaTime            |
 
-获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v11.4.5 常驻 4 项：codegraph/CRG/serena/grep，见 `rules/MCP.md`）。
+获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v11.4.13 常驻 5 项：codegraph/CRG/serena/everything/grep，见 `rules/MCP.md`）。
 
 ## 变更彻底性三阶段流程（R3/R4 详情）
 

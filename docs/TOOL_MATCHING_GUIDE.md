@@ -5,14 +5,14 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 # MCP 工具语义匹配指南
 
 > **本文只保留匹配矩阵**（场景→工具 / 决策树 / 调研三档 / 前置条件）。
-> 服务器清单/分组/四工具分工/禁止项 SSOT → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`（v11 三文档去重）。
+> 服务器清单/分组/四工具分工/禁止项 SSOT → `rules/MCP.md`；Cursor 差异 → `docs/CURSOR_MCP_PROFILE.md`（v11 三文档去重）。按语义名调用，禁止 `mcp0_`/`mcp1_` 前缀。
 
 ## 原则
 
 1. **语义优先** — 按意图匹配，非关键词堆砌
 2. **Tool-First** — MANIFEST → skill → agent → MCP
 3. **memory MCP ≠ claude-mem** — 勿启用 memory MCP；跨会话仅 claude-mem（R18）
-4. **本地代码三工具不可互相替代** — 分工见 `rules/MCP.md` §4；禁止用 serena 替代 codegraph 做 R17 探索
+4. **本地代码三工具 + everything 不可互相替代** — 分工见 `rules/MCP.md` §4；禁止用 serena/everything 替代 codegraph 做 R17 探索；禁止用 everything 替代工作区 Glob
 5. **工具优先级** — 编辑器内置 > 同名 plugin > MCP > 按需中断启用（chrome-devtools / postgres 禁止自动 merge）
 
 ## 前置条件
@@ -21,6 +21,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 | -------------------- | ----------------------------------------------------------------------------------- | ----------------------------- |
 | codegraph 探索 (R17) | SessionStart/PreToolUse ensure：`codegraph init -i` 或 `sync` | `validate_config.py` V16 + 无图 deny |
 | code-review-graph    | 同上 ensure：`code-review-graph build` 或 `update`           | 存在 `.code-review-graph/graph.db`   |
+| everything（本机文件名） | Windows + Everything.exe 运行中；`everything-mcp==1.0.6` + `mcp<2` | 工具 `everything_search` 可返回路径 |
 | OpenSpec CLI         | `npm i -g @fission-ai/openspec`（Node>=20.19）+ `openspec init --tools cursor`      | `openspec --version`          |
 | 深度调研 L3          | Exa + Firecrawl（`FIRECRAWL_API_KEY` 用户/系统环境变量）                            | Claude plugin 可用；不写 `.mcp.json` |
 
@@ -30,7 +31,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 
 ## 分组与四工具分工（指针）
 
-- 本地代码三工具分工（codegraph / serena / code-review-graph 何时用）→ `rules/MCP.md` §4
+- 本地代码三工具 + everything 分工（codegraph / serena / code-review-graph / everything 何时用）→ `rules/MCP.md` §4
 - 跨会话记忆仅 claude-mem plugin（R18）；浏览器 Claude=playwright 插件、Cursor=内置浏览器（UI）+ playwright plugin（E2E）；chrome-devtools / postgres 默认关，需要时**中断请用户手动启用**
 
 ## 场景 → 工具
@@ -43,6 +44,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 | 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`   | eng-reviewer        |
 | 语义找代码                  | codegraph_search                              | grep MCP（跨公开仓）|
 | 符号级重命名/替换           | serena `rename_symbol` / `replace_symbol_body` | 内置 Edit + Grep 校验 |
+| 本机按文件名（跨仓/全盘）   | everything_search                             | 内置 Glob（仅当前工作区） |
 | OpenSpec 规格变更           | openspec CLI + `/opsx:*`                      | rules/OPENSPEC.md   |
 | 查库文档/API (L1)           | Context7：`resolve-library-id` → `query-docs` | Exa 单次            |
 | GitHub PR/Issue             | `gh` CLI                                      | pr-workflow skill   |
@@ -71,6 +73,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 需要外部信息？
 ├─ 库/API 文档 → Context7 (resolve-library-id → query-docs)
 ├─ GitHub 操作 → github MCP / gh
+├─ 本机按文件名（跨仓/全盘，Windows） → everything_search（禁止替代工作区 Glob / codegraph）
 ├─ 跨公开仓找用法 → grep MCP
 ├─ 网页内容 → firecrawl（+ Exa 交叉验证）
 ├─ 浏览器操作/E2E → Cursor 内置浏览器（UI）；Claude=playwright 插件；E2E 脚本=playwright
@@ -81,8 +84,8 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 
 ## 跨编辑器 MCP 映射（指针）
 
-- Claude Code 常驻 4（codegraph / CRG / serena / grep）+ 按需 profile → `rules/MCP.md` §2–§3；双平台工具对照 → `rules/MCP.md` §双平台
-- Cursor User MCP 4+postgres(disabled) + Plugins → [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)
+- Claude Code 常驻 5（codegraph / CRG / serena / everything / grep）+ 按需 profile → `rules/MCP.md` §2–§3；双平台工具对照 → `rules/MCP.md` §双平台
+- Cursor User MCP 5+postgres(disabled) + Plugins → [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)（everything 须手工写入 `mcp.json`，sync.ps1 不复制）
 
 ## Shell / Agent Token
 

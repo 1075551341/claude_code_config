@@ -59,12 +59,17 @@ def is_mcp_tool(tool_name: str) -> bool:
 
 
 def is_edit_tool(tool_name: str) -> bool:
-    """原生编辑工具，或名字里带写动词的 MCP 工具。"""
+    """原生编辑工具，或名字里带写动词的 MCP / 解包后的 serena 符号写工具。"""
     if tool_name in NATIVE_EDIT_TOOLS:
         return True
+    lowered = (tool_name or "").lower()
     if is_mcp_tool(tool_name):
-        lowered = tool_name.lower()
         return any(verb in lowered for verb in MCP_WRITE_VERBS)
+    # Cursor CallDynamicTool 解包后常为 replace_symbol_body（无 mcp__ 前缀）
+    if any(verb in lowered for verb in MCP_WRITE_VERBS) and (
+        "symbol" in lowered or "serena" in lowered
+    ):
+        return True
     return False
 
 

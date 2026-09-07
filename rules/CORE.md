@@ -118,17 +118,18 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 需求                        | 首选                                                    | 次选                          | 禁止                                 |
 | --------------------------- | ------------------------------------------------------- | ----------------------------- | ------------------------------------ |
-| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read        |
+| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read/everything |
 | 语义模糊 / 跨服务 / ADR     | codegraph_explore                                       | docs/ADR/ 手写                | 启用/调用 codebase-memory（已禁用）  |
 | 为什么/约定/偏好/决策原因   | claude-mem search→get_observations                      | —                             | 往 codegraph 塞偏好；重复 Read       |
 | 精准上下文 / 变更影响面     | CRG `get_minimal_context` + `get_impact_radius`（有图） | codegraph blast-radius + Grep | 只靠直觉估范围；用 serena 探索       |
-| 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`             | eng-reviewer                  | 用 codegraph 做 test-gap（无此能力） |
+| 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`             | eng-reviewer                  | 用 codegraph 做 test-gap；用 everything_find_recent 当风险门 |
+| 本机按文件名定位（跨仓/全盘） | everything_search（仅 Windows）                       | 内置 Glob（当前工作区）       | 用 everything 替代 Glob 或 codegraph |
 
 **codegraph vs code-review-graph 分工（v11.4.6）**：
 
 - **codegraph = R17 探索主位**（符号/调用链/「怎么运作」；无 CRG 图时的 blast-radius）
 - **code-review-graph = 精准上下文 + 变更影响 + 风险门禁 + 审查 + 开 PR**（`get_minimal_context` / `get_impact_radius` / `get_affected_flows` / `detect_changes` / `get_review_context`）
-- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；无图 **deny**，禁止 Grep/编辑/查询 MCP，不得 Grep 兜底。
+- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；无图 **deny**，禁止 Grep/Glob/everything/编辑/查询 MCP，不得 Grep 兜底。everything 仅本机文件名索引，分工 SSOT → `rules/MCP.md` §4。
 
 **索引刷新**：codegraph v1.5 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新。不恢复每次编辑 kg sync hook。
 

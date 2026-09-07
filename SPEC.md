@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.12 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
+> 版本：11.4.13 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
 
 ---
 
@@ -60,7 +60,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
 | 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
-| 全局 MCP     | 9 常驻 | 本地代码4+远端探索2+Web&文档3；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
+| 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
 
@@ -194,7 +194,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | LOCAL_HOOK_PROFILE        | hooks/README.md                           |
 | GateGuard 概念            | stop-context-monitor, pre-suggest-compact |
 
-**禁止**安装 everything-claude-code 插件（duplicate hooks）。
+**禁止**安装 everything-claude-code 插件（duplicate hooks）。与 voidtools `everything` MCP（elis132/everything-mcp）不是同一物。
 
 ---
 
@@ -203,6 +203,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 分组       | 服务器                                               | 加载                                   |
 | ---------- | ---------------------------------------------------- | -------------------------------------- |
 | 本地代码   | codegraph, code-review-graph, serena                 | `.mcp.json` 常驻                       |
+| 本机文件名 | everything（elis132/everything-mcp；仅 Windows）     | `.mcp.json` 常驻；勿与 marketplace plugin 双挂 |
 | 远端探索   | grep                                                 | `.mcp.json` 常驻                       |
 | Plugins    | context7, exa, playwright                            | `settings.json` enabledPlugins=true    |
 | Plugins 默认关 | chrome-devtools, github, firecrawl                 | plugin=false；不写 MCP                 |
@@ -211,7 +212,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json` 按需 merge      |
 | collab     | figma, linear, notion, slack                         | `mcp-configs/collab.json`（声明）      |
 
-本地代码三工具分工（codegraph 探索主位 / serena 符号级编辑 / code-review-graph 变更后审查）→ [rules/MCP.md](rules/MCP.md) §4
+本地代码三工具 + everything 分工（codegraph 探索主位 / serena 符号级编辑 / CRG 影响面审查 / everything 本机文件名）→ [rules/MCP.md](rules/MCP.md) §4
 
 已删除：`aider-repo-map`、`sequential-thinking`（不要加回）。
 
@@ -360,4 +361,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.12 | 日期：2026-09-01 | 五柱×五阶段×三横切 | MCP 常驻 4 项（codegraph/CRG/serena/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20
+> 版本：11.4.13 | 日期：2026-09-07 | 五柱×五阶段×三横切 | MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20

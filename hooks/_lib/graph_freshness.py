@@ -39,6 +39,27 @@ WRITE_TOOLS = {
     "editnotebook",
 }
 EXPLORE_FALLBACK = {"grep", "glob"}
+EVERYTHING_TOOLS = frozenset(
+    {
+        "everything_search",
+        "everything_search_by_type",
+        "everything_find_recent",
+        "everything_file_details",
+        "everything_count_stats",
+    }
+)
+WRITE_VERBS = (
+    "write",
+    "edit",
+    "replace",
+    "insert",
+    "rename",
+    "delete",
+    "move",
+    "create_directory",
+    "create_text",
+    "apply_refactor",
+)
 GRAPH_SHELL_RE = re.compile(
     r"\b(codegraph|code-review-graph)\b",
     re.I,
@@ -86,7 +107,7 @@ DISCOVERY_EXCLUDE = {
 DENY_MSG = (
     "【图谱保鲜硬门】eligible git 仓必须先有 codegraph 与 code-review-graph，"
     "且本次已同步更新。SessionStart/本调用已尝试 init|sync / build|update，仍无图或失败。"
-    "禁止 Grep/Glob/编辑/查询类 MCP。请安装 CLI 后执行："
+    "禁止 Grep/Glob/everything/编辑/查询类 MCP。请安装 CLI 后执行："
     " `codegraph init -i` 与 `code-review-graph build`（或 MCP build_or_update_graph_tool）。"
 )
 
@@ -892,17 +913,51 @@ def is_query_mcp(tool_name: str, tool_input=None) -> bool:
     return False
 
 
-def is_write_tool(tool_name: str) -> bool:
-    n = _norm_tool(tool_name)
-    if n in WRITE_TOOLS:
-        return True
-    if "mcp__serena" in n or "mcp_serena" in n or "mcp__fs" in n or "mcp_fs" in n:
-        return True
+def is_everything_tool(tool_name: str, tool_input=None) -> bool:
+    """True for voidtools everything-mcp tools; never everything-claude-code."""
+    for name in collect_tool_names(tool_name, tool_input):
+        n = _norm_tool(name)
+        if "everything_claude_code" in n:
+            continue
+        if n in EVERYTHING_TOOLS:
+            return True
+        for tool in EVERYTHING_TOOLS:
+            if n.endswith(tool) or f"__{tool}" in n:
+                return True
+        # namespace only: everything / user_everything / mcp__everything（非 everything-claude-code）
+        if n in {"everything", "user_everything", "mcp__everything", "mcp_everything"}:
+            return True
+        if n.startswith("mcp__everything__") or n.startswith("mcp_everything_"):
+            return True
+        if n.startswith("user_everything"):
+            return True
     return False
 
 
-def is_explore_fallback(tool_name: str) -> bool:
-    return _norm_tool(tool_name) in EXPLORE_FALLBACK
+def is_write_tool(tool_name: str, tool_input=None) -> bool:
+    """Native writes, serena/fs MCP, or CallDynamicTool-unwrapped serena writes."""
+    names = collect_tool_names(tool_name, tool_input) or [tool_name]
+    for name in names:
+        n = _norm_tool(name)
+        if n in WRITE_TOOLS:
+            return True
+        if "everything_claude_code" in n:
+            continue
+        if "serena" in n:
+            return True
+        if n in {"mcp__fs", "mcp_fs", "user_fs"} or n.startswith("mcp__fs__") or n.startswith("mcp_fs_"):
+            return True
+        if any(verb in n for verb in WRITE_VERBS) and (
+            "symbol" in n or n.startswith("mcp") or "serena" in n
+        ):
+            return True
+    return False
+
+
+def is_explore_fallback(tool_name: str, tool_input=None) -> bool:
+    if _norm_tool(tool_name) in EXPLORE_FALLBACK:
+        return True
+    return is_everything_tool(tool_name, tool_input)
 
 
 def extract_shell_command(tool_input) -> str:
@@ -927,9 +982,9 @@ def should_deny_tool(tool_name: str, tool_input=None) -> bool:
         if cmd and SHELL_GREP_RE.search(cmd):
             return True
         return False
-    if is_explore_fallback(tool_name):
+    if is_explore_fallback(tool_name, tool_input):
         return True
-    if is_write_tool(tool_name):
+    if is_write_tool(tool_name, tool_input):
         return True
     if is_query_mcp(tool_name, tool_input):
         return True

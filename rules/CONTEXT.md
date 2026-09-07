@@ -127,16 +127,15 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 - 需要在改代码前评估影响范围
 - 大项目（>500 文件）中探索性搜索
 
-**工具选择指南**：
+**工具选择指南**（F1 默认仅 4 工具；禁止调用未暴露的 `codegraph_context`/`trace`/`impact`/`callees`/`status`/`files`）：
 | 意图 | 工具 |
 |------|------|
-| 了解某个区域 | `codegraph_context` |
-| "X 如何到达 Y" | `codegraph_trace` |
-| 找调用者/被调用者 | `codegraph_callers` / `codegraph_callees` |
-| 改代码前评估影响 | `codegraph_impact` |
+| 了解某个区域 / 批量读符号 / 影响面 | `codegraph_explore`（含 blast-radius） |
+| 单节点详情 | `codegraph_node` |
 | 查找符号 | `codegraph_search` |
-| 批量读取符号源码 | `codegraph_explore` |
-| 检查索引新鲜度 | `codegraph_status` |
+| 找调用者 | `codegraph_callers` |
+
+独立 `codegraph_impact` 仅在 `.mcp.json` 配置 `CODEGRAPH_MCP_TOOLS` 后才存在；本仓**不启用**（blast-radius 已够）。
 
 **规则**：
 

@@ -25,7 +25,7 @@ loading_tier: L3
 
 ## Phase 3 — 关键路径
 
-- `codegraph_trace` 主入口函数
+- `codegraph_explore` 主入口函数（默认不暴露 `codegraph_trace`）
 - 识别 3 条核心用户路径
 - 输出：调用链摘要
 

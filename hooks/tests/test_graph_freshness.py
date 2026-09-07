@@ -114,6 +114,70 @@ def test_tool_classify() -> None:
         "should deny shell grep",
         gf.should_deny_tool("Bash", {"command": "rg foo"}) is True,
     )
+    check(
+        "everything_search is fallback",
+        gf.is_explore_fallback("everything_search") is True,
+    )
+    check(
+        "claude everything mcp is fallback",
+        gf.is_explore_fallback("mcp__everything__everything_search") is True,
+    )
+    check(
+        "should deny everything_search",
+        gf.should_deny_tool("everything_search") is True,
+    )
+    check(
+        "should deny claude everything mcp",
+        gf.should_deny_tool("mcp__everything__everything_search") is True,
+    )
+    check(
+        "everything-claude-code is not everything-mcp",
+        gf.is_everything_tool("everything-claude-code") is False,
+    )
+    check(
+        "unwrapped replace_symbol_body is write",
+        gf.is_write_tool("replace_symbol_body") is True,
+    )
+    check(
+        "CallDynamicTool user-serena is write",
+        gf.is_write_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "should deny CallDynamicTool serena write",
+        gf.should_deny_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "CallDynamicTool everything is fallback",
+        gf.is_explore_fallback(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is True,
+    )
+    check(
+        "should deny CallDynamicTool everything",
+        gf.should_deny_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is True,
+    )
+    check(
+        "codegraph_explore is not write",
+        gf.is_write_tool(
+            "CallDynamicTool",
+            {"namespace": "user-codegraph", "toolName": "codegraph_explore"},
+        )
+        is False,
+    )
 
 
 def test_ensure_cache_and_deny(monkey_cmds: list | None = None) -> None:
@@ -389,6 +453,14 @@ def test_dynamic_mcp_classify() -> None:
         gf.is_build_tool(
             "CallDynamicTool",
             {"toolName": "build_or_update_graph_tool"},
+        )
+        is True,
+    )
+    check(
+        "query mcp dynamic everything",
+        gf.is_everything_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
         )
         is True,
     )

@@ -2,6 +2,16 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）
+
+- **everything**：`.mcp.json` 常驻 `elis132/everything-mcp==1.0.6`，启动钉 `--with mcp<2`（FastMCP 2.x 崩溃）。仅 Windows；需 Everything.exe。与 **everything-claude-code 插件**（禁止安装）不是同一物；禁止 marketplace plugin 双挂。
+- **分工 SSOT**（`rules/MCP.md` §4）：codegraph=R17；CRG=上下文/影响面/风险/审查；serena=符号编辑；everything=本机文件名。禁止 everything 替代 Glob / codegraph / CRG `detect_changes`。
+- **语义名**：规则与钩子按 `codegraph_explore` / `everything_search` 匹配，禁止 `mcp0_`/`mcp1_`。Cursor User MCP 可能带 `user-` 前缀。
+- **CONTEXT F1**：删除未暴露的 `codegraph_context`/`trace`/`impact`/`callees`/`status`；默认仅 explore/node/search/callers。不启用 `CODEGRAPH_MCP_TOOLS`。
+- **硬门**：无图时 everything 与 Glob 同级 deny；`is_write_tool` 解包 `CallDynamicTool`+serena。Claude matcher 加 `mcp__everything__.*`。
+- **Cursor `mcp.json`**：不经 `sync.ps1` 复制；粘贴片段见 `docs/CURSOR_MCP_PROFILE.md`。
+- **计数**：常驻 4→5。Guard 仍 1.2.11。
+
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 
 - **一次找齐**：独立审查必须扫完影响面后再给结论；禁止发现一条就停审/立刻改。完整清单到位后再派**一次** `change-implementer` 集中改齐。

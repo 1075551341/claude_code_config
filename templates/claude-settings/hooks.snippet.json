@@ -81,7 +81,7 @@
             "type": "command"
           }
         ],
-            "matcher": "mcp__codegraph__.*|mcp__code-review-graph__.*|mcp__serena__.*|mcp__fs__.*|Grep|Glob|Edit|Write|MultiEdit|Bash"
+            "matcher": "mcp__codegraph__.*|mcp__code-review-graph__.*|mcp__serena__.*|mcp__everything__.*|mcp__fs__.*|Grep|Glob|Edit|Write|MultiEdit|Bash"
       },
       {
         "hooks": [
