@@ -17,7 +17,7 @@ description: Cursor MCP 常驻/按需 + Plugins 边界 — plugin 优先（仅 C
 | codegraph@1.6.0 | R17 探索（怎么运作） |
 | code-review-graph==2.3.8 | 精准上下文 / 变更影响 / 风险 / 审查 / PR |
 | serena | 符号级精确编辑 + LSP |
-| everything==1.0.6 + mcp<2 | 本机文件名搜索（voidtools；需 Everything 运行中）。**须手工写入**，sync.ps1 不复制 |
+| everything-mcp==1.0.6 + mcp<2 | 本机文件名搜索（voidtools；需 Everything 运行中）。**须手工写入**，sync.ps1 不复制 |
 | grep | grep.app 跨仓搜索 |
 | postgres@0.6.2 | **disabled**；需要时**中断**请用户设 `DATABASE_URL` 后自行启用 |
 

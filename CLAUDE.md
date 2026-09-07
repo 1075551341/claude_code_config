@@ -133,7 +133,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 **禁止场景**（违反即阻断）：
 
 - eligible git 仓无双图时 Grep/Glob/everything/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
-- 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
+- 未调用 `codegraph_explore` 直接 Grep/Read/Glob/everything 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
 - 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
 - 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律

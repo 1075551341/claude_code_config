@@ -17,6 +17,7 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_file_path,
+    extract_tool_name,
     import_claude_lib,
     read_stdin,
     setup_stdio,
@@ -82,6 +83,16 @@ def main() -> None:
 
         session_id = handoff_session_id(data) or "unknown"
         claude_home = cfg["sync"]["claude_home"]
+        tool_name = extract_tool_name(data)
+        tool_input = data.get("tool_input") or data.get("input") or {}
+        try:
+            tool_paths = import_claude_lib(claude_home, "tool_paths")
+            if not tool_paths.is_edit_tool(tool_name, tool_input):
+                return
+        except Exception as e:
+            print(f"impact_nudge: tool_paths unavailable: {e}", file=sys.stderr)
+            if tool_name not in {"Write", "StrReplace", "Replace", "Edit", "MultiEdit", "EditNotebook", "Delete"}:
+                return
         paths = _edited_paths(data, claude_home)
 
         state = _load_state()

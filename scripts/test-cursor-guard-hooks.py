@@ -334,6 +334,21 @@ def main() -> int:
         note="first_edit_verify matcher must catch CallDynamicTool so is_edit_tool unwrap runs",
     )
 
+    impact_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "preToolUse", "impact_nudge.py")
+    deployed_impact = matcher_from_hooks(hooks_json, "preToolUse", "impact_nudge.py")
+    impact_ok = "CallDynamicTool" in impact_matcher
+    if hooks_json.exists():
+        impact_ok = impact_ok and "CallDynamicTool" in deployed_impact
+    results["tests"]["impact_nudge_calldynamic_matcher"] = finish_case(
+        {
+            "pass": impact_ok,
+            "json_ok": True,
+            "stdout": {"template": impact_matcher, "deployed": deployed_impact},
+        },
+        behavior=impact_ok,
+        note="impact_nudge matcher must catch CallDynamicTool serena writes",
+    )
+
     counter = STATE / "tool-counter.json"
     cursor_ctx = STATE / "cursor-context.json"
     handoff = STATE / "session-handoff.json"

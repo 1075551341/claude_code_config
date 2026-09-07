@@ -34,6 +34,7 @@ MCP_WRITE_VERBS = (
     "delete",
     "move",
     "create_directory",
+    "create_text",
     "apply_refactor",
 )
 
@@ -60,17 +61,9 @@ def is_mcp_tool(tool_name: str) -> bool:
 
 def is_edit_tool(tool_name: str, tool_input=None) -> bool:
     """原生编辑工具，或名字里带写动词的 MCP / 解包后的 serena 符号写工具。"""
-    names = [tool_name] if tool_name else []
-    if isinstance(tool_input, dict):
-        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
-            val = tool_input.get(key)
-            if isinstance(val, str) and val:
-                names.append(val)
-        nested = tool_input.get("arguments")
-        if isinstance(nested, dict):
-            val = nested.get("name") or nested.get("toolName")
-            if isinstance(val, str) and val:
-                names.append(val)
+    from crg_track import collect_tool_names
+
+    names = collect_tool_names(tool_name, tool_input)
     for name in names:
         if name in NATIVE_EDIT_TOOLS:
             return True

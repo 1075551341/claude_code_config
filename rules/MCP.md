@@ -65,7 +65,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 
 | 工具              | 定位                                         | 何时用                                                                                         | 何时不用                         |
 | ----------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------- |
-| codegraph         | **R17 探索主位**（怎么运作）                 | 符号/调用链/依赖/「这段代码如何工作」；默认 4 工具：`explore`/`node`/`search`/`callers`；无 CRG 图时的 blast-radius | test-gap；git-diff 风险评分；调用未暴露的 `impact`/`trace`/`context` |
+| codegraph         | **R17 探索主位**（怎么运作）                 | 符号/调用链/依赖/「这段代码如何工作」；默认 4 工具：`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`；无 CRG 图时的 blast-radius | test-gap；git-diff 风险评分；调用未暴露的 `codegraph_impact`/`codegraph_trace`/`codegraph_context` |
 | serena            | 符号级精确编辑 + LSP 诊断                    | 跨文件重命名/插入/替换符号体、取 `get_diagnostics_for_file`                                    | 只读探索（应走 codegraph）       |
 | code-review-graph | **精准上下文 / 变更影响 / 风险 / 审查 / PR** | `get_minimal_context`、`get_impact_radius`、`get_affected_flows`、`detect_changes`、`get_review_context`、开 PR 前风险门 | 替代 R17「怎么运作」的日常探索   |
 | everything        | **本机文件名秒级搜索**（只读 5 工具）        | Windows 全盘/跨仓按文件名定位：`everything_search` / `everything_search_by_type` / `everything_find_recent` / `everything_file_details` / `everything_count_stats`。需 Everything.exe 运行中 | 工作区 Glob；R17 结构探索；替代 CRG `detect_changes`（勿用 `everything_find_recent`） |

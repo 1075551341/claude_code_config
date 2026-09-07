@@ -1,4 +1,4 @@
-# 门控注入文本 SSOT（v11.4.12）
+# 门控注入文本 SSOT（v11.4.13）
 
 > 双端共用：Claude Code hooks 与 Cursor Guard hooks 均读取本文件。
 > 完整清单只在 skill；本文件只留短指针（每段 ≤12 行）。改文本不改 hook 代码。
@@ -27,7 +27,7 @@ R20 各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文
 
 1. 改前优先成熟方案或已有全局通用处理
 2. 有 CRG 图：get_minimal_context + get_impact_radius（有 git diff 再 detect_changes）；叠加 codegraph_explore blast-radius
-3. eligible git 仓须已有双图（SessionStart 已 init/update）。无图禁止 Grep/编辑/查询 MCP；hook 会再 ensure，仍失败则 deny。
+3. eligible git 仓须已有双图（SessionStart 已 init/update）。无图禁止 Grep/Glob/everything/编辑/查询 MCP；hook 会再 ensure，仍失败则 deny。
    Grep 全项目引用；配置类查 MANIFEST depends_on。范围不明不修改。
 
 ## 初次修改验收门

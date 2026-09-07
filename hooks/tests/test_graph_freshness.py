@@ -207,6 +207,23 @@ def test_tool_classify() -> None:
         "extract_edit_paths unwraps CallDynamicTool arguments",
         nested_paths == [__import__("os").path.normpath("/tmp/ws/hooks/_lib/tool_paths.py")],
     )
+    nested_only = {
+        "arguments": {
+            "namespace": "user-serena",
+            "toolName": "create_text_file",
+            "relative_path": "foo.py",
+        }
+    }
+    from crg_track import collect_tool_names as _collect
+    nested_names = _collect("CallDynamicTool", nested_only)
+    check(
+        "nested-only arguments collects namespace+toolName",
+        "create_text_file" in nested_names and any("serena" in n.lower() for n in nested_names),
+    )
+    check(
+        "nested-only serena create_text_file is edit",
+        tp.is_edit_tool("CallDynamicTool", nested_only) is True,
+    )
 
 
 def test_ensure_cache_and_deny(monkey_cmds: list | None = None) -> None:
@@ -582,6 +599,33 @@ def test_merge_hooks_idempotent() -> None:
     )
 
 
+def test_explore_router_contract() -> None:
+    src = (HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks" / "explore_router.py").read_text(
+        encoding="utf-8"
+    )
+    check(
+        "explore_router does not treat everything as Grep/Glob fallback",
+        "再使用 Grep/Glob/everything 作 fallback" not in src,
+    )
+    check(
+        "explore_router everything followup forbids Glob/codegraph substitute",
+        "everything 仅全盘/跨仓按文件名定位" in src and "禁止替代 Glob 或 codegraph" in src,
+    )
+    hooks_json = json.loads(
+        (HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks.json").read_text(encoding="utf-8")
+    )
+    impact = ""
+    for item in (hooks_json.get("hooks") or {}).get("preToolUse") or []:
+        if "impact_nudge.py" in str(item.get("command") or ""):
+            impact = str(item.get("matcher") or "")
+            break
+    check("impact_nudge matcher includes CallDynamicTool", "CallDynamicTool" in impact)
+    check("impact_nudge command present", any(
+        "impact_nudge.py" in str(item.get("command") or "")
+        for item in (hooks_json.get("hooks") or {}).get("preToolUse") or []
+    ))
+
+
 def main() -> int:
     print("test_graph_freshness")
     test_eligible_and_empty_registry()
@@ -599,6 +643,7 @@ def main() -> int:
     test_cfg_timeouts()
     test_subprojects_depth1_no_grandchild()
     test_merge_hooks_idempotent()
+    test_explore_router_contract()
     print(f"\n{len(PASSED)} passed, {len(FAILED)} failed")
     if FAILED:
         print("FAILED:", ", ".join(FAILED))

@@ -110,7 +110,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 ```
 1. 结构/局部（调用链、依赖、影响面、「怎么运作」）
-   → 仅 codegraph_explore；禁止直接 Grep/Read
+   → 仅 codegraph_explore；禁止直接 Grep/Read/Glob/everything
 2. codebase-memory：**已禁用**（全盘索引爆内存）— 勿调用；原升级场景（语义/跨服务/ADR）一律用 codegraph
 3. 「为什么这么做」「约定是什么」「用户偏好」（代码推不出）
    → 查 claude-mem；决策原因存 memory

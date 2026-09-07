@@ -21,13 +21,13 @@ source: internal
 
 ```
 ① 有 `.code-review-graph/`（v11.4.6 强制；无图由 hook ensure，仍无则 BLOCKED）：
-   └ get_minimal_context_tool — 任务入口精准上下文
-   └ get_impact_radius_tool — 变更影响面（函数/类/文件/执行流）
-   └ 有 git diff → detect_changes_tool（风险评分 / test-gap）
-   └ 无图 → hook 先 ensure（init/build）；仍无图 → **BLOCKED**，禁止 Grep 当探索主路径
+   └ get_minimal_context — 任务入口精准上下文
+   └ get_impact_radius — 变更影响面（函数/类/文件/执行流）
+   └ 有 git diff → detect_changes（风险评分 / test-gap）
+   └ 无图 → hook 先 ensure（init/build）；仍无图 → **BLOCKED**，禁止 Grep/Glob/everything 当探索主路径
 ② codegraph_explore(target) blast-radius（怎么运作 / 符号调用链）
    └ 先确认 codegraph 无 staleness ⚠️ banner；有则 Read 文件直接获取最新内容
-   └ 无 .codegraph/ 索引 → hook 先 `codegraph init -i`；仍无 → **BLOCKED**，禁止 Grep 全扫当主路径
+   └ 无 .codegraph/ 索引 → hook 先 `codegraph init -i`；仍无 → **BLOCKED**，禁止 Grep/Glob/everything 全扫当主路径
 ③ Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
 ④ MANIFEST.yaml concern → depends_on（配置/rule/skill/agent）

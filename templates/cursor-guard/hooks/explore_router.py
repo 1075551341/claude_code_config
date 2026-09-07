@@ -108,7 +108,13 @@ def _norm(name: str) -> str:
 
 
 def _collect_tool_names(tool_name: str, data: dict | None = None) -> list[str]:
-    names = [tool_name] if tool_name else []
+    names: list[str] = []
+
+    def _add(val: object) -> None:
+        if isinstance(val, str) and val and val not in names:
+            names.append(val)
+
+    _add(tool_name)
     blobs = []
     payload = data or {}
     for key in ("tool_input", "arguments", "input"):
@@ -119,10 +125,19 @@ def _collect_tool_names(tool_name: str, data: dict | None = None) -> list[str]:
             if isinstance(nested, dict):
                 blobs.append(nested)
     for blob in blobs:
-        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
+        ns = blob.get("namespace")
+        tn = None
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
             val = blob.get(key)
-            if isinstance(val, str) and val and val not in names:
-                names.append(val)
+            if isinstance(val, str) and val:
+                _add(val)
+                if tn is None:
+                    tn = val
+        if isinstance(ns, str) and ns:
+            _add(ns)
+            if tn:
+                _add(f"{ns}_{tn}")
+                _add(f"{ns}__{tn}")
     return names
 
 
@@ -189,8 +204,12 @@ def main() -> None:
                     "user_message": "已拦截：请先使用 codegraph_explore",
                     "agent_message": (
                         f"【Cursor Guard · codegraph soft_block】\n{msg}\n"
-                        "请先调用 codegraph_explore（或 codegraph_search），"
-                        "再使用 Grep/Glob/everything 作 fallback。"
+                        + (
+                            "请先调用 codegraph_explore（或 codegraph_search）。"
+                            "工作区找文件用 Glob；everything 仅全盘/跨仓按文件名定位，禁止替代 Glob 或 codegraph。"
+                            if everything
+                            else "请先调用 codegraph_explore（或 codegraph_search），再使用 Grep/Glob 作 fallback。"
+                        )
                     ),
                 }
             )
