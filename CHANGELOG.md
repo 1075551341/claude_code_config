@@ -14,6 +14,7 @@
 - **计数**：常驻 4→5。Guard 仍 1.2.11（matcher 增量，不升 Guard 版本）。
 - **过时清理**：`mcp-configs/search.json` 不再把 plugin 写成 `.mcp.json` 常驻；SPEC Plugins 表 / deep-research 不再把 context7/exa/firecrawl 指到 MCP；删除 catalog 中指向本机 `C:/Users/DELL/.cc-switch` 的坏 symlink。
 - **审查纠偏**：MANIFEST `mcp_tiering`/`mcp_loading` 与 `mcp/servers.json` `toolsets.plugins` 补 firecrawl；Cursor `verify_tracker` 用 `extract_tool_input`（含 CallDynamicTool 内层 `arguments`）；项目模板 / `hooks/README` / MCP.md cbm 段对齐 CRG 影响面 + everything 硬门。
+- **现行入口补齐**：`CURSOR_EDITOR_SETUP` / `CURSOR_MCP_PROFILE` Plugin 表 / user-rules 片段 / CORE 反模式表对齐常驻 5 与 CRG `get_impact_radius`；hooks README 澄清 everything 非 Grep/Glob fallback。
 
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 

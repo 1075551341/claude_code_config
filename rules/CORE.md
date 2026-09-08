@@ -138,7 +138,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 行为                                             | 判定     | 后果                              |
 | ------------------------------------------------ | -------- | --------------------------------- |
-| 改文件前未查 blast-radius（`codegraph_explore`） | 违反 R17 | 变更范围不可信                    |
+| 改文件前未查影响面（有图：CRG `get_impact_radius` + `codegraph_explore` blast-radius） | 违反 R3/R17 | 变更范围不可信                    |
 | 跳过 codegraph 直接 Grep/Read/Glob/everything 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费    |
 | 结构问题未用 codegraph 就上 cbm                  | 违反 R17 | cbm 已禁用；标 DONE_WITH_CONCERNS |
 | 启用/调用 codebase-memory                        | 禁止     | 全盘索引爆内存；用 codegraph      |
@@ -170,7 +170,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | ------------------------------------------ | ----------------------------- |
 | 只改指定文件不改关联文件；只验当前编辑文件 | 造成不一致/死代码；五问题复发 |
 | "看起来差不多" 跳过 Grep                   | 遗漏隐藏引用                  |
-| 手动估计影响范围                           | codegraph 比人准              |
+| 手动估计影响范围                           | 须走 CRG `get_impact_radius`（有图）+ codegraph blast-radius |
 | 残留引用 > 0 声称完成                      | 违反 R1（验证通过才算完成）   |
 
 ## 工作原则与项目约定

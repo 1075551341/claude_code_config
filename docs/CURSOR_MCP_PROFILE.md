@@ -53,6 +53,7 @@ everything 与 everything-claude-code 插件不是同一物（后者禁止安装
 | context7 | 库/API 文档 | 开 |
 | Exa | 语义搜索 | 开 |
 | playwright | E2E 脚本 | 开（UI 核验优先内置浏览器） |
+| firecrawl | 网页抓取（Claude 走 plugin） | **面板无 User；勿写入 User MCP** |
 | github | PR/Issue | **Disabled**（用 `gh` CLI） |
 
 GitKraken User MCP 保持 Disabled，不复制到其他编辑器。
