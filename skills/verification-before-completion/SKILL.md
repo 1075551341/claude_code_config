@@ -19,7 +19,7 @@ source: obra/superpowers
 > **v11.4.9**：有代码/配置改动即双审；独立审查 PASS/符合预期即停（禁止再审浪费 token）；仅结论不一致（NEEDS-CHANGES）才再开一轮，最多 3 轮。计划未批准零注入（CallDynamicTool/CreatePlan）。已有双图时 CLI update 失败记警告不阻断。
 > **v11.4.8**：非简单双审 = 修改→验证→审查循环，最多 3 轮；审查须对照原始要求检查全部修改；禁止只连审不改。
 > **v11.4.7**：计划未批准 / CreatePlan / 零编辑禁止 Cursor followup；短 R20；非简单双审最多 3 次。
-> **v11.4.6**：eligible git 仓 SessionStart **执行** `codegraph init|sync` + `code-review-graph build|update`；无图 PreToolUse **deny**（禁止 Grep 当探索主路径）。Stop 增量刷新双图；仅验证全绿后 `sync.ps1 -Scope rules`（跳过验证 / max_blocks / 无编辑 → 不跑）。
+> **v11.4.6**：eligible git 仓 SessionStart **执行** `codegraph init|sync` + `code-review-graph build|update`；无图 PreToolUse **deny**（禁止 Grep/Glob/everything 当探索主路径）。Stop 增量刷新双图；仅验证全绿后 `sync.ps1 -Scope rules`（跳过验证 / max_blocks / 无编辑 → 不跑）。
 > **v11.4.5**：有 `.code-review-graph/` 时改前/完成前强制 CRG（`get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context`）；Stop/followup 六维纠错续轮（影响面/需求/错改/漏改/原功能/文档）；「满足」行对指纹关键词承认/反驳/弃权（GSD honest-verifier）。不启用 ralph-loop，不采用实验性 agent-Stop hook。
 
 ## @Examples
@@ -158,7 +158,7 @@ Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / Cre
 □ 错改：是否改了范围外行为或顺手重构
 □ 漏改：同类引用与 INDEX/MANIFEST/README/注释/命令是否同步（无则写「无文档影响」）
 □ 原功能：非功能变更须给出测试或冒烟证据（禁止「应该没影响」）
-□ 工具：eligible 仓须双图已就绪；有 CRG 图须调用 get_impact_radius 或 detect_changes；codegraph blast-radius；Grep 仅作残留核对（无图禁止 Grep 当探索主路径）
+□ 工具：eligible 仓须双图已就绪；有 CRG 图须调用 get_impact_radius 或 detect_changes；codegraph blast-radius；Grep 仅作残留核对（无图禁止 Grep/Glob/everything 当探索主路径）
 ```
 
 同一文件第二次编辑不再注入。完成前仍须输出完整 R20（范围同样是影响面全部相关项，非仅已编辑文件）。

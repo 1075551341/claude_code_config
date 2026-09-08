@@ -243,6 +243,21 @@ def v6_mcp_security():
             if name in seen:
                 ERRORS.append(f"V6: Duplicate MCP server: {name}")
             seen.add(name)
+        expected = {
+            "codegraph",
+            "code-review-graph",
+            "serena",
+            "everything",
+            "grep",
+        }
+        if seen != expected:
+            ERRORS.append(
+                f"V6: .mcp.json resident {sorted(seen)} != {sorted(expected)}"
+            )
+        if "CODEGRAPH_MCP_TOOLS" in content:
+            ERRORS.append("V6: CODEGRAPH_MCP_TOOLS must not be set (impact not exposed)")
+        if "everything-mcp==1.0.6" not in content or "mcp<2" not in content:
+            ERRORS.append("V6: everything must pin everything-mcp==1.0.6 and mcp<2")
     except (json.JSONDecodeError, FileNotFoundError, OSError):
         pass  # noqa: R16 — validate_config self-check, skip unreadable config
 
@@ -665,6 +680,20 @@ def check_v14_cursor_guard_v11():
     except (OSError, json.JSONDecodeError) as exc:
         ERRORS.append(f"V14: hooks.json/guard-config unreadable: {exc}")
         return
+    try:
+        with open(hooks_json, "r", encoding="utf-8-sig") as fh:
+            hj = json.load(fh)
+        explore_matcher = ""
+        for item in (hj.get("hooks") or {}).get("preToolUse") or []:
+            if "explore_router.py" in str(item.get("command") or ""):
+                explore_matcher = str(item.get("matcher") or "")
+                break
+        if "CallDynamicTool" not in explore_matcher or "everything" not in explore_matcher:
+            ERRORS.append(
+                "V14: explore_router matcher must include CallDynamicTool and everything"
+            )
+    except (OSError, json.JSONDecodeError, TypeError) as exc:
+        ERRORS.append(f"V14: explore_router matcher unreadable: {exc}")
     man = os.path.join(BASE, "MANIFEST.yaml")
     try:
         with open(man, "r", encoding="utf-8") as fh:
@@ -819,6 +848,8 @@ def check_v16_codegraph_mandate():
             text = fh.read()
         if "pre-graph-freshness.py" not in text:
             ERRORS.append("V16: hooks.snippet.json missing pre-graph-freshness.py")
+        if "mcp__everything__" not in text:
+            ERRORS.append("V16: hooks.snippet.json missing mcp__everything__ matcher")
         if '"timeout": 120000' not in text and '"timeout":120000' not in text:
             WARNINGS.append("V16: hooks.snippet.json SessionStart timeout 不是 120000ms")
     except OSError as exc:

@@ -23,9 +23,9 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | P0 分类门      | SessionStart → `session-start-bootstrap.py`                                                                                         | sessionStart → `session_bootstrap.py`                                                                                                                                     | 每会话注入分类指令（简单/Bug/非简单路由）                                                                                  | 无；skill 已读且范围未变可不重复 Read                                |
 | 完成验证门     | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**，短 R20） | postToolUse → `verify_tracker.py` + `first_edit_verify.py` + Stop → `verification_stop.py`（**不** followup；仅图谱 refresh / 全绿 sync）。`verification_gate.py` 关闭完成门注入 | 硬门：Claude exit 2；Cursor 规则驱动（change-implementer 修改→验证→eng-reviewer 一次找齐、每轮全新开审） | Claude 逃逸关键词（跳过验证）；max_blocks=3 后放行标 DONE_WITH_CONCERNS |
-| 变更影响门     | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py`                                                                        | preToolUse Write/StrReplace → `impact_nudge.py`                                                                                                                           | 每个文件首次编辑前注入 blast-radius + Grep + MANIFEST                                                                      | **永不 deny**                                                        |
+| 变更影响门     | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py`                                                                        | preToolUse Write/StrReplace → `impact_nudge.py`                                                                                                                           | 每个文件首次编辑前注入 CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius + Grep + MANIFEST                   | **永不 deny**                                                        |
 | 初次修改验收门 | PostToolUse → `post-edit-verify-tracker.py`（记账后附加 additionalContext）                                                         | postToolUse → `first_edit_verify.py`                                                                                                                                      | 每个文件首次成功编辑后注入五维迷你验收；核对范围=该文件 + blast-radius 全部相关项（禁止只验当前文件）                       | 同一文件第二次编辑静默                                               |
-| 图谱保鲜门     | SessionStart ensure（120s）+ PreToolUse `pre-graph-freshness.py`（**deny**）+ Stop 增量刷新（有无编辑都刷）；验绿后 `sync.ps1 -Scope rules`           | sessionStart ensure（120s）+ preToolUse `graph_freshness.py`（**deny**）+ Stop 刷新（有无编辑都刷）；验绿后 sync_runner                                                                    | eligible git 仓无双图禁止 Grep/编辑/查询 MCP；建图类 CLI/MCP 放行。TRAE/Qoder 经 `deploy-editor-graph-hooks.ps1`；workbuddy 仅 L0 规则 | `GRAPH_FRESHNESS_SKIP_SYNC=1`（测试）；非 git 仓跳过（判定看 `workspace_roots`/git 根，不看用户 hook 进程目录）                 |
+| 图谱保鲜门     | SessionStart ensure（120s）+ PreToolUse `pre-graph-freshness.py`（**deny**）+ Stop 增量刷新（有无编辑都刷）；验绿后 `sync.ps1 -Scope rules`           | sessionStart ensure（120s）+ preToolUse `graph_freshness.py`（**deny**）+ Stop 刷新（有无编辑都刷）；验绿后 sync_runner                                                                    | eligible git 仓无双图禁止 Grep/Glob/everything/编辑/查询 MCP；建图类 CLI/MCP 放行。TRAE/Qoder 经 `deploy-editor-graph-hooks.ps1`；workbuddy 仅 L0 规则 | `GRAPH_FRESHNESS_SKIP_SYNC=1`（测试）；非 git 仓跳过（判定看 `workspace_roots`/git 根，不看用户 hook 进程目录）                 |
 
 - 状态文件：Claude `~/.claude/.state/impact-nudge.json` + `verification-gate.json`；Cursor Guard 同路径共用
 - 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节 + `graph_freshness` 节（session/pretool/stop/sync 超时）
@@ -93,16 +93,16 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 | Rust   | chrono / time crate |
 | C#     | NodaTime            |
 
-获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v11.4.5 常驻 4 项：codegraph/CRG/serena/grep，见 `rules/MCP.md`）。
+获取当前时间用 Shell（`date` / `Get-Date`）；`time` MCP 已不在常驻集（v11.4.13 常驻 5 项：codegraph/CRG/serena/everything/grep，见 `rules/MCP.md`）。
 
 ## 变更彻底性三阶段流程（R3/R4 详情）
 
 **阶段 1: 变更前 — 影响分析（阻断式）**
 
 ```
-① codegraph_explore(target_symbol) blast-radius — 代码级影响范围（默认工具；含调用者/被调用者）
-   └ 需精确 impact 时 `CODEGRAPH_MCP_TOOLS=...,impact` 启用 codegraph_impact 或 CLI `codegraph impact`（F1）
-② Grep 全项目(reference_pattern)   — 引用级影响（文件名/函数名/类型名/配置key）
+① 有 CRG 图：`get_minimal_context` + `get_impact_radius`（有 git diff 再 `detect_changes`）；叠加 `codegraph_explore` blast-radius
+   └ 独立 `codegraph_impact` 默认不暴露；确需时用 CLI `codegraph impact`（本仓 `.mcp.json` 不启用 `CODEGRAPH_MCP_TOOLS`）
+② Grep 全项目(reference_pattern)   — 引用级影响（文件名/函数名/类型名/配置key）；无图禁止 Grep/Glob/everything
 ③ MANIFEST.yaml concern→depends_on — 配置级关联（改此文件必须同步更新哪些文件）
 
 输出: 受影响文件完整清单
@@ -128,7 +128,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。
 
-**当前 `.mcp.json` 未配置 `CODEGRAPH_MCP_TOOLS`**（v10.17 核对纠正：此前文档误称已启用）。R3/R4 的变更前影响分析以 `codegraph_explore` 的 blast-radius 段为准，已满足要求。确需独立 `codegraph_impact` 时二选一：给 `.mcp.json` 的 codegraph 条目加 `"env": {"CODEGRAPH_MCP_TOOLS": "explore,node,search,callers,impact"}` 后重启，或直接用 CLI `codegraph impact`。
+**当前 `.mcp.json` 未配置 `CODEGRAPH_MCP_TOOLS`**（validate_config V6 禁止写入）。R3/R4 的变更前影响分析以 CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius 为准。确需独立 `codegraph_impact` 时用 CLI `codegraph impact`，不要改 `.mcp.json`。
 
 ## /learn ↔ claude-mem 管道（v10.2）
 

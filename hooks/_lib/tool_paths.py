@@ -34,6 +34,7 @@ MCP_WRITE_VERBS = (
     "delete",
     "move",
     "create_directory",
+    "create_text",
     "apply_refactor",
 )
 
@@ -58,13 +59,21 @@ def is_mcp_tool(tool_name: str) -> bool:
     return tool_name.startswith("mcp__") or tool_name.startswith("mcp_")
 
 
-def is_edit_tool(tool_name: str) -> bool:
-    """原生编辑工具，或名字里带写动词的 MCP 工具。"""
-    if tool_name in NATIVE_EDIT_TOOLS:
-        return True
-    if is_mcp_tool(tool_name):
-        lowered = tool_name.lower()
-        return any(verb in lowered for verb in MCP_WRITE_VERBS)
+def is_edit_tool(tool_name: str, tool_input=None) -> bool:
+    """原生编辑工具，或名字里带写动词的 MCP / 解包后的 serena 符号写工具。"""
+    from crg_track import collect_tool_names
+
+    names = collect_tool_names(tool_name, tool_input)
+    for name in names:
+        if name in NATIVE_EDIT_TOOLS:
+            return True
+        lowered = (name or "").lower()
+        if is_mcp_tool(name) and any(verb in lowered for verb in MCP_WRITE_VERBS):
+            return True
+        if any(verb in lowered for verb in MCP_WRITE_VERBS) and (
+            "symbol" in lowered or "serena" in lowered
+        ):
+            return True
     return False
 
 
@@ -73,19 +82,26 @@ def extract_edit_paths(tool_input: dict, cwd: str = "") -> list[str]:
 
     serena 用 `relative_path`、fs 用 `path`、原生工具用 `file_path`，
     统一在这里处理，避免各 hook 各写一套解析。
+    Cursor CallDynamicTool 路径常在 `arguments` 内层。
     """
     if not isinstance(tool_input, dict):
         return []
 
+    blobs = [tool_input]
+    nested = tool_input.get("arguments")
+    if isinstance(nested, dict):
+        blobs.append(nested)
+
     raw: list[str] = []
-    for key in PATH_KEYS:
-        value = tool_input.get(key)
-        if isinstance(value, str) and value.strip():
-            raw.append(value.strip())
-    for key in PATH_LIST_KEYS:
-        value = tool_input.get(key)
-        if isinstance(value, list):
-            raw.extend(v.strip() for v in value if isinstance(v, str) and v.strip())
+    for blob in blobs:
+        for key in PATH_KEYS:
+            value = blob.get(key)
+            if isinstance(value, str) and value.strip():
+                raw.append(value.strip())
+        for key in PATH_LIST_KEYS:
+            value = blob.get(key)
+            if isinstance(value, list):
+                raw.extend(v.strip() for v in value if isinstance(v, str) and v.strip())
 
     out: list[str] = []
     for path in raw:

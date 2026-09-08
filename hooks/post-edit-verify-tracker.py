@@ -218,7 +218,7 @@ def main():
     first_edit_msg = None
     record_plan_tool(entry, tool_name, tool_input)
     changed = True
-    if is_edit_tool(tool_name):
+    if is_edit_tool(tool_name, tool_input):
         paths = extract_edit_paths(tool_input, cwd)
         plan_only = bool(paths) and all(is_plan_artifact(p) for p in paths)
         for path in paths:

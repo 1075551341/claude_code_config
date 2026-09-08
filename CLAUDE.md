@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.12**（审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.4.13**（MCP 常驻 5：codegraph/CRG/serena/everything/grep；语义名路由防互博。原 v11.4.12：审查一次找齐再集中改；每轮独立审查必须全新开审，禁止 resume 上轮审查者。原 v11.4.11：审查只找问题、修改走 change-implementer。原 v11.4.10：Cursor 完成门不再 followup。原 v11.4.9：有改动即双审 + 计划未批准零注入。原 v11.4.8：非简单双审循环。原 v11.4.6：图谱保鲜硬门）
 
 **五柱**：Superpowers v6.2.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用：全盘索引爆 CPU/内存）— 详见 `rules/CORE.md`
@@ -23,7 +23,7 @@ layer: router
 
 ```
 用户显式指令 > CLAUDE.md > 激活skill > lazy规则 > alwaysApply > 默认
-工具路由: codegraph → Grep（codebase-memory 已禁用）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
+工具路由: codegraph →（双图就绪后）Grep；本机文件名 → everything（禁止替代 Glob/R17）| 为什么/偏好 → claude-mem（禁止跳级，见 CORE R17-R18）
 ```
 
 ## P0 路由集（6）= L1×4 + L2 门控×2
@@ -117,8 +117,9 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 | 场景                   | 首选工具            | 禁止替代            | 触发条件                  |
 | ---------------------- | ------------------- | ------------------- | ------------------------- |
-| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read；调用 cbm | 任何代码结构理解          |
+| 结构/调用链/怎么运作   | `codegraph_explore` | Grep/Read/Glob/everything；调用 cbm | 任何代码结构理解          |
 | 精准上下文/变更影响/风险/审查/PR | CRG `get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context` | 用 codegraph 做 test-gap；无图仍假装已审 | 有 `.code-review-graph/` 的改前/完成前/开 PR |
+| 本机按文件名（跨仓/全盘） | `everything_search` | 工作区 Glob；R17 探索 | Windows + Everything 运行中 |
 | 为什么/约定/偏好       | `claude-mem search` | 塞入 codegraph      | 代码推不出的信息          |
 | 网页深度调研           | `Firecrawl+Exa`     | WebFetch            | /deep-research 或调研意图 |
 | Shell输出压缩          | RTK (hook自动)      | 原生Bash            | 任何Bash调用              |
@@ -131,8 +132,8 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 **禁止场景**（违反即阻断）：
 
-- eligible git 仓无双图时 Grep/Glob/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
-- 未调用 `codegraph_explore` 直接 Grep/Read 代码结构 → 违反R17
+- eligible git 仓无双图时 Grep/Glob/everything/编辑/查询 MCP → 图谱保鲜硬门 deny（须先 `codegraph init -i` / `code-review-graph build`）
+- 未调用 `codegraph_explore` 直接 Grep/Read/Glob/everything 代码结构 → 违反R17
 - 未调用 `claude-mem search` 直接重复 Read 相同文件 → 违反R18
 - 未调用 `Firecrawl+Exa` 直接使用 WebFetch/WebSearch 深度调研 → 违反L3双源
 - 上下文>70% 未评估压缩（RTK/caveman） → 违反阈值铁律

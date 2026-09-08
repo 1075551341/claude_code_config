@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.12
+# 组件唯一归属源 — 防左右手互博 — v11.4.13
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.12"
-updated: "2026-09-01"
+version: "11.4.13"
+updated: "2026-09-07"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -247,7 +247,7 @@ concerns:
     owner: skill/change-impact-analysis
     source: local
     stage: execute
-    note: 改前 codegraph_impact + Grep 全项目；改后残留引用检测
+    note: 改前 CRG get_impact_radius（有图）+ codegraph_explore blast-radius + Grep；改后残留引用检测
     depends_on: [rules/CORE.md]
 
   tdd:
@@ -558,7 +558,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ grep；context7/exa/playwright 走 Plugins；chrome-devtools plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
+    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ everything（本机文件名）+ grep；context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools plugin 默认 false；github 不常驻；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
     depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,
@@ -569,17 +569,20 @@ concerns:
 
   mcp_local_code_split:
     owner: rules/MCP.md
-    note: 本地代码三工具分工防互博 — codegraph=R17 探索主位；serena=符号级精确编辑+LSP 诊断；code-review-graph=变更后 test-gap/风险评分
+    note: 本地代码三工具+everything 分工防互博 — codegraph=R17 探索主位；serena=符号级精确编辑+LSP 诊断；code-review-graph=精准上下文/影响面/风险/审查/PR；everything=本机文件名索引（非 Glob、非 R17）
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, rules/CORE.md]
     excludes:
       [
         用 serena 替代 codegraph 做 R17 探索,
         用 codegraph 做 test-gap,
+        用 everything 替代 Glob 或 codegraph,
+        用 everything_find_recent 替代 CRG detect_changes,
+        安装 everything-mcp marketplace plugin 与 .mcp.json 双挂,
       ]
 
   mcp_remote_explore:
     owner: config/.mcp.json
-    note: github（本地 stdio github-mcp-server，User env GITHUB_PERSONAL_ACCESS_TOKEN；勿用 api.githubcopilot.com HTTP，Cursor/Claude 会变成 mcp_auth + 0 tools）+ grep（grep.app 跨公开仓搜索）；本地代码搜索一律 codegraph，勿用 grep MCP 替代
+    note: grep（grep.app 跨公开仓搜索）在 `.mcp.json` 常驻；github **不写 MCP**（plugin 关，用 gh CLI）。本地代码搜索一律 codegraph，勿用 grep MCP 替代
     depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
 
   gstack_eng:
@@ -901,8 +904,9 @@ harness:
         codegraph,
         code-review-graph,
         serena,
+        everything,
         grep,
-      ] # 常驻：本地代码3 + grep；pw/context7/exa 走插件；chrome-devtools 默认关；无 aider-repo-map/sequential-thinking
+      ] # 常驻 5：本地代码3 + everything + grep；pw/context7/exa/firecrawl 走插件；chrome-devtools 默认关；github 不常驻；无 aider-repo-map/sequential-thinking
     debug: [chrome-devtools] # mcp-configs/debug.json
     fsaccess: [fs] # mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
     ops: [redis, sqlite, docker, postgres]

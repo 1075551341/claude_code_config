@@ -10,15 +10,16 @@ alwaysApply: true
 ## 探索优先级（R17 Cursor 版 · 严格三级禁止跳级）
 
 ```
-1. 结构/怎么运作 → codegraph_explore（禁止直接 Grep/Read）
-2. 精准上下文/变更影响/风险/审查/PR → CRG（有 `.code-review-graph/graph.db`）；无图则 SessionStart/PreToolUse ensure，仍无则 deny（禁止 Grep 当主路径）
+1. 结构/怎么运作 → codegraph_explore（禁止直接 Grep/Read/Glob/everything）
+2. 精准上下文/变更影响/风险/审查/PR → CRG（有 `.code-review-graph/graph.db`）；无图则 SessionStart/PreToolUse ensure，仍无则 deny（禁止 Grep/Glob/everything/编辑/查询 MCP）
 3. codebase-memory：已禁用 — 勿调用
 4. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
 ```
 
-- 结构、调用链、「怎么运作」：必须先 MCP `codegraph_explore`
+- 结构、调用链、「怎么运作」：必须先 MCP `codegraph_explore`（默认仅 `codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）
 - 影响面/风险/审查/开 PR：有 CRG 图时 `get_minimal_context` + `get_impact_radius` + `detect_changes` / `get_review_context`
-- Grep 仅双图就绪后作残留核对（非跳级捷径）；无图 **deny**
+- 本机按文件名（跨仓/全盘）：`everything_search`；**双图就绪后**当前工作区找文件用 Glob。禁止用 everything 替代 Glob 或 codegraph
+- Grep 仅双图就绪后作残留核对（非跳级捷径）；无图 **deny**（Grep/Glob/everything/编辑/查询 MCP）
 - 禁止未探索就大范围 Read 扫目录
 - chrome-devtools / postgres 默认关；需要时**中断请用户手动启用**（不改 Plugin 面板、不自动 merge MCP）
 - 工具优先级：内置浏览器（UI 核验）> playwright plugin（E2E）> chrome-devtools（调试）

@@ -109,8 +109,9 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 ### R17-R18 代码理解工具优先级（严格递进，禁止跳级）
 
 ```
-1. 结构/局部（调用链、依赖、影响面、「怎么运作」）
-   → 仅 codegraph_explore；禁止直接 Grep/Read
+1. 结构/局部（调用链、依赖、blast-radius、「怎么运作」）
+   → 仅 codegraph_explore；禁止直接 Grep/Read/Glob/everything
+   变更影响面 → CRG `get_impact_radius`（有图）再叠加 explore blast-radius
 2. codebase-memory：**已禁用**（全盘索引爆内存）— 勿调用；原升级场景（语义/跨服务/ADR）一律用 codegraph
 3. 「为什么这么做」「约定是什么」「用户偏好」（代码推不出）
    → 查 claude-mem；决策原因存 memory
@@ -118,17 +119,18 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 需求                        | 首选                                                    | 次选                          | 禁止                                 |
 | --------------------------- | ------------------------------------------------------- | ----------------------------- | ------------------------------------ |
-| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read        |
+| 函数/类/调用链/「怎么运作」 | codegraph_explore（blast-radius）                       | —（双图就绪后 Grep 定点残留） | 跳过 codegraph 直接 Grep/Read/Glob/everything |
 | 语义模糊 / 跨服务 / ADR     | codegraph_explore                                       | docs/ADR/ 手写                | 启用/调用 codebase-memory（已禁用）  |
 | 为什么/约定/偏好/决策原因   | claude-mem search→get_observations                      | —                             | 往 codegraph 塞偏好；重复 Read       |
 | 精准上下文 / 变更影响面     | CRG `get_minimal_context` + `get_impact_radius`（有图） | codegraph blast-radius + Grep | 只靠直觉估范围；用 serena 探索       |
-| 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`             | eng-reviewer                  | 用 codegraph 做 test-gap（无此能力） |
+| 风险门禁 / 审查 / 开 PR     | CRG `detect_changes` + `get_review_context`             | eng-reviewer                  | 用 codegraph 做 test-gap；用 everything_find_recent 当风险门 |
+| 本机按文件名定位（跨仓/全盘） | everything_search（仅 Windows）                       | 内置 Glob（当前工作区）       | 用 everything 替代 Glob 或 codegraph |
 
 **codegraph vs code-review-graph 分工（v11.4.6）**：
 
 - **codegraph = R17 探索主位**（符号/调用链/「怎么运作」；无 CRG 图时的 blast-radius）
 - **code-review-graph = 精准上下文 + 变更影响 + 风险门禁 + 审查 + 开 PR**（`get_minimal_context` / `get_impact_radius` / `get_affected_flows` / `detect_changes` / `get_review_context`）
-- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；无图 **deny**，禁止 Grep/编辑/查询 MCP，不得 Grep 兜底。
+- 禁止用 CRG 替代 R17「怎么运作」日常探索；禁止用 codegraph 做 test-gap。eligible git 仓须先有双图（SessionStart/PreToolUse hook 自动 init/update）；无图 **deny**，禁止 Grep/Glob/everything/编辑/查询 MCP，不得 Grep 兜底。everything 仅本机文件名索引，分工 SSOT → `rules/MCP.md` §4。
 
 **索引刷新**：codegraph v1.5 MCP watcher 管日常改动；**会话开始** hook 再 `codegraph sync` + CRG update/init；**Stop** 增量刷新。不恢复每次编辑 kg sync hook。
 
@@ -136,8 +138,8 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 行为                                             | 判定     | 后果                              |
 | ------------------------------------------------ | -------- | --------------------------------- |
-| 改文件前未查 blast-radius（`codegraph_explore`） | 违反 R17 | 变更范围不可信                    |
-| 跳过 codegraph 直接 Grep 搜函数                  | 违反 R17 | ~47% token / ~58% 工具调用浪费    |
+| 改文件前未查影响面（有图：CRG `get_impact_radius` + `codegraph_explore` blast-radius） | 违反 R3/R17 | 变更范围不可信                    |
+| 跳过 codegraph 直接 Grep/Read/Glob/everything 搜函数 | 违反 R17 | ~47% token / ~58% 工具调用浪费    |
 | 结构问题未用 codegraph 就上 cbm                  | 违反 R17 | cbm 已禁用；标 DONE_WITH_CONCERNS |
 | 启用/调用 codebase-memory                        | 禁止     | 全盘索引爆内存；用 codegraph      |
 | codegraph 已返回结果仍 Read 同文件               | 违反 R17 | 重复 token 消耗                   |
@@ -155,7 +157,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 变更类型                   | 必须执行                                                    |
 | -------------------------- | ----------------------------------------------------------- |
-| 改函数签名/接口/类型定义   | CRG impact（有图）+ `codegraph_explore` blast-radius + Grep |
+| 改函数签名/接口/类型定义   | CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius + Grep |
 | 改配置文件/规则/Skill      | MANIFEST `depends_on` 遍历                                  |
 | 重命名/删除/移动文件       | Grep 全项目残留引用                                         |
 | 改 agent/hook/MCP 定义     | 同步更新 INDEX.md + MANIFEST.yaml                           |
@@ -168,7 +170,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | ------------------------------------------ | ----------------------------- |
 | 只改指定文件不改关联文件；只验当前编辑文件 | 造成不一致/死代码；五问题复发 |
 | "看起来差不多" 跳过 Grep                   | 遗漏隐藏引用                  |
-| 手动估计影响范围                           | codegraph 比人准              |
+| 手动估计影响范围                           | 须走 CRG `get_impact_radius`（有图）+ codegraph blast-radius |
 | 残留引用 > 0 声称完成                      | 违反 R1（验证通过才算完成）   |
 
 ## 工作原则与项目约定

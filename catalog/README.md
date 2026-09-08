@@ -7,8 +7,8 @@
 
 | 目录 | 数量 | 策略 |
 |------|------|------|
-| skills/ | 101 | 全栈 + 办公 + 移动端/3D 保留 |
-| agents/ | 43 | 领域专家 + 语言 reviewer + gstack 5 角色 |
+| skills/ | 104 | 全栈 + 办公 + 移动端/3D 保留 |
+| agents/ | 48 | 领域专家 + 语言 reviewer + gstack 5 角色 |
 | rules/ | 15 | 语言/领域 lazy-load |
 
 ## 权威 vs 变体（v10.17）

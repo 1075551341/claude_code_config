@@ -1,5 +1,5 @@
 {
-  "_comment": "参考清单 — deploy 不写入用户 MCP。v11.4.5：常驻 4 项（codegraph/CRG/serena/grep）；plugin 优先；chrome-devtools/postgres 默认关、中断启用。codebase-memory 已禁用。",
+  "_comment": "参考清单 — deploy 不写入用户 MCP。v11.4.13：常驻 5 项（codegraph/CRG/serena/everything/grep）；plugin 优先；chrome-devtools/postgres 默认关、中断启用。codebase-memory 已禁用。everything 须手工写入 ~/.cursor/mcp.json。",
   "priority_p0_local_code": [
     {
       "name": "codegraph",
@@ -13,7 +13,13 @@
     },
     {
       "name": "serena",
-      "intent": "符号级精确编辑 + LSP；只读探索仍走 codegraph"
+      "intent": "符号级精确编辑 + LSP；只读探索仍走 codegraph",
+      "setup": "serena start-mcp-server --context ide --project ${workspaceFolder}"
+    },
+    {
+      "name": "everything",
+      "intent": "本机文件名秒级搜索（voidtools）。everything_search 等 5 工具。禁止替代 Glob/codegraph。钉 everything-mcp==1.0.6 + mcp<2。Cursor mcp.json 手工加。",
+      "setup": "Everything.exe 运行中；uvx --python C:\\Python312\\python.exe --with mcp<2 everything-mcp==1.0.6"
     }
   ],
   "priority_p1_remote_web": [

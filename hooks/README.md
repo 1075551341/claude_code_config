@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.15
+# Hooks 钩子系统 v5.16
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.16 变更（v11.4.13）**：图谱保鲜 deny 覆盖 Glob/everything；`CallDynamicTool` 解包 namespace+toolName；everything 无图与 Glob 同级 deny，不再当 Grep/Glob 产品 fallback。Cursor Guard 仍 1.2.11（matcher 增量）。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
 > **v5.13 变更（v11.4.9）**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；写 plan.md 不计完成门。Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断。Cursor Guard 1.2.9（sessionEnd 刷双图 timeout 45s）。
@@ -50,7 +51,7 @@
 
 | Hook                        | 触发                                                     | 功能                                                                                                                                                                                                                                                              | 层   |
 | --------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `pre-graph-freshness.py`    | codegraph/CRG MCP + Grep/Glob/Edit/Write/Bash            | **图谱保鲜硬门**：无图则 ensure，仍失败 deny；建图类放行                                                                                                                                                                                                          | 骨架 |
+| `pre-graph-freshness.py`    | codegraph/CRG/serena/everything/fs MCP + Grep/Glob/Edit/Write/Bash | **图谱保鲜硬门**：无图则 ensure，仍失败 deny（everything 与 Glob 同级拦截）；建图类放行                                                                                                                          | 骨架 |
 | `pre-edit-impact-nudge.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **变更影响门**：**每个文件首次编辑**注入 change-impact-analysis 强制指令（状态 `~/.claude/.state/impact-nudge.json` 记已注入文件集，永不 deny）                                                                                                                   | 骨架 |
 | `pre-read-before-edit.py`   | Edit/Write/MultiEdit                                     | GSD read-before-edit 强制                                                                                                                                                                                                                                         | 执行 |
 | `pre-encoding-snapshot.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **编码快照**（v11.4.2）：编辑前记录目标文件 BOM/EOL/大小签名 → `.state/encoding-snapshots.json`，供 Post 侧比对，永不阻断                                                                                                                                         | 横切 |
@@ -174,4 +175,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.15（v11.4.12）| 19 注册激活 + 5 未注册；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_
+_版本：5.16（v11.4.13）| 19 注册激活 + 5 未注册；图谱保鲜 deny Grep/Glob/everything；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2_

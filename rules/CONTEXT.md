@@ -109,9 +109,9 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 | 意图                       | 工具                                      |
 | -------------------------- | ----------------------------------------- |
-| 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
-| 语义搜索 / 学术与新闻      | Exa（Cursor 插件 MCP）                    |
-| 库/API 官方文档            | Context7 MCP                              |
+| 网页抓取 / 文档站 / 竞品页 | Firecrawl **plugin**（不写 MCP） |
+| 语义搜索 / 学术与新闻      | Exa **plugin**（不写 MCP）                |
+| 库/API 官方文档            | Context7 **plugin**（不写 MCP）           |
 | 多角度交叉验证             | `skills/deep-research` 四阶段流程（L3）   |
 
 禁止仅凭训练数据做时效性断言；矛盾来源须显式列出。
@@ -124,24 +124,24 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 - 项目已有 `.codegraph/` 索引（`codegraph init -i`）
 - 问"X 如何调用 Y"、"这个函数的调用链"等结构性问题
-- 需要在改代码前评估影响范围
+- 改代码前：有 CRG 图先 `get_impact_radius`，再叠加 `codegraph_explore` blast-radius
 - 大项目（>500 文件）中探索性搜索
 
-**工具选择指南**：
+**工具选择指南**（F1 默认仅 4 工具；禁止调用未暴露的 `codegraph_context`/`codegraph_trace`/`codegraph_impact`/`codegraph_callees`/`codegraph_status`/`codegraph_files`）：
 | 意图 | 工具 |
 |------|------|
-| 了解某个区域 | `codegraph_context` |
-| "X 如何到达 Y" | `codegraph_trace` |
-| 找调用者/被调用者 | `codegraph_callers` / `codegraph_callees` |
-| 改代码前评估影响 | `codegraph_impact` |
+| 了解某个区域 / 批量读符号 / blast-radius | `codegraph_explore` |
+| 变更影响面（有图） | CRG `get_impact_radius`（再叠加 explore blast-radius） |
+| 单节点详情 | `codegraph_node` |
 | 查找符号 | `codegraph_search` |
-| 批量读取符号源码 | `codegraph_explore` |
-| 检查索引新鲜度 | `codegraph_status` |
+| 找调用者 | `codegraph_callers` |
+
+独立 `codegraph_impact` **默认不暴露**；本仓 `.mcp.json` 禁止 `CODEGRAPH_MCP_TOOLS`。确需独立 impact 用 CLI `codegraph impact`。
 
 **规则**：
 
 - codegraph 返回的源码视为已读取，不重复 grep/Read
-- 无 `.codegraph/` 时回退到 explore agent
+- 无 `.codegraph/` 时由 hook ensure；仍无则 **BLOCKED**，禁止 explore agent / Grep / Glob / everything
 - 编辑后检查 staleness banner：有 ⚠️ 时 Read 文件直接获取最新内容
 
 ## 架构导览替代链
@@ -152,9 +152,9 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | ----------------- | --------------------------------------------- |
 | 代码结构/调用链   | codegraph_explore                             |
 | 架构/ADR          | codegraph_explore + docs/ADR/                 |
-| 变更影响          | codegraph blast-radius                        |
+| 变更影响          | CRG `get_impact_radius`（有图）+ codegraph_explore blast-radius |
 | 为什么/偏好       | claude-mem                                    |
-| 新人 onboarding   | codegraph explore                             |
+| 新人 onboarding   | codegraph_explore                             |
 
 ## claude-mem 三层搜索工作流
 

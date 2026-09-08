@@ -1,9 +1,9 @@
 {
   "$schema": "https://github.com/modelcontextprotocol/spec/blob/main/schema/schema.json",
-  "_comment": "Claude MCP：仅无官方 plugin 的项（内置>plugin>MCP）。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools 默认 false，需要时中断请用户开 Plugin。github 不写 MCP。postgres 见 ops.json，中断启用。npx 钉版本。",
+  "_comment": "Claude MCP：仅无官方 plugin 的项（内置>plugin>MCP）。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools 默认 false，需要时中断请用户开 Plugin。github 不写 MCP。postgres 见 ops.json，中断启用。npx 钉版本。常驻 5：codegraph/CRG/serena/everything/grep。",
   "mcpServers": {
     "codegraph": {
-      "_description": "R17 探索主位：符号/调用链/blast-radius/变更前影响面。钉扎 1.6.0（R14）。",
+      "_description": "R17 探索主位：符号/调用链/`codegraph_explore` blast-radius。钉扎 1.6.0（R14）。变更影响面走 CRG `get_impact_radius`。",
       "command": "npx",
       "args": [
         "-y",
@@ -53,6 +53,24 @@
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=1536"
       }
+    },
+    "everything": {
+      "_description": "elis132/everything-mcp：voidtools Everything 秒级文件名搜索（5 工具，只读）。需 Everything 运行中。钉 everything-mcp==1.0.6 且 --with mcp<2（未兼容 FastMCP 2.x）。勿与 marketplace plugin 双挂；勿与 everything-claude-code 插件混淆。仅 Windows。",
+      "type": "stdio",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\uvx.exe",
+        "--python",
+        "C:\\Python312\\python.exe",
+        "--with",
+        "mcp<2",
+        "everything-mcp==1.0.6"
+      ]
     },
     "grep": {
       "_description": "grep.app 远端代码搜索。本地代码走 codegraph（R17）+ CRG（影响面/审查）。",

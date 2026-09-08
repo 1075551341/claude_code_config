@@ -17,6 +17,8 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_file_path,
+    extract_tool_input,
+    extract_tool_name,
     import_claude_lib,
     read_stdin,
     setup_stdio,
@@ -38,7 +40,7 @@ MAX_TRACKED_FILES = 200
 def _edited_paths(data: dict, claude_home: str) -> list[str]:
     """优先用共享解析器（覆盖 MCP 写工具入参）；不可用时退回 hook_io 单路径提取。"""
     cwd = str(data.get("cwd") or "")
-    tool_input = data.get("tool_input") or data.get("input") or {}
+    tool_input = extract_tool_input(data)
     try:
         tool_paths = import_claude_lib(claude_home, "tool_paths")
         paths = tool_paths.extract_edit_paths(tool_input, cwd)
@@ -82,6 +84,16 @@ def main() -> None:
 
         session_id = handoff_session_id(data) or "unknown"
         claude_home = cfg["sync"]["claude_home"]
+        tool_name = extract_tool_name(data)
+        tool_input = extract_tool_input(data)
+        try:
+            tool_paths = import_claude_lib(claude_home, "tool_paths")
+            if not tool_paths.is_edit_tool(tool_name, tool_input):
+                return
+        except Exception as e:
+            print(f"impact_nudge: tool_paths unavailable: {e}", file=sys.stderr)
+            if tool_name not in {"Write", "StrReplace", "Replace", "Edit", "MultiEdit", "EditNotebook", "Delete"}:
+                return
         paths = _edited_paths(data, claude_home)
 
         state = _load_state()

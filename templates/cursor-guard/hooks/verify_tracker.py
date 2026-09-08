@@ -19,6 +19,7 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_file_path,
+    extract_tool_input,
     extract_tool_name,
     import_claude_lib,
     read_stdin,
@@ -79,10 +80,15 @@ def is_verify_command(command: str, patterns: list) -> bool:
 
 def extract_shell_command(data: dict) -> str:
     """从 Cursor hook 输入提取 shell 命令（hook_io 未提供此函数，内联实现）。"""
-    tool_input = data.get("tool_input") or data.get("input") or {}
-    if isinstance(tool_input, dict):
+    blobs = [extract_tool_input(data)]
+    nested = blobs[0].get("arguments") if blobs[0] else None
+    if isinstance(nested, dict):
+        blobs.append(nested)
+    for blob in blobs:
+        if not isinstance(blob, dict):
+            continue
         for key in ("command", "cmd", "shell_command"):
-            val = tool_input.get(key)
+            val = blob.get(key)
             if isinstance(val, str) and val:
                 return val
     return str(data.get("command") or data.get("cmd") or "")
@@ -122,11 +128,9 @@ def main() -> None:
         except Exception as e:
             print(f"verify_tracker: tool_paths unavailable: {e}", file=sys.stderr)
 
-        tool_input = data.get("tool_input") or data.get("input") or {}
-        if not isinstance(tool_input, dict):
-            tool_input = {}
+        tool_input = extract_tool_input(data)
 
-        is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
+        is_edit = tool_paths.is_edit_tool(tool_name, tool_input) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
 
         changed = False
         try:

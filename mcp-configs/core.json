@@ -2,5 +2,5 @@
   "toolset": "core",
   "description": "常驻基础分组视图 — 全部属于 dev 分组；本文件不再声明独立服务器",
   "servers": [],
-  "note": "完整常驻集见 .mcp.json：codegraph / CRG / serena / grep。chrome-devtools / postgres 默认关、中断启用。fs 按需见 mcp-configs/fsaccess.json"
+  "note": "完整常驻集见 .mcp.json：codegraph / CRG / serena / everything / grep。chrome-devtools / postgres 默认关、中断启用。fs 按需见 mcp-configs/fsaccess.json"
 }

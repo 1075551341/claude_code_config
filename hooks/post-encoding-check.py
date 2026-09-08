@@ -41,7 +41,7 @@ def main():
     tool_input = data.get("tool_input") or {}
     cwd = str(data.get("cwd") or "")
 
-    if not is_edit_tool(tool_name):
+    if not is_edit_tool(tool_name, tool_input):
         sys.exit(0)
 
     try:

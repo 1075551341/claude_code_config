@@ -7,7 +7,7 @@
 
 ```
 全局 skills/ → 五柱核心，会话自动匹配触发（清单见 ~/.claude/skills-INDEX.md）
-catalog/skills/ (107) → 领域专用 + v11 降级变体，按需复制到项目
+catalog/skills/ (104) → 领域专用 + v11 降级变体，按需复制到项目
 ```
 
 ## v11 新入 catalog（原全局降级）

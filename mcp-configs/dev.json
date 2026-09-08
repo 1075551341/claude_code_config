@@ -1,6 +1,6 @@
 {
   "toolset": "dev",
-  "description": "与 .mcp.json 同步：本地代码三件 + grep。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools/postgres 默认关、中断启用。勿再写入 MCP。无 aider-repo-map/sequential-thinking。",
-  "servers": ["codegraph", "code-review-graph", "serena", "grep"],
+  "description": "与 .mcp.json 同步：本地代码三件 + everything + grep。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools/postgres 默认关、中断启用。勿再写入 MCP。无 aider-repo-map/sequential-thinking。",
+  "servers": ["codegraph", "code-review-graph", "serena", "everything", "grep"],
   "note": "github 不常驻。postgres → mcp-configs/ops.json，中断启用。勿与插件双挂。"
 }

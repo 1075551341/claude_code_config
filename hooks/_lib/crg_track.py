@@ -42,17 +42,34 @@ def is_crg_tool(name: str) -> bool:
 
 
 def collect_tool_names(tool_name: str, tool_input=None) -> list[str]:
-    names = [tool_name] if tool_name else []
+    """解包 CallDynamicTool：顶层与内层 arguments 的 namespace + toolName。"""
+    names: list[str] = []
+
+    def _add(val: object) -> None:
+        if isinstance(val, str) and val and val not in names:
+            names.append(val)
+
+    _add(tool_name)
+    blobs: list[dict] = []
     if isinstance(tool_input, dict):
-        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
-            val = tool_input.get(key)
-            if isinstance(val, str) and val:
-                names.append(val)
+        blobs.append(tool_input)
         nested = tool_input.get("arguments")
         if isinstance(nested, dict):
-            val = nested.get("name") or nested.get("toolName")
+            blobs.append(nested)
+    for blob in blobs:
+        ns = blob.get("namespace")
+        tn = None
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
+            val = blob.get(key)
             if isinstance(val, str) and val:
-                names.append(val)
+                _add(val)
+                if tn is None:
+                    tn = val
+        if isinstance(ns, str) and ns:
+            _add(ns)
+            if tn:
+                _add(f"{ns}_{tn}")
+                _add(f"{ns}__{tn}")
     return names
 
 

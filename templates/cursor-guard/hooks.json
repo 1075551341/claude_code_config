@@ -62,7 +62,7 @@
     "preToolUse": [
       {
         "command": "python hooks/graph_freshness.py",
-        "matcher": "CallMcpTool|CallDynamicTool|Grep|Glob|Write|StrReplace|EditNotebook|Delete|Shell|MCP:.*|mcp__codegraph__.*|mcp__code-review-graph__.*|mcp_codegraph_.*|mcp_code-review-graph_.*|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "matcher": "CallMcpTool|CallDynamicTool|Grep|Glob|Write|StrReplace|EditNotebook|Delete|Shell|MCP:.*|mcp__codegraph__.*|mcp__code-review-graph__.*|mcp_codegraph_.*|mcp_code-review-graph_.*|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*|mcp__everything__.*|mcp_everything_.*",
         "timeout": 90
       },
       {
@@ -72,12 +72,12 @@
       },
       {
         "command": "python hooks/explore_router.py",
-        "matcher": "Grep|Read|Glob",
+        "matcher": "CallMcpTool|CallDynamicTool|Grep|Read|Glob|MCP:.*|mcp__everything__.*|mcp_everything_.*",
         "timeout": 5
       },
       {
         "command": "python hooks/impact_nudge.py",
-        "matcher": "Write|StrReplace|EditNotebook|Delete|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|CallDynamicTool|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       }
     ],
@@ -94,7 +94,7 @@
       },
       {
         "command": "python hooks/first_edit_verify.py",
-        "matcher": "Write|StrReplace|EditNotebook|Delete|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|CallDynamicTool|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       },
       {
