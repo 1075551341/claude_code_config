@@ -611,6 +611,10 @@ def test_explore_router_contract() -> None:
         "explore_router everything followup forbids Glob/codegraph substitute",
         "everything 仅全盘/跨仓按文件名定位" in src and "禁止替代 Glob 或 codegraph" in src,
     )
+    check(
+        "explore_router EVERYTHING_MSG is not Grep/Glob fallback copy",
+        "everything 仅用于本机全盘/跨仓按文件名定位" in src,
+    )
     hooks_json = json.loads(
         (HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks.json").read_text(encoding="utf-8")
     )

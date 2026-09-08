@@ -156,7 +156,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 | 变更类型                   | 必须执行                                                    |
 | -------------------------- | ----------------------------------------------------------- |
-| 改函数签名/接口/类型定义   | CRG impact（有图）+ `codegraph_explore` blast-radius + Grep |
+| 改函数签名/接口/类型定义   | CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius + Grep |
 | 改配置文件/规则/Skill      | MANIFEST `depends_on` 遍历                                  |
 | 重命名/删除/移动文件       | Grep 全项目残留引用                                         |
 | 改 agent/hook/MCP 定义     | 同步更新 INDEX.md + MANIFEST.yaml                           |

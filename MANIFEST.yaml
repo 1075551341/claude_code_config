@@ -247,7 +247,7 @@ concerns:
     owner: skill/change-impact-analysis
     source: local
     stage: execute
-    note: 改前 CRG impact（有图）+ codegraph_explore blast-radius + Grep；改后残留引用检测
+    note: 改前 CRG get_impact_radius（有图）+ codegraph_explore blast-radius + Grep；改后残留引用检测
     depends_on: [rules/CORE.md]
 
   tdd:

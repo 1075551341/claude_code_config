@@ -71,7 +71,7 @@ source: internal
 
 | 变更类型 | 检测范围 |
 |----------|----------|
-| 改函数名/签名 | CRG impact（有图）+ codegraph blast-radius + Grep 全项目函数名 |
+| 改函数名/签名 | CRG `get_impact_radius`（有图）+ codegraph blast-radius + Grep 全项目函数名 |
 | 改类型/接口 | 同上 + Grep import 引用 |
 | git diff / 风险 / 开 PR | CRG detect_changes + get_review_context（有图）+ Grep 残留 |
 | 改配置文件 | MANIFEST depends_on 遍历 |
@@ -85,7 +85,7 @@ source: internal
 | 禁止 | 正确做法 |
 |------|----------|
 | 只改指定文件 | Grep 找到所有关联文件一并修改；五维验收覆盖 blast-radius 全部相关项 |
-| "应该只有这些" | CRG impact + codegraph 验证，不靠直觉 |
+| "应该只有这些" | CRG `get_impact_radius` + codegraph 验证，不靠直觉 |
 | 手动估计范围 | CRG get_impact_radius + detect_changes + codegraph + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 | 跳过阶段 1 直接改 | 范围不明 = 盲改 = 必遗漏 |

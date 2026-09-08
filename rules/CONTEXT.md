@@ -151,7 +151,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 | ----------------- | --------------------------------------------- |
 | 代码结构/调用链   | codegraph_explore                             |
 | 架构/ADR          | codegraph_explore + docs/ADR/                 |
-| 变更影响          | codegraph_explore blast-radius                |
+| 变更影响          | CRG `get_impact_radius`（有图）+ codegraph_explore blast-radius |
 | 为什么/偏好       | claude-mem                                    |
 | 新人 onboarding   | codegraph_explore                             |
 
