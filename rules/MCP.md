@@ -55,7 +55,7 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 Agent 不得代执行上述 merge。chrome-devtools 优先开 Plugin；postgres 优先用户设 `DATABASE_URL` 后启用 ops 条目。
 
-> **playwright / context7 / exa**：Claude/Cursor 走 **Plugins**。chrome-devtools 默认关。Qoder/OpenCode/DSH 无 plugin 则钉 MCP，chrome-devtools 默认 disabled。postgres 默认禁用。
+> **playwright / context7 / exa / firecrawl**：Claude/Cursor 走 **Plugins**。chrome-devtools 默认关。Qoder/OpenCode/DSH 无 plugin 则钉 MCP，chrome-devtools 默认 disabled。postgres 默认禁用。
 
 Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python 系（serena / uv / uvx / everything-mcp）经 `scripts/python-mcp.ps1` 启动：清 PYTHONHOME/PYTHONPATH，避免残缺前缀导致 `encodings` 崩溃。编辑器 `mcp.json` 各自手工维护，**禁止经 sync.ps1 复制**。
 

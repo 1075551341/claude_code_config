@@ -27,7 +27,8 @@ FALLBACKS = {
     ),
     "impact": (
         "【门控 · 每个文件首次编辑前必做】\n"
-        "1. codegraph_explore 目标 blast-radius；2. Grep 全项目引用；"
+        "1. 有 CRG 图：get_minimal_context + get_impact_radius（有 git diff 再 detect_changes）；"
+        "叠加 codegraph_explore blast-radius；2. Grep 全项目引用；"
         "3. 配置类改动查 MANIFEST depends_on。范围不明不修改。"
     ),
     "first_edit": (
