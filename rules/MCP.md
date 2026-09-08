@@ -109,7 +109,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 
 **codegraph** — 预索引代码知识图谱 MCP（R17 首选）
 
-**codebase-memory** — **已永久禁用（2026-07-31，v10.10）**。架构/ADR/变更影响一律用 `codegraph_explore`。
+**codebase-memory** — **已永久禁用（2026-07-31，v10.10）**。架构/ADR 用 `codegraph_explore`；变更影响有图走 CRG `get_impact_radius`，再叠加 codegraph blast-radius。
 
 **firecrawl** — Claude 走 **plugin**（不写 `.mcp.json`）。Cursor 面板无 firecrawl User → 不常驻 MCP。DSH/OpenCode/Qoder 已有则保留钉 `firecrawl-mcp@3.24.0`（各端自管）。
 

@@ -558,7 +558,7 @@ concerns:
 
   mcp_tiering:
     owner: config/.mcp.json
-    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ everything（本机文件名）+ grep；context7/exa/playwright 走 Plugins；chrome-devtools plugin 默认 false；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
+    note: Claude 常驻 = 本地代码3（codegraph/CRG/serena）+ everything（本机文件名）+ grep；context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools plugin 默认 false；github 不常驻；无 aider-repo-map/sequential-thinking；fs→mcp-configs/fsaccess.json 按需；cbm 永久禁用
     depends_on: [
         docs/CURSOR_MCP_PROFILE.md,
         docs/TOOL_MATCHING_GUIDE.md,
@@ -906,7 +906,7 @@ harness:
         serena,
         everything,
         grep,
-      ] # 常驻 5：本地代码3 + everything + grep；pw/context7/exa 走插件；chrome-devtools 默认关；无 aider-repo-map/sequential-thinking
+      ] # 常驻 5：本地代码3 + everything + grep；pw/context7/exa/firecrawl 走插件；chrome-devtools 默认关；github 不常驻；无 aider-repo-map/sequential-thinking
     debug: [chrome-devtools] # mcp-configs/debug.json
     fsaccess: [fs] # mcp-configs/fsaccess.json（全盘可写会绕过验证追踪链）
     ops: [redis, sqlite, docker, postgres]
