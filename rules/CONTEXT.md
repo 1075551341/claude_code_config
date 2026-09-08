@@ -109,7 +109,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 | 意图                       | 工具                                      |
 | -------------------------- | ----------------------------------------- |
-| 网页抓取 / 文档站 / 竞品页 | Firecrawl（`crawl` MCP 或 firecrawl CLI） |
+| 网页抓取 / 文档站 / 竞品页 | Firecrawl **plugin**（不写 MCP） |
 | 语义搜索 / 学术与新闻      | Exa（Cursor 插件 MCP）                    |
 | 库/API 官方文档            | Context7 MCP                              |
 | 多角度交叉验证             | `skills/deep-research` 四阶段流程（L3）   |
@@ -124,18 +124,19 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 
 - 项目已有 `.codegraph/` 索引（`codegraph init -i`）
 - 问"X 如何调用 Y"、"这个函数的调用链"等结构性问题
-- 需要在改代码前评估影响范围
+- 改代码前：有 CRG 图先 `get_impact_radius`，再叠加 `codegraph_explore` blast-radius
 - 大项目（>500 文件）中探索性搜索
 
 **工具选择指南**（F1 默认仅 4 工具；禁止调用未暴露的 `codegraph_context`/`codegraph_trace`/`codegraph_impact`/`codegraph_callees`/`codegraph_status`/`codegraph_files`）：
 | 意图 | 工具 |
 |------|------|
-| 了解某个区域 / 批量读符号 / 影响面 | `codegraph_explore`（含 blast-radius） |
+| 了解某个区域 / 批量读符号 / blast-radius | `codegraph_explore` |
+| 变更影响面（有图） | CRG `get_impact_radius`（再叠加 explore blast-radius） |
 | 单节点详情 | `codegraph_node` |
 | 查找符号 | `codegraph_search` |
 | 找调用者 | `codegraph_callers` |
 
-独立 `codegraph_impact` 仅在 `.mcp.json` 配置 `CODEGRAPH_MCP_TOOLS` 后才存在；本仓**不启用**（blast-radius 已够）。
+独立 `codegraph_impact` **默认不暴露**；本仓 `.mcp.json` 禁止 `CODEGRAPH_MCP_TOOLS`。确需独立 impact 用 CLI `codegraph impact`。
 
 **规则**：
 

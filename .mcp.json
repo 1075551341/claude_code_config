@@ -3,7 +3,7 @@
   "_comment": "Claude MCP：仅无官方 plugin 的项（内置>plugin>MCP）。context7/exa/playwright/firecrawl 走 Plugins；chrome-devtools 默认 false，需要时中断请用户开 Plugin。github 不写 MCP。postgres 见 ops.json，中断启用。npx 钉版本。常驻 5：codegraph/CRG/serena/everything/grep。",
   "mcpServers": {
     "codegraph": {
-      "_description": "R17 探索主位：符号/调用链/blast-radius/变更前影响面。钉扎 1.6.0（R14）。",
+      "_description": "R17 探索主位：符号/调用链/`codegraph_explore` blast-radius。钉扎 1.6.0（R14）。变更影响面走 CRG `get_impact_radius`。",
       "command": "npx",
       "args": [
         "-y",

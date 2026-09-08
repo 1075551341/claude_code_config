@@ -61,7 +61,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
 | 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
-| 全局 plugins | 18     | installed_plugins 18；settings enabledPlugins 全量显式登记（v11.4.3 补 claude-hud=true / exa=false，禁双挂）：启用8 / 禁用10                                                                                                                           |
+| 全局 plugins | 18     | installed_plugins 18；开关 SSOT → `rules/MCP.md` 验证清单（context7/exa/playwright/firecrawl=true；chrome-devtools/github=false；不写 MCP）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
 
 ---
@@ -205,8 +205,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 本地代码   | codegraph, code-review-graph, serena                 | `.mcp.json` 常驻                       |
 | 本机文件名 | everything（elis132/everything-mcp；仅 Windows）     | `.mcp.json` 常驻；勿与 marketplace plugin 双挂 |
 | 远端探索   | grep                                                 | `.mcp.json` 常驻                       |
-| Plugins    | context7, exa, playwright                            | `settings.json` enabledPlugins=true    |
-| Plugins 默认关 | chrome-devtools, github, firecrawl                 | plugin=false；不写 MCP                 |
+| Plugins    | context7, exa, playwright, firecrawl             | `settings.json` enabledPlugins=true；不写 MCP |
+| Plugins 默认关 | chrome-devtools, github                        | plugin=false；不写 MCP；github 用 `gh` CLI |
 | debug      | chrome-devtools                                      | `mcp-configs/debug.json` 按需 merge    |
 | fsaccess   | fs                                                   | `mcp-configs/fsaccess.json` 按需 merge |
 | ops        | redis, sqlite, docker, postgres                      | `mcp-configs/ops.json` 按需 merge      |
@@ -311,10 +311,9 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-## Plugins（18 安装 / 7 启用 / 9 禁用 / 2 未在 settings 声明）
+## Plugins（18 安装；启用/禁用以 `rules/MCP.md` 验证清单与 `settings.json` 为准）
 
-> v10.17 按 `plugins/installed_plugins.json` × `settings.json.enabledPlugins` 实测重写。
-> 此前本表长期停留在旧快照（声称 15 启用），与运行态严重不符。
+> 同名能力只留 plugin，禁止再写入 `.mcp.json`。现行 Claude：context7 / exa / playwright / firecrawl plugin=true；chrome-devtools / github plugin=false。
 
 | Plugin                     | 状态 | 提供                      | 说明                                                     |
 | -------------------------- | ---- | ------------------------- | -------------------------------------------------------- |
@@ -325,19 +324,19 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | frontend-design            | ✅   | 前端设计                  | —                                                        |
 | skill-creator              | ✅   | 技能创建                  | —                                                        |
 | claude-md-management 1.0.0 | ✅   | CLAUDE.md 维护            | 早期因「防覆盖」禁用，现已启用                           |
-| chrome-devtools-mcp 1.6.0  | ❌   | Chrome DevTools           | v10.17 浏览器按需化；需要时走 `mcp-configs/debug.json`   |
-| context7                   | ❌   | 技术文档                  | 能力由 `.mcp.json` 的 context7 MCP 承担，避免同端双挂    |
-| firecrawl 1.0.9            | ❌   | 网页抓取                  | 同上，走 MCP                                             |
-| github                     | ❌   | GitHub 集成               | 同上，走 MCP                                             |
-| playwright                 | ❌   | 浏览器自动化              | Cursor 优先内置 `cursor-ide-browser`                     |
+| chrome-devtools-mcp 1.6.0  | ❌   | Chrome DevTools           | 默认关；需要时中断请用户开 Plugin，禁止自动 merge debug.json |
+| context7                   | ✅   | 技术文档                  | Claude **plugin**（不写 MCP）                            |
+| firecrawl 1.0.9            | ✅   | 网页抓取                  | Claude **plugin**（不写 MCP）                            |
+| github                     | ❌   | GitHub 集成               | plugin=false 且不写 MCP；用 `gh` CLI                     |
+| playwright                 | ✅   | 浏览器自动化              | Claude **plugin**；Cursor 优先内置浏览器                 |
 | security-guidance 2.0.6    | ❌   | 安全规则                  | 由 `rules/SECURITY.md` 承担                              |
 | typescript-lsp 1.0.0       | ❌   | TS LSP                    | 由 serena LSP 能力承担                                   |
 | feature-dev                | ❌   | 功能开发                  | 与五阶段流程重叠                                         |
 | ralph-loop                 | ❌   | 自动循环                  | 与五阶段冲突                                             |
-| claude-hud 0.6.0           | ➖   | 上下文 HUD 状态条         | 未在 enabledPlugins 声明（默认行为）                     |
-| exa 3.4.0                  | ➖   | Exa 搜索                  | 未在 enabledPlugins 声明；Claude 侧走 MCP，Cursor 走插件 |
+| claude-hud 0.6.0           | ✅   | 上下文 HUD 状态条         | v11.4.3 起 enabledPlugins=true                           |
+| exa 3.4.0                  | ✅   | Exa 搜索                  | Claude **plugin**（不写 MCP；已从 `.mcp.json` 撤出）     |
 
-> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。启用的 7 个里仅 2 个含 hooks（superpowers / claude-mem），零冲突。
+> 归属：SessionStart→插件 | 守卫/质量门→hooks | 审查→agents。启用的 plugin 里仅 2 个含 hooks（superpowers / claude-mem），零冲突。
 > 同名 skill：本地精简版覆盖插件版（token 省 45-74%，中文适配）。
 
 ---
