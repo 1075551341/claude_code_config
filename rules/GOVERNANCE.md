@@ -101,7 +101,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 ```
 ① 有 CRG 图：`get_minimal_context` + `get_impact_radius`（有 git diff 再 `detect_changes`）；叠加 `codegraph_explore` blast-radius
-   └ 独立 `codegraph_impact` 默认不暴露；确需时 `CODEGRAPH_MCP_TOOLS=...,impact` 或 CLI `codegraph impact`（F1，可选）
+   └ 独立 `codegraph_impact` 默认不暴露；确需时用 CLI `codegraph impact`（本仓 `.mcp.json` 不启用 `CODEGRAPH_MCP_TOOLS`）
 ② Grep 全项目(reference_pattern)   — 引用级影响（文件名/函数名/类型名/配置key）；无图禁止 Grep/Glob/everything
 ③ MANIFEST.yaml concern→depends_on — 配置级关联（改此文件必须同步更新哪些文件）
 
@@ -128,7 +128,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）。`codegraph_impact`/`codegraph_callees`/`codegraph_files`/`codegraph_status` **默认不暴露**，影响面信息已内联到 `codegraph_explore` 的 **blast-radius** 段与 `codegraph_node` 的 dependents 注记。
 
-**当前 `.mcp.json` 未配置 `CODEGRAPH_MCP_TOOLS`**（v10.17 核对纠正：此前文档误称已启用）。R3/R4 的变更前影响分析以 `codegraph_explore` 的 blast-radius 段为准，已满足要求。确需独立 `codegraph_impact` 时二选一：给 `.mcp.json` 的 codegraph 条目加 `"env": {"CODEGRAPH_MCP_TOOLS": "explore,node,search,callers,impact"}` 后重启，或直接用 CLI `codegraph impact`。
+**当前 `.mcp.json` 未配置 `CODEGRAPH_MCP_TOOLS`**（validate_config V6 禁止写入）。R3/R4 的变更前影响分析以 CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius 为准。确需独立 `codegraph_impact` 时用 CLI `codegraph impact`，不要改 `.mcp.json`。
 
 ## /learn ↔ claude-mem 管道（v10.2）
 

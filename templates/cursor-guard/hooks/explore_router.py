@@ -189,7 +189,7 @@ def main() -> None:
         blockable = tool_name in BLOCKABLE or everything
 
         # soft_block：Grep/Glob/everything 且本会话尚未用过 codegraph → deny
-        # 无索引 → 图谱保鲜硬门 deny（禁止 Grep 兜底）
+        # 无索引 → 图谱保鲜硬门 deny（禁止 Grep/Glob/everything 兜底）
         if (
             mode == "soft_block"
             and blockable
