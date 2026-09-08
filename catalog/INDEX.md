@@ -4,7 +4,7 @@
 > 本目录是**变体库**，不参与全局加载，只在 `migrate-from-legacy.py --skill|--agent|--rule`
 > 复制到项目 `.claude/` 时使用。同名项一律以顶层权威版为准。
 
-规模：skills 107 / agents 48 / rules 15
+规模：skills 104 / agents 48 / rules 15
 
 ## 同名项消歧（权威在顶层，此处为变体，勿加载）
 
@@ -14,11 +14,10 @@
 | agents | `ceo-reviewer`, `designer`, `eng-reviewer`, `qa`, `security-reviewer` |
 | rules | （无） |
 
-## Skills（107）
+## Skills（104）
 
 | 名称 | 说明 |
 | ---- | ---- |
-| `accessibility-audit` | 无障碍审计，检查 WCAG 合规性并生成修复建议 |
 | `android-development` | Android原生应用开发、Kotlin/Java编程、Jetpack组件使用 |
 | `api-development` | 设计RESTful API、实现API端点、编写后端接口 |
 | `api-documentation` | API文档编写规范，编写清晰、完整的RESTful API文档 |
@@ -51,7 +50,6 @@
 | `docker-devops` | 编写Dockerfile |
 | `docx` | 创建Word文档 |
 | `env-config` | 管理环境变量 |
-| `error-recovery` | 错误恢复与故障处理策略，包括重试、降级、熔断、补偿 |
 | `exa-search` | 使用 Exa AI 进行语义搜索和智能检索 |
 | `figma-design` | Figma 设计工具集成与设计稿转代码 |
 | `file-upload` | 实现文件上传功能 |
@@ -65,7 +63,6 @@
 | `grill-with-docs` | 对照 CONTEXT.md/ADR 拷问计划，逐条消解术语与决策并 inline 更新文档。触发：计划需对齐领域语言、stress-test 设计。excludes skill |
 | `handoff` | 将当前会话压缩为 handoff 文档，供新会话或子 agent 续作。触发：/clear 前、子 agent 切换、长任务断点。excludes claude-mem SSO |
 | `i18n-support` | 实现前端国际化 |
-| `incremental-arch` | 增量架构同步，基于 AST 感知分块和 Merkle DAG 实现高效上下文更新 |
 | `instinct-learning` | 本能学习（Ω-提示词优化器）。触发词：instinct learning | 本能学习 | 提示词优化 | 自我改进 |
 | `internal-communication` | 编写内部沟通邮件 |
 | `invoice-organizer` | 整理发票 |
@@ -146,7 +143,7 @@
 | `designer` ⚠️变体 | UI/UX 审查（UI/交互变更时启用）。触发词：设计审查、UI审查、交互审查、design review。 |
 | `devops-engineer` | DevOps/运维专家，覆盖 CI/CD、容器化、Terraform/IaC、监控告警与自动化部署。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、 |
 | `docs-expert` | 文档专家，覆盖文档生成和文档查找。当需要生成API文档、编写README文件、添加代码注释、生成JSDoc/docstring、编写接口文档、创建技术说明文档、编写开发指南、生 |
-| `eng-reviewer` ⚠️变体 | 工程审查（所有变更必须通过）。触发词：eng review、代码审查、PR审查、工程评审。 |
+| `eng-reviewer` ⚠️变体 | 工程审查（只找问题，不改代码）。触发词：eng review、代码审查、PR审查、工程评审。 |
 | `flutter-reviewer` | Flutter / Dart 代码审查专家。触发：Flutter 代码审查、Dart 质量检查、Widget 性能分析 |
 | `frontend-developer` | 负责前端开发任务。当需要实现前端页面、开发UI组件、创建Vue/React组件、实现响应式布局、处理前端状态管理、开发表单交互、实现动画效果、接入前端路由、调用后端API、处理 |
 | `git-expert` | Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践、Git Worktree并行开发。触发词：Git、合并冲突、分支策 |

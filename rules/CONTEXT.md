@@ -127,7 +127,7 @@ description: 上下文工程规则 — 详细策略（骨架内容已迁至 CORE
 - 需要在改代码前评估影响范围
 - 大项目（>500 文件）中探索性搜索
 
-**工具选择指南**（F1 默认仅 4 工具；禁止调用未暴露的 `codegraph_context`/`trace`/`impact`/`callees`/`status`/`files`）：
+**工具选择指南**（F1 默认仅 4 工具；禁止调用未暴露的 `codegraph_context`/`codegraph_trace`/`codegraph_impact`/`codegraph_callees`/`codegraph_status`/`codegraph_files`）：
 | 意图 | 工具 |
 |------|------|
 | 了解某个区域 / 批量读符号 / 影响面 | `codegraph_explore`（含 blast-radius） |

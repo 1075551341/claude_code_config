@@ -72,7 +72,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 ```
 需要外部信息？
 ├─ 库/API 文档 → Context7 (resolve-library-id → query-docs)
-├─ GitHub 操作 → github MCP / gh
+├─ GitHub 操作 → `gh` CLI（github 不写 MCP；plugin 默认关）
 ├─ 本机按文件名（跨仓/全盘，Windows） → everything_search（禁止替代工作区 Glob / codegraph）
 ├─ 跨公开仓找用法 → grep MCP
 ├─ 网页内容 → firecrawl（+ Exa 交叉验证）
