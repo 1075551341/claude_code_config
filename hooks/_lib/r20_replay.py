@@ -28,9 +28,9 @@ _FIELD_RE = re.compile(
     rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
-_GRAPH_PAIR_RE = re.compile(
-    r"\b(codegraph|code-review-graph)(?:\s+|-)(init|sync|index|build|update)\b",
-    re.I,
+_GRAPH_CMD_RE = re.compile(
+    r"(?:^|[;&|]\s*)(?!echo\b)(?:sudo\s+)?(codegraph|code-review-graph)(?:\s+|-)(init|sync|index|build|update)\b",
+    re.I | re.M,
 )
 _GRAPH_MCP_MARKERS = (
     "build_or_update",
@@ -40,6 +40,12 @@ _GRAPH_MCP_MARKERS = (
 )
 _NO_REVIEWER_STEM = frozenset({"code"})
 DEFAULT_DOC_EXTS = (".md", ".txt", ".rst", ".markdown")
+_ROLE_YOU_ARE_REVIEWER = re.compile(
+    r"\byou are\s+(?:an?\s+)?("
+    r"eng-reviewer|ceo-reviewer|security-reviewer|dx-reviewer|"
+    r"code-reviewer|designer|qa)\b",
+    re.I,
+)
 _IMPACT_TOKENS = (
     "crg",
     "get_impact_radius",
@@ -151,6 +157,9 @@ def review_dimensions_ok(text: str) -> bool:
         return False
     if "问题是否解决" not in text:
         return False
+    satisfied = field_value(text, "满足")
+    if not satisfied or satisfied.strip().lower() in _EMPTY_SATISFIED:
+        return False
     solved = field_value(text, "问题是否解决")
     if not solved or solved.strip().lower() in _EMPTY_SATISFIED:
         return False
@@ -169,6 +178,8 @@ def identify_reviewer(agent_blob: str, reviewer_agents=None) -> str | None:
     if not blob:
         return None
     lower = blob.lower()
+    if "change-implementer" in lower and not _ROLE_YOU_ARE_REVIEWER.search(lower):
+        return None
     names = [str(n) for n in (reviewer_agents or DEFAULT_REVIEWER_AGENTS) if n]
     names.sort(key=len, reverse=True)
     for name in names:
@@ -242,17 +253,26 @@ def _current_round_reviews(entry: dict) -> list:
 
 
 def attach_review_text(entry: dict, text: str) -> bool:
-    """把审查正文填到本轮最后一条空 reviews[].text。仅 capture 调用。"""
+    """把合格审查正文填到本轮最后一条空 reviews[].text。仅 capture / Task 结果调用。
+
+    非审查结论（无 PASS/NEEDS-CHANGES，或缺七维的 PASS）不填槽，避免父会话抢槽。
+    已有正文的槽跳过，继续填更早/更晚的空槽（并行审查）。
+    """
     blob = (text or "").strip()
     if not blob or not isinstance(entry, dict):
         return False
+    if "NEEDS-CHANGES" not in blob:
+        if not (_looks_like_review_verdict(blob) and review_dimensions_ok(blob)):
+            return False
     round_reviews = _current_round_reviews(entry)
-    for item in reversed(round_reviews):
+    last_empty = None
+    for item in round_reviews:
         if not str(item.get("text") or "").strip():
-            item["text"] = blob
-            return True
+            last_empty = item
+    if last_empty is None:
         return False
-    return False
+    last_empty["text"] = blob
+    return True
 
 
 def clear_review_pass_if_counted(entry: dict, paths) -> bool:
@@ -282,20 +302,24 @@ def _verdict_unclean(text: str) -> bool:
 
 
 def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, list]:
-    """本轮 reviews[] 已捕获正文 + 可选当前回复。不改写空 text。"""
+    """本轮已捕获正文；extra 仅用于 NEEDS-CHANGES 否决，不把不完整 PASS 并入已捕获批次。"""
     round_items = _current_round_reviews(entry)
     has_empty = False
-    texts: list[str] = []
+    captured: list[str] = []
     for item in round_items:
         body = str(item.get("text") or "").strip()
         if not body:
             has_empty = True
             continue
-        if body not in texts:
-            texts.append(body)
-    blob = (extra or "").strip()
-    if blob and _looks_like_review_verdict(blob) and blob not in texts:
-        texts.append(blob)
+        if body not in captured:
+            captured.append(body)
+    extra_s = (extra or "").strip()
+    texts = list(captured)
+    if extra_s and extra_s not in texts:
+        if "NEEDS-CHANGES" in extra_s:
+            texts.append(extra_s)
+        elif not captured and _looks_like_review_verdict(extra_s):
+            texts.append(extra_s)
     return texts, has_empty, round_items
 
 
@@ -575,16 +599,59 @@ def graph_fresh_for_review(entry: dict, cfg: dict | None = None) -> bool:
     return graph_ts > edit_ts
 
 
+def tool_result_text(data) -> str:
+    """PostToolUse / SubagentStop 载荷里的工具或子代理正文。"""
+    if not isinstance(data, dict):
+        return ""
+
+    def from_val(val) -> str:
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+        if not isinstance(val, dict):
+            return ""
+        for inner in ("content", "text", "output", "result", "message"):
+            iv = val.get(inner)
+            if isinstance(iv, str) and iv.strip():
+                return iv.strip()
+        content = val.get("content")
+        if isinstance(content, list):
+            parts = []
+            for item in content:
+                if isinstance(item, dict) and item.get("text"):
+                    parts.append(str(item["text"]))
+                elif isinstance(item, str):
+                    parts.append(item)
+            blob = "\n".join(parts).strip()
+            if blob:
+                return blob
+        return ""
+
+    for key in (
+        "tool_result",
+        "tool_response",
+        "response",
+        "output",
+        "result",
+        "last_assistant_message",
+        "agent_transcript",
+        "text",
+    ):
+        blob = from_val(data.get(key))
+        if blob:
+            return blob
+    return ""
+
+
 def is_graph_refresh_call(tool_name: str, tool_input=None) -> bool:
     """Bash/MCP 是否为 codegraph 或 CRG 的 init/sync/build/update。
 
-    Shell 必须是相邻的 CLI+动作（``codegraph sync`` / ``code-review-graph update``）。
-    MCP 标记只看工具名，不扫描 Bash command，避免 ``echo codegraph; npm run build``。
+    Shell 必须是命令起始或 `;`/`&&`/`|` 之后的 CLI+动作，且不能是 echo。
+    MCP 标记只看工具名，不扫描 Bash command。
     """
     raw = (tool_name or "").strip()
     blob = tool_input if isinstance(tool_input, dict) else {}
     cmd = str(blob.get("command") or blob.get("cmd") or "")
-    if _GRAPH_PAIR_RE.search(cmd):
+    if _GRAPH_CMD_RE.search(cmd):
         return True
     name_hay = " ".join(
         part

@@ -99,6 +99,14 @@ def test_tool_classify() -> None:
         gf.is_build_tool("Bash", {"command": "codegraph init -i"}) is True,
     )
     check(
+        "echo codegraph sync is not build",
+        gf.is_build_tool("Bash", {"command": "echo codegraph sync"}) is False,
+    )
+    check(
+        "echo codegraph plus npm build is not build",
+        gf.is_build_tool("Bash", {"command": "echo codegraph; npm run build"}) is False,
+    )
+    check(
         "should deny Grep when classifying",
         gf.should_deny_tool("Grep") is True,
     )

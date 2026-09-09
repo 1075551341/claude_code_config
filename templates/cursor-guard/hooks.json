@@ -89,7 +89,7 @@
       },
       {
         "command": "python hooks/verify_tracker.py",
-        "matcher": "Write|StrReplace|EditNotebook|Delete|Shell|Task|CreatePlan|SwitchMode|CallDynamicTool|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
+        "matcher": "Write|StrReplace|EditNotebook|Delete|Shell|Task|Agent|CreatePlan|SwitchMode|CallDynamicTool|mcp__serena__.*|mcp__fs__.*|mcp_serena_.*|mcp_fs_.*",
         "timeout": 5
       },
       {

@@ -633,6 +633,13 @@ def test_cursor_should_followup() -> None:
         r20_replay.identify_reviewer("change-implementer") is None,
     )
     check(
+        "identify implementer prompt citing eng-reviewer is not reviewer",
+        r20_replay.identify_reviewer(
+            "You are change-implementer. Previous eng-reviewer NEEDS-CHANGES: fix tests."
+        )
+        is None,
+    )
+    check(
         "identify generalPurpose is not reviewer",
         r20_replay.identify_reviewer("generalPurpose") is None,
     )
@@ -667,6 +674,42 @@ def test_cursor_should_followup() -> None:
         "attached then verdict passes",
         r20_replay.apply_review_verdict(cap, "") is True
         and cap.get("review_pass_ok") is True,
+    )
+    check(
+        "attach rejects non-verdict parent chatter",
+        r20_replay.attach_review_text(
+            {
+                "edited_files": [{"path": "a.py", "ts": 1}],
+                "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+            },
+            "I'll dispatch eng-reviewer next.",
+        )
+        is False,
+    )
+    parallel = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [
+            {"agent": "eng-reviewer", "ts": 2},
+            {"agent": "ceo-reviewer", "ts": 3},
+        ],
+    }
+    check("parallel attach first slot", r20_replay.attach_review_text(parallel, REVIEW_PASS) is True)
+    check("parallel attach second slot", r20_replay.attach_review_text(parallel, REVIEW_PASS) is True)
+    check(
+        "parallel both slots filled then PASS",
+        r20_replay.apply_review_verdict(parallel, "") is True
+        and parallel.get("review_pass_ok") is True
+        and all(str(item.get("text") or "").strip() for item in parallel["reviews"]),
+    )
+    poisoned = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+    }
+    r20_replay.apply_review_verdict(poisoned, "")
+    check(
+        "parent incomplete PASS does not poison captured PASS",
+        r20_replay.apply_review_verdict(poisoned, "Independent review PASS") is False
+        and poisoned.get("review_pass_ok") is True,
     )
     passed = {"review_pass_ok": True}
     check(
@@ -733,6 +776,23 @@ def test_cursor_should_followup() -> None:
         r20_replay.is_graph_refresh_call(
             "Bash", {"command": "echo codegraph; npm run build"}
         )
+        is False,
+    )
+    check(
+        "echo codegraph sync is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "echo codegraph sync"})
+        is False,
+    )
+    check(
+        "quoted echo codegraph sync is not refresh",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "echo 'codegraph sync'"}
+        )
+        is False,
+    )
+    check(
+        "npm run build alone is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "npm run build"})
         is False,
     )
     check(
@@ -1023,6 +1083,12 @@ def test_stop_does_not_stamp_pre_review_graph() -> None:
         "stop does not stamp pre-review graph",
         "record_pre_review_graph_refresh" not in src,
     )
+    check(
+        "stop does not attach review text",
+        "attach_review_text" not in src,
+    )
+    cap_src = (HOOKS_DIR / "r20-capture.py").read_text(encoding="utf-8")
+    check("claude r20-capture attaches", "attach_review_text" in cap_src)
 
 
 def test_review_verdict_ok() -> None:

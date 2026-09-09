@@ -21,6 +21,8 @@ from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，�
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 from crg_track import record_crg_call  # noqa: E402
 from r20_replay import (  # noqa: E402
+    apply_review_verdict,
+    attach_review_text,
     clear_review_pass_if_counted,
     identify_reviewer,
     is_graph_refresh_call,
@@ -30,6 +32,7 @@ from r20_replay import (  # noqa: E402
     record_plan_tool,
     record_pre_review_graph_refresh,
     reviewer_dispatch_blob,
+    tool_result_text,
 )
 
 CLAUDE_HOME = str(claude_home())
@@ -279,6 +282,12 @@ def main():
             resumed = is_resumed_subagent(tool_input)
             if note_reviewer_dispatch(entry, reviewer, now, resumed=resumed):
                 changed = True
+            if not resumed:
+                result_text = tool_result_text(data)
+                if attach_review_text(entry, result_text):
+                    changed = True
+                if apply_review_verdict(entry, result_text):
+                    changed = True
             if resumed:
                 first_edit_msg = (
                     f"{first_edit_msg}\n\n{RESUMED_REVIEW_REMINDER}"

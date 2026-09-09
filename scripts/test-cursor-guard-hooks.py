@@ -1328,7 +1328,7 @@ def main() -> int:
             "verify_tracker.py",
             {
                 "tool_name": "Shell",
-                "tool_input": {"command": "echo codegraph; npm run build"},
+                "tool_input": {"command": "echo codegraph sync"},
                 "conversation_id": sid_false,
                 "cwd": str(Path(tempfile.gettempdir())),
             },
@@ -1341,7 +1341,7 @@ def main() -> int:
                 (r_false.get("exit") == 0)
                 and float(entry_f.get("last_pre_review_graph_ts") or 0) == 0
             ),
-            note="echo codegraph; npm run build 不得记审查前刷图戳",
+            note="echo codegraph sync 不得记审查前刷图戳",
         )
 
     results["tests"]["sync_no_keyword"] = run_hook(

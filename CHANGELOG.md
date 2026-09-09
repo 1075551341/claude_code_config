@@ -10,7 +10,7 @@
 - **全栈 glob**：新增薄层 `rules/BACKEND.md`、`rules/DATABASE.md`；`FRONTEND.md` 去掉 teoms-web/Vue 默认与裸 `*.js`。`global_rules_max` 10→12。
 - **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
 - **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.12**。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
-- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 正文里的 `security` 误判为审查者；Cursor `generalPurpose` 从 `prompt` 识别审查角色；`is_graph_refresh_call` 要求相邻 CLI+动作且 MCP 标记只看工具名；空 `reviews[].text` 不能 PASS（capture 才填正文，Stop 不填）；新的计入编辑清除 `review_pass_ok`；纯文档走双审相位且不要求 pytest；Stop 对文档交付也执行 graph/review 硬门；Guard `gate_messages` 本地兜底替换 `{{review_max_rounds}}`；CURSOR-EDITOR 循环改为修改→验证→刷图→审查。
+- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论；并行空槽可依次填；父消息不完整 PASS 不得毒化已捕获正文。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。
 - **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。
 
 ## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）

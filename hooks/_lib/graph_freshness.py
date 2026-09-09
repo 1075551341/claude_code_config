@@ -16,6 +16,7 @@ import sys
 import time
 
 from crg_track import collect_tool_names, find_crg_root, is_crg_tool, is_project_graph_dir
+from r20_replay import is_graph_refresh_call
 
 STATE_NAME = "graph-freshness.json"
 CODEGRAPH_MARKERS = (
@@ -59,14 +60,6 @@ WRITE_VERBS = (
     "create_directory",
     "create_text",
     "apply_refactor",
-)
-GRAPH_SHELL_RE = re.compile(
-    r"\b(codegraph|code-review-graph)\b",
-    re.I,
-)
-GRAPH_SHELL_ACTION_RE = re.compile(
-    r"\b(init|sync|index|build|update)\b",
-    re.I,
 )
 SHELL_GREP_RE = re.compile(r"\b(grep|rg|findstr|git\s+grep)\b", re.I)
 
@@ -889,7 +882,7 @@ def _norm_tool(name: str) -> str:
 
 def is_build_tool(tool_name: str, tool_input=None, command: str = "") -> bool:
     cmd = command or extract_shell_command(tool_input)
-    if cmd and GRAPH_SHELL_RE.search(cmd) and GRAPH_SHELL_ACTION_RE.search(cmd):
+    if cmd and is_graph_refresh_call("Bash", {"command": cmd}):
         return True
     for name in collect_tool_names(tool_name, tool_input):
         n = _norm_tool(name)
@@ -980,7 +973,7 @@ def should_deny_tool(tool_name: str, tool_input=None) -> bool:
         return False
     n = _norm_tool(tool_name)
     if n in {"bash", "runcommand", "shell"}:
-        if cmd and GRAPH_SHELL_RE.search(cmd) and GRAPH_SHELL_ACTION_RE.search(cmd):
+        if cmd and is_graph_refresh_call("Bash", {"command": cmd}):
             return False
         if cmd and SHELL_GREP_RE.search(cmd):
             return True

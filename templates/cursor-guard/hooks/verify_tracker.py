@@ -193,30 +193,15 @@ def main() -> None:
                 if reviewer:
                     r20.note_reviewer_dispatch(entry, reviewer, now, resumed=resumed)
                     changed = True
+                    if not resumed:
+                        result_text = r20.tool_result_text(data)
+                        if r20.attach_review_text(entry, result_text):
+                            changed = True
+                        if r20.apply_review_verdict(entry, result_text):
+                            changed = True
             except Exception as e:
                 print(f"verify_tracker: reviewer dispatch unavailable: {e}", file=sys.stderr)
-                sub = str(
-                    data.get("subagent_type")
-                    or tool_input.get("subagent_type")
-                    or data.get("description")
-                    or tool_input.get("prompt")
-                    or ""
-                )
-                lowered = sub.lower()
-                for name in reviewers:
-                    n = str(name).lower()
-                    if n in lowered and (len(n) > 3 or "-" in n):
-                        reviewer = name
-                        break
-                if reviewer and not resumed:
-                    entry.setdefault("reviews", []).append({"agent": reviewer, "ts": now})
-                    entry["review_pass_ok"] = False
-                    changed = True
-                elif reviewer and resumed:
-                    entry.setdefault("skipped_resumed_reviews", []).append(
-                        {"agent": reviewer, "ts": now}
-                    )
-                    changed = True
+                # 兜底不按子串识别，避免 code-explorer 命中 code-reviewer
 
         try:
             r20g = import_claude_lib(claude_home, "r20_replay")

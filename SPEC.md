@@ -57,9 +57,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 全局 skills  | 36     | P0 路由集 6 + supplement 30（v11: 45→36，6 降级 catalog + 3 删并）                                                                                                                     |
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
-| 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
+| 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 8 + glob 3（FRONTEND/BACKEND/DATABASE；不含 README）                                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
+| 全局 hooks   | 18     | 注册激活 18 + 未注册 5 + 分发器 2（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.12）                                                              |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；开关 SSOT → `rules/MCP.md` 验证清单（context7/exa/playwright/firecrawl=true；chrome-devtools/github=false；不写 MCP）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |

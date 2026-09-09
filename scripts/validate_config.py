@@ -500,6 +500,7 @@ def check_v11_hook_exception_propagation():
         "pre-compact-state.py",
         "post-secret-detector.py", "post-edit-format.py",
         "post-edit-verify-tracker.py",
+        "r20-capture.py",
         "stop-verification-gate.py",
         "stop-session-summary.py", "stop-readme-updater.py",
     ]
