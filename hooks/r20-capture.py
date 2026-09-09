@@ -13,7 +13,13 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_lib"))
 
 from issue_state import claude_home  # noqa: E402
-from r20_replay import attach_review_text, apply_review_verdict, replay_ok, tool_result_text  # noqa: E402
+from r20_replay import (  # noqa: E402
+    attach_review_text,
+    apply_review_verdict,
+    replay_ok,
+    reviewer_source_from_payload,
+    tool_result_text,
+)
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -64,7 +70,8 @@ def main() -> None:
     state = load_state()
     entry = state.setdefault(session_id, {"ts": now, "started_ts": now})
     changed = False
-    if attach_review_text(entry, text):
+    source = reviewer_source_from_payload(data)
+    if attach_review_text(entry, text, source=source):
         changed = True
     if apply_review_verdict(entry, text):
         changed = True

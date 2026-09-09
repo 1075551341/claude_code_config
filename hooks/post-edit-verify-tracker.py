@@ -284,7 +284,7 @@ def main():
                 changed = True
             if not resumed:
                 result_text = tool_result_text(data)
-                if attach_review_text(entry, result_text):
+                if attach_review_text(entry, result_text, source=reviewer):
                     changed = True
                 if apply_review_verdict(entry, result_text):
                     changed = True

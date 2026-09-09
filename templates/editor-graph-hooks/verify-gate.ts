@@ -98,21 +98,25 @@ const IMPACT_TOKENS = [
   "影响范围",
 ];
 const FIELD_RE =
-  /(?:^|\n)\s*-?\s*(满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:]\s*([\s\S]*?)(?=(?:\n\s*-?\s*(?:满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:])|\n结论|$)/g;
+  /(?:^|\n)\s*-?\s*(满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决)\s*[：:][ \t]*([\s\S]*?)(?=(?:\n\s*-?\s*(?:满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决)\s*[：:])|\n结论|$)/g;
 
 function fieldValue(text: string, name: string): string {
   FIELD_RE.lastIndex = 0;
+  let last = "";
   let match: RegExpExecArray | null;
   while ((match = FIELD_RE.exec(text))) {
-    if (match[1] === name) return (match[2] || "").trim();
+    if (match[1] === name) {
+      const val = (match[2] || "").trim();
+      if (val) last = val;
+    }
   }
-  return "";
+  return last;
 }
 
 function checkR20(text: string): boolean {
   if (!text || !text.trim()) return false;
   if (!/会话终验|\bR20\b/.test(text)) return false;
-  for (const field of ["遗漏", "错改", "漏改", "原功能", "影响范围"]) {
+  for (const field of ["遗漏", "错改", "漏改", "原功能", "影响范围", "问题是否解决"]) {
     if (!text.includes(field)) return false;
   }
   const sat = fieldValue(text, "满足");
@@ -127,6 +131,9 @@ function checkR20(text: string): boolean {
   if (!impact || EMPTY_SAT.has(impact.toLowerCase())) return false;
   const low = impact.toLowerCase();
   if (!IMPACT_TOKENS.some((token) => low.includes(token))) return false;
+  const solved = fieldValue(text, "问题是否解决");
+  if (!solved || EMPTY_SAT.has(solved.toLowerCase())) return false;
+  if (!/(已解决|未解决|部分解决)/.test(solved)) return false;
   return true;
 }
 

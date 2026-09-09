@@ -9,8 +9,8 @@
 - **铁律瘦身**：R1–R11 短指针；R9 平台 spawn 只在 `rules/MCP.md`；R12–R20 全文 CORE；R20 = 七维 + 审查前刷图。L0 CLAUDE.md ≤200 行。Superpowers **6.3.0**。
 - **全栈 glob**：新增薄层 `rules/BACKEND.md`、`rules/DATABASE.md`；`FRONTEND.md` 去掉 teoms-web/Vue 默认与裸 `*.js`。`global_rules_max` 10→12。
 - **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
-- **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.12**。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
-- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论（PASS 与 NEEDS-CHANGES 均须七维）；并行空槽可依次填；父消息不完整 PASS / 门控「PASS 或 NEEDS-CHANGES」不得毒化已捕获正文；换行空「满足：」不得吞下一字段。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。
+- **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.13**（身份绑定填槽）。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
+- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论（PASS 与 NEEDS-CHANGES 均须七维）；并行空槽按审查者身份填（无身份不填，禁止父会话抢槽）；父消息不完整 PASS / 门控「PASS 或/or NEEDS-CHANGES」不得毒化已捕获正文；换行空「满足：」不得吞下一字段，同名字段取最后非空。结论只认标题/结论行，不扫正文子串。便携 `r20_check.py` 导入 `r20_replay`（禁止再复制正则）。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。Cursor Guard **1.2.13**。
 - **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。
 
 ## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）

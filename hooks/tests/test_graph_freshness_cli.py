@@ -134,7 +134,8 @@ def test_r20_check_portable() -> None:
     ok_text = (
         "## 会话终验（R20）\n- 满足：落地\n- 遗漏：无\n- 错改：无\n"
         "- 漏改：无文档影响\n- 原功能：保持（证据：pytest）\n"
-        "- 影响范围：已审查 CRG get_impact_radius\n结论：DONE"
+        "- 影响范围：已审查 CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n结论：DONE"
     )
     ok, reason = r20c.replay_ok(ok_text)
     check("portable r20 pass", ok is True, reason)

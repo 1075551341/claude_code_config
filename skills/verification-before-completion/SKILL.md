@@ -184,7 +184,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；
 「满足」不可为空/`...`；「漏改」须含 `文档` 或 `注释` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。「问题是否解决」须含 `已解决` / `未解决` / `部分解决` 与观察证据。
-DSH / OpenCode 用便携副本 `r20_check.py`（规则对齐，无指纹比对）。
+DSH / OpenCode 用便携 `r20_check.py`（导入 `r20_replay`，无指纹比对）。
 Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / CreatePlan / 仅计划文件禁止声称完成。CallDynamicTool 内层 CreatePlan 必须记账；写 `.plan.md` 不得清 awaiting。
 
 **场景G：初次修改后迷你验收（v11.3.4，每个文件首次成功编辑后 hook 注入一次）**

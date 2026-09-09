@@ -669,7 +669,7 @@ def test_cursor_should_followup() -> None:
         "edited_files": [{"path": "a.py", "ts": 1}],
         "reviews": [{"agent": "eng-reviewer", "ts": 2}],
     }
-    check("attach fills empty review", r20_replay.attach_review_text(cap, REVIEW_PASS) is True)
+    check("attach fills empty review", r20_replay.attach_review_text(cap, REVIEW_PASS, source="eng-reviewer") is True)
     check(
         "attached then verdict passes",
         r20_replay.apply_review_verdict(cap, "") is True
@@ -683,6 +683,7 @@ def test_cursor_should_followup() -> None:
                 "reviews": [{"agent": "eng-reviewer", "ts": 2}],
             },
             "I'll dispatch eng-reviewer next.",
+            source="eng-reviewer",
         )
         is False,
     )
@@ -692,7 +693,7 @@ def test_cursor_should_followup() -> None:
     }
     check(
         "attach rejects NEEDS-CHANGES without seven dims",
-        r20_replay.attach_review_text(needs_no_dims, "Verdict: NEEDS-CHANGES") is False
+        r20_replay.attach_review_text(needs_no_dims, "Verdict: NEEDS-CHANGES", source="eng-reviewer") is False
         and not str((needs_no_dims.get("reviews") or [{}])[0].get("text") or "").strip(),
     )
     blank_sat = (
@@ -725,6 +726,7 @@ def test_cursor_should_followup() -> None:
                 "reviews": [{"agent": "eng-reviewer", "ts": 2}],
             },
             blank_sat,
+            source="eng-reviewer",
         )
         is False,
     )
@@ -741,6 +743,115 @@ def test_cursor_should_followup() -> None:
         is False
         and captured_ok.get("review_pass_ok") is True,
     )
+    slash_ok = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+        "review_pass_ok": True,
+    }
+    check(
+        "instructional PASS / NEEDS-CHANGES does not poison",
+        r20_replay.apply_review_verdict(
+            slash_ok, "结论：PASS / NEEDS-CHANGES"
+        )
+        is False
+        and slash_ok.get("review_pass_ok") is True,
+    )
+    mentioned = (
+        "Independent review PASS\n"
+        "- 满足：已处理正文里的 NEEDS-CHANGES 字样（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+        "结论：PASS\n"
+    )
+    mentioned_entry = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": mentioned}],
+    }
+    check(
+        "body NEEDS-CHANGES substring does not unclean 结论 PASS",
+        r20_replay.apply_review_verdict(mentioned_entry, "") is True
+        and mentioned_entry.get("review_pass_ok") is True,
+    )
+    parent_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "parent seven-dim without source does not attach",
+        r20_replay.attach_review_text(parent_slot, REVIEW_PASS) is False
+        and not str((parent_slot.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    check(
+        "payload text mentioning eng-reviewer is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"text": "You are eng-reviewer. " + REVIEW_PASS}
+        )
+        is None,
+    )
+    check(
+        "payload agent_id is a source",
+        r20_replay.reviewer_source_from_payload({"agent_id": "eng-reviewer"})
+        == "eng-reviewer",
+    )
+    mismatch = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "ceo-reviewer", "ts": 2}],
+    }
+    check(
+        "attach refuses mismatched reviewer slot",
+        r20_replay.attach_review_text(mismatch, REVIEW_PASS, source="eng-reviewer")
+        is False
+        and not str((mismatch.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    later_fill = (
+        "- 满足：\n"
+        "- 遗漏：无\n"
+        "- 满足：后文非空（承认）\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    check(
+        "field_value uses last non-empty",
+        r20_replay.field_value(later_fill, "满足") == "后文非空（承认）",
+    )
+    legend = (
+        "Independent review PASS\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决 | 未解决 | 部分解决\n"
+    )
+    check("legend-only 问题是否解决 fails dims", r20_replay.review_dimensions_ok(legend) is False)
+    needs_ok = (
+        "Independent review NEEDS-CHANGES\n"
+        "- 满足：身份绑定未做（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：部分解决（证据：pytest）\n"
+        "结论：NEEDS-CHANGES\n"
+    )
+    needs_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "seven-dim NEEDS-CHANGES attaches to matching slot",
+        r20_replay.attach_review_text(needs_slot, needs_ok, source="eng-reviewer") is True
+        and "NEEDS-CHANGES" in str((needs_slot.get("reviews") or [{}])[0].get("text") or ""),
+    )
     parallel = {
         "edited_files": [{"path": "a.py", "ts": 1}],
         "reviews": [
@@ -748,8 +859,8 @@ def test_cursor_should_followup() -> None:
             {"agent": "ceo-reviewer", "ts": 3},
         ],
     }
-    check("parallel attach first slot", r20_replay.attach_review_text(parallel, REVIEW_PASS) is True)
-    check("parallel attach second slot", r20_replay.attach_review_text(parallel, REVIEW_PASS) is True)
+    check("parallel attach first slot", r20_replay.attach_review_text(parallel, REVIEW_PASS, source="eng-reviewer") is True)
+    check("parallel attach second slot", r20_replay.attach_review_text(parallel, REVIEW_PASS, source="ceo-reviewer") is True)
     check(
         "parallel both slots filled then PASS",
         r20_replay.apply_review_verdict(parallel, "") is True
@@ -1144,6 +1255,14 @@ def test_stop_does_not_stamp_pre_review_graph() -> None:
     )
     cap_src = (HOOKS_DIR / "r20-capture.py").read_text(encoding="utf-8")
     check("claude r20-capture attaches", "attach_review_text" in cap_src)
+    check("claude r20-capture binds source", "reviewer_source_from_payload" in cap_src)
+    portable = (
+        HOOKS_DIR.parent / "templates" / "editor-graph-hooks" / "r20_check.py"
+    ).read_text(encoding="utf-8")
+    check(
+        "portable r20_check imports SSOT",
+        "replay_detail" in portable and "_FIELD_RE" not in portable,
+    )
 
 
 def test_review_verdict_ok() -> None:

@@ -25,7 +25,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 - 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节 + `graph_freshness` 节（session/pretool/stop/sync 超时）
 - 强度调整：验证门硬阻断由 `verification_gate.enabled` 控制；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
 - Cursor 侧改动生效路径：改 `templates/cursor-guard/` → 跑 `scripts/deploy-cursor-guard.ps1` → 重启 Cursor
-- DSH / OpenCode：不经 Claude Stop。规则 SSOT 仍是 `hooks/_lib/r20_replay.py`；便携 `templates/editor-graph-hooks/r20_check.py` 部署到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`（无指纹比对）。OpenCode `verify-gate.ts` 本地判定对齐，**禁止 spawn** `gate_cli.py`。不经 `sync.ps1` 覆盖各端 AGENTS.md。
+- DSH / OpenCode：不经 Claude Stop。规则 SSOT 仍是 `hooks/_lib/r20_replay.py`；便携 `r20_check.py` 导入该模块（部署时同时复制 `r20_replay.py` 到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`）。OpenCode `verify-gate.ts` 字段切分与 SSOT 对齐（`[ \t]*`、最后非空），**禁止 spawn** `gate_cli.py`。不经 `sync.ps1` 覆盖各端 AGENTS.md。
 
 ## R16 详细声明（错误暴漏）
 

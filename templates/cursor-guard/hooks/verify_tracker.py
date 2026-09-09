@@ -195,7 +195,7 @@ def main() -> None:
                     changed = True
                     if not resumed:
                         result_text = r20.tool_result_text(data)
-                        if r20.attach_review_text(entry, result_text):
+                        if r20.attach_review_text(entry, result_text, source=reviewer):
                             changed = True
                         if r20.apply_review_verdict(entry, result_text):
                             changed = True

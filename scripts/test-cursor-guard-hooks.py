@@ -1266,6 +1266,7 @@ def main() -> int:
             "r20_capture.py",
             {
                 "conversation_id": sid_pass,
+                "agent": "eng-reviewer",
                 "text": REVIEW_PASS,
             },
         )
@@ -1277,6 +1278,35 @@ def main() -> int:
                 and (st_ok.get(sid_pass) or {}).get("review_pass_ok") is True
             ),
             note="已有 reviews 且七维 PASS → review_pass_ok",
+        )
+        sid_parent = "r20-parent-spoof-test"
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_parent: {
+                        "ts": time.time(),
+                        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+                        "review_pass_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_parent = run_hook(
+            "r20_capture.py",
+            {"conversation_id": sid_parent, "text": REVIEW_PASS},
+        )
+        st_parent = json.loads(vg_path.read_text(encoding="utf-8"))
+        parent_entry = st_parent.get(sid_parent) or {}
+        parent_text = str((parent_entry.get("reviews") or [{}])[0].get("text") or "")
+        results["tests"]["r20_capture_parent_without_agent"] = finish_case(
+            r_parent,
+            behavior=(
+                (r_parent.get("exit") == 0)
+                and parent_entry.get("review_pass_ok") is not True
+                and not parent_text.strip()
+            ),
+            note="无审查者身份的父消息七维 PASS 不得填槽",
         )
         sid_graph = "graph-refresh-stamp-test"
         now_g = time.time()

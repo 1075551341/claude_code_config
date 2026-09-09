@@ -67,9 +67,14 @@ if (Test-Path -LiteralPath $cliSrc) {
             Write-Host "  [OK] OpenCode plugins/graph-freshness.ts" -ForegroundColor Green
         }
         $r20Src = Join-Path $Claude "templates\editor-graph-hooks\r20_check.py"
+        $replaySrc = Join-Path $Claude "hooks\_lib\r20_replay.py"
         if (Test-Path -LiteralPath $r20Src) {
             Copy-Item -LiteralPath $r20Src -Destination (Join-Path $ocScripts "r20_check.py") -Force
             Write-Host "  [OK] OpenCode scripts/r20_check.py" -ForegroundColor Green
+        }
+        if (Test-Path -LiteralPath $replaySrc) {
+            Copy-Item -LiteralPath $replaySrc -Destination (Join-Path $ocScripts "r20_replay.py") -Force
+            Write-Host "  [OK] OpenCode scripts/r20_replay.py" -ForegroundColor Green
         }
         $vgSrc = Join-Path $Claude "templates\editor-graph-hooks\verify-gate.ts"
         if (Test-Path -LiteralPath $vgSrc) {
@@ -79,8 +84,13 @@ if (Test-Path -LiteralPath $cliSrc) {
     }
 }
 $r20Src = Join-Path $Claude "templates\editor-graph-hooks\r20_check.py"
+$replaySrc = Join-Path $Claude "hooks\_lib\r20_replay.py"
 if ((Test-Path -LiteralPath $r20Src) -and (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".dsh"))) {
     New-Item -ItemType Directory -Force -Path $dshTools | Out-Null
     Copy-Item -LiteralPath $r20Src -Destination (Join-Path $dshTools "r20_check.py") -Force
     Write-Host "  [OK] DSH tools/r20_check.py" -ForegroundColor Green
+    if (Test-Path -LiteralPath $replaySrc) {
+        Copy-Item -LiteralPath $replaySrc -Destination (Join-Path $dshTools "r20_replay.py") -Force
+        Write-Host "  [OK] DSH tools/r20_replay.py" -ForegroundColor Green
+    }
 }

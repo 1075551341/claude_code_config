@@ -26,6 +26,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.13**：审查填槽必须绑定审查者身份（无身份的父消息不得抢槽）；结论只认标题/结论行。`r20_check.py` 导入 `r20_replay`。
+
 **v1.2.12**：七维（含问题是否解决）；审查前须在 last_edit 之后刷图，否则相位停在 `graph`；文档编辑 in scope；批次 NEEDS-CHANGES 压过 PASS。
 **v1.2.11**：`verify_tracker` 对带 `resume` 的审查 Task 不计入 `reviews`（每轮须全新开审）。
 **v1.2.10**：完成门不再 `followup_message`（会刷会话面板）。Stop 只刷图谱 / 全绿 sync；双审改规则驱动。`enforce_mode=off`。

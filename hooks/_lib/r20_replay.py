@@ -28,6 +28,21 @@ _FIELD_RE = re.compile(
     rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
+_VERDICT_LINE_RE = re.compile(
+    r"(?:^|\n)\s*(?:#{0,3}\s*)?(?:\*{0,2})?"
+    r"(?:独立审查(?:\s*/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|"
+    r"Independent review|结论|判断|Verdict|状态)"
+    r"(?:\*{0,2})?\s*[：:]?\s*.{0,160}?\b(PASS|NEEDS-CHANGES)\b",
+    re.I,
+)
+_INSTRUCTIONAL_VERDICT_RE = re.compile(
+    r"\bPASS\s*(?:或|/|or)\s*NEEDS-CHANGES\b",
+    re.I,
+)
+_SOLVED_LEGEND = re.compile(
+    r"^已解决\s*[|/]\s*未解决\s*[|/]\s*部分解决$"
+)
+_FIELD_BLANK = {"", ".", "..", "...", "…", "n/a", "na", "none"}
 _GRAPH_CMD_RE = re.compile(
     r"(?:^|[;&|]\s*)(?!echo\b)(?:sudo\s+)?(codegraph|code-review-graph)(?:\s+|-)(init|sync|index|build|update)\b",
     re.I | re.M,
@@ -58,62 +73,70 @@ _IMPACT_TOKENS = (
 
 
 def field_value(text: str, name: str) -> str:
-    """取出终验字段正文；找不到返回空串。"""
-    for match in _FIELD_RE.finditer(text):
-        if match.group(1) == name:
-            return match.group(2).strip()
-    return ""
+    """取出终验字段正文；同名字段取最后一条非空（避免空模板行挡住后文）。"""
+    last = ""
+    for match in _FIELD_RE.finditer(text or ""):
+        if match.group(1) != name:
+            continue
+        val = match.group(2).strip()
+        if val:
+            last = val
+    return last
 
 
-def replay_ok(text: str, requirements: dict | None = None) -> bool:
-    """最后一条助手回复是否构成合格 R20（反空模板；v11.4 可选需求指纹实质比对）。
-
-    requirements 非空且含 strong 特征时，「满足」行须覆盖指纹关键词——
-    strong<5 全命中，≥5 允许 ≥80%（req_fingerprint.coverage_ok）。
-    不传参行为与 v11.3 完全一致（Cursor 端旧调用兼容）。
-    """
+def replay_detail(text: str, requirements: dict | None = None) -> tuple[bool, str]:
+    """R20 机械检测；返回 (ok, reason)。便携 r20_check 与 Stop 共用，禁止再复制正则。"""
     if not text or not text.strip():
-        return False
+        return False, "empty"
     if ("会话终验" not in text) and ("R20" not in text):
-        return False
-    if any(token not in text for token in _REQUIRED):
-        return False
+        return False, "missing R20 marker"
+    missing = [token for token in _REQUIRED if token not in text]
+    if missing:
+        return False, "missing fields: " + ",".join(missing)
 
     satisfied = field_value(text, "满足")
     if satisfied.strip().lower() in _EMPTY_SATISFIED:
-        return False
+        return False, "empty 满足"
 
     if requirements:
         from req_fingerprint import coverage_ok
 
         ok, _detail = coverage_ok(requirements, satisfied)
         if not ok:
-            return False
+            return False, "fingerprint coverage"
 
     missed = field_value(text, "漏改")
     if not missed:
-        return False
+        return False, "empty 漏改"
     if not (
         "文档" in missed
         or "注释" in missed
         or "无文档影响" in missed
         or _PATH_RE.search(missed)
     ):
-        return False
+        return False, "漏改 needs 文档/注释/路径"
 
     original = field_value(text, "原功能")
     if not original:
-        return False
+        return False, "empty 原功能"
     if not any(token in original for token in ("证据", "测试", "冒烟")):
-        return False
+        return False, "原功能 needs 证据/测试/冒烟"
 
     impact = field_value(text, "影响范围") or field_value(text, "影响面")
     if not impact or impact.strip().lower() in _EMPTY_SATISFIED:
-        return False
+        return False, "empty 影响范围"
     lowered = impact.lower()
     if not any(token in lowered for token in _IMPACT_TOKENS):
-        return False
-    return review_dimensions_ok(text)
+        return False, "影响范围 needs CRG/get_impact_radius/IMPACT/blast"
+    if not review_dimensions_ok(text):
+        return False, "seven dimensions"
+    return True, "ok"
+
+
+def replay_ok(text: str, requirements: dict | None = None) -> bool:
+    """最后一条助手回复是否构成合格 R20（反空模板；v11.4 可选需求指纹实质比对）。"""
+    ok, _reason = replay_detail(text, requirements)
+    return ok
 
 
 def is_resumed_subagent(tool_input) -> bool:
@@ -147,7 +170,7 @@ DEFAULT_REVIEWER_AGENTS = (
 
 
 def review_dimensions_ok(text: str) -> bool:
-    """独立审查 / R20 七维是否齐全（缺一则本轮无效）。"""
+    """独立审查 / R20 七维是否齐全（缺一或空槽则本轮无效）。"""
     if not text or not text.strip():
         return False
     for name in ("满足", "遗漏", "错改", "漏改", "原功能"):
@@ -160,10 +183,90 @@ def review_dimensions_ok(text: str) -> bool:
     satisfied = field_value(text, "满足")
     if not satisfied or satisfied.strip().lower() in _EMPTY_SATISFIED:
         return False
+    for name in ("遗漏", "错改"):
+        val = field_value(text, name)
+        if not val or val.strip().lower() in _FIELD_BLANK:
+            return False
+    missed = field_value(text, "漏改")
+    if not missed or missed.strip().lower() in _FIELD_BLANK:
+        return False
+    original = field_value(text, "原功能")
+    if not original or original.strip().lower() in _FIELD_BLANK:
+        return False
+    impact = field_value(text, "影响范围") or field_value(text, "影响面")
+    if not impact or impact.strip().lower() in _EMPTY_SATISFIED:
+        return False
     solved = field_value(text, "问题是否解决")
     if not solved or solved.strip().lower() in _EMPTY_SATISFIED:
         return False
+    if _SOLVED_LEGEND.match(solved.strip()):
+        return False
     return any(token in solved for token in _SOLVED_TOKENS)
+
+
+def primary_verdict(text: str) -> str | None:
+    """只认标题/结论行上的 PASS 或 NEEDS-CHANGES，不扫正文子串。"""
+    last_span = ""
+    last_kind = None
+    for match in _VERDICT_LINE_RE.finditer(text or ""):
+        last_span = match.group(0)
+        last_kind = match.group(1).upper()
+    if not last_span or not last_kind:
+        return None
+    if _INSTRUCTIONAL_VERDICT_RE.search(last_span):
+        return None
+    if last_kind == "NEEDS-CHANGES":
+        return "NEEDS-CHANGES"
+    if last_kind == "PASS":
+        return "PASS"
+    return None
+
+
+def normalize_reviewer(name: str, reviewer_agents=None) -> str:
+    ident = identify_reviewer(name or "", reviewer_agents)
+    if ident:
+        return ident.lower()
+    return (name or "").strip().lower()
+
+
+def reviewer_source_from_payload(data, tool_input=None) -> str | None:
+    """从 hook 载荷的身份字段识别审查者。禁止扫描正文（避免父消息点名抢槽）。"""
+    names: list[str] = []
+    blob = tool_input if isinstance(tool_input, dict) else None
+    if blob is None and isinstance(data, dict):
+        maybe = data.get("tool_input") or data.get("input") or data.get("arguments")
+        blob = maybe if isinstance(maybe, dict) else None
+    if isinstance(blob, dict):
+        ident = identify_reviewer(reviewer_dispatch_blob(blob))
+        if ident:
+            return ident
+        st = blob.get("subagent_type")
+        if isinstance(st, str) and st.strip():
+            names.append(st.strip())
+    if isinstance(data, dict):
+        for key in (
+            "agent_id",
+            "agent_name",
+            "agent_type",
+            "subagent_type",
+            "subagent",
+        ):
+            val = data.get(key)
+            if isinstance(val, str) and val.strip():
+                names.append(val.strip())
+        agent = data.get("agent")
+        if isinstance(agent, str) and agent.strip():
+            names.append(agent.strip())
+        elif isinstance(agent, dict):
+            for key in ("id", "name", "type", "role", "subagent_type"):
+                val = agent.get(key)
+                if isinstance(val, str) and val.strip():
+                    names.append(val.strip())
+    for name in names:
+        ident = identify_reviewer(name)
+        if ident:
+            return ident
+    return None
 
 
 def identify_reviewer(agent_blob: str, reviewer_agents=None) -> str | None:
@@ -252,25 +355,31 @@ def _current_round_reviews(entry: dict) -> list:
     return [item for item in reviews if float(item.get("ts") or 0) > edit_ts]
 
 
-def attach_review_text(entry: dict, text: str) -> bool:
-    """把合格审查正文填到本轮最后一条空 reviews[].text。仅 capture / Task 结果调用。
+def attach_review_text(entry: dict, text: str, source: str | None = None) -> bool:
+    """把合格审查正文填到本轮匹配身份的空 reviews[].text。
 
-    非审查结论（无 PASS/NEEDS-CHANGES，或缺七维的 PASS）不填槽，避免父会话抢槽。
-    已有正文的槽跳过，继续填更早/更晚的空槽（并行审查）。
+    必须带审查者身份（dispatch 的 agent 或 hook 载荷字段）。无身份不填槽。
+    PASS 与 NEEDS-CHANGES 均须七维；结论只认标题/结论行。
     """
     blob = (text or "").strip()
     if not blob or not isinstance(entry, dict):
         return False
-    if not _looks_like_review_verdict(blob) or not review_dimensions_ok(blob):
+    if primary_verdict(blob) is None or not review_dimensions_ok(blob):
+        return False
+    source_n = normalize_reviewer(source or "")
+    if not source_n:
         return False
     round_reviews = _current_round_reviews(entry)
-    last_empty = None
+    target = None
     for item in round_reviews:
-        if not str(item.get("text") or "").strip():
-            last_empty = item
-    if last_empty is None:
+        if str(item.get("text") or "").strip():
+            continue
+        if normalize_reviewer(str(item.get("agent") or "")) == source_n:
+            target = item
+            break
+    if target is None:
         return False
-    last_empty["text"] = blob
+    target["text"] = blob
     return True
 
 
@@ -287,21 +396,20 @@ def clear_review_pass_if_counted(entry: dict, paths) -> bool:
 
 
 def _looks_like_review_verdict(text: str) -> bool:
-    blob = text or ""
-    return "NEEDS-CHANGES" in blob or bool(re.search(r"\bPASS\b", blob))
+    return primary_verdict(text) is not None
 
 
 def _verdict_unclean(text: str) -> bool:
     blob = text or ""
-    return (
-        "NEEDS-CHANGES" in blob
-        or bool(_UNCLEAN_PASS_RE.search(blob))
-        or not review_dimensions_ok(blob)
-    )
+    if not review_dimensions_ok(blob):
+        return True
+    if primary_verdict(blob) != "PASS":
+        return True
+    return bool(_UNCLEAN_PASS_RE.search(blob))
 
 
 def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, list]:
-    """本轮已捕获正文；extra 仅用于 NEEDS-CHANGES 否决，不把不完整 PASS 并入已捕获批次。"""
+    """本轮已捕获正文；extra 仅当结论行是否决时并入，不把教学句或不完整 PASS 并入。"""
     round_items = _current_round_reviews(entry)
     has_empty = False
     captured: list[str] = []
@@ -314,13 +422,11 @@ def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, 
             captured.append(body)
     extra_s = (extra or "").strip()
     texts = list(captured)
-    instructional = bool(
-        re.search(r"PASS\s*或\s*NEEDS-CHANGES|PASS\s+or\s+NEEDS-CHANGES", extra_s, re.I)
-    )
+    extra_kind = primary_verdict(extra_s) if extra_s else None
     if extra_s and extra_s not in texts:
-        if "NEEDS-CHANGES" in extra_s and not (instructional and not review_dimensions_ok(extra_s)):
+        if extra_kind == "NEEDS-CHANGES":
             texts.append(extra_s)
-        elif not captured and _looks_like_review_verdict(extra_s):
+        elif extra_kind == "PASS" and not captured:
             texts.append(extra_s)
     return texts, has_empty, round_items
 
@@ -328,7 +434,7 @@ def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, 
 def apply_review_verdict(entry: dict, text: str) -> bool:
     """按本轮 reviews[] 批次聚合写入 review_pass_ok。禁止自报 PASS。
 
-    不把父消息填进空 reviews[].text（那是 r20_capture.attach_review_text 的职责）。
+    不把父消息填进空 reviews[].text（capture 必须带审查者身份才 attach）。
     本轮存在空 text 的审查槽 → 不能 PASS。
     批次内任一 NEEDS-CHANGES、缺七维、或不干净 PASS → 整轮不通过。
     全部干净 PASS 且本轮审查槽均有正文才记 pass。
@@ -338,7 +444,7 @@ def apply_review_verdict(entry: dict, text: str) -> bool:
     texts, has_empty, round_items = _round_review_texts(entry, text)
     extra = (text or "").strip()
     if not round_items:
-        if extra and "NEEDS-CHANGES" in extra:
+        if extra and primary_verdict(extra) == "NEEDS-CHANGES":
             if entry.get("review_pass_ok") is not False:
                 entry["review_pass_ok"] = False
                 return True
@@ -349,9 +455,7 @@ def apply_review_verdict(entry: dict, text: str) -> bool:
             entry["review_pass_ok"] = False
             return True
         return False
-    all_pass = all(
-        review_verdict_ok(blob) and re.search(r"\bPASS\b", blob) for blob in texts
-    )
+    all_pass = all(primary_verdict(blob) == "PASS" and review_dimensions_ok(blob) for blob in texts)
     if all_pass and not entry.get("review_pass_ok"):
         entry["review_pass_ok"] = True
         return True
