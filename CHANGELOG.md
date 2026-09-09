@@ -9,7 +9,7 @@
 - **MCP spawn**：`.mcp.json` 与 Cursor 粘贴片段 `command: pwsh`。Qoder 仍 fork `powershell.exe` 时改宿主配置，不在包装脚本里保留 5.1 分支（`rules/MCP.md` §3b）。
 - **运行时**：`which_pwsh()` 只认 `pwsh`；live `scripts/*.ps1` 无 `#Requires -Version 5.1`。Cursor Guard **1.2.17**（`sync_runner` 只 spawn pwsh；缺则 BLOCKED；Shell 警告 `powershell`→pwsh，allow 不 deny）。
 - **validate_config V20**：钉 `powershell_min: "7.5"`、`package_manager: pnpm`、`pnpm_major: "11"`、`missing_tool: BLOCKED`、`python.installer: uv`、脚本 Requires、`which_pwsh` 不回退、mcp.json/Cursor 片段不得 `command: powershell`/`powershell.exe`、Guard `sync_runner` 须 `resolve_pwsh`、CLAUDE.md R15 不含「兜底」。
-- **审查修正**：活 MCP spawn 从 `powershell` 改为 `pwsh`（包装脚本 `#Requires 7.5` 否则会拒启）；V14 版本史取现行 Guard 戳（不再钉死 v20.19）；bootstrap 对 pyproject/requirements 回报 `uv`。V20 恢复 `package_manager: pnpm` 断言并识别无空格/`powershell.exe` JSON；Guard Shell 警告与 Claude `pre-bash-guard` 对齐；`resolve_pwsh` 运行时测试。
+- **审查修正**：活 MCP spawn 从 `powershell` 改为 `pwsh`（包装脚本 `#Requires 7.5` 否则会拒启）；V14 版本史取现行 Guard 戳（不再钉死 v20.19）；bootstrap 对 pyproject/requirements 回报 `uv`。V20 恢复 `package_manager: pnpm` 断言并识别无空格/`powershell.exe` JSON（含正例夹具与大小写）；Guard Shell 警告与 Claude `pre-bash-guard` 对齐（含 `.exe`）；`resolve_pwsh` / `run_sync_plan` 缺 pwsh 不 spawn；V14 钉 1.2.16 史留；live 脚本禁 pnpm→npm / pwsh→powershell 控制流回退。
 - **语言指针**：FRONTEND/BACKEND 与 catalog `RULES_{PYTHON,TYPESCRIPT,GO,JAVA,RUST,CSHARP,DART,RUBY}` 指向 yaml 地板，不在 alwaysApply 再加规则。
 
 ## v11.5.0 全新七维审查 + 图谱硬门 + 全栈可落地（2026-09-09）

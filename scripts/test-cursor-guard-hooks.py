@@ -664,6 +664,24 @@ def main() -> int:
         note="powershell is warn+allow (not deny); nudge pwsh/R9",
     )
 
+    for cmd, key in (
+        ("powershell.exe -File x.ps1", "shell_guard_powershell_exe_warn"),
+        ("POWERSHELL.EXE -File x.ps1", "shell_guard_powershell_exe_upper_warn"),
+    ):
+        r_exe = run_hook("shell_guard.py", {"command": cmd})
+        exe_out = r_exe.get("stdout") if isinstance(r_exe.get("stdout"), dict) else {}
+        exe_msg = stdout_text(r_exe)
+        results["tests"][key] = finish_case(
+            r_exe,
+            behavior=(
+                exe_out.get("permission") == "allow"
+                and "agent_message" in exe_out
+                and "pwsh" in exe_msg
+                and "R9" in exe_msg
+            ),
+            note=f"{cmd.split()[0]} is warn+allow (not deny); nudge pwsh/R9",
+        )
+
     r_pwsh_ok = run_hook("shell_guard.py", {"command": "pwsh -File x.ps1"})
     results["tests"]["shell_guard_pwsh_no_warn"] = finish_case(
         r_pwsh_ok,

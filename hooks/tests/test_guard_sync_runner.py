@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -49,9 +50,41 @@ def test_resolve_pwsh() -> None:
         check("missing which was pwsh", which.call_args == (("pwsh",),))
 
 
+def test_run_sync_plan_missing_pwsh_no_subprocess() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        claude = Path(td)
+        (claude / "scripts").mkdir()
+        (claude / "scripts" / "sync.ps1").write_text(
+            "#Requires -Version 7.5\n", encoding="utf-8"
+        )
+        plan = sr.SyncPlan(scope=sr.SyncScope.ALL, changed="t", messages=["t"])
+        with (
+            patch.object(sr.shutil, "which", return_value=None),
+            patch.object(
+                sr,
+                "load_guard_config",
+                return_value={
+                    "sync": {
+                        "auto_on_edit": True,
+                        "debounce_seconds": 0,
+                        "claude_home": claude,
+                    }
+                },
+            ),
+            patch.object(sr, "_debounced", return_value=False),
+            patch.object(sr.subprocess, "run") as run,
+        ):
+            ok, msg = sr.run_sync_plan(plan, force=True)
+            check("run_sync_plan missing pwsh blocked", ok is False)
+            check("run_sync_plan missing pwsh no subprocess", run.call_count == 0)
+            check("run_sync_plan missing names 7.5", "7.5" in msg)
+            check("run_sync_plan missing forbids 5.1", "5.1" in msg)
+
+
 def main() -> int:
     print("test_guard_sync_runner")
     test_resolve_pwsh()
+    test_run_sync_plan_missing_pwsh_no_subprocess()
     print(f"\n{len(PASSED)} passed, {len(FAILED)} failed")
     if FAILED:
         print("FAILED:", ", ".join(FAILED))

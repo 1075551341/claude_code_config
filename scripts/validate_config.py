@@ -38,6 +38,25 @@ ERRORS = []
 WARNINGS = []
 INFO = []
 
+# V20: MCP/JSON spawn of Windows PowerShell 5.1 (any spacing/case / .exe)
+V20_POWERSHELL_COMMAND_RE = re.compile(
+    r"""["']command["']\s*:\s*["']powershell(?:\.exe)?["']""",
+    re.IGNORECASE,
+)
+V20_SYNC_SPAWN_PS_RE = re.compile(
+    r"""(?:which\(|args\s*=\s*\[[^\]]*)["']powershell(?:\.exe)?["']""",
+    re.IGNORECASE | re.DOTALL,
+)
+# Control-flow fallbacks in live scripts (mentioning npm/powershell in comments is OK)
+V20_SCRIPT_PNPM_NPM_FALLBACK_RE = re.compile(
+    r"(?is)(?:-not|!)\s*\(?\s*Get-Command\s+['\"]?pnpm\b"
+    r"[\s\S]{0,400}?\bnpm\s+(?:install|i\b|run\b|exec\b|-g\b)",
+)
+V20_SCRIPT_PWSH_PS_FALLBACK_RE = re.compile(
+    r"(?is)(?:-not|!)\s*\(?\s*Get-Command\s+['\"]?pwsh\b"
+    r"[\s\S]{0,400}?powershell(?:\.exe)?",
+)
+
 CORE_AGENTS = {
     "planner", "code-explorer", "code-reviewer", "build-error-resolver",
     "architect", "spec-reviewer", "agentic-orchestrator",
@@ -781,6 +800,23 @@ def check_v14_cursor_guard_v11():
                 ERRORS.append(
                     f"V14: {rel} live Guard {found.group(1)!r} expected {expected!r}"
                 )
+        hist = (
+            ("hooks/README.md", r"\*\*v5\.19 变更[^\n]*1\.2\.16"),
+            ("docs/SYNC_GUIDE.md", r"v20\.21[^\n]*Guard 1\.2\.16"),
+            ("docs/CURSOR_EDITOR_SETUP.md", r"\*\*v1\.2\.16\*\*"),
+        )
+        for rel, pat in hist:
+            path = os.path.join(BASE, rel)
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    body = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: cannot read {rel} (history): {exc}")
+                continue
+            if not re.search(pat, body):
+                ERRORS.append(
+                    f"V14: {rel} missing historical Guard 1.2.16 stamp ({pat})"
+                )
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 
@@ -1217,10 +1253,7 @@ def check_v20_toolchain():
         except OSError as exc:
             ERRORS.append(f"V20: cannot read {rel}: {exc}")
             continue
-        if re.search(
-            r"""["']command["']\s*:\s*["']powershell(?:\.exe)?["']""",
-            live,
-        ):
+        if V20_POWERSHELL_COMMAND_RE.search(live):
             ERRORS.append(f"V20: {rel} still has command powershell; must spawn pwsh")
 
     sync_runner = os.path.join(
@@ -1232,11 +1265,7 @@ def check_v20_toolchain():
     except OSError as exc:
         ERRORS.append(f"V20: cannot read sync_runner.py: {exc}")
     else:
-        if re.search(
-            r"""(?:which\(|args\s*=\s*\[[^\]]*)["']powershell(?:\.exe)?["']""",
-            runner,
-            re.S,
-        ):
+        if V20_SYNC_SPAWN_PS_RE.search(runner):
             ERRORS.append("V20: Guard sync_runner must not spawn powershell")
         if "def resolve_pwsh" not in runner:
             ERRORS.append("V20: Guard sync_runner must define resolve_pwsh")
@@ -1273,6 +1302,14 @@ def check_v20_toolchain():
                 ERRORS.append(f"V20: scripts/{name} still has #Requires -Version 5.1")
             if "#Requires -Version 7.5" not in text:
                 ERRORS.append(f"V20: scripts/{name} missing #Requires -Version 7.5")
+            if V20_SCRIPT_PNPM_NPM_FALLBACK_RE.search(text):
+                ERRORS.append(
+                    f"V20: scripts/{name} falls back to npm when pnpm is missing"
+                )
+            if V20_SCRIPT_PWSH_PS_FALLBACK_RE.search(text):
+                ERRORS.append(
+                    f"V20: scripts/{name} falls back to powershell when pwsh is missing"
+                )
 
     gf = os.path.join(BASE, "hooks", "_lib", "graph_freshness.py")
     try:
