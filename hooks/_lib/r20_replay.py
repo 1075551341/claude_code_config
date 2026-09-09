@@ -9,7 +9,6 @@ import os
 import re
 import subprocess
 
-_VERDICT_RE = re.compile(r"\b(PASS|NEEDS-CHANGES)\b")
 _UNCLEAN_PASS_RE = re.compile(
     r"(未同步|须同步|应同步|存在文档漂移|注释不一致)"
 )
@@ -28,19 +27,27 @@ _FIELD_RE = re.compile(
     rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
-_VERDICT_LINE_RE = re.compile(
-    r"(?:^|\n)\s*(?:#{0,3}\s*)?(?:\*{0,2})?"
+_HEADING_RE = re.compile(
     r"(?:独立审查(?:\s*/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|"
-    r"Independent review|结论|判断|Verdict|状态)"
-    r"(?:\*{0,2})?\s*[：:]?\s*.{0,160}?\b(PASS|NEEDS-CHANGES)\b",
+    r"Independent\s+review|结论|判断|Verdict|状态)"
+    r"\b",
     re.I,
 )
 _INSTRUCTIONAL_VERDICT_RE = re.compile(
     r"\bPASS\s*(?:或|/|or)\s*NEEDS-CHANGES\b",
     re.I,
 )
+_PASS_TOKEN_RE = re.compile(r"\bPASS\b")
+_NEEDS_TOKEN_RE = re.compile(r"\bNEEDS-CHANGES\b")
 _SOLVED_LEGEND = re.compile(
-    r"^已解决\s*[|/]\s*未解决\s*[|/]\s*部分解决$"
+    r"已解决\s*[|/]\s*未解决\s*[|/]\s*部分解决"
+)
+_IDENTITY_KEYS = (
+    "agent_id",
+    "agent_name",
+    "agent_type",
+    "subagent_type",
+    "subagent",
 )
 _FIELD_BLANK = {"", ".", "..", "...", "…", "n/a", "na", "none"}
 _GRAPH_CMD_RE = re.compile(
@@ -152,10 +159,8 @@ def is_resumed_subagent(tool_input) -> bool:
 
 
 def review_verdict_ok(text: str) -> bool:
-    """v11.4：最后一条助手回复是否含独立审查结论标记（PASS / NEEDS-CHANGES）。"""
-    if not text or not text.strip():
-        return False
-    return bool(_VERDICT_RE.search(text))
+    """最后一条助手回复是否含独立审查结论（与 primary_verdict 同一口径）。"""
+    return primary_verdict(text) is not None
 
 
 DEFAULT_REVIEWER_AGENTS = (
@@ -199,27 +204,41 @@ def review_dimensions_ok(text: str) -> bool:
     solved = field_value(text, "问题是否解决")
     if not solved or solved.strip().lower() in _EMPTY_SATISFIED:
         return False
-    if _SOLVED_LEGEND.match(solved.strip()):
+    if _SOLVED_LEGEND.search(solved):
         return False
     return any(token in solved for token in _SOLVED_TOKENS)
 
 
+def _strip_verdict_markup(line: str) -> str:
+    s = (line or "").strip()
+    s = re.sub(r"^#{1,6}\s*", "", s)
+    s = re.sub(r"^[-*]\s+", "", s)
+    return s.strip("*").strip()
+
+
 def primary_verdict(text: str) -> str | None:
-    """只认标题/结论行上的 PASS 或 NEEDS-CHANGES，不扫正文子串。"""
-    last_span = ""
-    last_kind = None
-    for match in _VERDICT_LINE_RE.finditer(text or ""):
-        last_span = match.group(0)
-        last_kind = match.group(1).upper()
-    if not last_span or not last_kind:
-        return None
-    if _INSTRUCTIONAL_VERDICT_RE.search(last_span):
-        return None
-    if last_kind == "NEEDS-CHANGES":
-        return "NEEDS-CHANGES"
-    if last_kind == "PASS":
-        return "PASS"
-    return None
+    """只认标题/结论行上的 PASS 或 NEEDS-CHANGES。
+
+    整行解析（禁止 ``.{0,160}?`` 截到第一个 PASS）；教学句
+    ``PASS 或|/|or NEEDS-CHANGES`` 与同行同时出现两种结论均跳过。
+    最后一条真实结论胜出。不扫正文子串。
+    """
+    last = None
+    for raw in (text or "").splitlines():
+        line = _strip_verdict_markup(raw)
+        if not line or not _HEADING_RE.search(line):
+            continue
+        if _INSTRUCTIONAL_VERDICT_RE.search(line):
+            continue
+        has_pass = bool(_PASS_TOKEN_RE.search(line))
+        has_needs = bool(_NEEDS_TOKEN_RE.search(line))
+        if has_pass and has_needs:
+            continue
+        if has_needs:
+            last = "NEEDS-CHANGES"
+        elif has_pass:
+            last = "PASS"
+    return last
 
 
 def normalize_reviewer(name: str, reviewer_agents=None) -> str:
@@ -230,31 +249,22 @@ def normalize_reviewer(name: str, reviewer_agents=None) -> str:
 
 
 def reviewer_source_from_payload(data, tool_input=None) -> str | None:
-    """从 hook 载荷的身份字段识别审查者。禁止扫描正文（避免父消息点名抢槽）。"""
+    """从 hook 载荷的身份字段识别审查者。
+
+    只读 ``agent`` / ``agent_id`` / ``subagent_type`` 等身份键。
+    禁止扫描 ``text``、``prompt``、``description``（父消息点名或
+    ``input.prompt`` 不得抢槽）。Task 委派身份由 tracker 的 ``source=`` 传入。
+    """
     names: list[str] = []
-    blob = tool_input if isinstance(tool_input, dict) else None
-    if blob is None and isinstance(data, dict):
-        maybe = data.get("tool_input") or data.get("input") or data.get("arguments")
-        blob = maybe if isinstance(maybe, dict) else None
-    if isinstance(blob, dict):
-        ident = identify_reviewer(reviewer_dispatch_blob(blob))
-        if ident:
-            return ident
-        st = blob.get("subagent_type")
-        if isinstance(st, str) and st.strip():
-            names.append(st.strip())
-    if isinstance(data, dict):
-        for key in (
-            "agent_id",
-            "agent_name",
-            "agent_type",
-            "subagent_type",
-            "subagent",
-        ):
-            val = data.get(key)
+
+    def add_identity(blob) -> None:
+        if not isinstance(blob, dict):
+            return
+        for key in _IDENTITY_KEYS:
+            val = blob.get(key)
             if isinstance(val, str) and val.strip():
                 names.append(val.strip())
-        agent = data.get("agent")
+        agent = blob.get("agent")
         if isinstance(agent, str) and agent.strip():
             names.append(agent.strip())
         elif isinstance(agent, dict):
@@ -262,6 +272,12 @@ def reviewer_source_from_payload(data, tool_input=None) -> str | None:
                 val = agent.get(key)
                 if isinstance(val, str) and val.strip():
                     names.append(val.strip())
+
+    add_identity(tool_input if isinstance(tool_input, dict) else None)
+    if isinstance(data, dict):
+        add_identity(data)
+        for nest in ("tool_input", "input", "arguments"):
+            add_identity(data.get(nest))
     for name in names:
         ident = identify_reviewer(name)
         if ident:

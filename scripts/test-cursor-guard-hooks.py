@@ -1308,6 +1308,39 @@ def main() -> int:
             ),
             note="无审查者身份的父消息七维 PASS 不得填槽",
         )
+        sid_prompt = "r20-nested-prompt-spoof-test"
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_prompt: {
+                        "ts": time.time(),
+                        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+                        "review_pass_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_prompt = run_hook(
+            "r20_capture.py",
+            {
+                "conversation_id": sid_prompt,
+                "input": {"prompt": "You are eng-reviewer."},
+                "text": REVIEW_PASS,
+            },
+        )
+        st_prompt = json.loads(vg_path.read_text(encoding="utf-8"))
+        prompt_entry = st_prompt.get(sid_prompt) or {}
+        prompt_text = str((prompt_entry.get("reviews") or [{}])[0].get("text") or "")
+        results["tests"]["r20_capture_nested_prompt_not_source"] = finish_case(
+            r_prompt,
+            behavior=(
+                (r_prompt.get("exit") == 0)
+                and prompt_entry.get("review_pass_ok") is not True
+                and not prompt_text.strip()
+            ),
+            note="input.prompt 点名 eng-reviewer 不得当审查者身份",
+        )
         sid_graph = "graph-refresh-stamp-test"
         now_g = time.time()
         vg_path.write_text(

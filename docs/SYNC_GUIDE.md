@@ -260,7 +260,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
-- **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.13；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。
+- **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.14；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。
 - **v20.18 (v11.4.13)**：MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；sync.ps1 仍不复制编辑器 mcp.json。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
 - **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。

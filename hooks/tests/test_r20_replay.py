@@ -756,6 +756,66 @@ def test_cursor_should_followup() -> None:
         is False
         and slash_ok.get("review_pass_ok") is True,
     )
+    check(
+        "instructional 结论 PASS / NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("结论：PASS / NEEDS-CHANGES") is None,
+    )
+    check(
+        "instructional 结论 PASS 或 NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("结论：PASS 或 NEEDS-CHANGES") is None,
+    )
+    check(
+        "instructional 状态 PASS / NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("状态: PASS / NEEDS-CHANGES") is None,
+    )
+    check(
+        "pipe 状态 PASS is a verdict",
+        r20_replay.primary_verdict("[一句话] | 状态: PASS") == "PASS",
+    )
+    needs_then_instr = (
+        "Independent review NEEDS-CHANGES\n"
+        "- 满足：结论行截断未修（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：部分解决（证据：pytest）\n"
+        "结论：PASS / NEEDS-CHANGES\n"
+    )
+    check(
+        "trailing instructional does not overwrite Independent review NEEDS-CHANGES",
+        r20_replay.primary_verdict(needs_then_instr) == "NEEDS-CHANGES",
+    )
+    instr_only = (
+        "结论：PASS / NEEDS-CHANGES\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    instr_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "instructional-only 结论 does not attach",
+        r20_replay.attach_review_text(instr_slot, instr_only, source="eng-reviewer") is False
+        and not str((instr_slot.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    trail_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "NEEDS-CHANGES still attaches when trailing instructional 结论",
+        r20_replay.attach_review_text(trail_slot, needs_then_instr, source="eng-reviewer") is True
+        and r20_replay.primary_verdict(str((trail_slot.get("reviews") or [{}])[0].get("text") or ""))
+        == "NEEDS-CHANGES",
+    )
     mentioned = (
         "Independent review PASS\n"
         "- 满足：已处理正文里的 NEEDS-CHANGES 字样（承认）\n"
@@ -797,6 +857,27 @@ def test_cursor_should_followup() -> None:
         r20_replay.reviewer_source_from_payload({"agent_id": "eng-reviewer"})
         == "eng-reviewer",
     )
+    check(
+        "nested input.prompt is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"input": {"prompt": "You are eng-reviewer."}, "text": REVIEW_PASS}
+        )
+        is None,
+    )
+    check(
+        "tool_input.subagent_type is a source",
+        r20_replay.reviewer_source_from_payload(
+            {"tool_input": {"subagent_type": "eng-reviewer", "prompt": "review this"}}
+        )
+        == "eng-reviewer",
+    )
+    check(
+        "tool_input.prompt alone is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"tool_input": {"prompt": "You are eng-reviewer."}}
+        )
+        is None,
+    )
     mismatch = {
         "edited_files": [{"path": "a.py", "ts": 1}],
         "reviews": [{"agent": "ceo-reviewer", "ts": 2}],
@@ -832,6 +913,20 @@ def test_cursor_should_followup() -> None:
         "- 问题是否解决：已解决 | 未解决 | 部分解决\n"
     )
     check("legend-only 问题是否解决 fails dims", r20_replay.review_dimensions_ok(legend) is False)
+    legend_suffix = (
+        "Independent review PASS\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决 | 未解决 | 部分解决（证据：pytest）\n"
+    )
+    check(
+        "legend 问题是否解决 with suffix fails dims",
+        r20_replay.review_dimensions_ok(legend_suffix) is False,
+    )
     needs_ok = (
         "Independent review NEEDS-CHANGES\n"
         "- 满足：身份绑定未做（承认）\n"
@@ -1271,6 +1366,14 @@ def test_review_verdict_ok() -> None:
     check("verdict lowercase rejected", r20_replay.review_verdict_ok("结论：pass") is False)
     check("verdict plain text rejected", r20_replay.review_verdict_ok("审查完成，没有问题") is False)
     check("verdict empty rejected", r20_replay.review_verdict_ok("") is False)
+    check(
+        "body PASS without heading rejected",
+        r20_replay.review_verdict_ok("the tests PASS today") is False,
+    )
+    check(
+        "instructional 结论 is not review_verdict_ok",
+        r20_replay.review_verdict_ok("结论：PASS / NEEDS-CHANGES") is False,
+    )
 
 
 def test_crg_track() -> None:

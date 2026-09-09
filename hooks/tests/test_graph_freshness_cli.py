@@ -126,6 +126,10 @@ def test_plugin_once_markers() -> None:
     vg_text = vg.read_text(encoding="utf-8")
     check("verify-gate 影响范围", "影响范围" in vg_text)
     check("verify-gate r20_check mention", "r20_check.py" in vg_text)
+    check("verify-gate 问题是否解决", "问题是否解决" in vg_text)
+    check("verify-gate line verdict", "primaryVerdict" in vg_text)
+    check("verify-gate review_max_rounds", "review_max_rounds=5" in vg_text)
+    check("verify-gate no old round cap", "最多 3 轮" not in vg_text)
 
 
 def test_r20_check_portable() -> None:

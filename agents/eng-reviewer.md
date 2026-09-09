@@ -54,6 +54,8 @@ source: garrytan/gstack
 架构: X/10 | 质量: X/10 | 测试: X/10 | 性能: X/10
 ```
 
+结论行只填 PASS 或 NEEDS-CHANGES 其一；模板里的「PASS / NEEDS-CHANGES」是说明，机械门会忽略教学句。问题是否解决须选已解决/未解决/部分解决其一，不要整段复制图例。
+
 ## 边界
 
 不负责：产品决策（→ ceo-reviewer）、UI 视觉（→ designer）、安全深审（→ security-reviewer）、落实修改（→ change-implementer）
