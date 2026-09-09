@@ -11,7 +11,7 @@
 - **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
 - **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.15**（结论标题 Unicode 边界）。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
 - **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论（PASS 与 NEEDS-CHANGES 均须七维）；并行空槽按审查者身份填（无身份不填，禁止父会话抢槽）；父消息不完整 PASS / 门控「PASS 或/or NEEDS-CHANGES」不得毒化已捕获正文；换行空「满足：」不得吞下一字段，同名字段取最后非空。结论只认标题/结论行：整行解析，跳过教学句与同行双结论，最后一条真实结论胜出（禁止截到第一个 PASS）。标题用 Unicode 字母边界（禁止把 Python `\\b` 搬进 JS；「当前状态」不得当结论行）。`reviewer_source_from_payload` 只读身份字段，不扫 `text`/`prompt`/`description`。`review_verdict_ok` 与 `primary_verdict` 同一口径。图例「已解决 | 未解决 | 部分解决」带后缀仍拒填。便携 `r20_check.py` 导入 `r20_replay`（禁止再复制正则）；OpenCode `verify-gate.ts` 结论行与七维对齐（禁止 spawn `gate_cli.py`）。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。Cursor Guard **1.2.15**。
-- **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。
+- **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。V14 核现行文档身份戳（`hooks/README.md` Cursor 段 / README 当前 / SETUP 首条 / SPEC / SYNC 版本史）须等于 `guard_version`，避免只改模板版本留下旧现行句。
 
 ## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）
 

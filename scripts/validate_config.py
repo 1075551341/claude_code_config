@@ -741,6 +741,44 @@ def check_v14_cursor_guard_v11():
             )
     except OSError as exc:
         ERRORS.append(f"V14: MANIFEST.yaml unreadable: {exc}")
+
+    def _section_after(text: str, heading: str | None) -> str:
+        if not heading:
+            return text
+        idx = text.find(heading)
+        if idx < 0:
+            return ""
+        rest = text[idx:]
+        nxt = rest.find("\n## ", 1)
+        return rest if nxt < 0 else rest[:nxt]
+
+    if expected:
+        live_stamps = (
+            ("hooks/README.md", "## Cursor 编辑器", r"Cursor Guard v(\d+\.\d+\.\d+)"),
+            ("README.md", "## 版本", r"当前：[^\n]*Guard (\d+\.\d+\.\d+)"),
+            ("docs/CURSOR_EDITOR_SETUP.md", None, r"\*\*v(\d+\.\d+\.\d+)\*\*"),
+            ("SPEC.md", None, r"Cursor Guard 运行时 23（v(\d+\.\d+\.\d+)）"),
+            ("docs/SYNC_GUIDE.md", "## 版本史", r"v20\.19[^\n]*Guard (\d+\.\d+\.\d+)"),
+        )
+        for rel, heading, pat in live_stamps:
+            path = os.path.join(BASE, rel)
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    body = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: cannot read {rel}: {exc}")
+                continue
+            chunk = _section_after(body, heading)
+            if heading and not chunk:
+                ERRORS.append(f"V14: {rel} missing heading {heading!r}")
+                continue
+            found = re.search(pat, chunk)
+            if not found:
+                ERRORS.append(f"V14: {rel} missing live Guard version stamp")
+            elif found.group(1) != expected:
+                ERRORS.append(
+                    f"V14: {rel} live Guard {found.group(1)!r} expected {expected!r}"
+                )
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 
