@@ -24,7 +24,7 @@ _FIELD_NAMES = (
     "满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决"
 )
 _FIELD_RE = re.compile(
-    rf"(?:^|\n)\s*-?\s*({_FIELD_NAMES})\s*[：:]\s*(.*?)(?="
+    rf"(?:^|\n)\s*-?\s*({_FIELD_NAMES})\s*[：:][ \t]*(.*?)(?="
     rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
@@ -261,9 +261,8 @@ def attach_review_text(entry: dict, text: str) -> bool:
     blob = (text or "").strip()
     if not blob or not isinstance(entry, dict):
         return False
-    if "NEEDS-CHANGES" not in blob:
-        if not (_looks_like_review_verdict(blob) and review_dimensions_ok(blob)):
-            return False
+    if not _looks_like_review_verdict(blob) or not review_dimensions_ok(blob):
+        return False
     round_reviews = _current_round_reviews(entry)
     last_empty = None
     for item in round_reviews:
@@ -315,8 +314,11 @@ def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, 
             captured.append(body)
     extra_s = (extra or "").strip()
     texts = list(captured)
+    instructional = bool(
+        re.search(r"PASS\s*或\s*NEEDS-CHANGES|PASS\s+or\s+NEEDS-CHANGES", extra_s, re.I)
+    )
     if extra_s and extra_s not in texts:
-        if "NEEDS-CHANGES" in extra_s:
+        if "NEEDS-CHANGES" in extra_s and not (instructional and not review_dimensions_ok(extra_s)):
             texts.append(extra_s)
         elif not captured and _looks_like_review_verdict(extra_s):
             texts.append(extra_s)

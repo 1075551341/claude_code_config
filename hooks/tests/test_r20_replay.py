@@ -686,6 +686,61 @@ def test_cursor_should_followup() -> None:
         )
         is False,
     )
+    needs_no_dims = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "attach rejects NEEDS-CHANGES without seven dims",
+        r20_replay.attach_review_text(needs_no_dims, "Verdict: NEEDS-CHANGES") is False
+        and not str((needs_no_dims.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    blank_sat = (
+        "Independent review PASS\n"
+        "- 满足：\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    check(
+        "blank 满足 line is empty field",
+        r20_replay.field_value(blank_sat, "满足") == "",
+    )
+    check(
+        "blank 满足 does not swallow 遗漏",
+        r20_replay.field_value(blank_sat, "遗漏") == "无",
+    )
+    check(
+        "blank 满足 line fails seven dims",
+        r20_replay.review_dimensions_ok(blank_sat) is False,
+    )
+    check(
+        "attach rejects blank 满足 PASS",
+        r20_replay.attach_review_text(
+            {
+                "edited_files": [{"path": "a.py", "ts": 1}],
+                "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+            },
+            blank_sat,
+        )
+        is False,
+    )
+    captured_ok = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+        "review_pass_ok": True,
+    }
+    check(
+        "instructional PASS 或 NEEDS-CHANGES does not poison",
+        r20_replay.apply_review_verdict(
+            captured_ok, "回贴完整清单与 PASS 或 NEEDS-CHANGES"
+        )
+        is False
+        and captured_ok.get("review_pass_ok") is True,
+    )
     parallel = {
         "edited_files": [{"path": "a.py", "ts": 1}],
         "reviews": [
