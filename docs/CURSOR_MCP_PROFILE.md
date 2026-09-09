@@ -28,7 +28,7 @@ everything 与 everything-claude-code 插件不是同一物（后者禁止安装
 ```json
 "everything": {
   "type": "stdio",
-  "command": "powershell",
+  "command": "pwsh",
   "args": [
     "-NoProfile",
     "-ExecutionPolicy",

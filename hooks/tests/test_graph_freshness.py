@@ -646,6 +646,28 @@ def test_which_pwsh_pwsh_only() -> None:
         "which_pwsh does not fall back to powershell",
         'which_tool("powershell")' not in src,
     )
+    orig = gf.which_tool
+    skip = os.environ.pop("GRAPH_FRESHNESS_SKIP_SYNC", None)
+    orig_home = os.environ.get("CLAUDE_HOME")
+    os.environ["CLAUDE_HOME"] = str(HOOKS_DIR.parent)
+    try:
+        gf.which_tool = lambda name: None  # type: ignore[method-assign]
+        ok, msg = gf.run_sync_ps1(timeout_sec=1)
+        check("missing pwsh is blocked", ok is False)
+        check("missing pwsh names 7.5+", "7.5" in msg)
+        check("missing pwsh forbids 5.1", "5.1" in msg)
+        check(
+            "missing pwsh does not invoke powershell",
+            "pwsh/powershell" not in msg,
+        )
+    finally:
+        gf.which_tool = orig  # type: ignore[method-assign]
+        if skip is not None:
+            os.environ["GRAPH_FRESHNESS_SKIP_SYNC"] = skip
+        if orig_home is None:
+            os.environ.pop("CLAUDE_HOME", None)
+        else:
+            os.environ["CLAUDE_HOME"] = orig_home
 
 
 def main() -> int:

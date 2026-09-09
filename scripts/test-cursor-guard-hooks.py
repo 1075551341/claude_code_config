@@ -9,7 +9,7 @@
 被测对象默认是 ~/.cursor/hooks 已部署副本。无部署、或
 CURSOR_GUARD_USE_TEMPLATES=1 时，用仓库 templates/cursor-guard 铺到 ~/.cursor。
 CLAUDE_HOME 指向配置仓（含 hooks/_lib）以便加载现行 r20_replay。
-改了 templates/cursor-guard/ 后也可：powershell -File scripts/deploy-cursor-guard.ps1
+改了 templates/cursor-guard/ 后也可：pwsh -File scripts/deploy-cursor-guard.ps1
 一般不直接调本脚本，用上层封装：scripts/test-cursor-guard-regression.ps1（自动清状态 + 设 UTF-8）。
 退出码：0 = 全部通过；非 0 = 有用例失败。
 """

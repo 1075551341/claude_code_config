@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -56,9 +57,17 @@ def run_sync_plan(plan: SyncPlan, force: bool = False) -> tuple[bool, str]:
     if not sync_script.exists():
         return False, f"sync.ps1 不存在: {sync_script}"
 
+    pwsh = shutil.which("pwsh")
+    if not pwsh:
+        return False, (
+            "pwsh 未找到。安装 PowerShell 7.5+："
+            "winget install --id Microsoft.PowerShell。"
+            "禁止使用 Windows PowerShell 5.1。"
+        )
     ps_scope = scope_to_ps1_arg(plan.scope)
     args = [
-        "powershell",
+        pwsh,
+        "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
         "-File",

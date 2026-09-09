@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "guard_version": "1.2.15",
+  "guard_version": "1.2.16",
   "hooks": {
     "sessionStart": [
       {

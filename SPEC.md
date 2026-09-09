@@ -59,7 +59,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
 | 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 8 + glob 3（FRONTEND/BACKEND/DATABASE；不含 README）                                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 18     | 注册激活 18 + 未注册 5 + 分发器 2（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.15）                                                              |
+| 全局 hooks   | 18     | 注册激活 18 + 未注册 5 + 分发器 2（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.16）                                                              |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；开关 SSOT → `rules/MCP.md` 验证清单（context7/exa/playwright/firecrawl=true；chrome-devtools/github=false；不写 MCP）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -360,4 +360,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.5.0 | 日期：2026-09-09 | 五柱×五阶段×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；review_max_rounds=5）+ 全栈 glob + Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N
+> 版本：11.6.0 | 日期：2026-09-09 | 五柱×五阶段×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；review_max_rounds=5）+ 全栈 glob + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N

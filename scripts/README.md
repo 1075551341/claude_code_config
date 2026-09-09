@@ -192,5 +192,5 @@ python scripts\audit_hooks.py    # 核对 20 个注册项与 matcher（含 mcp__
 ## 说明
 
 - 脚本内注释与界面文案以中文为主；部分技术字段名保持英文。
-- `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 Windows PowerShell 5.1 正确解析中文。
+- `sync.ps1`、`fix.ps1` 源文件使用 **UTF-8（含 BOM）** 保存，便于 `pwsh` 7.5+ 正确解析中文。
 - **文档与脚本版本对齐（v11.1.0）**：`sync.ps1` **v20.0**（多编辑器 1+N，`sync.sh` 已删除），`fix.ps1` v5.x，`check.ps1` v3.x；以各脚本文件头注释为准。

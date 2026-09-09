@@ -574,7 +574,13 @@ foreach ($t in $runtimeTools) {
         $ver = & $t.C --version 2>&1 | Select-Object -First 1
         Add-Check "Runtime" $t.N "pass" $ver
     } else {
-        Add-Check "Runtime" $t.N (if ($t.Req) { "fail" } else { "warn" }) "Not installed$(if(-not $t.Req){' (optional)'})"
+        Add-Check "Runtime" $t.N (if ($t.Req) { "fail" } else { "warn" }) $(
+            if ($t.C -eq "pnpm") {
+                "Not installed — corepack enable && corepack prepare pnpm@11 --activate"
+            } else {
+                "Not installed$(if(-not $t.Req){' (optional)'})"
+            }
+        )
     }
 }
 

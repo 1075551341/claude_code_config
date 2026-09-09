@@ -26,6 +26,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.16**：`sync_runner` 只 spawn `pwsh`（缺则 BLOCKED）。与 live `sync.ps1` `#Requires -Version 7.5` 对齐。
 **v1.2.15**：结论标题按 Unicode 字母边界（OpenCode 不用 JS `\\b` 配中文；「当前状态」不得当结论行）。
 **v1.2.14**：结论整行解析（跳过「PASS 或/or NEEDS-CHANGES」教学句，最后一条真实结论胜出）；`reviewer_source_from_payload` 不读 `prompt`/`description`。OpenCode `verify-gate.ts` 与 Python SSOT 对齐。
 **v1.2.13**：审查填槽必须绑定审查者身份（无身份的父消息不得抢槽）；结论只认标题/结论行。`r20_check.py` 导入 `r20_replay`。

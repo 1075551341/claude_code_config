@@ -760,7 +760,7 @@ def check_v14_cursor_guard_v11():
             ("README.md", "## 版本", r"当前：[^\n]*Guard (\d+\.\d+\.\d+)"),
             ("docs/CURSOR_EDITOR_SETUP.md", None, r"\*\*v(\d+\.\d+\.\d+)\*\*"),
             ("SPEC.md", None, r"Cursor Guard 运行时 23（v(\d+\.\d+\.\d+)）"),
-            ("docs/SYNC_GUIDE.md", "## 版本史", r"v20\.19[^\n]*Guard (\d+\.\d+\.\d+)"),
+            ("docs/SYNC_GUIDE.md", "## 版本史", r"Guard \**(\d+\.\d+\.\d+)"),
         )
         for rel, heading, pat in live_stamps:
             path = os.path.join(BASE, rel)
@@ -1187,8 +1187,50 @@ def check_v20_toolchain():
         pkg = (m.group(1) if m else "").strip()
     if ps_min != "7.5":
         ERRORS.append(f"V20: windows.powershell_min={ps_min!r} expected '7.5'")
-    if pkg != "pnpm":
-        ERRORS.append(f"V20: node.package_manager={pkg!r} expected 'pnpm'")
+    python_cfg = data.get("python") if isinstance(data.get("python"), dict) else {}
+    missing_tool = str(data.get("missing_tool") or "")
+    pnpm_major = str(node.get("pnpm_major") or "")
+    py_installer = str(python_cfg.get("installer") or "")
+    if not missing_tool:
+        m = re.search(r"missing_tool:\s*(\S+)", raw)
+        missing_tool = (m.group(1) if m else "").strip()
+    if not pnpm_major:
+        m = re.search(r'pnpm_major:\s*"([^"]+)"', raw)
+        pnpm_major = m.group(1) if m else ""
+    if not py_installer:
+        m = re.search(r"installer:\s*(\S+)", raw)
+        py_installer = (m.group(1) if m else "").strip()
+    if missing_tool != "BLOCKED":
+        ERRORS.append(f"V20: missing_tool={missing_tool!r} expected 'BLOCKED'")
+    if pnpm_major != "11":
+        ERRORS.append(f"V20: node.pnpm_major={pnpm_major!r} expected '11'")
+    if py_installer != "uv":
+        ERRORS.append(f"V20: python.installer={py_installer!r} expected 'uv'")
+
+    for rel in (".mcp.json", "docs/CURSOR_MCP_PROFILE.md"):
+        live_path = os.path.join(BASE, rel)
+        try:
+            with open(live_path, "r", encoding="utf-8") as fh:
+                live = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V20: cannot read {rel}: {exc}")
+            continue
+        if '"command": "powershell"' in live:
+            ERRORS.append(f"V20: {rel} still has command powershell; must spawn pwsh")
+
+    sync_runner = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "_lib", "sync_runner.py"
+    )
+    try:
+        with open(sync_runner, "r", encoding="utf-8") as fh:
+            runner = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read sync_runner.py: {exc}")
+    else:
+        if re.search(r'args\s*=\s*\[[^\]]*"powershell"', runner, re.S):
+            ERRORS.append("V20: Guard sync_runner must not spawn powershell")
+        if "shutil.which(\"pwsh\")" not in runner and "shutil.which('pwsh')" not in runner:
+            ERRORS.append("V20: Guard sync_runner must resolve pwsh")
 
     scripts_dir = os.path.join(BASE, "scripts")
     if os.path.isdir(scripts_dir):
