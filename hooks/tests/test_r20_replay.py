@@ -36,7 +36,19 @@ VALID = (
     "- 漏改：无文档影响\n"
     "- 原功能：保持（证据：python hooks/tests/test_r20_replay.py）\n"
     "- 影响范围：已审查 CRG get_impact_radius 与 IMPACT 清单，与本次编辑一致\n"
+    "- 问题是否解决：已解决（证据：python hooks/tests/test_r20_replay.py）\n"
     "结论：DONE"
+)
+SOLVED_LINE = "- 问题是否解决：已解决（证据：python hooks/tests/test_r20_replay.py）\n"
+REVIEW_PASS = (
+    "Independent review PASS\n"
+    "- 满足：需求已落地（承认）\n"
+    "- 遗漏：无\n"
+    "- 错改：无\n"
+    "- 漏改：无文档影响\n"
+    "- 原功能：保持（证据：pytest）\n"
+    "- 影响范围：CRG get_impact_radius\n"
+    "- 问题是否解决：已解决（证据：pytest）\n"
 )
 IMPACT_LINE = "- 影响范围：已审查 CRG get_impact_radius 与 IMPACT 清单\n"
 
@@ -122,6 +134,7 @@ def test_path_in_lougai_ok() -> None:
         "## 会话终验（R20）\n- 满足：同步文档\n- 遗漏：无\n- 错改：无\n"
         "- 漏改：已同步 CHANGELOG.md\n- 原功能：保持（证据：冒烟跑通 test_r20_replay）\n"
         + IMPACT_LINE
+        + SOLVED_LINE
     )
     check("漏改路径 accepted", r20_replay.replay_ok(text) is True)
 
@@ -136,9 +149,16 @@ def test_missing_impact_rejected() -> None:
     empty_impact = (
         "## 会话终验（R20）\n- 满足：同步文档\n- 遗漏：无\n- 错改：无\n"
         "- 漏改：无文档影响\n- 原功能：保持（证据：pytest）\n"
-        "- 影响范围：无\n结论：DONE"
+        "- 影响范围：无\n" + SOLVED_LINE + "结论：DONE"
     )
     check("empty 影响范围 rejected", r20_replay.replay_ok(empty_impact) is False)
+    missing_solved = (
+        "## 会话终验（R20）\n- 满足：同步文档\n- 遗漏：无\n- 错改：无\n"
+        "- 漏改：无文档影响\n- 原功能：保持（证据：pytest）\n"
+        + IMPACT_LINE
+        + "结论：DONE"
+    )
+    check("missing 问题是否解决 rejected", r20_replay.replay_ok(missing_solved) is False)
 
 
 def test_missing_marker() -> None:
@@ -326,8 +346,9 @@ def test_cursor_should_followup() -> None:
                 "non_simple": True,
                 "edited_files": [{"path": "a.py", "ts": 1}],
                 "verify_commands": [{"command": "pytest", "ts": 2}],
+                "last_pre_review_graph_ts": 3,
             },
-            {"review_max_rounds": 3, "require_reviewer_min_files": 3},
+            {"review_max_rounds": 5, "require_reviewer_min_files": 3},
         )
         is True,
     )
@@ -382,9 +403,31 @@ def test_cursor_should_followup() -> None:
                 "verify_commands": [{"command": "pytest", "ts": 5}],
                 "reviews": [{"agent": "eng-reviewer", "ts": 3}],
                 "review_rounds": 1,
+                "last_pre_review_graph_ts": 6,
             }
         )
         == "review",
+    )
+    check(
+        "verified but stale graph is graph phase",
+        r20_replay.dual_pass_phase(
+            {
+                "edited_files": [{"path": "a.py", "ts": 4}],
+                "verify_commands": [{"command": "pytest", "ts": 5}],
+            }
+        )
+        == "graph",
+    )
+    check(
+        "session last_graph_refresh_ts does not unlock review",
+        r20_replay.dual_pass_phase(
+            {
+                "edited_files": [{"path": "a.py", "ts": 4}],
+                "verify_commands": [{"command": "pytest", "ts": 5}],
+                "last_graph_refresh_ts": 6,
+            }
+        )
+        == "graph",
     )
     check(
         "modify phase does not ask review-only",
@@ -404,9 +447,9 @@ def test_cursor_should_followup() -> None:
             {
                 "non_simple": True,
                 "edited_files": [{"path": "a.py", "ts": 1}],
-                "review_rounds": 3,
+                "review_rounds": 5,
             },
-            {"review_max_rounds": 3},
+            {"review_max_rounds": 5},
         )
         is False,
     )
@@ -416,9 +459,9 @@ def test_cursor_should_followup() -> None:
             {
                 "non_simple": True,
                 "edited_files": [{"path": "a.py", "ts": 1}],
-                "review_rounds": 3,
+                "review_rounds": 5,
             },
-            {"review_max_rounds": 3},
+            {"review_max_rounds": 5},
         )
         == "capped",
     )
@@ -484,12 +527,12 @@ def test_cursor_should_followup() -> None:
         is True,
     )
     check(
-        "md only not dual pass",
+        "md only is dual pass",
         r20_replay.dual_pass_in_scope(
             {"edited_files": [{"path": "README.md", "ts": 1}]},
             {"require_reviewer_min_files": 1},
         )
-        is False,
+        is True,
     )
     check(
         "is_plan_mode payload skips",
@@ -502,20 +545,35 @@ def test_cursor_should_followup() -> None:
     empty = {}
     check(
         "PASS without reviews ignored",
-        r20_replay.apply_review_verdict(empty, "Independent review PASS") is False
+        r20_replay.apply_review_verdict(empty, REVIEW_PASS) is False
         and empty.get("review_pass_ok") is not True,
     )
     with_rev = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    applied_empty = r20_replay.apply_review_verdict(with_rev, REVIEW_PASS)
     check(
-        "PASS with reviews sets ok",
-        r20_replay.apply_review_verdict(with_rev, "Independent review PASS") is True
-        and with_rev.get("review_pass_ok") is True,
+        "apply_review_verdict does not fill empty review text",
+        not str((with_rev.get("reviews") or [{}])[0].get("text") or "").strip(),
     )
-    unclean = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    check(
+        "empty review text cannot PASS",
+        applied_empty is True and with_rev.get("review_pass_ok") is not True,
+    )
+    filled = {"reviews": [{"agent": "eng-reviewer", "ts": 1, "text": REVIEW_PASS}]}
+    check(
+        "PASS with review text sets ok",
+        r20_replay.apply_review_verdict(filled, "") is True
+        and filled.get("review_pass_ok") is True,
+    )
+    no_dims = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    check(
+        "PASS without seven dims is unclean",
+        r20_replay.apply_review_verdict(no_dims, "Independent review PASS") is True
+        and no_dims.get("review_pass_ok") is False,
+    )
+    unclean = {"reviews": [{"agent": "eng-reviewer", "ts": 1, "text": REVIEW_PASS.replace("PASS", "PASS；README 须同步")}]}
     check(
         "PASS with 须同步 is unclean",
-        r20_replay.apply_review_verdict(unclean, "Independent review PASS；README 须同步")
-        is True
+        r20_replay.apply_review_verdict(unclean, "") is True
         and unclean.get("review_pass_ok") is False,
     )
     needs = {"reviews": [{"agent": "eng-reviewer", "ts": 1}], "review_pass_ok": True}
@@ -523,6 +581,440 @@ def test_cursor_should_followup() -> None:
         "NEEDS-CHANGES clears pass",
         r20_replay.apply_review_verdict(needs, "Verdict: NEEDS-CHANGES") is True
         and needs.get("review_pass_ok") is False,
+    )
+    review_needs = REVIEW_PASS.replace("PASS", "NEEDS-CHANGES").replace("已解决", "未解决")
+    batch = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [
+            {"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS},
+            {"agent": "ceo-reviewer", "ts": 3, "text": review_needs},
+        ],
+    }
+    check(
+        "batch NEEDS-CHANGES beats PASS",
+        r20_replay.apply_review_verdict(batch, REVIEW_PASS) is True
+        and batch.get("review_pass_ok") is False,
+    )
+    stale = {
+        "edited_files": [{"path": "a.py", "ts": 5}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+    }
+    check(
+        "parent PASS after new edit ignored",
+        r20_replay.apply_review_verdict(stale, REVIEW_PASS) is False
+        and stale.get("review_pass_ok") is not True,
+    )
+    check(
+        "identify ceo short name",
+        r20_replay.identify_reviewer("ceo") == "ceo-reviewer",
+    )
+    check(
+        "identify designer",
+        r20_replay.identify_reviewer("UI designer review") == "designer",
+    )
+    check(
+        "identify dx short name",
+        r20_replay.identify_reviewer("dx") == "dx-reviewer",
+    )
+    check(
+        "identify security short name",
+        r20_replay.identify_reviewer("security") == "security-reviewer",
+    )
+    check(
+        "identify code-explorer is not reviewer",
+        r20_replay.identify_reviewer("code-explorer") is None,
+    )
+    check(
+        "identify mid-sentence security is not reviewer",
+        r20_replay.identify_reviewer("fix the security of the hook") is None,
+    )
+    check(
+        "identify implementer is not reviewer",
+        r20_replay.identify_reviewer("change-implementer") is None,
+    )
+    check(
+        "identify implementer prompt citing eng-reviewer is not reviewer",
+        r20_replay.identify_reviewer(
+            "You are change-implementer. Previous eng-reviewer NEEDS-CHANGES: fix tests."
+        )
+        is None,
+    )
+    check(
+        "identify generalPurpose is not reviewer",
+        r20_replay.identify_reviewer("generalPurpose") is None,
+    )
+    check(
+        "identify eng-reviewer in prompt",
+        r20_replay.identify_reviewer("You are eng-reviewer. Read only.") == "eng-reviewer",
+    )
+    blob = r20_replay.reviewer_dispatch_blob(
+        {
+            "subagent_type": "generalPurpose",
+            "description": "Independent review",
+            "prompt": "You are eng-reviewer. Tools: Read/Grep only.",
+        }
+    )
+    check(
+        "dispatch blob reads prompt",
+        r20_replay.identify_reviewer(blob) == "eng-reviewer",
+    )
+    same = {"edited_files": [{"path": "a.py", "ts": 1}], "reviews": []}
+    r20_replay.note_reviewer_dispatch(same, "eng-reviewer", 2)
+    r20_replay.note_reviewer_dispatch(same, "ceo-reviewer", 3)
+    check(
+        "same-round dispatch increments once",
+        int(same.get("review_rounds") or 0) == 1 and len(same.get("reviews") or []) == 2,
+    )
+    cap = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check("attach fills empty review", r20_replay.attach_review_text(cap, REVIEW_PASS, source="eng-reviewer") is True)
+    check(
+        "attached then verdict passes",
+        r20_replay.apply_review_verdict(cap, "") is True
+        and cap.get("review_pass_ok") is True,
+    )
+    check(
+        "attach rejects non-verdict parent chatter",
+        r20_replay.attach_review_text(
+            {
+                "edited_files": [{"path": "a.py", "ts": 1}],
+                "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+            },
+            "I'll dispatch eng-reviewer next.",
+            source="eng-reviewer",
+        )
+        is False,
+    )
+    needs_no_dims = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "attach rejects NEEDS-CHANGES without seven dims",
+        r20_replay.attach_review_text(needs_no_dims, "Verdict: NEEDS-CHANGES", source="eng-reviewer") is False
+        and not str((needs_no_dims.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    blank_sat = (
+        "Independent review PASS\n"
+        "- 满足：\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    check(
+        "blank 满足 line is empty field",
+        r20_replay.field_value(blank_sat, "满足") == "",
+    )
+    check(
+        "blank 满足 does not swallow 遗漏",
+        r20_replay.field_value(blank_sat, "遗漏") == "无",
+    )
+    check(
+        "blank 满足 line fails seven dims",
+        r20_replay.review_dimensions_ok(blank_sat) is False,
+    )
+    check(
+        "attach rejects blank 满足 PASS",
+        r20_replay.attach_review_text(
+            {
+                "edited_files": [{"path": "a.py", "ts": 1}],
+                "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+            },
+            blank_sat,
+            source="eng-reviewer",
+        )
+        is False,
+    )
+    captured_ok = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+        "review_pass_ok": True,
+    }
+    check(
+        "instructional PASS 或 NEEDS-CHANGES does not poison",
+        r20_replay.apply_review_verdict(
+            captured_ok, "回贴完整清单与 PASS 或 NEEDS-CHANGES"
+        )
+        is False
+        and captured_ok.get("review_pass_ok") is True,
+    )
+    slash_ok = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+        "review_pass_ok": True,
+    }
+    check(
+        "instructional PASS / NEEDS-CHANGES does not poison",
+        r20_replay.apply_review_verdict(
+            slash_ok, "结论：PASS / NEEDS-CHANGES"
+        )
+        is False
+        and slash_ok.get("review_pass_ok") is True,
+    )
+    check(
+        "instructional 结论 PASS / NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("结论：PASS / NEEDS-CHANGES") is None,
+    )
+    check(
+        "instructional 结论 PASS 或 NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("结论：PASS 或 NEEDS-CHANGES") is None,
+    )
+    check(
+        "instructional 状态 PASS / NEEDS-CHANGES is not a verdict",
+        r20_replay.primary_verdict("状态: PASS / NEEDS-CHANGES") is None,
+    )
+    check(
+        "pipe 状态 PASS is a verdict",
+        r20_replay.primary_verdict("[一句话] | 状态: PASS") == "PASS",
+    )
+    check(
+        "Chinese 结论 PASS is a verdict",
+        r20_replay.primary_verdict("结论：PASS") == "PASS",
+    )
+    check(
+        "Chinese 独立审查 NEEDS-CHANGES is a verdict",
+        r20_replay.primary_verdict("独立审查 NEEDS-CHANGES") == "NEEDS-CHANGES",
+    )
+    check(
+        "当前状态 PASS does not overwrite 结论 NEEDS-CHANGES",
+        r20_replay.primary_verdict(
+            "结论：NEEDS-CHANGES\n当前状态: 单元测试 PASS"
+        )
+        == "NEEDS-CHANGES",
+    )
+    needs_then_instr = (
+        "Independent review NEEDS-CHANGES\n"
+        "- 满足：结论行截断未修（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：部分解决（证据：pytest）\n"
+        "结论：PASS / NEEDS-CHANGES\n"
+    )
+    check(
+        "trailing instructional does not overwrite Independent review NEEDS-CHANGES",
+        r20_replay.primary_verdict(needs_then_instr) == "NEEDS-CHANGES",
+    )
+    instr_only = (
+        "结论：PASS / NEEDS-CHANGES\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    instr_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "instructional-only 结论 does not attach",
+        r20_replay.attach_review_text(instr_slot, instr_only, source="eng-reviewer") is False
+        and not str((instr_slot.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    trail_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "NEEDS-CHANGES still attaches when trailing instructional 结论",
+        r20_replay.attach_review_text(trail_slot, needs_then_instr, source="eng-reviewer") is True
+        and r20_replay.primary_verdict(str((trail_slot.get("reviews") or [{}])[0].get("text") or ""))
+        == "NEEDS-CHANGES",
+    )
+    mentioned = (
+        "Independent review PASS\n"
+        "- 满足：已处理正文里的 NEEDS-CHANGES 字样（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+        "结论：PASS\n"
+    )
+    mentioned_entry = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": mentioned}],
+    }
+    check(
+        "body NEEDS-CHANGES substring does not unclean 结论 PASS",
+        r20_replay.apply_review_verdict(mentioned_entry, "") is True
+        and mentioned_entry.get("review_pass_ok") is True,
+    )
+    parent_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "parent seven-dim without source does not attach",
+        r20_replay.attach_review_text(parent_slot, REVIEW_PASS) is False
+        and not str((parent_slot.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    check(
+        "payload text mentioning eng-reviewer is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"text": "You are eng-reviewer. " + REVIEW_PASS}
+        )
+        is None,
+    )
+    check(
+        "payload agent_id is a source",
+        r20_replay.reviewer_source_from_payload({"agent_id": "eng-reviewer"})
+        == "eng-reviewer",
+    )
+    check(
+        "nested input.prompt is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"input": {"prompt": "You are eng-reviewer."}, "text": REVIEW_PASS}
+        )
+        is None,
+    )
+    check(
+        "tool_input.subagent_type is a source",
+        r20_replay.reviewer_source_from_payload(
+            {"tool_input": {"subagent_type": "eng-reviewer", "prompt": "review this"}}
+        )
+        == "eng-reviewer",
+    )
+    check(
+        "tool_input.prompt alone is not a source",
+        r20_replay.reviewer_source_from_payload(
+            {"tool_input": {"prompt": "You are eng-reviewer."}}
+        )
+        is None,
+    )
+    mismatch = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "ceo-reviewer", "ts": 2}],
+    }
+    check(
+        "attach refuses mismatched reviewer slot",
+        r20_replay.attach_review_text(mismatch, REVIEW_PASS, source="eng-reviewer")
+        is False
+        and not str((mismatch.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    later_fill = (
+        "- 满足：\n"
+        "- 遗漏：无\n"
+        "- 满足：后文非空（承认）\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest）\n"
+    )
+    check(
+        "field_value uses last non-empty",
+        r20_replay.field_value(later_fill, "满足") == "后文非空（承认）",
+    )
+    legend = (
+        "Independent review PASS\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决 | 未解决 | 部分解决\n"
+    )
+    check("legend-only 问题是否解决 fails dims", r20_replay.review_dimensions_ok(legend) is False)
+    legend_suffix = (
+        "Independent review PASS\n"
+        "- 满足：需求已落地（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：已解决 | 未解决 | 部分解决（证据：pytest）\n"
+    )
+    check(
+        "legend 问题是否解决 with suffix fails dims",
+        r20_replay.review_dimensions_ok(legend_suffix) is False,
+    )
+    needs_ok = (
+        "Independent review NEEDS-CHANGES\n"
+        "- 满足：身份绑定未做（承认）\n"
+        "- 遗漏：无\n"
+        "- 错改：无\n"
+        "- 漏改：无文档影响\n"
+        "- 原功能：保持（证据：pytest）\n"
+        "- 影响范围：CRG get_impact_radius\n"
+        "- 问题是否解决：部分解决（证据：pytest）\n"
+        "结论：NEEDS-CHANGES\n"
+    )
+    needs_slot = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check(
+        "seven-dim NEEDS-CHANGES attaches to matching slot",
+        r20_replay.attach_review_text(needs_slot, needs_ok, source="eng-reviewer") is True
+        and "NEEDS-CHANGES" in str((needs_slot.get("reviews") or [{}])[0].get("text") or ""),
+    )
+    parallel = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [
+            {"agent": "eng-reviewer", "ts": 2},
+            {"agent": "ceo-reviewer", "ts": 3},
+        ],
+    }
+    check("parallel attach first slot", r20_replay.attach_review_text(parallel, REVIEW_PASS, source="eng-reviewer") is True)
+    check("parallel attach second slot", r20_replay.attach_review_text(parallel, REVIEW_PASS, source="ceo-reviewer") is True)
+    check(
+        "parallel both slots filled then PASS",
+        r20_replay.apply_review_verdict(parallel, "") is True
+        and parallel.get("review_pass_ok") is True
+        and all(str(item.get("text") or "").strip() for item in parallel["reviews"]),
+    )
+    poisoned = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+    }
+    r20_replay.apply_review_verdict(poisoned, "")
+    check(
+        "parent incomplete PASS does not poison captured PASS",
+        r20_replay.apply_review_verdict(poisoned, "Independent review PASS") is False
+        and poisoned.get("review_pass_ok") is True,
+    )
+    passed = {"review_pass_ok": True}
+    check(
+        "counted edit clears review pass",
+        r20_replay.clear_review_pass_if_counted(passed, ["a.py"]) is True
+        and passed.get("review_pass_ok") is False,
+    )
+    keep = {"review_pass_ok": True}
+    check(
+        "plan artifact does not clear review pass",
+        r20_replay.clear_review_pass_if_counted(keep, ["foo.plan.md"]) is False
+        and keep.get("review_pass_ok") is True,
+    )
+    check(
+        "md only without verify is graph not verify",
+        r20_replay.dual_pass_phase(
+            {"edited_files": [{"path": "README.md", "ts": 1}]},
+        )
+        == "graph",
+    )
+    check(
+        "md only with pre-review graph is review",
+        r20_replay.dual_pass_phase(
+            {
+                "edited_files": [{"path": "README.md", "ts": 1}],
+                "last_pre_review_graph_ts": 2,
+            }
+        )
+        == "review",
     )
     check(
         "resume str is resumed",
@@ -540,6 +1032,68 @@ def test_cursor_should_followup() -> None:
         "false resume not resumed",
         r20_replay.is_resumed_subagent({"resume": False}) is False,
     )
+    check(
+        "graph shell is refresh call",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "codegraph sync"}) is True,
+    )
+    check(
+        "graph pair with crg update is refresh call",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "codegraph sync && code-review-graph update"}
+        )
+        is True,
+    )
+    check(
+        "codegraph init -i is refresh call",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "codegraph init -i"}) is True,
+    )
+    check(
+        "echo codegraph plus npm build is not refresh",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "echo codegraph; npm run build"}
+        )
+        is False,
+    )
+    check(
+        "echo codegraph sync is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "echo codegraph sync"})
+        is False,
+    )
+    check(
+        "quoted echo codegraph sync is not refresh",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "echo 'codegraph sync'"}
+        )
+        is False,
+    )
+    check(
+        "npm run build alone is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "npm run build"})
+        is False,
+    )
+    check(
+        "echo codegraph_sync is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "echo codegraph_sync"}) is False,
+    )
+    check(
+        "mcp tool name codegraph_sync is refresh",
+        r20_replay.is_graph_refresh_call("codegraph_sync", {}) is True,
+    )
+    check(
+        "codegraph_explore is not refresh",
+        r20_replay.is_graph_refresh_call("codegraph_explore", {}) is False,
+    )
+    check(
+        "pytest is not graph refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "pytest -q"}) is False,
+    )
+    stamped = {"edited_files": [{"path": "a.py", "ts": 1}]}
+    check(
+        "stamp pre-review graph",
+        r20_replay.record_pre_review_graph_refresh(stamped, 2) is True
+        and stamped.get("last_pre_review_graph_ts") == 2
+        and stamped.get("last_graph_refresh_ts") == 2,
+    )
 
 
 def test_gate_reader_sections() -> None:
@@ -552,6 +1106,9 @@ def test_gate_reader_sections() -> None:
     check("first_edit section", "需求" in first and "漏改" in first)
     check("first_edit covers blast-radius", "全部相关" in first)
     check("verify mentions followup or R20", "R20" in verify)
+    check("verify seven dims", "问题是否解决" in verify)
+    check("verify no 只读免审", "只读免审" not in verify)
+    check("verify rounds from json", "最多 5 轮" in verify)
     check("p0 points at task-triage", "task-triage" in p0)
     check("impact not include first_edit heading", "初次修改验收门" not in impact)
     check("verify not include impact heading", "变更影响门" not in verify)
@@ -665,6 +1222,56 @@ def test_claude_tracker_first_edit_injects() -> None:
             counted = len(entry.get("reviews") or []) == 0
         check("tracker resume not counted as review", skipped and counted)
 
+        gp_payload = json.dumps(
+            {
+                "session_id": "gp-review-test",
+                "tool_name": "Write",
+                "tool_input": {"file_path": str(Path(tmp) / "b.py")},
+                "cwd": tmp,
+            }
+        )
+        subprocess.run(
+            cmd,
+            input=gp_payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        gp_task = json.dumps(
+            {
+                "session_id": "gp-review-test",
+                "tool_name": "Task",
+                "tool_input": {
+                    "subagent_type": "generalPurpose",
+                    "description": "Independent review",
+                    "prompt": "You are eng-reviewer. Tools Read/Grep only. Do not edit.",
+                },
+                "cwd": tmp,
+            }
+        )
+        gp_run = subprocess.run(
+            cmd,
+            input=gp_task,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        check("tracker generalPurpose review exit 0", gp_run.returncode == 0)
+        gp_counted = False
+        gp_agent = ""
+        if state_path.exists():
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            gp_entry = state.get("gp-review-test") or {}
+            gp_reviews = gp_entry.get("reviews") or []
+            gp_counted = len(gp_reviews) == 1 and int(gp_entry.get("review_rounds") or 0) == 1
+            gp_agent = str((gp_reviews[0] or {}).get("agent") or "") if gp_reviews else ""
+        check(
+            "tracker records generalPurpose prompt as eng-reviewer",
+            gp_counted and gp_agent == "eng-reviewer",
+        )
+
 
 def test_impact_diff_superset_blocked() -> None:
     """清单外变更（脏集−基线−声明 ≠ ∅）→ 返回额外文件列表。"""
@@ -717,7 +1324,9 @@ def test_fingerprint_coverage_pass() -> None:
         "- 满足：impact-manifest 自动落盘与 req_fingerprint 覆盖比对已实现并测试通过\n"
         "- 遗漏：无\n- 错改：无\n- 漏改：无文档影响\n"
         "- 原功能：保持（证据：python hooks/tests/test_r20_replay.py 全绿）\n"
-        "- 影响范围：已审查 CRG get_impact_radius 与 IMPACT 清单\n结论：DONE"
+        "- 影响范围：已审查 CRG get_impact_radius 与 IMPACT 清单\n"
+        "- 问题是否解决：已解决（证据：python hooks/tests/test_r20_replay.py 全绿）\n"
+        "结论：DONE"
     )
     check("fingerprint coverage pass", r20_replay.replay_ok(text, reqs) is True)
 
@@ -730,7 +1339,9 @@ def test_fingerprint_coverage_fail() -> None:
         "- 满足：全部按要求完成了\n"
         "- 遗漏：无\n- 错改：无\n- 漏改：无文档影响\n"
         "- 原功能：保持（证据：pytest 全绿）\n"
-        "- 影响范围：已审查 CRG get_impact_radius\n结论：DONE"
+        "- 影响范围：已审查 CRG get_impact_radius\n"
+        "- 问题是否解决：已解决（证据：pytest 全绿）\n"
+        "结论：DONE"
     )
     check("fingerprint coverage fail", r20_replay.replay_ok(text, reqs) is False)
     check("same text passes without fingerprint", r20_replay.replay_ok(text) is True)
@@ -742,12 +1353,42 @@ def test_fingerprint_weak_only_noop() -> None:
     check("weak-only noop pass", r20_replay.replay_ok(VALID, reqs) is True)
 
 
+def test_stop_does_not_stamp_pre_review_graph() -> None:
+    src = (HOOKS_DIR / "stop-verification-gate.py").read_text(encoding="utf-8")
+    check(
+        "stop does not stamp pre-review graph",
+        "record_pre_review_graph_refresh" not in src,
+    )
+    check(
+        "stop does not attach review text",
+        "attach_review_text" not in src,
+    )
+    cap_src = (HOOKS_DIR / "r20-capture.py").read_text(encoding="utf-8")
+    check("claude r20-capture attaches", "attach_review_text" in cap_src)
+    check("claude r20-capture binds source", "reviewer_source_from_payload" in cap_src)
+    portable = (
+        HOOKS_DIR.parent / "templates" / "editor-graph-hooks" / "r20_check.py"
+    ).read_text(encoding="utf-8")
+    check(
+        "portable r20_check imports SSOT",
+        "replay_detail" in portable and "_FIELD_RE" not in portable,
+    )
+
+
 def test_review_verdict_ok() -> None:
     check("verdict PASS detected", r20_replay.review_verdict_ok("eng-reviewer 结论：PASS — 无阻断项") is True)
     check("verdict NEEDS-CHANGES detected", r20_replay.review_verdict_ok("review verdict: NEEDS-CHANGES") is True)
     check("verdict lowercase rejected", r20_replay.review_verdict_ok("结论：pass") is False)
     check("verdict plain text rejected", r20_replay.review_verdict_ok("审查完成，没有问题") is False)
     check("verdict empty rejected", r20_replay.review_verdict_ok("") is False)
+    check(
+        "body PASS without heading rejected",
+        r20_replay.review_verdict_ok("the tests PASS today") is False,
+    )
+    check(
+        "instructional 结论 is not review_verdict_ok",
+        r20_replay.review_verdict_ok("结论：PASS / NEEDS-CHANGES") is False,
+    )
 
 
 def test_crg_track() -> None:
@@ -786,6 +1427,7 @@ def main() -> int:
     test_fingerprint_coverage_fail()
     test_fingerprint_weak_only_noop()
     test_review_verdict_ok()
+    test_stop_does_not_stamp_pre_review_graph()
     test_positive_string_content()
     test_positive_list_content()
     test_empty_template_rejected()

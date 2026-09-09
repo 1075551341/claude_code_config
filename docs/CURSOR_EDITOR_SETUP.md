@@ -19,13 +19,20 @@ description: Cursor 编辑器全局独有配置指南（与 Claude Code 低耦�
 ## 部署
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 ```
 
 完全退出并重启 Cursor → Settings → Hooks 查看执行记录。
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.17**：Shell 警告对齐 Claude `pre-bash-guard`（`powershell`/`powershell.exe` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
+**v1.2.16**：`sync_runner` 只 spawn `pwsh`（缺则 BLOCKED）。与 live `sync.ps1` `#Requires -Version 7.5` 对齐。
+**v1.2.15**：结论标题按 Unicode 字母边界（OpenCode 不用 JS `\\b` 配中文；「当前状态」不得当结论行）。
+**v1.2.14**：结论整行解析（跳过「PASS 或/or NEEDS-CHANGES」教学句，最后一条真实结论胜出）；`reviewer_source_from_payload` 不读 `prompt`/`description`。OpenCode `verify-gate.ts` 与 Python SSOT 对齐。
+**v1.2.13**：审查填槽必须绑定审查者身份（无身份的父消息不得抢槽）；结论只认标题/结论行。`r20_check.py` 导入 `r20_replay`。
+
+**v1.2.12**：七维（含问题是否解决）；审查前须在 last_edit 之后刷图，否则相位停在 `graph`；文档编辑 in scope；批次 NEEDS-CHANGES 压过 PASS。
 **v1.2.11**：`verify_tracker` 对带 `resume` 的审查 Task 不计入 `reviews`（每轮须全新开审）。
 **v1.2.10**：完成门不再 `followup_message`（会刷会话面板）。Stop 只刷图谱 / 全绿 sync；双审改规则驱动。`enforce_mode=off`。
 **v1.2.9**：有改动即双审；独立审查 PASS/符合预期即停；仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；sessionEnd 刷双图 timeout 45s。
@@ -50,7 +57,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 验证（一键回归，推荐）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
 ```
 
 部署后回归：`... -Deploy`。报告：`scripts/test-guard-result.json`。

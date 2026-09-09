@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+Stop Hook: 完成验证硬门（v11.5.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+有交付物编辑即双审：审查前刷图；eng-reviewer 七维一次找齐；修改走 change-implementer。每轮全新开审（禁止 resume）。干净 PASS 即停。最多 review_max_rounds 轮。apply_review_verdict 同步 PASS（须已有 reviews；缺七维或 PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
@@ -31,6 +31,7 @@ from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAU
 from r20_replay import (  # noqa: E402
     apply_review_verdict,
     counted_edit_items,
+    dual_pass_in_scope,
     dual_pass_phase,
     impact_diff_check,
     is_awaiting_plan,
@@ -65,7 +66,8 @@ DEFAULT_CFG = {
     "require_review_verdict": True,
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
-    "review_max_rounds": 3,
+    "review_max_rounds": 5,
+    "require_refresh_before_review": True,
 }
 
 CODE_EXTENSIONS = {
@@ -443,7 +445,9 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         if any("预期符合性" in r for r in reasons):
             lines.append("对照 plan/spec tasks，禁止静默缩范围。")
     if any("R20" in r or "会话终验" in r for r in reasons):
-        lines.append("输出短 R20：满足/遗漏/错改/漏改/原功能/影响范围（漏改含文档；原功能含证据）。")
+        lines.append(
+            "输出短 R20 七维：满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决（漏改含文档；原功能含证据）。"
+        )
     lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行 DONE_WITH_CONCERNS；跳过请说「跳过验证」）")
     return "\n".join(lines)
 
@@ -613,6 +617,15 @@ def main():
             else:
                 check_warnings = []
                 reasons = []
+                last_msg = last_assistant_message(transcript_path)
+                verdict_cfg_on = cfg.get("require_review_verdict", True)
+                verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
+                if apply_review_verdict(entry, last_msg):
+                    entry["ts"] = time.time()
+                    state[session_id] = entry
+                    save_state(state)
+                max_rounds = int(cfg.get("review_max_rounds", 5))
+                rounds = int(entry.get("review_rounds") or 0)
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
                     roots = refresh_roots
@@ -636,43 +649,6 @@ def main():
                             "项目已建 .code-review-graph/ 但最后一次代码编辑后未调用 CRG"
                             "（get_minimal_context / get_impact_radius / detect_changes / get_review_context）"
                         )
-                    total_changed = len({f["path"] for f in code_files} | set(untracked))
-                    verdict_cfg_on = cfg.get("require_review_verdict", True)
-                    last_msg = last_assistant_message(transcript_path)
-                    verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
-                    if apply_review_verdict(entry, last_msg):
-                        entry["ts"] = time.time()
-                        state[session_id] = entry
-                        save_state(state)
-                    max_rounds = int(cfg.get("review_max_rounds", 3))
-                    rounds = int(entry.get("review_rounds") or 0)
-                    phase = dual_pass_phase(entry, cfg)
-                    if phase == "capped":
-                        print(
-                            f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
-                            file=sys.stderr,
-                        )
-                    elif phase == "modify":
-                        reasons.append(
-                            "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
-                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
-                        )
-                    elif phase == "verify":
-                        pass
-                    elif phase == "review":
-                        reasons.append(
-                            "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
-                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
-                        )
-                    elif (
-                        verdict_cfg_on
-                        and not verdict_ok
-                        and blocks >= int(cfg.get("verdict_trigger_min_blocks", 2))
-                    ):
-                        reasons.append(
-                            f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
-                            "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
-                        )
                     # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
                     changed_paths = [f["path"] for f in code_files] + list(untracked)
                     if (
@@ -688,6 +664,42 @@ def main():
                         )
                     if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
                         reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
+
+                delivery_in_scope = dual_pass_in_scope(entry, cfg)
+                if delivery_in_scope or code_files or untracked:
+                    phase = dual_pass_phase(entry, cfg)
+                    if phase == "capped":
+                        print(
+                            f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
+                            file=sys.stderr,
+                        )
+                    elif phase == "modify":
+                        reasons.append(
+                            "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
+                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
+                        )
+                    elif phase == "verify":
+                        pass
+                    elif phase == "graph":
+                        reasons.append(
+                            "审查前须增量刷新双图（codegraph sync + code-review-graph update）。"
+                            "SessionStart ensure 不能代替 last_edit 之后的刷新。刷图后再全新开审。"
+                        )
+                    elif phase == "review":
+                        reasons.append(
+                            "有改动双审：须委派全新 eng-reviewer 对照原始要求做七维审查（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决），"
+                            "一次找齐全部问题（禁止 resume、禁止改文件、禁止发现一条就停审），"
+                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
+                        )
+                    elif (
+                        verdict_cfg_on
+                        and not verdict_ok
+                        and blocks >= int(cfg.get("verdict_trigger_min_blocks", 2))
+                    ):
+                        reasons.append(
+                            f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
+                            "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
+                        )
 
                 # 方案A：清单制品差集校验（v11.3.6）— 当前脏集−基线集 ⊄ 声明清单 → 错改/漏改硬证据
                 igate = load_impact_gate()

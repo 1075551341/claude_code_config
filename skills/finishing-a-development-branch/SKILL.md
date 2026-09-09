@@ -26,10 +26,10 @@ Claude: /finishing-a-development-branch → 运行检查 → 确认可合并 →
 
 ```bash
 # 运行所有检查
-□ 测试通过（npm test / pytest）
-□ Lint 通过（npm run lint / ruff check）
+□ 测试通过（pnpm test / pytest）
+□ Lint 通过（pnpm run lint / ruff check）
 □ 类型检查通过（tsc --noEmit / mypy）
-□ 构建成功（npm run build）
+□ 构建成功（pnpm run build）
 ```
 
 ### 2. Git 状态检查
@@ -170,5 +170,5 @@ git fetch -p && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r gi
 
 - `git-workflow` - Git 工作流管理
 - `git-worktrees` - 并行开发隔离
-- `code-review-workflow` - 代码审查工作流
-- `verification-checklist` - 完成验证
+- `requesting-code-review` - 派发 gstack eng-reviewer 七维审查
+- `verification-before-completion` - 完成前验证 + 独立审查

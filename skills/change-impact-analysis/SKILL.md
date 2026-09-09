@@ -20,14 +20,14 @@ source: internal
 ### 阶段 1: 范围识别
 
 ```
-① 有 `.code-review-graph/`（v11.4.6 强制；无图由 hook ensure，仍无则 BLOCKED）：
+① 有 `.code-review-graph/`（无图由 hook **ensure**，仍无则 BLOCKED）：
    └ get_minimal_context — 任务入口精准上下文
    └ get_impact_radius — 变更影响面（函数/类/文件/执行流）
    └ 有 git diff → detect_changes（风险评分 / test-gap）
-   └ 无图 → hook 先 ensure（init/build）；仍无图 → **BLOCKED**，禁止 Grep/Glob/everything 当探索主路径
+   └ 无图 → SessionStart/PreToolUse ensure（命令细节 → `rules/CORE.md` 图谱政策 + `hooks/_lib/graph_freshness.py`）；仍无图 → **BLOCKED**，禁止 Grep/Glob/everything 当探索主路径
 ② codegraph_explore(target) blast-radius（怎么运作 / 符号调用链）
    └ 先确认 codegraph 无 staleness ⚠️ banner；有则 Read 文件直接获取最新内容
-   └ 无 .codegraph/ 索引 → hook 先 `codegraph init -i`；仍无 → **BLOCKED**，禁止 Grep/Glob/everything 全扫当主路径
+   └ 无 .codegraph/ 索引 → 同上 ensure；仍无 → **BLOCKED**
 ③ Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
 ④ MANIFEST.yaml concern → depends_on（配置/rule/skill/agent）
@@ -56,7 +56,7 @@ source: internal
    → 残留 > 0 → 回到阶段 2 继续修改
 
 ② 构建/类型/Lint 验证
-   → npm run build / pnpm run typecheck / pnpm run lint
+   → pnpm run build / pnpm run typecheck / pnpm run lint
 
 ③ 回归保持核验（非功能变更必须）
    → 重构/格式/配置/重命名类非功能变更：核验原功能行为不变
@@ -94,4 +94,4 @@ source: internal
 
 - 阶段 1 清单为空 → **拒绝执行**（先让用户明确变更范围）
 - 阶段 3 残留 > 0 → **不可声称完成**（回到阶段 2）
-- 全部通过 → 进入 verification-before-completion（五维/R20 核对范围含本清单全部相关项，禁止只验已编辑文件）
+- 全部通过 → 进入 verification-before-completion（R20 七维核对范围含本清单全部相关项，禁止只验已编辑文件）

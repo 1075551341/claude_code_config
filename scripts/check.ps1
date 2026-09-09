@@ -19,18 +19,18 @@
 
 .EXAMPLE
     # 全部命令（本脚本仅一个开关）
-    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File scripts/check.ps1           # 完整诊断，含 MCP 连通性（需 pwsh 7.5+）
     pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick    # 跳过 MCP 探测，最快
 
 .NOTES
     配套命令（本脚本不代跑，按需单独执行）：
-      python scripts/validate_config.py            # 深度校验 V1-V19
+      python scripts/validate_config.py            # 深度校验 V1-V20
       pwsh -File scripts/sync.ps1                # 修同步/软链问题
       pwsh -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 PowerShell 不会把上面的块识别为
 # comment-based help，Get-Help 将读不到这些命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param([switch]$Quick)
 
@@ -558,12 +558,14 @@ if ($py) {
     Add-Check "Runtime" "Python" "fail" "Not installed - hooks will not run"
 }
 
+Add-Check "Runtime" "pwsh" "pass" $PSVersionTable.PSVersion.ToString()
+
 $runtimeTools = @(
     @{ C = "node"; N = "Node.js"; Req = $true }
-    @{ C = "npm";  N = "npm";     Req = $true }
-    @{ C = "npx";  N = "npx";     Req = $true }
+    @{ C = "pnpm"; N = "pnpm";    Req = $true }
     @{ C = "uvx";  N = "uvx(uv)"; Req = $false }
-    @{ C = "pnpm"; N = "pnpm";    Req = $false }
+    @{ C = "npm";  N = "npm";     Req = $false }
+    @{ C = "npx";  N = "npx";     Req = $false }
 )
 
 foreach ($t in $runtimeTools) {
@@ -572,7 +574,13 @@ foreach ($t in $runtimeTools) {
         $ver = & $t.C --version 2>&1 | Select-Object -First 1
         Add-Check "Runtime" $t.N "pass" $ver
     } else {
-        Add-Check "Runtime" $t.N (if ($t.Req) { "fail" } else { "warn" }) "Not installed$(if(-not $t.Req){' (optional)'})"
+        Add-Check "Runtime" $t.N (if ($t.Req) { "fail" } else { "warn" }) $(
+            if ($t.C -eq "pnpm") {
+                "Not installed — corepack enable && corepack prepare pnpm@11 --activate"
+            } else {
+                "Not installed$(if(-not $t.Req){' (optional)'})"
+            }
+        )
     }
 }
 

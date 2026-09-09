@@ -5,6 +5,8 @@ globs: ["*.dart", "pubspec.yaml"]
 
 # Dart / Flutter 开发规则
 
+> Dart 3+ → `config/toolchain.yaml`
+
 ## 空安全
 
 - 启用 Sound Null Safety

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.13）。
+"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.6.0）。
 
-SessionStart/sessionEnd 真正 init/update；已有图时 CLI 失败记警告不阻断。
-无图 blocked → PreToolUse deny。Stop 增量刷新；仅验证全绿后跑 sync.ps1。
+任务开始 ensure；审查前增量 refresh（last_edit 之后）；任务完成 Stop refresh。
+已有图时 CLI 失败记警告不阻断。无图 blocked → PreToolUse deny。
 """
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ import sys
 import time
 
 from crg_track import collect_tool_names, find_crg_root, is_crg_tool, is_project_graph_dir
+from r20_replay import is_graph_refresh_call
 
 STATE_NAME = "graph-freshness.json"
 CODEGRAPH_MARKERS = (
@@ -60,14 +61,6 @@ WRITE_VERBS = (
     "create_text",
     "apply_refactor",
 )
-GRAPH_SHELL_RE = re.compile(
-    r"\b(codegraph|code-review-graph)\b",
-    re.I,
-)
-GRAPH_SHELL_ACTION_RE = re.compile(
-    r"\b(init|sync|index|build|update)\b",
-    re.I,
-)
 SHELL_GREP_RE = re.compile(r"\b(grep|rg|findstr|git\s+grep)\b", re.I)
 
 DEFAULT_CFG = {
@@ -79,6 +72,7 @@ DEFAULT_CFG = {
     "require_both_graphs": True,
     "subproject_discovery": True,
     "subproject_max_children": 8,
+    "require_refresh_before_review": True,
 }
 
 # 发现子 git 时跳过的目录名。禁止走进图谱目录，避免「图的图」。
@@ -674,6 +668,7 @@ def ensure_root(
             "codegraph": result["codegraph"],
             "crg": result["crg"],
             "ts": time.time(),
+            "last_graph_refresh_ts": time.time(),
             "session_id": sid,
             "error": result["error"],
             "incremental_only": incremental_only,
@@ -887,7 +882,7 @@ def _norm_tool(name: str) -> str:
 
 def is_build_tool(tool_name: str, tool_input=None, command: str = "") -> bool:
     cmd = command or extract_shell_command(tool_input)
-    if cmd and GRAPH_SHELL_RE.search(cmd) and GRAPH_SHELL_ACTION_RE.search(cmd):
+    if cmd and is_graph_refresh_call("Bash", {"command": cmd}):
         return True
     for name in collect_tool_names(tool_name, tool_input):
         n = _norm_tool(name)
@@ -978,7 +973,7 @@ def should_deny_tool(tool_name: str, tool_input=None) -> bool:
         return False
     n = _norm_tool(tool_name)
     if n in {"bash", "runcommand", "shell"}:
-        if cmd and GRAPH_SHELL_RE.search(cmd) and GRAPH_SHELL_ACTION_RE.search(cmd):
+        if cmd and is_graph_refresh_call("Bash", {"command": cmd}):
             return False
         if cmd and SHELL_GREP_RE.search(cmd):
             return True
@@ -1131,7 +1126,7 @@ def refresh_incremental(
 
 
 def which_pwsh() -> str | None:
-    return which_tool("pwsh") or which_tool("powershell")
+    return which_tool("pwsh")
 
 
 def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
@@ -1144,7 +1139,11 @@ def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
         return False, f"sync.ps1 不存在: {script}"
     exe = which_pwsh()
     if not exe:
-        return False, "pwsh/powershell 未找到"
+        return False, (
+            "pwsh 未找到。安装 PowerShell 7.5+："
+            "winget install --id Microsoft.PowerShell。"
+            "禁止使用 Windows PowerShell 5.1。"
+        )
     args = [
         exe,
         "-NoProfile",

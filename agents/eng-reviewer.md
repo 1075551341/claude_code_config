@@ -12,6 +12,7 @@ source: garrytan/gstack
 所有代码变更的必经关卡。与 `code-reviewer` 协作但职责不同：本 agent 侧重架构与工程决策层面审查。
 
 **只对照原始要求判断是否符合预期并列出问题。禁止改文件、禁止提交补丁。修复 → `change-implementer`。**
+主会话须已在 last_edit 之后刷新双图；本 agent 使用只读 CRG `get_impact_radius` / `get_review_context`（有图）与 `codegraph_explore` blast-radius。每轮 fresh，禁止假设上轮已扫范围仍然完整。
 
 ## 审查维度（0-10 评分）
 
@@ -37,6 +38,14 @@ source: garrytan/gstack
 ## Eng Review: [变更名]
 ### 总结
 [一句话] | 状态: PASS / NEEDS-CHANGES
+### 七维（缺任一项本轮无效）
+- 满足：
+- 遗漏：
+- 错改：
+- 漏改：
+- 原功能：
+- 影响范围：
+- 问题是否解决：已解决 | 未解决 | 部分解决（证据：）
 ### P0（必须修复）
 - [文件:行] 问题 + 建议
 ### P1（应该修复）
@@ -44,6 +53,8 @@ source: garrytan/gstack
 ### 评分
 架构: X/10 | 质量: X/10 | 测试: X/10 | 性能: X/10
 ```
+
+结论行只填 PASS 或 NEEDS-CHANGES 其一；模板里的「PASS / NEEDS-CHANGES」是说明，机械门会忽略教学句。问题是否解决须选已解决/未解决/部分解决其一，不要整段复制图例。
 
 ## 边界
 

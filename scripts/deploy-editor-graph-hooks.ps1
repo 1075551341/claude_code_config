@@ -8,10 +8,22 @@
     命令一律 python <~/.claude/hooks/*.py>，不经 _editor_hook_launcher。
     已有相同脚本路径的条目则更新 timeout，不重复添加。
 
+    -Scope editors：只合并 TRAE/Qoder（落地默认用于 Claude/Cursor/Qoder/TRAE/Codearts）。
+    -Scope all：再把便携 CLI 复制到 DSH / OpenCode（本仓 11.5 不对齐这两端时不要用）。
+
+.PARAMETER Scope
+    editors | all。默认 all（兼容旧调用）。落地步骤用 editors。
+
 .EXAMPLE
-    pwsh -File scripts/deploy-editor-graph-hooks.ps1
+    pwsh -File scripts/deploy-editor-graph-hooks.ps1 -Scope editors
 #>
-#Requires -Version 5.1
+#Requires -Version 7.5
+
+[CmdletBinding()]
+param(
+    [ValidateSet("editors", "all")]
+    [string]$Scope = "all"
+)
 
 $ErrorActionPreference = "Stop"
 $Claude = Join-Path $env:USERPROFILE ".claude"
@@ -28,6 +40,11 @@ $script = Join-Path $Claude "scripts\_merge_editor_graph_hooks.py"
 & $python $script
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "  [OK] editor graph hooks merged" -ForegroundColor Green
+
+if ($Scope -ne "all") {
+    Write-Host "  [OK] Scope=editors — skipped DSH/OpenCode portable copy" -ForegroundColor Green
+    exit 0
+}
 
 $cliSrc = Join-Path $Claude "templates\editor-graph-hooks\graph_freshness_cli.py"
 $dshTools = Join-Path $env:USERPROFILE ".dsh\tools"
@@ -50,9 +67,14 @@ if (Test-Path -LiteralPath $cliSrc) {
             Write-Host "  [OK] OpenCode plugins/graph-freshness.ts" -ForegroundColor Green
         }
         $r20Src = Join-Path $Claude "templates\editor-graph-hooks\r20_check.py"
+        $replaySrc = Join-Path $Claude "hooks\_lib\r20_replay.py"
         if (Test-Path -LiteralPath $r20Src) {
             Copy-Item -LiteralPath $r20Src -Destination (Join-Path $ocScripts "r20_check.py") -Force
             Write-Host "  [OK] OpenCode scripts/r20_check.py" -ForegroundColor Green
+        }
+        if (Test-Path -LiteralPath $replaySrc) {
+            Copy-Item -LiteralPath $replaySrc -Destination (Join-Path $ocScripts "r20_replay.py") -Force
+            Write-Host "  [OK] OpenCode scripts/r20_replay.py" -ForegroundColor Green
         }
         $vgSrc = Join-Path $Claude "templates\editor-graph-hooks\verify-gate.ts"
         if (Test-Path -LiteralPath $vgSrc) {
@@ -62,8 +84,13 @@ if (Test-Path -LiteralPath $cliSrc) {
     }
 }
 $r20Src = Join-Path $Claude "templates\editor-graph-hooks\r20_check.py"
+$replaySrc = Join-Path $Claude "hooks\_lib\r20_replay.py"
 if ((Test-Path -LiteralPath $r20Src) -and (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".dsh"))) {
     New-Item -ItemType Directory -Force -Path $dshTools | Out-Null
     Copy-Item -LiteralPath $r20Src -Destination (Join-Path $dshTools "r20_check.py") -Force
     Write-Host "  [OK] DSH tools/r20_check.py" -ForegroundColor Green
+    if (Test-Path -LiteralPath $replaySrc) {
+        Copy-Item -LiteralPath $replaySrc -Destination (Join-Path $dshTools "r20_replay.py") -Force
+        Write-Host "  [OK] DSH tools/r20_replay.py" -ForegroundColor Green
+    }
 }

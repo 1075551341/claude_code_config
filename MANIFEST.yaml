@@ -1,10 +1,10 @@
-# 组件唯一归属源 — 防左右手互博 — v11.4.13
+# 组件唯一归属源 — 防左右手互博 — v11.6.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.4.13"
-updated: "2026-09-07"
+version: "11.6.0"
+updated: "2026-09-09"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -235,7 +235,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.4.12 — 一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。v11.4.11 — 审查者只找问题，修改走 change-implementer；配置/文档/注释必须同步。v11.4.10 — Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留。v11.4.9 — 有改动即双审；独立审查 PASS/符合预期即停，仅结论不一致（NEEDS-CHANGES）才再开一轮最多 3 轮；计划未批准零注入（CallDynamicTool/CreatePlan）。v11.4.8 — 双审=修改→验证→审查循环最多 3 轮（dual_pass_phase）。上游：Claude Stop exit 2。SSOT quality_gates.json + hooks/_lib/r20_replay.py。"
+    note: "v11.5.0 — 有交付即七维独立审查（含文档）；审查前刷图；review_max_rounds=5；max_blocks=3。政策 SSOT verification-before-completion + quality_gates.json + r20_replay.py。Claude Stop exit 2；Cursor 完成门不 followup。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -331,6 +331,18 @@ concerns:
     source: VoltAgent/awesome-design-md
     stage: spec
 
+  backend_api:
+    owner: rules/BACKEND.md
+    source: local
+    stage: execute
+    note: "v11.5 薄层 glob；项目覆盖 catalog/rules/RULES_BACKEND.md"
+
+  database:
+    owner: rules/DATABASE.md
+    source: local
+    stage: execute
+    note: "v11.5 薄层 glob；项目覆盖 catalog/rules/RULES_DATABASE.md"
+
   codex_plugin_review:
     owner: config/MANIFEST.yaml
     source: openai/codex-plugin-cc
@@ -358,6 +370,13 @@ concerns:
     stage: skeleton
     status: reference # v10.11: 官方安装路径文档（npm 弃用）
     note: "Windows: irm https://claude.ai/install.ps1 | iex"
+
+  toolchain:
+    owner: config/toolchain.yaml
+    source: local
+    stage: execute
+    note: "v11.6 平台/运行时/包管理器 SSOT；缺工具 BLOCKED；禁止 PS5.1/npm/pip 静默回退。R9/R15 指针。"
+    depends_on: [rules/CORE.md, rules/GOVERNANCE.md, rules/MCP.md]
 
   coding_philosophy:
     owner: skill/karpathy-guidelines
@@ -436,7 +455,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.11 — resume 审查 Task 不计入 reviews；每轮须全新开审。v1.2.10 — 完成门不再 followup；规则驱动双审。v1.2.9 起有改动即双审。v1.2 基线：sync/压缩/codegraph路由/shell/密钥/维护提示；~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.17 — Shell 警告 powershell→pwsh（allow）；sync_runner.resolve_pwsh。v1.2.16 — sync_runner 只 spawn pwsh。v1.2.15 — 结论标题 Unicode 字母边界。v1.2.14 — 结论整行解析；capture 身份不读 prompt。v1.2.13 — 填槽绑定审查者身份；结论只认标题行。v1.2.12 — 七维 + 审查前刷图；resume 审查 Task 不计入 reviews。完成门不 followup。~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]
@@ -598,7 +617,7 @@ concerns:
     stage: execute
     excludes: [输出审查结论 PASS/NEEDS-CHANGES, 审查自身 diff]
     depends_on: [agents/eng-reviewer, skills/executing-plans]
-    note: v11.4.12 双审修改者；配置/文档/注释必须同步；改完交回后下一轮审查须全新开审
+    note: v11.5 双审修改者；配置/文档/注释必须同步；改完交回后下一轮审查须全新开审 + 审查前刷图
 
   gstack_ceo: { owner: agent/ceo-reviewer, layer: skeleton, stage: plan }
   gstack_designer: { owner: agent/designer, layer: skeleton, stage: spec }
@@ -837,7 +856,7 @@ p0_skills:
 
 global_skills_max: 36 # v11: 45→36（6 降级 catalog + context-engineering 删除 + frontend-refactor-proposer/writing-skills 并入）
 global_agents_max: 17 # v11.4.11: 16→17（补 change-implementer）
-global_rules_max: 10 # v11: 12→10（DESIGN 并入 FRONTEND；BESTPRACTICE 并入 GOVERNANCE）
+global_rules_max: 12 # v11.5: 10→12（BACKEND + DATABASE 薄层 glob）
 
 # superagent_forge 幽灵登记已于 v11 删除（引用的 .codeartsdoer/specs 与 agents/superagent_forge 路径均不存在，codearts 编辑器未安装）
 

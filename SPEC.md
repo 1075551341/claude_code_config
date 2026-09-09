@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.13 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
+> 版本：11.6.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；`review_max_rounds=5`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -57,9 +57,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 全局 skills  | 36     | P0 路由集 6 + supplement 30（v11: 45→36，6 降级 catalog + 3 删并）                                                                                                                     |
 | 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
-| 全局 rules   | 10     | alwaysApply 1(CORE) + model_decision 8 + glob 1（FRONTEND；不含 README；v11: DESIGN/BESTPRACTICE 并入）                                                                                |
+| 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 8 + glob 3（FRONTEND/BACKEND/DATABASE；不含 README）                                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 16     | 注册激活 16 + 未注册 4 + 分发器 2（`_editor_*`）= 顶层 `.py` 22；v11.3.4 初次修改验收并入 `post-edit-verify-tracker`（不增注册数）；Cursor Guard 运行时 23（v1.2.11，resume 审查不计入） |
+| 全局 hooks   | 18     | 注册激活 18 + 未注册 5 + 分发器 2（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.17）                                                              |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；开关 SSOT → `rules/MCP.md` 验证清单（context7/exa/playwright/firecrawl=true；chrome-devtools/github=false；不写 MCP）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -128,7 +128,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | agentic-orchestrator | ③执行 |
 | code-explorer        | ③执行 |
 
-## gstack 审查 6+3+1（v11.4.11 引入 change-implementer；v11.4.12 一次找齐+每轮全新开审）
+## gstack 审查 6+3+1（v11.5 七维 + 审查前刷图；v11.4.11 引入 change-implementer）
 
 **审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer（深度模式=原 cso 全量审计）
 **补全 (supplement)**：sre, doc-writer, change-implementer
@@ -317,7 +317,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 | Plugin                     | 状态 | 提供                      | 说明                                                     |
 | -------------------------- | ---- | ------------------------- | -------------------------------------------------------- |
-| superpowers 6.2.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
+| superpowers 6.3.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
 | claude-mem 13.13.1         | ✅   | 6 hooks + 记忆技能        | 五柱之一（R18 记忆优先）                                 |
 | code-review                | ✅   | 审查技能                  | 与 eng-reviewer 互补                                     |
 | commit-commands            | ✅   | Git 快捷命令              | —                                                        |
@@ -360,4 +360,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.13 | 日期：2026-09-07 | 五柱×五阶段×三横切 | MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20
+> 版本：11.6.0 | 日期：2026-09-09 | 五柱×五阶段×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；review_max_rounds=5）+ 全栈 glob + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N

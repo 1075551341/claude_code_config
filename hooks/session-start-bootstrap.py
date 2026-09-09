@@ -38,10 +38,12 @@ def detect_package_manager(cwd: str) -> str:
             return pm
     
     # 检查 Python 项目
+    if os.path.exists(os.path.join(cwd, "uv.lock")):
+        return "uv"
     if os.path.exists(os.path.join(cwd, "pyproject.toml")):
-        return "pip"
+        return "uv"
     if os.path.exists(os.path.join(cwd, "requirements.txt")):
-        return "pip"
+        return "uv"
     
     # 检查 Go 项目
     if os.path.exists(os.path.join(cwd, "go.mod")):

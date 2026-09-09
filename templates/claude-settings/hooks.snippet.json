@@ -56,7 +56,7 @@
             "type": "command"
           }
         ],
-        "matcher": "Bash|Task"
+        "matcher": "Bash|Task|Agent"
       }
     ],
     "PreCompact": [
@@ -183,6 +183,19 @@
           {
             "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/stop-readme-updater.py",
             "timeout": 30000,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SubagentStop": [
+      {
+        "_comment": "审查子代理结束时捕获七维正文；Stop 不 attach。",
+        "hooks": [
+          {
+            "command": "python {{CLAUDE_HOME}}/hooks/_editor_hook_launcher.py {{CLAUDE_HOME}}/hooks/r20-capture.py",
+            "timeout": 5000,
             "type": "command"
           }
         ],

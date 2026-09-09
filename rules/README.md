@@ -1,20 +1,22 @@
 # Rules 规则索引
 
-全局 **10 规则文件** alwaysApply/lazy/glob（v11：DESIGN 并入 FRONTEND、BESTPRACTICE 并入 GOVERNANCE）。语言/领域模板在 `catalog/rules/`，按需通过L0路由Read加载。
+全局 **12 规则文件** alwaysApply/lazy/glob（v11.5：BACKEND + DATABASE 薄层 glob；FRONTEND 去项目特例）。语言/领域模板在 `catalog/rules/`，按需通过L0路由Read加载。
 
 ---
 
-## 全局规则（10）
+## 全局规则（12）
 
 | 文件 | 适用 | 加载 | layer |
 |------|------|------|-------|
-| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R12–R20（R1–R20 见 CLAUDE.md） | ✅ alwaysApply | skeleton |
-| `FRONTEND.md` | ESLint/Prettier/Stylelint + Vue/React + 设计系统 DESIGN.md 规范（glob 匹配前端文件） | glob | supplement |
+| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R12–R20 + 图谱三时点（R1–R20 见 CLAUDE.md） | ✅ alwaysApply | skeleton |
+| `FRONTEND.md` | 栈无关前端原则 + 设计系统（glob：vue/jsx/tsx/css/less/scss/html） | glob | supplement |
+| `BACKEND.md` | API / 错误处理（py,go,rs,java,kt,cs + api/server/backend/services 的 ts/js） | glob | supplement |
+| `DATABASE.md` | 表/查询/事务/migration（sql,prisma + migrations） | glob | supplement |
 | `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
 | `GIT.md` | 分支策略（commit → `skills/git-workflow`） | lazy | supplement |
 | `WORKFLOW.md` | discuss→plan→execute→verify→ship + deer-flow 编排 | lazy | supplement |
-| `AGENTS.md` | 多 Agent 协作、互斥 | lazy | supplement |
-| `MCP.md` | .mcp.json 权威源 | lazy | supplement |
+| `AGENTS.md` | 多 Agent 协作、并行审查路由 | lazy | supplement |
+| `MCP.md` | .mcp.json 权威源 + 编辑器 spawn | lazy | supplement |
 | `GOVERNANCE.md` | 治理详情 + 最佳实践详参（提示词/API/日志/会话/编排） | lazy | supplement |
 | `CONTEXT.md` | 上下文工程 + 子agent调度 + 腐烂治理 | lazy | supplement |
 | `OPENSPEC.md` | OpenSpec delta-spec 规范 + /opsx: 命令链 | lazy | supplement |

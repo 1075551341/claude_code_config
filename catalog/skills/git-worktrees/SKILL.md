@@ -168,4 +168,4 @@ git config --global alias.wclean '!git worktree list | grep -v main | cut -d" " 
 ## 相关技能
 
 - `git-workflow` - Git 工作流
-- `code-review-workflow` - PR 审查流程
+- `requesting-code-review` - 独立审查路由（eng-reviewer）

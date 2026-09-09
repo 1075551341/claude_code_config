@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V19 共 19 项静态检查（结构/铁律/hook/MCP/INDEX 一致性）。
+"""配置一致性校验 — V1-V20 共 20 项静态检查（结构/铁律/hook/MCP/INDEX/工具链）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
-    powershell -File scripts/check.ps1       # 上层健康检查，内部会调用本脚本
+    pwsh -File scripts/check.ps1             # 上层健康检查，内部会调用本脚本
 
 检查项：V1 触发词冲突 / V2 agent 职责重叠 / V3 CORE.md / V4 铁律一致 /
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
-V19 三大 INDEX 与磁盘双向一致。
+V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -30,10 +30,32 @@ try:
 except ImportError:
     yaml = None
 
-BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
+BASE = os.environ.get("CLAUDE_HOME") or os.path.join(
+    os.environ.get("USERPROFILE") or os.environ.get("HOME", ""),
+    ".claude",
+)
 ERRORS = []
 WARNINGS = []
 INFO = []
+
+# V20: MCP/JSON spawn of Windows PowerShell 5.1 (any spacing/case / .exe)
+V20_POWERSHELL_COMMAND_RE = re.compile(
+    r"""["']command["']\s*:\s*["']powershell(?:\.exe)?["']""",
+    re.IGNORECASE,
+)
+V20_SYNC_SPAWN_PS_RE = re.compile(
+    r"""(?:which\(|args\s*=\s*\[[^\]]*)["']powershell(?:\.exe)?["']""",
+    re.IGNORECASE | re.DOTALL,
+)
+# Control-flow fallbacks in live scripts (mentioning npm/powershell in comments is OK)
+V20_SCRIPT_PNPM_NPM_FALLBACK_RE = re.compile(
+    r"(?is)(?:-not|!)\s*\(?\s*Get-Command\s+['\"]?pnpm\b"
+    r"[\s\S]{0,400}?\bnpm\s+(?:install|i\b|run\b|exec\b|-g\b)",
+)
+V20_SCRIPT_PWSH_PS_FALLBACK_RE = re.compile(
+    r"(?is)(?:-not|!)\s*\(?\s*Get-Command\s+['\"]?pwsh\b"
+    r"[\s\S]{0,400}?powershell(?:\.exe)?",
+)
 
 CORE_AGENTS = {
     "planner", "code-explorer", "code-reviewer", "build-error-resolver",
@@ -45,7 +67,7 @@ GSTACK_REVIEW_AGENTS = {
 # v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
 # product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer",
+    "sre", "doc-writer", "codex-reviewer", "change-implementer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
 GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
@@ -77,12 +99,32 @@ REQUIRED_SKILLS = (
 )
 GLOBAL_SKILLS_MAX = 36  # v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
 
-# v11: DESIGN.md 并入 FRONTEND.md（设计系统节）；BESTPRACTICE.md 并入 GOVERNANCE.md（最佳实践详参章）
+# v11.5: BACKEND.md + DATABASE.md 薄层 glob；FRONTEND 去项目特例
 GLOBAL_RULES = {
     "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
     "AGENTS.md", "MCP.md", "CONTEXT.md", "OPENSPEC.md",
-    "FRONTEND.md", "GOVERNANCE.md",
+    "FRONTEND.md", "GOVERNANCE.md", "BACKEND.md", "DATABASE.md",
 }
+GLOBAL_RULES_MAX = 12
+LIVE_POLICY_PATHS = (
+    "CLAUDE.md",
+    "rules/CORE.md",
+    "rules/AGENTS.md",
+    "rules/GOVERNANCE.md",
+    "rules/FRONTEND.md",
+    "rules/BACKEND.md",
+    "rules/DATABASE.md",
+    "skills/verification-before-completion/SKILL.md",
+    "skills/executing-plans/SKILL.md",
+    "skills/task-triage/SKILL.md",
+    "skills/requesting-code-review/SKILL.md",
+    "skills/change-impact-analysis/SKILL.md",
+    "templates/cursor-guard/rules/CURSOR-EDITOR.mdc",
+    "commands/verify.md",
+    "agents/eng-reviewer.md",
+    "hooks/_lib/gate_messages.md",
+)
+LIVE_POLICY_BANS = ("最多 3 轮", "只读免审")
 
 
 def check_json(path, label):
@@ -186,7 +228,7 @@ def v4_iron_laws_consistency():
     if os.path.exists(verif_path):
         with open(verif_path, "r", encoding="utf-8") as fh:
             extra = core + "\n" + fh.read()
-    for kw in ("漏改", "原功能", "文档/注释"):
+    for kw in ("漏改", "原功能", "文档/注释", "问题是否解决"):
         if kw not in extra:
             ERRORS.append(
                 f"V4: R20 keyword {kw!r} missing from CORE.md or verification skill"
@@ -219,10 +261,15 @@ def v5_manifest_completeness():
         WARNINGS.append(f"V5: Missing MANIFEST concerns: {sorted(missing)}")
     agents_max = manifest.get("global_agents_max", GLOBAL_AGENTS_MAX)
     skills_max = manifest.get("global_skills_max", GLOBAL_SKILLS_MAX)
+    rules_max = manifest.get("global_rules_max", GLOBAL_RULES_MAX)
     if agents_max != GLOBAL_AGENTS_MAX or skills_max != GLOBAL_SKILLS_MAX:
         WARNINGS.append(
             f"V5: MANIFEST limits ({agents_max}/{skills_max}) "
             f"!= validator ({GLOBAL_AGENTS_MAX}/{GLOBAL_SKILLS_MAX})"
+        )
+    if rules_max != GLOBAL_RULES_MAX:
+        WARNINGS.append(
+            f"V5: MANIFEST global_rules_max ({rules_max}) != validator ({GLOBAL_RULES_MAX})"
         )
 
 
@@ -346,6 +393,8 @@ def main():
     missing_rules = GLOBAL_RULES - rule_files
     if missing_rules:
         ERRORS.append(f"Missing global rules: {sorted(missing_rules)}")
+    if len(rule_files) > GLOBAL_RULES_MAX:
+        ERRORS.append(f"Too many global rules: {len(rule_files)} > {GLOBAL_RULES_MAX}")
 
     claude_path = os.path.join(BASE, "CLAUDE.md")
     line_count = 0
@@ -353,8 +402,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -384,10 +433,13 @@ def main():
     check_v14_cursor_guard_v11()
     check_v15_loading_tiers()
     check_v16_codegraph_mandate()
+    check_live_policy_bans()
+    check_fullstack_globs()
     check_v17_bare_except_extended()
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
+    check_v20_toolchain()
 
     report(
         agents=len(agent_names),
@@ -399,13 +451,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (19 checks) ===")
+    print("=== .claude v11 VALIDATION (20 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
+        "V19", "V20",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -429,7 +482,7 @@ def check_v10_bare_except():
     import re as re_mod
     import glob as glob_mod
     import ast as ast_mod
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     count = 0
     for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
         if "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
@@ -468,6 +521,7 @@ def check_v11_hook_exception_propagation():
         "pre-compact-state.py",
         "post-secret-detector.py", "post-edit-format.py",
         "post-edit-verify-tracker.py",
+        "r20-capture.py",
         "stop-verification-gate.py",
         "stop-session-summary.py", "stop-readme-updater.py",
     ]
@@ -476,7 +530,7 @@ def check_v11_hook_exception_propagation():
         "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     missing = []
     for h in core_hooks:
         if not os.path.exists(os.path.join(hooks_dir, h)):
@@ -496,8 +550,8 @@ def check_v11_hook_exception_propagation():
 
 def check_v12_r16_in_core():
     """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
-    core_path = os.path.expanduser("~/.claude/rules/CORE.md")
-    claude_path = os.path.expanduser("~/.claude/CLAUDE.md")
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    claude_path = os.path.join(BASE, "CLAUDE.md")
     for fpath, label in [(core_path, "CORE.md"), (claude_path, "CLAUDE.md")]:
         try:
             with open(fpath, 'r', encoding='utf-8') as f:
@@ -708,6 +762,61 @@ def check_v14_cursor_guard_v11():
             )
     except OSError as exc:
         ERRORS.append(f"V14: MANIFEST.yaml unreadable: {exc}")
+
+    def _section_after(text: str, heading: str | None) -> str:
+        if not heading:
+            return text
+        idx = text.find(heading)
+        if idx < 0:
+            return ""
+        rest = text[idx:]
+        nxt = rest.find("\n## ", 1)
+        return rest if nxt < 0 else rest[:nxt]
+
+    if expected:
+        live_stamps = (
+            ("hooks/README.md", "## Cursor 编辑器", r"Cursor Guard v(\d+\.\d+\.\d+)"),
+            ("README.md", "## 版本", r"当前：[^\n]*Guard (\d+\.\d+\.\d+)"),
+            ("docs/CURSOR_EDITOR_SETUP.md", None, r"\*\*v(\d+\.\d+\.\d+)\*\*"),
+            ("SPEC.md", None, r"Cursor Guard 运行时 23（v(\d+\.\d+\.\d+)）"),
+            ("docs/SYNC_GUIDE.md", "## 版本史", r"Guard \**(\d+\.\d+\.\d+)"),
+        )
+        for rel, heading, pat in live_stamps:
+            path = os.path.join(BASE, rel)
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    body = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: cannot read {rel}: {exc}")
+                continue
+            chunk = _section_after(body, heading)
+            if heading and not chunk:
+                ERRORS.append(f"V14: {rel} missing heading {heading!r}")
+                continue
+            found = re.search(pat, chunk)
+            if not found:
+                ERRORS.append(f"V14: {rel} missing live Guard version stamp")
+            elif found.group(1) != expected:
+                ERRORS.append(
+                    f"V14: {rel} live Guard {found.group(1)!r} expected {expected!r}"
+                )
+        hist = (
+            ("hooks/README.md", r"\*\*v5\.19 变更[^\n]*1\.2\.16"),
+            ("docs/SYNC_GUIDE.md", r"v20\.21[^\n]*Guard 1\.2\.16"),
+            ("docs/CURSOR_EDITOR_SETUP.md", r"\*\*v1\.2\.16\*\*"),
+        )
+        for rel, pat in hist:
+            path = os.path.join(BASE, rel)
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    body = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V14: cannot read {rel} (history): {exc}")
+                continue
+            if not re.search(pat, body):
+                ERRORS.append(
+                    f"V14: {rel} missing historical Guard 1.2.16 stamp ({pat})"
+                )
     if not missing and os.path.isfile(doc) and os.path.isfile(rule):
         print(f"  V14: Cursor Guard v{gv} ({len(v11_hooks)} hooks + docs) ✓")
 
@@ -832,11 +941,23 @@ def check_v16_codegraph_mandate():
         "pretool_ensure_timeout_sec",
         "stop_refresh_timeout_sec",
         "sync_ps1_timeout_sec",
+        "require_refresh_before_review",
     )
     missing = [k for k in required if k not in gf]
     if missing:
         ERRORS.append(f"V16: graph_freshness missing keys: {', '.join(missing)}")
         return
+    if not bool(gf.get("require_refresh_before_review")):
+        ERRORS.append("V16: graph_freshness.require_refresh_before_review must be true")
+    try:
+        with open(qg_path, "r", encoding="utf-8") as fh:
+            vg = json.load(fh).get("verification_gate") or {}
+        if int(vg.get("review_max_rounds") or 0) != 5:
+            ERRORS.append("V16: verification_gate.review_max_rounds must be 5")
+        if int(vg.get("max_blocks") or 0) != 3:
+            ERRORS.append("V16: verification_gate.max_blocks must stay 3")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        ERRORS.append(f"V16: verification_gate unreadable: {exc}")
     if int(gf.get("session_ensure_timeout_sec") or 0) < 120:
         WARNINGS.append(
             "V16: graph_freshness.session_ensure_timeout_sec < 120 "
@@ -857,6 +978,57 @@ def check_v16_codegraph_mandate():
     print("  V16: graph_freshness timeouts + snippet ✓")
 
 
+def check_fullstack_globs():
+    """FRONTEND 去项目特例与裸 js；BACKEND/DATABASE 薄层 glob 必须存在。"""
+    frontend = os.path.join(BASE, "rules", "FRONTEND.md")
+    backend = os.path.join(BASE, "rules", "BACKEND.md")
+    database = os.path.join(BASE, "rules", "DATABASE.md")
+    try:
+        with open(frontend, "r", encoding="utf-8") as fh:
+            front = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V16: cannot read FRONTEND.md: {exc}")
+        return
+    if "teoms-web" in front.lower():
+        ERRORS.append("V16: FRONTEND.md must not default to teoms-web")
+    if "**/*.{vue,jsx,tsx,css,less,scss,html}" not in front:
+        ERRORS.append(
+            "V16: FRONTEND.md glob must be vue,jsx,tsx,css,less,scss,html (no bare js)"
+        )
+    if re.search(r"\*\.js(?:\s|,|'|\"|$)", front):
+        ERRORS.append("V16: FRONTEND.md must not glob bare *.js")
+    for path, needle, label in (
+        (backend, "**/{api,server,backend,services}/**/*.{ts,js}", "BACKEND.md"),
+        (database, "**/migrations/**", "DATABASE.md"),
+    ):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V16: cannot read {label}: {exc}")
+            continue
+        if needle not in text:
+            ERRORS.append(f"V16: {label} missing glob {needle!r}")
+
+
+def check_live_policy_bans():
+    """现行政策文件禁止硬编码旧轮次 / 只读免审旁路（史留 CHANGELOG）。"""
+    for rel in LIVE_POLICY_PATHS:
+        path = os.path.join(BASE, rel)
+        if not os.path.isfile(path):
+            ERRORS.append(f"V16: live policy missing {rel}")
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V16: cannot read {rel}: {exc}")
+            continue
+        for ban in LIVE_POLICY_BANS:
+            if ban in text:
+                ERRORS.append(f"V16: {rel} hardcodes {ban!r}")
+
+
 def check_v17_bare_except_extended():
     """V17: R16 扩展 — 裸 except 扫描（hooks/ + scripts/，含 bare except: 和 except Exception:）"""
     import re as re_mod
@@ -868,8 +1040,8 @@ def check_v17_bare_except_extended():
         "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [
-        os.path.expanduser("~/.claude/hooks"),
-        os.path.expanduser("~/.claude/scripts"),
+        os.path.join(BASE, "hooks"),
+        os.path.join(BASE, "scripts"),
     ]
     violations = []
 
@@ -1016,6 +1188,163 @@ def check_v19_index_disk_sync():
         indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
         disk_rules,
     )
+
+
+def check_v20_toolchain():
+    """V20: 工具链 SSOT — pwsh 7.5 / pnpm；live 脚本无 5.1 Requires；which_pwsh 不回退 powershell。"""
+    path = os.path.join(BASE, "config", "toolchain.yaml")
+    if not os.path.isfile(path):
+        ERRORS.append("V20: config/toolchain.yaml missing")
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read toolchain.yaml: {exc}")
+        return
+    data = {}
+    if yaml:
+        try:
+            loaded = yaml.safe_load(raw)
+            if isinstance(loaded, dict):
+                data = loaded
+        except yaml.YAMLError as exc:
+            ERRORS.append(f"V20: toolchain.yaml unreadable: {exc}")
+            return
+    windows = data.get("windows") if isinstance(data.get("windows"), dict) else {}
+    node = data.get("node") if isinstance(data.get("node"), dict) else {}
+    ps_min = str(windows.get("powershell_min") or "")
+    pkg = str(node.get("package_manager") or "")
+    if not ps_min:
+        m = re.search(r'powershell_min:\s*"([^"]+)"', raw)
+        ps_min = m.group(1) if m else ""
+    if not pkg:
+        m = re.search(r"package_manager:\s*(\S+)", raw)
+        pkg = (m.group(1) if m else "").strip()
+    if ps_min != "7.5":
+        ERRORS.append(f"V20: windows.powershell_min={ps_min!r} expected '7.5'")
+    if pkg != "pnpm":
+        ERRORS.append(f"V20: node.package_manager={pkg!r} expected 'pnpm'")
+    python_cfg = data.get("python") if isinstance(data.get("python"), dict) else {}
+    missing_tool = str(data.get("missing_tool") or "")
+    pnpm_major = str(node.get("pnpm_major") or "")
+    py_installer = str(python_cfg.get("installer") or "")
+    if not missing_tool:
+        m = re.search(r"missing_tool:\s*(\S+)", raw)
+        missing_tool = (m.group(1) if m else "").strip()
+    if not pnpm_major:
+        m = re.search(r'pnpm_major:\s*"([^"]+)"', raw)
+        pnpm_major = m.group(1) if m else ""
+    if not py_installer:
+        m = re.search(r"installer:\s*(\S+)", raw)
+        py_installer = (m.group(1) if m else "").strip()
+    if missing_tool != "BLOCKED":
+        ERRORS.append(f"V20: missing_tool={missing_tool!r} expected 'BLOCKED'")
+    if pnpm_major != "11":
+        ERRORS.append(f"V20: node.pnpm_major={pnpm_major!r} expected '11'")
+    if py_installer != "uv":
+        ERRORS.append(f"V20: python.installer={py_installer!r} expected 'uv'")
+
+    for rel in (".mcp.json", "docs/CURSOR_MCP_PROFILE.md"):
+        live_path = os.path.join(BASE, rel)
+        try:
+            with open(live_path, "r", encoding="utf-8") as fh:
+                live = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V20: cannot read {rel}: {exc}")
+            continue
+        if V20_POWERSHELL_COMMAND_RE.search(live):
+            ERRORS.append(f"V20: {rel} still has command powershell; must spawn pwsh")
+
+    sync_runner = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "_lib", "sync_runner.py"
+    )
+    try:
+        with open(sync_runner, "r", encoding="utf-8") as fh:
+            runner = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read sync_runner.py: {exc}")
+    else:
+        if V20_SYNC_SPAWN_PS_RE.search(runner):
+            ERRORS.append("V20: Guard sync_runner must not spawn powershell")
+        if "def resolve_pwsh" not in runner:
+            ERRORS.append("V20: Guard sync_runner must define resolve_pwsh")
+        if "shutil.which(\"pwsh\")" not in runner and "shutil.which('pwsh')" not in runner:
+            ERRORS.append("V20: Guard sync_runner must resolve pwsh")
+
+    shell_patterns = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "_lib", "shell_patterns.py"
+    )
+    try:
+        with open(shell_patterns, "r", encoding="utf-8") as fh:
+            patterns = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read shell_patterns.py: {exc}")
+    else:
+        if r"powershell(?:\.exe)?" not in patterns:
+            ERRORS.append(
+                "V20: Guard shell_patterns WARN must include powershell (align pre-bash-guard)"
+            )
+
+    scripts_dir = os.path.join(BASE, "scripts")
+    if os.path.isdir(scripts_dir):
+        for name in sorted(os.listdir(scripts_dir)):
+            if not name.endswith(".ps1"):
+                continue
+            script_path = os.path.join(scripts_dir, name)
+            try:
+                with open(script_path, "r", encoding="utf-8-sig") as fh:
+                    text = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V20: cannot read scripts/{name}: {exc}")
+                continue
+            if "#Requires -Version 5.1" in text:
+                ERRORS.append(f"V20: scripts/{name} still has #Requires -Version 5.1")
+            if "#Requires -Version 7.5" not in text:
+                ERRORS.append(f"V20: scripts/{name} missing #Requires -Version 7.5")
+            if V20_SCRIPT_PNPM_NPM_FALLBACK_RE.search(text):
+                ERRORS.append(
+                    f"V20: scripts/{name} falls back to npm when pnpm is missing"
+                )
+            if V20_SCRIPT_PWSH_PS_FALLBACK_RE.search(text):
+                ERRORS.append(
+                    f"V20: scripts/{name} falls back to powershell when pwsh is missing"
+                )
+
+    gf = os.path.join(BASE, "hooks", "_lib", "graph_freshness.py")
+    try:
+        with open(gf, "r", encoding="utf-8") as fh:
+            src = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read graph_freshness.py: {exc}")
+        return
+    m = re.search(r"def which_pwsh\([^)]*\)[^\n]*\n((?:[ \t].*\n)+)", src)
+    body = m.group(1) if m else ""
+    if not body:
+        ERRORS.append("V20: which_pwsh definition not found")
+    else:
+        if 'which_tool("powershell")' in body or "which_tool('powershell')" in body:
+            ERRORS.append("V20: which_pwsh must not fall back to powershell")
+        if 'which_tool("pwsh")' not in body and "which_tool('pwsh')" not in body:
+            ERRORS.append('V20: which_pwsh must call which_tool("pwsh")')
+
+    claude_path = os.path.join(BASE, "CLAUDE.md")
+    try:
+        with open(claude_path, "r", encoding="utf-8") as fh:
+            claude = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read CLAUDE.md: {exc}")
+        return
+    r15 = re.search(r"\| R15 \|[^\n]+", claude)
+    if not r15:
+        ERRORS.append("V20: CLAUDE.md R15 row missing")
+    else:
+        row = r15.group(0)
+        if "兜底" in row:
+            ERRORS.append("V20: CLAUDE.md R15 must not contain 兜底")
+        if "pnpm" not in row:
+            ERRORS.append("V20: CLAUDE.md R15 must mention pnpm")
+    print("  V20: toolchain floors + pwsh-only which_pwsh ✓")
 
 
 if __name__ == "__main__":

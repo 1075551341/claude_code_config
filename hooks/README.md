@@ -1,7 +1,11 @@
-# Hooks 钩子系统 v5.16
+# Hooks 钩子系统 v5.20
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.20 变更（v11.6.0）**：Cursor Guard **1.2.17** — Shell 警告对齐 Claude `pre-bash-guard`（`powershell` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
+> **v5.19 变更（v11.6.0）**：Cursor Guard **1.2.16** — `sync_runner` 只 spawn pwsh。`.mcp.json` / Cursor 粘贴片段 `command: pwsh`。
+> **v5.18 变更（v11.6.0）**：`which_pwsh` 只认 pwsh 7.5+；live 脚本 `#Requires -Version 7.5`。Cursor Guard 1.2.15。
+> **v5.17 变更（v11.5.0）**：七维（含问题是否解决）；审查前刷图相位 `graph`；`review_max_rounds=5`；批次聚合 verdict；文档 in scope；填槽绑定审查者身份；结论整行解析。Cursor Guard 1.2.15。`deploy-editor-graph-hooks.ps1 -Scope editors|all`。
 > **v5.16 变更（v11.4.13）**：图谱保鲜 deny 覆盖 Glob/everything；`CallDynamicTool` 解包 namespace+toolName；everything 无图与 Glob 同级 deny，不再当 Grep/Glob 产品 fallback。Cursor Guard 仍 1.2.11（matcher 增量）。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
@@ -143,7 +147,7 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步（`sync_runner` 只 spawn pwsh）、Shell 警告 `powershell`→pwsh（allow 不 deny）、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
@@ -175,4 +179,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.16（v11.4.13）| 19 注册激活 + 5 未注册；图谱保鲜 deny Grep/Glob/everything；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2_
+_版本：5.20（v11.6.0）| 19 注册激活 + 5 未注册；七维独立审查；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_

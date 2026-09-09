@@ -1,0 +1,49 @@
+# 平台 / 运行时 / 包管理器 SSOT（v11.6）
+# 缺工具 → BLOCKED，给出安装命令。禁止 if-else 静默回退到旧工具（PS5.1 / npm / pip）。
+# 语言规则与 GOVERNANCE/CORE 只指向本文件，不在 alwaysApply 再加一条规则。
+
+missing_tool: BLOCKED
+
+windows:
+  shell: pwsh
+  powershell_min: "7.5"
+  powershell_prefer: lts   # 当前 LTS，且不得低于 min
+  install: "winget install --id Microsoft.PowerShell"
+  missing: "Install PowerShell 7.5+ (pwsh). Do not use Windows PowerShell 5.1."
+
+node:
+  min: "22"
+  package_manager: pnpm
+  pnpm_major: "11"
+  install_pnpm: "corepack enable && corepack prepare pnpm@11 --activate"
+  missing: "Install pnpm 11 via corepack. Do not silently fall back to npm."
+  respect_lockfile: true   # 仓库已有 lock 则用该管理器；这是项目约定，不是缺 pnpm 时的 npm 兜底
+
+python:
+  min: "3.12"
+  installer: uv
+  install: "https://docs.astral.sh/uv/getting-started/installation/"
+  missing: "Install uv. Do not silently fall back to pip or poetry."
+  runtime_pins: "MCP/serena 等运行时钉扎仍写在 MCP 配置，不强迫所有项目升到最新 CPython。"
+
+go:
+  min: "1.22"
+  module: go
+
+java:
+  lts: "21"
+  build: "maven or gradle (respect the repo)"
+
+csharp:
+  sdk_min: "8"
+
+rust:
+  channel: stable
+  edition: "2021"
+
+dart:
+  sdk_min: "3"
+
+ruby:
+  min: "3.2"
+  gems: bundler

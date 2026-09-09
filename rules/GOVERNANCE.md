@@ -7,22 +7,16 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 > 本文承接 CORE.md 迁出的详情内容。铁律一行表与门控在 CORE；此处为适用范围与操作细节。
 
-## 门控强度（v11.4.12 — 一次找齐再集中改；每轮全新开审）
+## 门控强度（v11.5 — 七维独立审查 + 审查前刷图）
 
-> 原则：不依赖模型自觉。门控文本 SSOT = `hooks/_lib/gate_messages.md`（短指针，完整清单在 skill）。R20 机械检测 SSOT = `hooks/_lib/r20_replay.py`。
-> v11.4.12：审查一次找齐全部未满足项，清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 resume 上一轮审查者）；禁止边审边改耗轮次。
-> v11.4.11：审查者只找问题，修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。
-> v11.4.10：Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留。
-> v11.4.9：有代码/配置改动即双审；独立审查 PASS/符合预期即停；仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan 记账；plan.md 不计完成门）；已有双图时 CLI 失败不阻断。
-> v11.4.8：非简单双审 = 修改→验证→审查循环最多 3 轮；`dual_pass_phase`；禁止只连审不改。
-> v11.4.7：计划未批准 / CreatePlan / 零编辑 / 无 session id → Cursor **禁止** `followup_message`；完成门不再用裸词「完成」；`review_max_rounds=3`。
-> v11.3.5：完成验证门第 1 条增「验证证据须为观察输出（命令/测试/文件），不信叙述」（软性短句，硬门字段不变）；hooks 无变更（v5.8）。
-> v11.3.4：Cursor Stop 用 `followup_message` 等效硬门；初次修改后五维验收；R20 反空模板。
+> 原则：不依赖模型自觉。门控文本 SSOT = `hooks/_lib/gate_messages.md`。R20 机械检测 SSOT = `hooks/_lib/r20_replay.py`。
+> **审查政策正文只在** `skills/verification-before-completion/SKILL.md`（七维、全新开审、审查前刷图、`review_max_rounds`）。`max_blocks` 仍为 Stop 验证阻断（≠ 审查轮次）。
+> 史：v11.4.x 轮次与完成态边界见 `CHANGELOG.md`，不再作为现行政策。
 
 | 门             | Claude Code 触发                                                                                                                    | Cursor Guard 触发                                                                                                                                                         | 行为                                                                                                                       | 豁免                                                                 |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | P0 分类门      | SessionStart → `session-start-bootstrap.py`                                                                                         | sessionStart → `session_bootstrap.py`                                                                                                                                     | 每会话注入分类指令（简单/Bug/非简单路由）                                                                                  | 无；skill 已读且范围未变可不重复 Read                                |
-| 完成验证门     | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**，短 R20） | postToolUse → `verify_tracker.py` + `first_edit_verify.py` + Stop → `verification_stop.py`（**不** followup；仅图谱 refresh / 全绿 sync）。`verification_gate.py` 关闭完成门注入 | 硬门：Claude exit 2；Cursor 规则驱动（change-implementer 修改→验证→eng-reviewer 一次找齐、每轮全新开审） | Claude 逃逸关键词（跳过验证）；max_blocks=3 后放行标 DONE_WITH_CONCERNS |
+| 完成验证门     | UserPromptSubmit → `pre-userprompt-verify-gate.py`（软注入）+ Stop → `stop-verification-gate.py`（**硬阻断 exit 2**，短 R20） | postToolUse → `verify_tracker.py` + `first_edit_verify.py` + Stop → `verification_stop.py`（**不** followup；仅图谱 refresh / 全绿 sync）。`verification_gate.py` 关闭完成门注入 | 硬门：Claude exit 2；Cursor 规则驱动（改→验→刷图→全新七维审查） | Claude 逃逸关键词（跳过验证）；max_blocks=3 后放行标 DONE_WITH_CONCERNS |
 | 变更影响门     | PreToolUse Edit/Write/MultiEdit → `pre-edit-impact-nudge.py`                                                                        | preToolUse Write/StrReplace → `impact_nudge.py`                                                                                                                           | 每个文件首次编辑前注入 CRG `get_impact_radius`（有图）+ `codegraph_explore` blast-radius + Grep + MANIFEST                   | **永不 deny**                                                        |
 | 初次修改验收门 | PostToolUse → `post-edit-verify-tracker.py`（记账后附加 additionalContext）                                                         | postToolUse → `first_edit_verify.py`                                                                                                                                      | 每个文件首次成功编辑后注入五维迷你验收；核对范围=该文件 + blast-radius 全部相关项（禁止只验当前文件）                       | 同一文件第二次编辑静默                                               |
 | 图谱保鲜门     | SessionStart ensure（120s）+ PreToolUse `pre-graph-freshness.py`（**deny**）+ Stop 增量刷新（有无编辑都刷）；验绿后 `sync.ps1 -Scope rules`           | sessionStart ensure（120s）+ preToolUse `graph_freshness.py`（**deny**）+ Stop 刷新（有无编辑都刷）；验绿后 sync_runner                                                                    | eligible git 仓无双图禁止 Grep/Glob/everything/编辑/查询 MCP；建图类 CLI/MCP 放行。TRAE/Qoder 经 `deploy-editor-graph-hooks.ps1`；workbuddy 仅 L0 规则 | `GRAPH_FRESHNESS_SKIP_SYNC=1`（测试）；非 git 仓跳过（判定看 `workspace_roots`/git 根，不看用户 hook 进程目录）                 |
@@ -31,7 +25,7 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 - 配置 SSOT：`config/quality_gates.json` → `verification_gate` 节 + `graph_freshness` 节（session/pretool/stop/sync 超时）
 - 强度调整：验证门硬阻断由 `verification_gate.enabled` 控制；影响门仅注入不阻断是**显式决策**，升级 deny 需用户确认
 - Cursor 侧改动生效路径：改 `templates/cursor-guard/` → 跑 `scripts/deploy-cursor-guard.ps1` → 重启 Cursor
-- DSH / OpenCode：不经 Claude Stop。规则 SSOT 仍是 `hooks/_lib/r20_replay.py`；便携 `templates/editor-graph-hooks/r20_check.py` 部署到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`（无指纹比对）。OpenCode `verify-gate.ts` 本地判定对齐，**禁止 spawn** `gate_cli.py`。不经 `sync.ps1` 覆盖各端 AGENTS.md。
+- DSH / OpenCode：不经 Claude Stop。规则 SSOT 仍是 `hooks/_lib/r20_replay.py`；便携 `r20_check.py` 导入该模块（部署时同时复制 `r20_replay.py` 到 `~/.dsh/tools` 与 `~/.config/opencode/scripts`）。OpenCode `verify-gate.ts` 结论行与字段切分与 SSOT 对齐（整行解析、跳过教学句、`[ \t]*`、最后非空），**禁止 spawn** `gate_cli.py`。不经 `sync.ps1` 覆盖各端 AGENTS.md。
 
 ## R16 详细声明（错误暴漏）
 
@@ -51,9 +45,11 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 ## R15 适用范围（Node / JS 包管理器）
 
-- **默认**：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`
-- **尊重项目**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 `pnpm` → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm
-- **npm 兜底**：本机无 pnpm、pnpm 执行失败且用户未要求换工具链、或脚本/文档明确写 `npm` 时
+版本地板与缺工具处置 → `config/toolchain.yaml`（SSOT）。
+
+- **默认新工作**：pnpm 11（`corepack enable && corepack prepare pnpm@11 --activate`）
+- **尊重项目 lockfile**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 pnpm → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm（项目约定，不是本机缺 pnpm 时的回退）
+- **缺声明的管理器**：BLOCKED，给出安装命令。禁止「PATH 上没有 pnpm 就改用 npm」
 - **禁止**：在 pnpm 项目中混用 `npm install` 生成/改写 lock（避免双 lock 漂移）
 
 ## 注释规则与模板
@@ -231,9 +227,9 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 
 **终端环境规范（Windows）**：
 
-- 优先 `pwsh`（PowerShell 7+ 稳定版）：PS5.1 在编码（默认 GBK/UTF-16LE）、管道行为、异常处理、跨平台路径上与 PS7 有实质差异，易引发脚本异常
-- 脚本注释/文档示例统一 `pwsh -ExecutionPolicy Bypass -File <脚本>`；PS5.1 环境回退用 `powershell`
-- **Qoder / 编辑器 MCP 特例**：`scripts/chrome-devtools-mcp.ps1`、`playwright-mcp.ps1`、`context7-mcp.ps1`、`python-mcp.ps1` 用 `powershell.exe` 间接启动（编辑器 MCP spawn / Qoder Go 客户端兼容），不受 pwsh 优先规则约束
+- 一律 `pwsh`（PowerShell 7.5+）：PS5.1 在编码（默认 GBK/UTF-16LE）、管道行为、异常处理、跨平台路径上与 7 有实质差异，易引发脚本异常
+- 脚本 `#Requires -Version 7.5`；文档示例 `pwsh -ExecutionPolicy Bypass -File <脚本>`。缺 pwsh → BLOCKED + `winget install --id Microsoft.PowerShell`。禁止回退 Windows PowerShell 5.1
+- 编辑器 `mcp.json` 应 spawn `pwsh`。Qoder 若仍 fork `powershell.exe` 是宿主配置问题，修 mcp.json，不是第二套用户 Shell 标准 → `rules/MCP.md`
 
 ## API 设计
 
@@ -257,7 +253,7 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 - 上下文 >70% 择机 compact，>90% 强制新子Agent
 - 长任务（>30分钟）拆分为独立子Agent，每个有明确完成标准
 
-**会话终验（R20）**：改前优先成熟方案或已有全局通用处理（本文件「工程决策原则」：成熟度/先查已有能力）；完成后按用户**原始要求逐条回放**（禁止把实现重做一遍）。模板 SSOT → `skills/verification-before-completion/SKILL.md`（满足/遗漏/错改/漏改/原功能）。**核对范围 = blast-radius 全部相关项**（文档/INDEX/MANIFEST/注释/命令/测试/同类引用），禁止只验已编辑文件。**配置/修改必须与文档/注释同步**（不一致计入「漏改」，不得声称完成）。独立审查一次找齐全部未满足项，**每轮必须全新开审**（禁止 resume 上一轮审查者）；修改必须 `change-implementer` 按完整清单集中改齐；禁止边审边改耗轮次。非功能变更必须在「原功能」写「保持」并指向测试或冒烟证据。验证命令不能代替需求对照。未输出不得声称完成。Claude Stop 硬门：`r20_replay.py` 反空模板。Cursor 完成门不 followup。纯文档编辑同样适用。
+**会话终验（R20）**：操作化模板与七维清单只在 `skills/verification-before-completion/SKILL.md`。本文件不另写一套终验。改前成熟方案见本文件「工程决策原则」。未输出七维不得声称完成。Claude Stop：`r20_replay.py`。Cursor 完成门不 followup。
 
 ## 上下文管理
 

@@ -12,14 +12,14 @@
 
 .EXAMPLE
     # 全部命令
-    powershell -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1                    # 搜全部 8 个分类
-    powershell -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1 -Category AI开发   # 只搜单个分类
+    pwsh -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1                    # 搜全部 8 个分类
+    pwsh -ExecutionPolicy Bypass -File scripts/search-github-tools.ps1 -Category AI开发   # 只搜单个分类
 
 .NOTES
     需要网络连接；可选配置 GITHUB_TOKEN 环境变量提高 API 限额。
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param(
     [string]$Category = "all",

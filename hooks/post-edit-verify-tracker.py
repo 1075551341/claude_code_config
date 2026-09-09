@@ -20,7 +20,20 @@ from tool_paths import extract_edit_paths, is_edit_tool  # noqa: E402
 from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，便于测试隔离
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 from crg_track import record_crg_call  # noqa: E402
-from r20_replay import is_plan_artifact, is_resumed_subagent, record_plan_tool  # noqa: E402
+from r20_replay import (  # noqa: E402
+    apply_review_verdict,
+    attach_review_text,
+    clear_review_pass_if_counted,
+    identify_reviewer,
+    is_graph_refresh_call,
+    is_plan_artifact,
+    is_resumed_subagent,
+    note_reviewer_dispatch,
+    record_plan_tool,
+    record_pre_review_graph_refresh,
+    reviewer_dispatch_blob,
+    tool_result_text,
+)
 
 CLAUDE_HOME = str(claude_home())
 STATE_DIR = os.path.join(CLAUDE_HOME, ".state")
@@ -34,7 +47,15 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer",
+    "ceo-reviewer",
+    "designer",
+    "dx-reviewer",
+    "qa",
+    "security-reviewer",
+    "code-reviewer",
+]
 
 IMPACT_GATE_KEY = "impact_manifest_gate"
 IMPACT_REMINDER = (
@@ -211,6 +232,9 @@ def main():
     })
     entry["ts"] = now
     entry.setdefault("started_ts", now)
+    entry.setdefault("edited_files", [])
+    entry.setdefault("verify_commands", [])
+    entry.setdefault("reviews", [])
     if cwd:
         entry["cwd"] = cwd
 
@@ -223,6 +247,8 @@ def main():
         plan_only = bool(paths) and all(is_plan_artifact(p) for p in paths)
         for path in paths:
             entry["edited_files"].append({"path": path, "ts": now})
+            changed = True
+        if clear_review_pass_if_counted(entry, paths):
             changed = True
         fresh = [] if plan_only else fresh_edit_paths(entry, paths)
         if fresh:
@@ -246,33 +272,32 @@ def main():
         if command and is_verify_command(command, cfg["verify_command_patterns"]):
             entry["verify_commands"].append({"command": command[:300], "ts": now})
             changed = True
-    elif tool_name in ("Task", "Agent"):
-        agent = str(tool_input.get("subagent_type") or tool_input.get("description") or "").lower()
-        for reviewer in cfg["reviewer_agents"]:
-            if reviewer.lower() in agent:
-                if is_resumed_subagent(tool_input):
-                    entry.setdefault("skipped_resumed_reviews", []).append(
-                        {"agent": reviewer, "ts": now}
-                    )
-                    changed = True
-                    first_edit_msg = (
-                        f"{first_edit_msg}\n\n{RESUMED_REVIEW_REMINDER}"
-                        if first_edit_msg
-                        else RESUMED_REVIEW_REMINDER
-                    )
-                    break
-                last_rev = 0.0
-                for item in entry.get("reviews") or []:
-                    last_rev = max(last_rev, float(item.get("ts", 0) or 0))
-                last_edit = 0.0
-                for item in entry.get("edited_files") or []:
-                    last_edit = max(last_edit, float(item.get("ts", 0) or 0))
-                if last_edit > last_rev:
-                    entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
-                entry["reviews"].append({"agent": reviewer, "ts": now})
-                entry["review_pass_ok"] = False
+        if is_graph_refresh_call(tool_name, tool_input):
+            if record_pre_review_graph_refresh(entry, now):
                 changed = True
-                break
+    elif tool_name in ("Task", "Agent"):
+        blob = reviewer_dispatch_blob(tool_input)
+        reviewer = identify_reviewer(blob, cfg["reviewer_agents"])
+        if reviewer:
+            resumed = is_resumed_subagent(tool_input)
+            if note_reviewer_dispatch(entry, reviewer, now, resumed=resumed):
+                changed = True
+            if not resumed:
+                result_text = tool_result_text(data)
+                if attach_review_text(entry, result_text, source=reviewer):
+                    changed = True
+                if apply_review_verdict(entry, result_text):
+                    changed = True
+            if resumed:
+                first_edit_msg = (
+                    f"{first_edit_msg}\n\n{RESUMED_REVIEW_REMINDER}"
+                    if first_edit_msg
+                    else RESUMED_REVIEW_REMINDER
+                )
+
+    if is_graph_refresh_call(tool_name, tool_input):
+        if record_pre_review_graph_refresh(entry, now):
+            changed = True
 
     if record_crg_call(entry, tool_name, now, tool_input):
         changed = True

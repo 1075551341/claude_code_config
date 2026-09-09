@@ -14,14 +14,14 @@
 
 .EXAMPLE
     # 全部命令（无参数）
-    powershell -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1
+    pwsh -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1
 
 .NOTES
     会真实调用 sync.ps1 -All -Force 并临时造脏数据，跑完自行清理。
     退出码 0 = 去重正常；1 = 出现同名残留或内容未刷新（First-Fail 立即退出）。
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 $ErrorActionPreference = "Stop"
 $CLAUDE_DIR   = Join-Path $env:USERPROFILE ".claude"
@@ -54,7 +54,7 @@ if (-not (Test-Path $cursorRules)) { New-Item -ItemType Directory -Path $cursorR
 "stale" | Set-Content -Path (Join-Path $cursorRules "MCP.md")      -Encoding utf8
 Ok "injected variants into plugin / ~/.cursor/rules"
 
-& powershell -ExecutionPolicy Bypass -File $SYNC -All -Force | Out-Null
+& pwsh -ExecutionPolicy Bypass -File $SYNC -All -Force | Out-Null
 if ($LASTEXITCODE -ne 0) { Fail "sync.ps1 exited $LASTEXITCODE" }
 Ok "sync.ps1 -All -Force completed"
 
@@ -107,7 +107,7 @@ foreach ($ch in $editorChannels) {
     "stale" | Set-Content -Path (Join-Path $ch.Dir "CORE$($ch.AltExt)")  -Encoding utf8
     "user-own" | Set-Content -Path (Join-Path $ch.Dir "MY-CUSTOM$($ch.Ext)") -Encoding utf8
 
-    & powershell -ExecutionPolicy Bypass -File $SYNC -Force | Out-Null
+    & pwsh -ExecutionPolicy Bypass -File $SYNC -Force | Out-Null
     if ($LASTEXITCODE -ne 0) { Fail "$($ch.Name): sync.ps1 exited $LASTEXITCODE" }
 
     foreach ($base in $RULE_BASES) {

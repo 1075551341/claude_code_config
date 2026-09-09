@@ -21,6 +21,7 @@ catalog/agents/ (48) → 领域专用 + v11 降级变体，按需复制到项目
 `ceo-reviewer`、`designer`、`eng-reviewer`、`qa`、`security-reviewer` 在顶层
 `~/.claude/agents/` 也存在。**顶层为权威实现**（`agents-INDEX.md` 与 MANIFEST 均指向它），
 本目录同名项是变体副本，仅在复制到项目时使用，不要在全局会话中委派。
+完成门七维（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决）只维护在全局 `agents/eng-reviewer.md` 与 `skills/verification-before-completion/SKILL.md`；本目录同名审查者不要再复制一份七维模板。
 
 ## 复制命令
 

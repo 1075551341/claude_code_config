@@ -15,7 +15,7 @@ L2 门控: verification-before-completion, systematic-debugging
 
 writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | brainstorming | systematic-debugging | verification-before-completion | using-superpowers
 
-> 与插件 superpowers v6.2.0 同名但**非副本**：本地版为中文重写 + 五阶段/门控/verify_tier 集成（相似度 <10%），本地为权威。
+> 与插件 superpowers v6.3.0 同名但**非副本**：本地版为中文重写 + 五阶段/门控/verify_tier 集成（相似度 <10%），本地为权威。
 
 ## 调研 / Git / 记忆
 

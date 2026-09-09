@@ -1,8 +1,8 @@
 # 多端图谱保鲜（v11.4.10）
 
-便携 CLI SSOT：`graph_freshness_cli.py`（ensure / refresh / status）+ `r20_check.py`（R20 机械门，含影响范围）。
-部署：`pwsh -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder 合并 hook **并**复制 CLI / R20 检查器到 DSH/OpenCode；复制 `graph-freshness.ts` 与 `verify-gate.ts`）。
-v11.4.10：Cursor 完成门不再 followup。OpenCode `verify-gate` 审查 PASS 后不再催完成令。
+便携 CLI SSOT：`graph_freshness_cli.py`（ensure / refresh / status）+ `r20_check.py`（导入 `hooks/_lib/r20_replay.py`，禁止再复制字段正则）。
+部署：`pwsh -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder 合并 hook **并**复制 CLI / R20 检查器 + `r20_replay.py` 到 DSH/OpenCode；复制 `graph-freshness.ts` 与 `verify-gate.ts`）。
+v11.5.0：`r20_check.py` 导入 `r20_replay`；OpenCode `verify-gate` 结论行与七维对齐 Python SSOT（整行解析、跳过教学句）。审查 PASS 后不再催完成令。
 v11.4.9：Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断；OpenCode `verify-gate` 计划文件不注入完成令；独立审查 PASS 即停。
 
 | Harness | 开始 | 结束 | 配置 |

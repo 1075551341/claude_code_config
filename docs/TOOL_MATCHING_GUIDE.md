@@ -22,7 +22,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 | codegraph 探索 (R17) | SessionStart/PreToolUse ensure：`codegraph init -i` 或 `sync` | `validate_config.py` V16 + 无图 deny |
 | code-review-graph    | 同上 ensure：`code-review-graph build` 或 `update`           | 存在 `.code-review-graph/graph.db`   |
 | everything（本机文件名） | Windows + Everything.exe 运行中；`everything-mcp==1.0.6` + `mcp<2` | 工具 `everything_search` 可返回路径 |
-| OpenSpec CLI         | `npm i -g @fission-ai/openspec`（Node>=20.19）+ `openspec init --tools cursor`      | `openspec --version`          |
+| OpenSpec CLI         | `pnpm add -g @fission-ai/openspec`（Node>=22）+ `openspec init --tools cursor`      | `openspec --version`          |
 | 深度调研 L3          | Exa + Firecrawl（`FIRECRAWL_API_KEY` 用户/系统环境变量）                            | Claude plugin 可用；不写 `.mcp.json` |
 
 ### Firecrawl 认证

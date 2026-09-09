@@ -15,7 +15,7 @@
     "code-review-graph": {
       "_description": "精准上下文/变更影响/风险/审查/PR。钉扎 2.3.8。经 python-mcp.ps1 清 PYTHONHOME，钉 CPython 3.12。",
       "type": "stdio",
-      "command": "powershell",
+      "command": "pwsh",
       "args": [
         "-NoProfile",
         "-ExecutionPolicy",
@@ -34,7 +34,7 @@
     "serena": {
       "_description": "Serena 符号级代码工具。经 python-mcp.ps1 清 PYTHONHOME。",
       "type": "stdio",
-      "command": "powershell",
+      "command": "pwsh",
       "args": [
         "-NoProfile",
         "-ExecutionPolicy",
@@ -57,7 +57,7 @@
     "everything": {
       "_description": "elis132/everything-mcp：voidtools Everything 秒级文件名搜索（5 工具，只读）。需 Everything 运行中。钉 everything-mcp==1.0.6 且 --with mcp<2（未兼容 FastMCP 2.x）。勿与 marketplace plugin 双挂；勿与 everything-claude-code 插件混淆。仅 Windows。",
       "type": "stdio",
-      "command": "powershell",
+      "command": "pwsh",
       "args": [
         "-NoProfile",
         "-ExecutionPolicy",

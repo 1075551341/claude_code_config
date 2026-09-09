@@ -11,6 +11,8 @@ tools:
 
 # Eng Reviewer（gstack 角色）
 
+> 七维与完成门口径以全局 [`../../agents/eng-reviewer.md`](../../agents/eng-reviewer.md) 与 `skills/verification-before-completion/SKILL.md` 为准。
+
 所有代码变更的必经关卡。与 `code-reviewer` 协作但职责不同：本 agent 侧重架构与工程决策层面审查。
 
 **只对照原始要求判断是否符合预期并列出问题。禁止改文件、禁止提交补丁。修复 → `change-implementer`。**

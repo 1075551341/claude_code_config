@@ -20,12 +20,12 @@ const STATE_DIR = join(homedir(), ".config", "opencode", ".state");
 const STATE_FILE = join(STATE_DIR, "verify-gate.json");
 
 const R20_RULE =
-  "[完成验证] 仅当本回合有过非计划文件的代码/配置编辑时输出短 R20（各一行：满足/遗漏/错改/漏改/原功能/影响范围）。" +
+  "[完成验证] 仅当本回合有过非计划文件的代码/配置编辑时输出短 R20（各一行：满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决）。" +
   "计划未落地、仅 *.plan.md、零编辑不要终审、不要注入完成令。" +
   "满足须承认/反驳/弃权；漏改写无文档影响或路径；原功能附证据；影响范围含 CRG/IMPACT/blast。" +
   "有代码改动：审查一次找齐（禁止改文件）；每轮全新开审（禁止 resume）；清单齐后再开一次实现回合集中改齐。" +
-  "干净 PASS 即停。禁止边审边改耗轮次，最多 3 轮；禁止只连审不改。" +
-  "机械门与 scripts/r20_check.py 对齐。无观察输出不得声称完成。";
+  "干净 PASS 即停。禁止边审边改耗轮次，review_max_rounds=5；禁止只连审不改。" +
+  "机械门与 scripts/r20_check.py 对齐（结论只认标题行，跳过教学句）。无观察输出不得声称完成。";
 
 const EDIT_TOOLS = new Set(["edit", "write", "patch", "multiedit"]);
 
@@ -98,28 +98,63 @@ const IMPACT_TOKENS = [
   "影响范围",
 ];
 const FIELD_RE =
-  /(?:^|\n)\s*-?\s*(满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:]\s*([\s\S]*?)(?=(?:\n\s*-?\s*(?:满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:])|\n结论|$)/g;
+  /(?:^|\n)\s*-?\s*(满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决)\s*[：:][ \t]*([\s\S]*?)(?=(?:\n\s*-?\s*(?:满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决)\s*[：:])|\n结论|$)/g;
 
 function fieldValue(text: string, name: string): string {
   FIELD_RE.lastIndex = 0;
+  let last = "";
   let match: RegExpExecArray | null;
   while ((match = FIELD_RE.exec(text))) {
-    if (match[1] === name) return (match[2] || "").trim();
+    if (match[1] === name) {
+      const val = (match[2] || "").trim();
+      if (val) last = val;
+    }
   }
-  return "";
+  return last;
+}
+
+const INSTRUCTIONAL_VERDICT = /\bPASS\s*(?:或|\/|or)\s*NEEDS-CHANGES\b/i;
+// Unicode letter lookaround — JS `\b` is ASCII-only and never matches after CJK.
+const HEADING_RE =
+  /(?<!\p{L})(?:独立审查(?:\s*\/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|Independent\s+review|结论|判断|Verdict|状态)(?!\p{L})/iu;
+const SOLVED_LEGEND = /已解决\s*[|/]\s*未解决\s*[|/]\s*部分解决/;
+
+function stripVerdictMarkup(line: string): string {
+  let s = line.trim();
+  s = s.replace(/^#{1,6}\s*/, "");
+  s = s.replace(/^[-*]\s+/, "");
+  return s.replace(/^\*+|\*+$/g, "").trim();
+}
+
+/** Line-based verdict; keep in lockstep with hooks/_lib/r20_replay.py primary_verdict. */
+function primaryVerdict(text: string): "PASS" | "NEEDS-CHANGES" | null {
+  let last: "PASS" | "NEEDS-CHANGES" | null = null;
+  for (const raw of (text || "").split("\n")) {
+    const line = stripVerdictMarkup(raw);
+    if (!line) continue;
+    HEADING_RE.lastIndex = 0;
+    if (!HEADING_RE.test(line)) continue;
+    if (INSTRUCTIONAL_VERDICT.test(line)) continue;
+    const hasPass = /\bPASS\b/.test(line);
+    const hasNeeds = /\bNEEDS-CHANGES\b/.test(line);
+    if (hasPass && hasNeeds) continue;
+    if (hasNeeds) last = "NEEDS-CHANGES";
+    else if (hasPass) last = "PASS";
+  }
+  return last;
 }
 
 function checkR20(text: string): boolean {
   if (!text || !text.trim()) return false;
   if (!/会话终验|\bR20\b/.test(text)) return false;
-  for (const field of ["遗漏", "错改", "漏改", "原功能", "影响范围"]) {
+  for (const field of ["遗漏", "错改", "漏改", "原功能", "影响范围", "问题是否解决"]) {
     if (!text.includes(field)) return false;
   }
   const sat = fieldValue(text, "满足");
   if (EMPTY_SAT.has(sat.toLowerCase())) return false;
   const missed = fieldValue(text, "漏改");
   if (!missed) return false;
-  if (!/(文档|无文档影响)/.test(missed) && !/[\\/]|\.\w{2,8}\b/.test(missed))
+  if (!/(文档|注释|无文档影响)/.test(missed) && !/[\\/]|\.\w{2,8}\b/.test(missed))
     return false;
   const orig = fieldValue(text, "原功能");
   if (!orig || !/(证据|测试|冒烟)/.test(orig)) return false;
@@ -127,6 +162,10 @@ function checkR20(text: string): boolean {
   if (!impact || EMPTY_SAT.has(impact.toLowerCase())) return false;
   const low = impact.toLowerCase();
   if (!IMPACT_TOKENS.some((token) => low.includes(token))) return false;
+  const solved = fieldValue(text, "问题是否解决");
+  if (!solved || EMPTY_SAT.has(solved.toLowerCase())) return false;
+  if (SOLVED_LEGEND.test(solved)) return false;
+  if (!/(已解决|未解决|部分解决)/.test(solved)) return false;
   return true;
 }
 
@@ -243,13 +282,11 @@ export const VerifyGate: Plugin = async ({ client }) => {
         pendingReminder.delete(sid);
         urgentInjected.delete(sid);
       }
-      if (/NEEDS-CHANGES/.test(text)) {
+      const kind = primaryVerdict(text);
+      if (kind === "NEEDS-CHANGES") {
         s.reviewPass = false;
         saveStore(store);
-      } else if (
-        /\bPASS\b/.test(text) &&
-        /(独立审查|eng-reviewer|符合预期)/.test(text)
-      ) {
+      } else if (kind === "PASS" && checkR20(text)) {
         s.reviewPass = true;
         saveStore(store);
         pendingReminder.delete(sid);

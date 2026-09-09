@@ -59,6 +59,12 @@ Agent 不得代执行上述 merge。chrome-devtools 优先开 Plugin；postgres 
 
 Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python 系（serena / uv / uvx / everything-mcp）经 `scripts/python-mcp.ps1` 启动：清 PYTHONHOME/PYTHONPATH，避免残缺前缀导致 `encodings` 崩溃。编辑器 `mcp.json` 各自手工维护，**禁止经 sync.ps1 复制**。
 
+### 3b. 编辑器 MCP spawn（R9 平台约束，不在铁律表展开）
+
+Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），禁止 `powershell -Command`、禁止回退 5.1、禁止 `cd + 重定向`写文件（R9）。
+
+编辑器 `mcp.json` **应** spawn `pwsh` 拉起 `scripts/*-mcp.ps1`。Qoder 等客户端若仍 fork `powershell.exe`，视为宿主配置错误：把 command 改成 `pwsh`，不要在包装脚本里保留 5.1 分支。包装脚本不是用户 Shell 默认，也不豁免 `#Requires 7.5`。
+
 ### 4. 本地代码三工具 + everything 分工（防互博）
 
 能力有重叠，按下表选择。everything 是 voidtools 本机文件名索引，**不是** everything-claude-code 插件（后者禁止安装）。everything-mcp 的 Claude marketplace plugin 禁止与 `.mcp.json` 双挂（且无法钉 `mcp<2`）。

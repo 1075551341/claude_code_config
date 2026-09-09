@@ -2,6 +2,27 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.6.0 工具链 SSOT：pwsh 7.5+ / pnpm 11 / 语言地板（2026-09-09）
+
+- **单一地板**：`config/toolchain.yaml`。缺工具 → BLOCKED + 安装命令。禁止 if-else 静默回退到 Windows PowerShell 5.1 / npm / pip。
+- **R9 / R15**：Windows 一律 `pwsh` 7.5+（`#Requires -Version 7.5`）；Node 默认 pnpm 11。尊重已有 lockfile 是项目约定，不是 PATH 上没有 pnpm 时改用 npm。
+- **MCP spawn**：`.mcp.json` 与 Cursor 粘贴片段 `command: pwsh`。Qoder 仍 fork `powershell.exe` 时改宿主配置，不在包装脚本里保留 5.1 分支（`rules/MCP.md` §3b）。
+- **运行时**：`which_pwsh()` 只认 `pwsh`；live `scripts/*.ps1` 无 `#Requires -Version 5.1`。Cursor Guard **1.2.17**（`sync_runner` 只 spawn pwsh；缺则 BLOCKED；Shell 警告 `powershell`→pwsh，allow 不 deny）。
+- **validate_config V20**：钉 `powershell_min: "7.5"`、`package_manager: pnpm`、`pnpm_major: "11"`、`missing_tool: BLOCKED`、`python.installer: uv`、脚本 Requires、`which_pwsh` 不回退、mcp.json/Cursor 片段不得 `command: powershell`/`powershell.exe`、Guard `sync_runner` 须 `resolve_pwsh`、CLAUDE.md R15 不含「兜底」。
+- **审查修正**：活 MCP spawn 从 `powershell` 改为 `pwsh`（包装脚本 `#Requires 7.5` 否则会拒启）；V14 版本史取现行 Guard 戳（不再钉死 v20.19）；bootstrap 对 pyproject/requirements 回报 `uv`。V20 恢复 `package_manager: pnpm` 断言并识别无空格/`powershell.exe` JSON（含正例夹具与大小写）；Guard Shell 警告与 Claude `pre-bash-guard` 对齐（含 `.exe`）；`resolve_pwsh` / `run_sync_plan` 缺 pwsh 不 spawn；V14 钉 1.2.16 史留；live 脚本禁 pnpm→npm / pwsh→powershell 控制流回退。
+- **语言指针**：FRONTEND/BACKEND 与 catalog `RULES_{PYTHON,TYPESCRIPT,GO,JAVA,RUST,CSHARP,DART,RUBY}` 指向 yaml 地板，不在 alwaysApply 再加规则。
+
+## v11.5.0 全新七维审查 + 图谱硬门 + 全栈可落地（2026-09-09）
+
+- **审查政策单一 SSOT**：`skills/verification-before-completion/SKILL.md`。有交付即只读独立审查（**含文档**）；废除只读完成旁路。每轮全新七维（满足/遗漏/错改/漏改/原功能/影响范围/**问题是否解决**）；禁止 `resume`、禁止边审边改。`review_max_rounds=5`（`max_blocks` 仍为 3）。无依赖审查者同一消息并行；批次任一 NEEDS-CHANGES / 七维缺项压过 PASS。
+- **图谱三时点**：任务开始 SessionStart `ensure`；**每一轮开审前**须在 `last_edit` 之后增量 refresh（SessionStart ensure 不能代替）；任务完成 Stop refresh（不记审查前戳）。无新鲜图禁止开审。不恢复每次编辑 kg sync。
+- **铁律瘦身**：R1–R11 短指针；R9 平台 spawn 只在 `rules/MCP.md`；R12–R20 全文 CORE；R20 = 七维 + 审查前刷图。L0 CLAUDE.md ≤200 行。Superpowers **6.3.0**。
+- **全栈 glob**：新增薄层 `rules/BACKEND.md`、`rules/DATABASE.md`；`FRONTEND.md` 去掉 teoms-web/Vue 默认与裸 `*.js`。`global_rules_max` 10→12。
+- **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
+- **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.15**（结论标题 Unicode 边界）。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
+- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论（PASS 与 NEEDS-CHANGES 均须七维）；并行空槽按审查者身份填（无身份不填，禁止父会话抢槽）；父消息不完整 PASS / 门控「PASS 或/or NEEDS-CHANGES」不得毒化已捕获正文；换行空「满足：」不得吞下一字段，同名字段取最后非空。结论只认标题/结论行：整行解析，跳过教学句与同行双结论，最后一条真实结论胜出（禁止截到第一个 PASS）。标题用 Unicode 字母边界（禁止把 Python `\\b` 搬进 JS；「当前状态」不得当结论行）。`reviewer_source_from_payload` 只读身份字段，不扫 `text`/`prompt`/`description`。`review_verdict_ok` 与 `primary_verdict` 同一口径。图例「已解决 | 未解决 | 部分解决」带后缀仍拒填。便携 `r20_check.py` 导入 `r20_replay`（禁止再复制正则）；OpenCode `verify-gate.ts` 结论行与七维对齐（禁止 spawn `gate_cli.py`）。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。Cursor Guard **1.2.15**。
+- **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。V14 核现行文档身份戳（`hooks/README.md` Cursor 段 / README 当前 / SETUP 首条 / SPEC / SYNC 版本史）须等于 `guard_version`，避免只改模板版本留下旧现行句。
+
 ## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）
 
 - **everything**：`.mcp.json` 常驻 `elis132/everything-mcp==1.0.6`，启动钉 `--with mcp<2`（FastMCP 2.x 崩溃）。仅 Windows；需 Everything.exe。与 **everything-claude-code 插件**（禁止安装）不是同一物；禁止 marketplace plugin 双挂。

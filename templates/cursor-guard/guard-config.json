@@ -1,5 +1,5 @@
 {
-  "version": "1.2.11",
+  "version": "1.2.17",
   "profile": "standard",
   "compression": {
     "window_tokens": 200000,
@@ -57,7 +57,7 @@
   "verification": {
     "enabled": true,
     "enforce_mode": "off",
-    "_note": "v1.2.11: resume 审查 Task 不计入 reviews。v1.2.10: Stop 不能 deny；followup_message 会刷会话面板。完成门改规则驱动（修改→验证→独立审查），hook 不再注入。",
+    "_note": "v1.2.17: Shell 警告对齐 Claude pre-bash-guard（powershell → 改用 pwsh，allow 不 deny）；sync_runner.resolve_pwsh。v1.2.16: sync_runner 只 spawn pwsh（缺则 BLOCKED）。v1.2.15: 结论标题按 Unicode 字母边界（禁止 JS `\\b` 配中文；「当前状态」不得当结论）。v1.2.14: 结论整行解析（跳过 PASS 或/or NEEDS-CHANGES 教学句）；capture 身份不读 prompt/description。v1.2.13: 审查填槽必须绑定审查者身份；结论只认标题/结论行。v1.2.12: 七维 + 审查前刷图；resume 审查 Task 不计入 reviews。v1.2.10: Stop 不能 deny；followup_message 会刷会话面板。完成门改规则驱动（修改→验证→独立审查），hook 不再注入。",
     "unverified_reminder": true,
     "prompt_keywords": ["完成了", "修好了", "测试通过", "声称完成", "done", "搞定", "fixed"]
   },
