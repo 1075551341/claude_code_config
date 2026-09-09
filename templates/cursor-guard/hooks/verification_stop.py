@@ -69,7 +69,7 @@ def _verified_green(r20, entry: dict, data: dict, qg: dict) -> bool:
     if not entry.get("r20_replay_ok"):
         return False
     phase = r20.dual_pass_phase(entry, qg)
-    if phase in {"review", "modify", "verify", "capped"}:
+    if phase in {"review", "modify", "verify", "graph", "capped"}:
         return False
     return True
 

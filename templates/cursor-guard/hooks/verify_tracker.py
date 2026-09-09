@@ -38,7 +38,15 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer",
+    "ceo-reviewer",
+    "designer",
+    "dx-reviewer",
+    "qa",
+    "security-reviewer",
+    "code-reviewer",
+]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
 FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
 STALE_SECONDS = 7 * 24 * 3600
@@ -154,28 +162,45 @@ def main() -> None:
             if command and is_verify_command(command, patterns):
                 entry["verify_commands"].append({"command": command[:300], "ts": now})
                 changed = True
+            try:
+                r20g = import_claude_lib(claude_home, "r20_replay")
+                if r20g.is_graph_refresh_call(tool_name, {"command": command}):
+                    r20g.record_pre_review_graph_refresh(entry, now)
+                    changed = True
+            except Exception as e:
+                print(f"verify_tracker: graph refresh stamp failed: {e}", file=sys.stderr)
         elif tool_name in ("Task", "Agent"):
             sub = str(
                 data.get("subagent_type")
                 or tool_input.get("subagent_type")
                 or data.get("description")
                 or ""
-            ).lower()
-            for reviewer in reviewers:
-                if reviewer.lower() in sub:
-                    resumed = False
-                    try:
-                        r20 = import_claude_lib(claude_home, "r20_replay")
-                        resumed = bool(r20.is_resumed_subagent(tool_input))
-                    except Exception as e:
-                        print(f"verify_tracker: is_resumed_subagent unavailable: {e}", file=sys.stderr)
-                        resumed = bool(tool_input.get("resume"))
-                    if resumed:
-                        entry.setdefault("skipped_resumed_reviews", []).append(
-                            {"agent": reviewer, "ts": now}
-                        )
-                        changed = True
+            )
+            reviewer = None
+            try:
+                r20 = import_claude_lib(claude_home, "r20_replay")
+                reviewer = r20.identify_reviewer(sub, reviewers)
+            except Exception as e:
+                print(f"verify_tracker: identify_reviewer unavailable: {e}", file=sys.stderr)
+                lowered = sub.lower()
+                for name in reviewers:
+                    if str(name).lower() in lowered:
+                        reviewer = name
                         break
+            if reviewer:
+                resumed = False
+                try:
+                    r20 = import_claude_lib(claude_home, "r20_replay")
+                    resumed = bool(r20.is_resumed_subagent(tool_input))
+                except Exception as e:
+                    print(f"verify_tracker: is_resumed_subagent unavailable: {e}", file=sys.stderr)
+                    resumed = bool(tool_input.get("resume"))
+                if resumed:
+                    entry.setdefault("skipped_resumed_reviews", []).append(
+                        {"agent": reviewer, "ts": now}
+                    )
+                    changed = True
+                else:
                     last_rev = 0.0
                     for item in entry.get("reviews") or []:
                         last_rev = max(last_rev, float(item.get("ts", 0) or 0))
@@ -187,7 +212,14 @@ def main() -> None:
                     entry["reviews"].append({"agent": reviewer, "ts": now})
                     entry["review_pass_ok"] = False
                     changed = True
-                    break
+
+        try:
+            r20g = import_claude_lib(claude_home, "r20_replay")
+            if r20g.is_graph_refresh_call(tool_name, tool_input):
+                r20g.record_pre_review_graph_refresh(entry, now)
+                changed = True
+        except Exception as e:
+            print(f"verify_tracker: graph mcp stamp failed: {e}", file=sys.stderr)
 
         try:
             crg = import_claude_lib(claude_home, "crg_track")

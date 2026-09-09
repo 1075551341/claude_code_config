@@ -6,8 +6,10 @@
     python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json  # 同时写 JSON 报告
     python scripts/test-cursor-guard-hooks.py -o <路径>                            # --output 短写法
 
-被测对象是 ~/.cursor/hooks 下的已部署副本，不是仓库模板；改了 templates/cursor-guard/
-必须先 deploy 再跑：powershell -File scripts/deploy-cursor-guard.ps1
+被测对象默认是 ~/.cursor/hooks 已部署副本。无部署、或
+CURSOR_GUARD_USE_TEMPLATES=1 时，用仓库 templates/cursor-guard 铺到 ~/.cursor。
+CLAUDE_HOME 指向配置仓（含 hooks/_lib）以便加载现行 r20_replay。
+改了 templates/cursor-guard/ 后也可：powershell -File scripts/deploy-cursor-guard.ps1
 一般不直接调本脚本，用上层封装：scripts/test-cursor-guard-regression.ps1（自动清状态 + 设 UTF-8）。
 退出码：0 = 全部通过；非 0 = 有用例失败。
 """
@@ -17,6 +19,7 @@ import argparse
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -25,13 +28,24 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-CURSOR = Path(os.environ.get("USERPROFILE", Path.home())) / ".cursor"
+_HOME = Path(os.environ.get("USERPROFILE") or Path.home())
+CURSOR = Path(os.environ.get("CURSOR_HOME") or (_HOME / ".cursor"))
 HOOKS = CURSOR / "hooks"
 STATE = CURSOR / ".state"
-CLAUDE = Path(os.environ.get("USERPROFILE", Path.home())) / ".claude"
+CLAUDE = Path(os.environ["CLAUDE_HOME"]) if os.environ.get("CLAUDE_HOME") else (_HOME / ".claude")
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE_GUARD = CLAUDE / "templates" / "cursor-guard" / "guard-config.json"
+TEMPLATE_GUARD = REPO_ROOT / "templates" / "cursor-guard" / "guard-config.json"
 REPO_TEMPLATE_HOOKS = REPO_ROOT / "templates" / "cursor-guard" / "hooks.json"
+REVIEW_PASS = (
+    "Independent review PASS\n"
+    "- 满足：需求已落地（承认）\n"
+    "- 遗漏：无\n"
+    "- 错改：无\n"
+    "- 漏改：无文档影响\n"
+    "- 原功能：保持（证据：pytest）\n"
+    "- 影响范围：CRG get_impact_radius\n"
+    "- 问题是否解决：已解决（证据：pytest）\n"
+)
 
 TRANSIENT_STATE_FILES = (
     "compress-pending.json",
@@ -71,6 +85,23 @@ def clear_transient_state() -> None:
     STATE.mkdir(parents=True, exist_ok=True)
     for name in TRANSIENT_STATE_FILES:
         (STATE / name).unlink(missing_ok=True)
+
+
+def sync_guard_templates_for_test() -> None:
+    """无部署或显式 CURSOR_GUARD_USE_TEMPLATES=1 时，用仓库模板铺 ~/.cursor。"""
+    src = REPO_ROOT / "templates" / "cursor-guard"
+    missing = not (HOOKS / "verify_tracker.py").exists()
+    flag = os.environ.get("CURSOR_GUARD_USE_TEMPLATES", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if not (flag or missing):
+        return
+    HOOKS.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src / "hooks", HOOKS, dirs_exist_ok=True)
+    shutil.copy2(src / "hooks.json", CURSOR / "hooks.json")
+    shutil.copy2(src / "guard-config.json", CURSOR / "guard-config.json")
 
 
 def run_hook(
@@ -144,6 +175,7 @@ def matcher_from_hooks(hooks_path: Path, event: str, command_substr: str) -> str
 
 def main() -> int:
     setup_stdout_utf8()
+    sync_guard_templates_for_test()
     parser = argparse.ArgumentParser(description="Cursor Guard hook regression")
     parser.add_argument(
         "--output",
@@ -989,7 +1021,7 @@ def main() -> int:
                         "verify_commands": [{"command": "pytest", "ts": 2}],
                         "r20_replay_ok": True,
                         "non_simple": True,
-                        "review_rounds": 3,
+                        "review_rounds": 5,
                         "review_pass_ok": False,
                     }
                 }
@@ -1008,7 +1040,7 @@ def main() -> int:
         results["tests"]["verification_stop_review_capped"] = finish_case(
             r_capped,
             behavior="followup_message" not in (r_capped.get("stdout") or {}),
-            note="修改→审查满 3 轮仍无 PASS → 不 followup 空转",
+            note="修改→审查满 5 轮仍无 PASS → 不 followup 空转",
         )
         vg_path.write_text(
             json.dumps(
@@ -1081,7 +1113,7 @@ def main() -> int:
                 and int(entry_inc.get("review_rounds") or 0) == 1
                 and len(entry_inc.get("reviews") or []) == 2
             ),
-            note="同轮连派 eng-reviewer 只 +1 轮次，禁止提前耗尽 3 轮",
+            note="同轮连派 eng-reviewer 只 +1 轮次，禁止提前耗尽 review_max_rounds",
         )
         sid_resume = "review-resume-skip-test"
         now_resume = time.time()
@@ -1170,11 +1202,30 @@ def main() -> int:
         )
         st_bare[sid_pass]["reviews"] = [{"agent": "eng-reviewer", "ts": 2}]
         vg_path.write_text(json.dumps(st_bare), encoding="utf-8")
-        r_pass_ok = run_hook(
+        r_pass_nodim = run_hook(
             "r20_capture.py",
             {
                 "conversation_id": sid_pass,
                 "text": "Independent review PASS of this change.",
+            },
+        )
+        st_nodim = json.loads(vg_path.read_text(encoding="utf-8"))
+        results["tests"]["r20_capture_pass_missing_seven_dims"] = finish_case(
+            r_pass_nodim,
+            behavior=(
+                (r_pass_nodim.get("exit") == 0)
+                and (st_nodim.get(sid_pass) or {}).get("review_pass_ok") is not True
+            ),
+            note="已有 reviews 但缺七维 → 不得 PASS",
+        )
+        st_nodim[sid_pass]["reviews"] = [{"agent": "eng-reviewer", "ts": 2}]
+        st_nodim[sid_pass]["review_pass_ok"] = False
+        vg_path.write_text(json.dumps(st_nodim), encoding="utf-8")
+        r_pass_ok = run_hook(
+            "r20_capture.py",
+            {
+                "conversation_id": sid_pass,
+                "text": REVIEW_PASS,
             },
         )
         st_ok = json.loads(vg_path.read_text(encoding="utf-8"))
@@ -1184,7 +1235,40 @@ def main() -> int:
                 (r_pass_ok.get("exit") == 0)
                 and (st_ok.get(sid_pass) or {}).get("review_pass_ok") is True
             ),
-            note="已有 reviews 且正文 PASS → review_pass_ok",
+            note="已有 reviews 且七维 PASS → review_pass_ok",
+        )
+        sid_graph = "graph-refresh-stamp-test"
+        now_g = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_graph: {
+                        "ts": now_g,
+                        "edited_files": [{"path": "a.py", "ts": now_g - 10}],
+                        "verify_commands": [{"command": "pytest", "ts": now_g - 9}],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_graph = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Shell",
+                "tool_input": {"command": "codegraph sync && code-review-graph update"},
+                "conversation_id": sid_graph,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        st_g = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_g = st_g.get(sid_graph) or {}
+        results["tests"]["verify_tracker_graph_refresh_stamp"] = finish_case(
+            r_graph,
+            behavior=(
+                (r_graph.get("exit") == 0)
+                and float(entry_g.get("last_pre_review_graph_ts") or 0) > now_g - 10
+            ),
+            note="审查前 codegraph/CRG 刷新写入 last_pre_review_graph_ts",
         )
 
     results["tests"]["sync_no_keyword"] = run_hook(

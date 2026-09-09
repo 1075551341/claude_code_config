@@ -2,6 +2,16 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.5.0 全新七维审查 + 图谱硬门 + 全栈可落地（2026-09-09）
+
+- **审查政策单一 SSOT**：`skills/verification-before-completion/SKILL.md`。有交付即只读独立审查（**含文档**）；废除只读完成旁路。每轮全新七维（满足/遗漏/错改/漏改/原功能/影响范围/**问题是否解决**）；禁止 `resume`、禁止边审边改。`review_max_rounds=5`（`max_blocks` 仍为 3）。无依赖审查者同一消息并行；批次任一 NEEDS-CHANGES / 七维缺项压过 PASS。
+- **图谱三时点**：任务开始 SessionStart `ensure`；**每一轮开审前**须在 `last_edit` 之后增量 refresh（SessionStart ensure 不能代替）；任务完成 Stop refresh（不记审查前戳）。无新鲜图禁止开审。不恢复每次编辑 kg sync。
+- **铁律瘦身**：R1–R11 短指针；R9 平台 spawn 只在 `rules/MCP.md`；R12–R20 全文 CORE；R20 = 七维 + 审查前刷图。L0 CLAUDE.md ≤200 行。Superpowers **6.3.0**。
+- **全栈 glob**：新增薄层 `rules/BACKEND.md`、`rules/DATABASE.md`；`FRONTEND.md` 去掉 teoms-web/Vue 默认与裸 `*.js`。`global_rules_max` 10→12。
+- **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
+- **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.12**。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
+- **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。
+
 ## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）
 
 - **everything**：`.mcp.json` 常驻 `elis132/everything-mcp==1.0.6`，启动钉 `--with mcp<2`（FastMCP 2.x 崩溃）。仅 Windows；需 Everything.exe。与 **everything-claude-code 插件**（禁止安装）不是同一物；禁止 marketplace plugin 双挂。

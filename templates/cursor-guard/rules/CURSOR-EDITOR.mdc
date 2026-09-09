@@ -49,7 +49,7 @@ alwaysApply: true
 - Cursor `stop` **不能** `permission: deny`（仅 shell/MCP 能 deny）
 - **不再**用 `followup_message` 做完成验证（会变成假用户回合、刷会话面板、loop_count 重置后反复注入）
 - Stop hook 仅做图谱 refresh / 全绿后 `sync.ps1`，不发完成门 followup
-- **有代码/配置改动即双审（规则驱动）**：`change-implementer` 修改 → 验证（观察输出）→ `eng-reviewer` 一次找齐全部问题（禁止改文件）；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮独立审查必须全新开审**（禁止 `resume` 上一轮审查者，最多 3 轮，禁止边审边改、禁止只连审不改）；只读免审
+- **有交付物编辑即双审（规则驱动）**：审查前增量刷图 → `change-implementer` 修改 → 验证（观察输出）→ `eng-reviewer`（及并行路由）七维一次找齐（禁止改文件）；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮全新开审**（禁止 `resume`；轮次 → `quality_gates.review_max_rounds`）。政策 → verification-before-completion。计划未批准 / 仅计划文件 / 纯澄清问答不进入完成态。
 - 计划未批准 / CreatePlan / 仅计划文件 → 禁止声称完成（规则约束，不靠 hook 续轮）
 - 每个文件首次编辑后注入五维迷你验收（计划制品跳过）；核对范围 = 该文件 + blast-radius 全部相关项
 

@@ -14,15 +14,27 @@ _UNCLEAN_PASS_RE = re.compile(
     r"(未同步|须同步|应同步|存在文档漂移|注释不一致)"
 )
 
-_REQUIRED = ("遗漏", "错改", "漏改", "原功能", "影响范围")
+_REQUIRED = ("遗漏", "错改", "漏改", "原功能", "影响范围", "问题是否解决")
 _EMPTY_SATISFIED = {"", ".", "..", "...", "…", "无", "n/a", "na", "none"}
+_SOLVED_TOKENS = ("已解决", "未解决", "部分解决")
 _PATH_RE = re.compile(
     r"(?:[A-Za-z]:)?[\\/][\w.\\/-]+|\S+\.(?:md|mdc|py|ts|tsx|js|json|ya?ml|toml|txt)\b"
 )
+_FIELD_NAMES = (
+    "满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决"
+)
 _FIELD_RE = re.compile(
-    r"(?:^|\n)\s*-?\s*(满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:]\s*(.*?)(?="
-    r"(?:\n\s*-?\s*(?:满足|遗漏|错改|漏改|原功能|影响范围|影响面)\s*[：:])|\n结论|$)",
+    rf"(?:^|\n)\s*-?\s*({_FIELD_NAMES})\s*[：:]\s*(.*?)(?="
+    rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
+)
+_GRAPH_SHELL_RE = re.compile(r"\b(codegraph|code-review-graph)\b", re.I)
+_GRAPH_ACTION_RE = re.compile(r"\b(init|sync|index|build|update)\b", re.I)
+_GRAPH_MCP_MARKERS = (
+    "build_or_update",
+    "codegraph_sync",
+    "codegraph_init",
+    "codegraph_index",
 )
 _IMPACT_TOKENS = (
     "crg",
@@ -91,7 +103,7 @@ def replay_ok(text: str, requirements: dict | None = None) -> bool:
     lowered = impact.lower()
     if not any(token in lowered for token in _IMPACT_TOKENS):
         return False
-    return True
+    return review_dimensions_ok(text)
 
 
 def is_resumed_subagent(tool_input) -> bool:
@@ -113,24 +125,102 @@ def review_verdict_ok(text: str) -> bool:
     return bool(_VERDICT_RE.search(text))
 
 
-def apply_review_verdict(entry: dict, text: str) -> bool:
-    """把审查正文写入 review_pass_ok。PASS 须已有 reviews，禁止自报。
+DEFAULT_REVIEWER_AGENTS = (
+    "eng-reviewer",
+    "ceo-reviewer",
+    "designer",
+    "dx-reviewer",
+    "qa",
+    "security-reviewer",
+    "code-reviewer",
+)
 
-    PASS 夹带未关闭同步问题（须同步/未同步等）视为不干净，不得记 pass。
-    返回是否改了 entry。
-    """
+
+def review_dimensions_ok(text: str) -> bool:
+    """独立审查 / R20 七维是否齐全（缺一则本轮无效）。"""
     if not text or not text.strip():
         return False
-    unclean = "NEEDS-CHANGES" in text or bool(_UNCLEAN_PASS_RE.search(text))
+    for name in ("满足", "遗漏", "错改", "漏改", "原功能"):
+        if name not in text:
+            return False
+    if "影响范围" not in text and "影响面" not in text:
+        return False
+    if "问题是否解决" not in text:
+        return False
+    solved = field_value(text, "问题是否解决")
+    if not solved or solved.strip().lower() in _EMPTY_SATISFIED:
+        return False
+    return any(token in solved for token in _SOLVED_TOKENS)
+
+
+def identify_reviewer(agent_blob: str, reviewer_agents=None) -> str | None:
+    """从 Task/Agent 描述识别审查者（含 ceo/designer/dx/security 简称）。"""
+    blob = (agent_blob or "").strip().lower()
+    if not blob:
+        return None
+    names = [str(n) for n in (reviewer_agents or DEFAULT_REVIEWER_AGENTS) if n]
+    names.sort(key=len, reverse=True)
+    for name in names:
+        n = name.lower()
+        if n in blob:
+            return name
+        stem = n[:-9] if n.endswith("-reviewer") else n
+        if stem and re.search(rf"(?:^|[^a-z0-9]){re.escape(stem)}(?:$|[^a-z0-9])", blob):
+            return name
+    return None
+
+
+def _verdict_unclean(text: str) -> bool:
+    blob = text or ""
+    return (
+        "NEEDS-CHANGES" in blob
+        or bool(_UNCLEAN_PASS_RE.search(blob))
+        or not review_dimensions_ok(blob)
+    )
+
+
+def _round_review_texts(entry: dict, extra: str = "") -> list[str]:
+    """本轮 reviews[] 正文 + 当前回复；供批次聚合。"""
+    reviews = list(entry.get("reviews") or [])
+    blob = (extra or "").strip()
+    if blob and reviews and not str(reviews[-1].get("text") or "").strip():
+        reviews[-1]["text"] = blob
+        entry["reviews"] = reviews
+    edit_ts = _last_item_ts(counted_edit_items(entry))
+    round_items = [
+        item for item in reviews if float(item.get("ts") or 0) > edit_ts
+    ] or reviews
+    texts: list[str] = []
+    for item in round_items:
+        body = str(item.get("text") or "").strip()
+        if body and body not in texts:
+            texts.append(body)
+    if blob and blob not in texts:
+        texts.append(blob)
+    return texts
+
+
+def apply_review_verdict(entry: dict, text: str) -> bool:
+    """按本轮 reviews[] 批次聚合写入 review_pass_ok。禁止自报 PASS。
+
+    批次内任一 NEEDS-CHANGES、缺七维、或不干净 PASS → 整轮不通过。
+    全部干净 PASS 且已有 reviews 才记 pass。
+    """
+    texts = _round_review_texts(entry, text)
+    if not texts:
+        return False
+    unclean = any(_verdict_unclean(blob) for blob in texts)
     if unclean:
         if entry.get("review_pass_ok") is not False:
             entry["review_pass_ok"] = False
             return True
         return False
-    if review_verdict_ok(text) and re.search(r"\bPASS\b", text):
-        if (entry.get("reviews") or []) and not entry.get("review_pass_ok"):
-            entry["review_pass_ok"] = True
-            return True
+    all_pass = all(
+        review_verdict_ok(blob) and re.search(r"\bPASS\b", blob) for blob in texts
+    )
+    if all_pass and (entry.get("reviews") or []) and not entry.get("review_pass_ok"):
+        entry["review_pass_ok"] = True
+        return True
     return False
 
 
@@ -332,39 +422,83 @@ def _last_item_ts(items) -> float:
 
 
 def dual_pass_in_scope(entry: dict, cfg: dict | None = None) -> bool:
-    """是否走修改→验证→独立审查循环（有代码/配置编辑即启用）。"""
+    """是否走修改→验证→独立审查循环（有交付物编辑即启用，含文档）。"""
     cfg = cfg or {}
     if is_awaiting_plan(entry):
         return False
-    if not counted_edit_items(entry):
+    edited = counted_edit_items(entry)
+    if not edited:
         return False
-    min_files = int(cfg.get("require_reviewer_min_files", 1))
-    non_simple = bool(entry.get("non_simple"))
-    code_n = unique_code_edit_count(entry, cfg.get("doc_only_extensions"))
-    if code_n < 1:
+    n = len({str(item.get("path") or "") for item in edited if item.get("path")})
+    if n < 1:
         return False
-    if non_simple:
+    if bool(entry.get("non_simple")):
         return True
-    return code_n >= min_files
+    min_files = int(cfg.get("require_reviewer_min_files", 1))
+    return n >= min_files
+
+
+def graph_fresh_for_review(entry: dict, cfg: dict | None = None) -> bool:
+    """审查前须在 last_edit 之后做过增量刷图（Stop 刷新不计）。"""
+    cfg = cfg or {}
+    if not cfg.get("require_refresh_before_review", True):
+        return True
+    edit_ts = _last_item_ts(counted_edit_items(entry))
+    graph_ts = float(entry.get("last_pre_review_graph_ts") or 0)
+    return graph_ts > edit_ts
+
+
+def is_graph_refresh_call(tool_name: str, tool_input=None) -> bool:
+    """Bash/MCP 是否为 codegraph 或 CRG 的 init/sync/build/update。"""
+    raw = (tool_name or "").strip()
+    blob = tool_input if isinstance(tool_input, dict) else {}
+    cmd = str(blob.get("command") or blob.get("cmd") or "")
+    if _GRAPH_SHELL_RE.search(cmd) and _GRAPH_ACTION_RE.search(cmd):
+        return True
+    hay = " ".join(
+        part
+        for part in (
+            raw,
+            str(blob.get("toolName") or ""),
+            str(blob.get("name") or ""),
+            cmd,
+        )
+        if part
+    ).lower()
+    if any(marker in hay.replace("-", "_") for marker in _GRAPH_MCP_MARKERS):
+        return True
+    inner = blob.get("arguments") or blob.get("tool_input") or blob.get("input")
+    if isinstance(inner, dict) and inner is not blob:
+        return is_graph_refresh_call(str(inner.get("toolName") or inner.get("name") or ""), inner)
+    return False
+
+
+def record_pre_review_graph_refresh(entry: dict, ts: float) -> bool:
+    """审查前刷图记账。Stop 完成刷新不得调用。"""
+    prev = float(entry.get("last_pre_review_graph_ts") or 0)
+    stamp = float(ts or 0)
+    if stamp <= prev:
+        return False
+    entry["last_pre_review_graph_ts"] = stamp
+    entry["last_graph_refresh_ts"] = stamp
+    return True
 
 
 def dual_pass_phase(entry: dict, cfg: dict | None = None) -> str:
     """双审相位。
 
-    一轮 = 修改 → 验证（对照预期）→ 独立审查全部修改。
-    独立审查干净 PASS / 符合预期 → done（立即结束，禁止再审浪费 token）。
-    审查给出完整未满足清单（禁止发现一条就停审）→ 再派一次 change-implementer 按清单集中改齐后再验。
-    下一轮审查必须全新开审（禁止 resume 上一轮审查者；对照原始要求全量重扫，上轮清单不得限定范围）。
-    禁止边审边改耗轮次。最多 review_max_rounds 轮。禁止审查者改文件、禁止只连审不改。
+    一轮 = 修改 → 验证 → 审查前刷图 → 全新独立审查（七维一次找齐）。
+    独立审查干净 PASS / 符合预期 → done。
+    下一轮必须全新开审（禁止 resume）。最多 review_max_rounds 轮。
 
-    返回: skip | done | capped | modify | verify | review
+    返回: skip | done | capped | modify | verify | graph | review
     """
     cfg = cfg or {}
     if not dual_pass_in_scope(entry, cfg):
         return "skip"
     if entry.get("review_pass_ok"):
         return "done"
-    max_rounds = int(cfg.get("review_max_rounds", 3))
+    max_rounds = int(cfg.get("review_max_rounds", 5))
     rounds = int(entry.get("review_rounds") or 0)
     if rounds >= max_rounds:
         return "capped"
@@ -374,6 +508,8 @@ def dual_pass_phase(entry: dict, cfg: dict | None = None) -> str:
         return "modify"
     if has_unverified_edits(entry):
         return "verify"
+    if not graph_fresh_for_review(entry, cfg):
+        return "graph"
     return "review"
 
 

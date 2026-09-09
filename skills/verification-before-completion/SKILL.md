@@ -11,16 +11,8 @@ source: obra/superpowers
 # 完成前强制交叉验证
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
-> **verify_tier / 持续处理升档（验证全量 + 执行升档非简单）** 的触发 SSOT → `skills/task-triage/SKILL.md`。
-> **v11.3.4 硬门兜底**：Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup（规则驱动双审）。R20 反空模板见 `hooks/_lib/r20_replay.py`。初次修改后五维验收由 PostToolUse 注入（场景 G）。项目已建 code-review-graph 时全量档须调用 `detect_changes_tool`。
-> **v11.4.12**：独立审查一次找齐全部问题再汇总；清单齐后再派修改者集中改齐。**每轮独立审查必须全新开审**（禁止 `resume` 上一轮审查者；对照原始要求全量重扫，上轮清单不得限定范围）。禁止边审边改耗轮次（避免满 3 轮仍有未扫到的问题）。
-> **v11.4.11**：独立审查者只找问题（是否符合预期），禁止改文件；修改必须 `change-implementer`。配置/修改必须与文档/注释同步。验证与审查不一致须立即派修改者，禁止只报不等待。
-> **v11.4.10**：Cursor Stop / beforeSubmitPrompt **不再注入完成门**（followup_message 会刷会话面板）。完成验证改由规则：修改→验证→独立审查；PASS 即停；仅结论不一致才再开一轮，最多 3 轮。Claude Stop exit 2 保留。
-> **v11.4.9**：有代码/配置改动即双审；独立审查 PASS/符合预期即停（禁止再审浪费 token）；仅结论不一致（NEEDS-CHANGES）才再开一轮，最多 3 轮。计划未批准零注入（CallDynamicTool/CreatePlan）。已有双图时 CLI update 失败记警告不阻断。
-> **v11.4.8**：非简单双审 = 修改→验证→审查循环，最多 3 轮；审查须对照原始要求检查全部修改；禁止只连审不改。
-> **v11.4.7**：计划未批准 / CreatePlan / 零编辑禁止 Cursor followup；短 R20；非简单双审最多 3 次。
-> **v11.4.6**：eligible git 仓 SessionStart **执行** `codegraph init|sync` + `code-review-graph build|update`；无图 PreToolUse **deny**（禁止 Grep/Glob/everything 当探索主路径）。Stop 增量刷新双图；仅验证全绿后 `sync.ps1 -Scope rules`（跳过验证 / max_blocks / 无编辑 → 不跑）。
-> **v11.4.5**：有 `.code-review-graph/` 时改前/完成前强制 CRG（`get_minimal_context` / `get_impact_radius` / `detect_changes` / `get_review_context`）；Stop/followup 六维纠错续轮（影响面/需求/错改/漏改/原功能/文档）；「满足」行对指纹关键词承认/反驳/弃权（GSD honest-verifier）。不启用 ralph-loop，不采用实验性 agent-Stop hook。
+> **verify_tier / 持续处理升档** 的触发 SSOT → `skills/task-triage/SKILL.md`。
+> **v11.5.0 审查政策 SSOT（本文件）**：有交付即只读独立审查（含文档）；每轮全新七维；审查前刷图；最多 `config/quality_gates.json` `review_max_rounds`；禁止边审边改。Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup。R20 反空模板 → `hooks/_lib/r20_replay.py`。史 → `CHANGELOG.md`。
 
 ## @Examples
 
@@ -60,7 +52,52 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 ├─ 文档级验证（如涉及公共API）
 ├─ 关联文件验证（任何修改必须）
 ├─ 交叉验证（verify_tier=全量 必须）
-└─ 会话终验 R20（任何有过编辑的会话必须：按原始要求逐条回放 满足/遗漏/错改/漏改/原功能/影响范围）
+└─ 会话终验 R20（有编辑必须：七维含问题是否解决）
+```
+
+## 独立审查（本文件 = 政策 SSOT）
+
+**任务** = 已输出分类契约、且将声称完成 / 产生交付物的工作单元。
+
+| 必须独立审查 | 仍不审（未进入完成态，不是免审旁路） |
+| --- | --- |
+| 任何 counted 编辑（**含文档**）、调研结论、计划/规格、架构建议 | 计划未批准 / 仅 `*.plan.md`；纯澄清问答（无交付、不声称完成） |
+
+简单路径同样：一次改齐 → 验证 → **图谱刷新** → **全新只读独立审查** → 短 R20。
+
+**一轮** = 改 → 验 → **刷图** → 并行全新审查。同轮多审查者合计 +1 轮。数字 SSOT：`config/quality_gates.json` `review_max_rounds`（Stop `max_blocks` 仍为 3，≠ 审查轮次）。
+
+**全新**（每轮缺一不可）：新开 `Task`/`Agent`，禁止 `resume`；对照 **原始要求 + 当前 diff + 本轮新鲜图谱** 全量重扫（上轮清单不得限定范围）；一次找齐后再给 `PASS` / `NEEDS-CHANGES`；审查者只读；修改只走 `change-implementer`。禁止边审边改。
+
+**审查前刷图**：`last_edit` 之后必须增量 `refresh_incremental`（与 SessionStart `ensure` / Stop refresh 同一套 `graph_freshness` CLI）。`last_pre_review_graph_ts > last_edit_ts` 才允许派审。SessionStart ensure 不能代替此次刷新。Stop 刷新不得记成审查前戳。同一轮并行审查者共享这一次刷新。失败 → **禁止开审**。
+
+**并行路由**（正文 `rules/AGENTS.md`）：必派 `eng-reviewer`；产品 `+ceo-reviewer`；UI `+designer`+`dx-reviewer`；安全 `+security-reviewer`；测试边界 `+qa`。无依赖同一消息多个 `Task`。批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过；再派一次 `change-implementer`。满轮 → `BLOCKED` / `DONE_WITH_CONCERNS`。
+
+**派发 prompt 必须带**：本轮已刷新；CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius；对照原始要求做七维。
+
+### 七维（独立审查与主会话 R20 同一清单）
+
+缺任一项视为本轮无效、不计 PASS。
+
+1. 满足（承认/反驳/弃权 + 证据）
+2. 遗漏
+3. 错改
+4. 漏改（含文档/注释/版本戳或「无文档影响」）
+5. 原功能（保持 + 测试/冒烟证据）
+6. 影响范围（CRG `get_impact_radius` / IMPACT / blast）
+7. **问题是否解决**（已解决 / 未解决 / 部分解决；须观察证据，禁止「看起来好了」）
+
+```
+## 独立审查 / 会话终验（R20）
+原始要求：<逐条关键词，禁止复述实现>
+- 满足：<各点承认/反驳/弃权>
+- 遗漏：无
+- 错改：无
+- 漏改：无文档影响
+- 原功能：保持（证据：<命令>）
+- 影响范围：CRG / IMPACT / blast-radius
+- 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
+结论：PASS / NEEDS-CHANGES  （主会话终验：DONE | DONE_WITH_CONCERNS）
 ```
 
 ## 验证准则分解评分（v11.3.5 吸收 llm-as-a-verifier）
@@ -129,7 +166,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 ### 会话终验 R20（任何有过编辑的会话必须，两档同强制）
 
-按用户**原始要求逐条回放**核对（禁止把实现重做一遍）；测试/lint 证据不能代替本项。改前须已优先成熟方案或全局通用处理（不足时开的特例写入「错改」）。**配置/修改必须与文档、注释、版本戳同步**（不一致 = 未完成，计入「漏改」，须当场派 `change-implementer` 改齐，禁止记 P1 后 PASS 停手）。非功能变更（重构/格式/配置/重命名/文档）「原功能」必须写「保持」并指向测试或冒烟证据；禁止「应该没影响」。
+按用户**原始要求逐条回放**核对（禁止把实现重做一遍）；测试/lint 证据不能代替本项。改前须已优先成熟方案或全局通用处理（不足时开的特例写入「错改」）。**配置/修改必须与文档、注释、版本戳同步**（不一致 = 未完成，计入「漏改」，须当场派 `change-implementer` 改齐，禁止记 P1 后 PASS 停手）。非功能变更（重构/格式/配置/重命名/文档）「原功能」必须写「保持」并指向测试或冒烟证据；禁止「应该没影响」。七维模板见上文「独立审查」节。
 
 ```
 ## 会话终验（R20）
@@ -140,12 +177,13 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 - 漏改：无文档影响
 - 原功能：保持（证据：<命令>）
 - 影响范围：CRG / IMPACT / blast-radius
+- 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
 结论：DONE | DONE_WITH_CONCERNS
 ```
 
 未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
-`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`；
-「满足」不可为空/`...`；「漏改」须含 `文档` 或 `注释` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。
+`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；
+「满足」不可为空/`...`；「漏改」须含 `文档` 或 `注释` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。「问题是否解决」须含 `已解决` / `未解决` / `部分解决` 与观察证据。
 DSH / OpenCode 用便携副本 `r20_check.py`（规则对齐，无指纹比对）。
 Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / CreatePlan / 仅计划文件禁止声称完成。CallDynamicTool 内层 CreatePlan 必须记账；写 `.plan.md` 不得清 awaiting。
 
@@ -242,15 +280,16 @@ Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / Cre
 □ Scope Reduction: 存在活跃 plan/spec 制品 → 强制对照 tasks 清单确认无静默缩范围
 ```
 
-### 审查委派（有代码/配置改动；v11.4.12 一次找齐再集中改；每轮全新开审）
+### 审查委派（有交付物编辑即启用；政策见上文「独立审查」）
 
 ```
+□ 审查前增量刷新双图（last_pre_review_graph_ts > last_edit）；失败禁止开审
 □ 修改 → Task change-implementer（禁止审查者改文件）
-□ 验证（主会话贴观察输出）→ Task eng-reviewer 只找问题：必须扫完影响面后再给结论，一次列全未满足项
-□ 每轮审查必须全新 Task/Agent（禁止 resume 上一轮审查者）；上轮清单仅参考，不得限定本轮扫描范围
-□ 干净 PASS 且与验证一致 → 立即结束，禁止再派审查
-□ NEEDS-CHANGES → 汇总完整清单后再派一次 change-implementer 集中改齐（禁止发现一条立刻改再审）；再验证后全新开审（禁止只对照旧清单核销）；最多 3 轮；禁止只连审不改、禁止只汇报等用户；满轮未过不得声称完成
-□ 有代码文件即要求审查（min_files=1）；只读/仅计划文件 skip
+□ 验证（主会话贴观察输出）→ 无依赖审查者同一消息并行；必派 eng-reviewer 七维一次找齐
+□ 每轮审查必须全新 Task/Agent（禁止 resume）；上轮清单仅参考，不得限定本轮扫描范围
+□ 干净 PASS 且七维有效且与验证一致 → 立即结束，禁止再派审查
+□ NEEDS-CHANGES / 七维缺项 → 汇总完整清单后再派一次 change-implementer 集中改齐；再验证后全新开审；轮次 ≤ quality_gates.review_max_rounds；禁止只连审不改
+□ counted 编辑含文档即 in scope；仅计划未批准 / *.plan.md / 纯澄清问答 skip
 □ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
 ```
 

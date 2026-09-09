@@ -8,10 +8,22 @@
     命令一律 python <~/.claude/hooks/*.py>，不经 _editor_hook_launcher。
     已有相同脚本路径的条目则更新 timeout，不重复添加。
 
+    -Scope editors：只合并 TRAE/Qoder（落地默认用于 Claude/Cursor/Qoder/TRAE/Codearts）。
+    -Scope all：再把便携 CLI 复制到 DSH / OpenCode（本仓 11.5 不对齐这两端时不要用）。
+
+.PARAMETER Scope
+    editors | all。默认 all（兼容旧调用）。落地步骤用 editors。
+
 .EXAMPLE
-    pwsh -File scripts/deploy-editor-graph-hooks.ps1
+    pwsh -File scripts/deploy-editor-graph-hooks.ps1 -Scope editors
 #>
 #Requires -Version 5.1
+
+[CmdletBinding()]
+param(
+    [ValidateSet("editors", "all")]
+    [string]$Scope = "all"
+)
 
 $ErrorActionPreference = "Stop"
 $Claude = Join-Path $env:USERPROFILE ".claude"
@@ -28,6 +40,11 @@ $script = Join-Path $Claude "scripts\_merge_editor_graph_hooks.py"
 & $python $script
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "  [OK] editor graph hooks merged" -ForegroundColor Green
+
+if ($Scope -ne "all") {
+    Write-Host "  [OK] Scope=editors — skipped DSH/OpenCode portable copy" -ForegroundColor Green
+    exit 0
+}
 
 $cliSrc = Join-Path $Claude "templates\editor-graph-hooks\graph_freshness_cli.py"
 $dshTools = Join-Path $env:USERPROFILE ".dsh\tools"

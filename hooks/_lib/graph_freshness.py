@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.4.13）。
+"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.5.0）。
 
-SessionStart/sessionEnd 真正 init/update；已有图时 CLI 失败记警告不阻断。
-无图 blocked → PreToolUse deny。Stop 增量刷新；仅验证全绿后跑 sync.ps1。
+任务开始 ensure；审查前增量 refresh（last_edit 之后）；任务完成 Stop refresh。
+已有图时 CLI 失败记警告不阻断。无图 blocked → PreToolUse deny。
 """
 from __future__ import annotations
 
@@ -79,6 +79,7 @@ DEFAULT_CFG = {
     "require_both_graphs": True,
     "subproject_discovery": True,
     "subproject_max_children": 8,
+    "require_refresh_before_review": True,
 }
 
 # 发现子 git 时跳过的目录名。禁止走进图谱目录，避免「图的图」。
@@ -674,6 +675,7 @@ def ensure_root(
             "codegraph": result["codegraph"],
             "crg": result["crg"],
             "ts": time.time(),
+            "last_graph_refresh_ts": time.time(),
             "session_id": sid,
             "error": result["error"],
             "incremental_only": incremental_only,

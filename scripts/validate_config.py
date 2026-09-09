@@ -30,7 +30,10 @@ try:
 except ImportError:
     yaml = None
 
-BASE = os.path.join(os.environ.get("USERPROFILE", ""), ".claude")
+BASE = os.environ.get("CLAUDE_HOME") or os.path.join(
+    os.environ.get("USERPROFILE") or os.environ.get("HOME", ""),
+    ".claude",
+)
 ERRORS = []
 WARNINGS = []
 INFO = []
@@ -45,7 +48,7 @@ GSTACK_REVIEW_AGENTS = {
 # v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
 # product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
 GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer",
+    "sre", "doc-writer", "codex-reviewer", "change-implementer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
 GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
@@ -77,12 +80,32 @@ REQUIRED_SKILLS = (
 )
 GLOBAL_SKILLS_MAX = 36  # v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
 
-# v11: DESIGN.md 并入 FRONTEND.md（设计系统节）；BESTPRACTICE.md 并入 GOVERNANCE.md（最佳实践详参章）
+# v11.5: BACKEND.md + DATABASE.md 薄层 glob；FRONTEND 去项目特例
 GLOBAL_RULES = {
     "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
     "AGENTS.md", "MCP.md", "CONTEXT.md", "OPENSPEC.md",
-    "FRONTEND.md", "GOVERNANCE.md",
+    "FRONTEND.md", "GOVERNANCE.md", "BACKEND.md", "DATABASE.md",
 }
+GLOBAL_RULES_MAX = 12
+LIVE_POLICY_PATHS = (
+    "CLAUDE.md",
+    "rules/CORE.md",
+    "rules/AGENTS.md",
+    "rules/GOVERNANCE.md",
+    "rules/FRONTEND.md",
+    "rules/BACKEND.md",
+    "rules/DATABASE.md",
+    "skills/verification-before-completion/SKILL.md",
+    "skills/executing-plans/SKILL.md",
+    "skills/task-triage/SKILL.md",
+    "skills/requesting-code-review/SKILL.md",
+    "skills/change-impact-analysis/SKILL.md",
+    "templates/cursor-guard/rules/CURSOR-EDITOR.mdc",
+    "commands/verify.md",
+    "agents/eng-reviewer.md",
+    "hooks/_lib/gate_messages.md",
+)
+LIVE_POLICY_BANS = ("最多 3 轮", "只读免审")
 
 
 def check_json(path, label):
@@ -186,7 +209,7 @@ def v4_iron_laws_consistency():
     if os.path.exists(verif_path):
         with open(verif_path, "r", encoding="utf-8") as fh:
             extra = core + "\n" + fh.read()
-    for kw in ("漏改", "原功能", "文档/注释"):
+    for kw in ("漏改", "原功能", "文档/注释", "问题是否解决"):
         if kw not in extra:
             ERRORS.append(
                 f"V4: R20 keyword {kw!r} missing from CORE.md or verification skill"
@@ -219,10 +242,15 @@ def v5_manifest_completeness():
         WARNINGS.append(f"V5: Missing MANIFEST concerns: {sorted(missing)}")
     agents_max = manifest.get("global_agents_max", GLOBAL_AGENTS_MAX)
     skills_max = manifest.get("global_skills_max", GLOBAL_SKILLS_MAX)
+    rules_max = manifest.get("global_rules_max", GLOBAL_RULES_MAX)
     if agents_max != GLOBAL_AGENTS_MAX or skills_max != GLOBAL_SKILLS_MAX:
         WARNINGS.append(
             f"V5: MANIFEST limits ({agents_max}/{skills_max}) "
             f"!= validator ({GLOBAL_AGENTS_MAX}/{GLOBAL_SKILLS_MAX})"
+        )
+    if rules_max != GLOBAL_RULES_MAX:
+        WARNINGS.append(
+            f"V5: MANIFEST global_rules_max ({rules_max}) != validator ({GLOBAL_RULES_MAX})"
         )
 
 
@@ -346,6 +374,8 @@ def main():
     missing_rules = GLOBAL_RULES - rule_files
     if missing_rules:
         ERRORS.append(f"Missing global rules: {sorted(missing_rules)}")
+    if len(rule_files) > GLOBAL_RULES_MAX:
+        ERRORS.append(f"Too many global rules: {len(rule_files)} > {GLOBAL_RULES_MAX}")
 
     claude_path = os.path.join(BASE, "CLAUDE.md")
     line_count = 0
@@ -353,8 +383,8 @@ def main():
         with open(claude_path, "r", encoding="utf-8") as fh:
             claude_md = fh.read()
         line_count = claude_md.count("\n") + 1
-    if line_count > 500:
-        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 500")
+    if line_count > 200:
+        ERRORS.append(f"CLAUDE.md too long: {line_count} lines > 200")
 
     commands_dir = os.path.join(BASE, "commands")
     if os.path.isdir(commands_dir):
@@ -384,6 +414,8 @@ def main():
     check_v14_cursor_guard_v11()
     check_v15_loading_tiers()
     check_v16_codegraph_mandate()
+    check_live_policy_bans()
+    check_fullstack_globs()
     check_v17_bare_except_extended()
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
@@ -401,7 +433,7 @@ def main():
 def report(agents=0, skills=0, rules=0, claude_lines=0):
     print("=== .claude v11 VALIDATION (19 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
-    print(f"CLAUDE.md: {claude_lines} lines (max 500)")
+    print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
@@ -429,7 +461,7 @@ def check_v10_bare_except():
     import re as re_mod
     import glob as glob_mod
     import ast as ast_mod
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     count = 0
     for pyfile in glob_mod.glob(os.path.join(hooks_dir, "*.py")):
         if "_archive" in pyfile or "_optional" in pyfile or "_deprecated" in pyfile:
@@ -476,7 +508,7 @@ def check_v11_hook_exception_propagation():
         "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
-    hooks_dir = os.path.expanduser("~/.claude/hooks")
+    hooks_dir = os.path.join(BASE, "hooks")
     missing = []
     for h in core_hooks:
         if not os.path.exists(os.path.join(hooks_dir, h)):
@@ -496,8 +528,8 @@ def check_v11_hook_exception_propagation():
 
 def check_v12_r16_in_core():
     """V12: R16铁律在CORE.md和CLAUDE.md中存在"""
-    core_path = os.path.expanduser("~/.claude/rules/CORE.md")
-    claude_path = os.path.expanduser("~/.claude/CLAUDE.md")
+    core_path = os.path.join(BASE, "rules", "CORE.md")
+    claude_path = os.path.join(BASE, "CLAUDE.md")
     for fpath, label in [(core_path, "CORE.md"), (claude_path, "CLAUDE.md")]:
         try:
             with open(fpath, 'r', encoding='utf-8') as f:
@@ -832,11 +864,23 @@ def check_v16_codegraph_mandate():
         "pretool_ensure_timeout_sec",
         "stop_refresh_timeout_sec",
         "sync_ps1_timeout_sec",
+        "require_refresh_before_review",
     )
     missing = [k for k in required if k not in gf]
     if missing:
         ERRORS.append(f"V16: graph_freshness missing keys: {', '.join(missing)}")
         return
+    if not bool(gf.get("require_refresh_before_review")):
+        ERRORS.append("V16: graph_freshness.require_refresh_before_review must be true")
+    try:
+        with open(qg_path, "r", encoding="utf-8") as fh:
+            vg = json.load(fh).get("verification_gate") or {}
+        if int(vg.get("review_max_rounds") or 0) != 5:
+            ERRORS.append("V16: verification_gate.review_max_rounds must be 5")
+        if int(vg.get("max_blocks") or 0) != 3:
+            ERRORS.append("V16: verification_gate.max_blocks must stay 3")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        ERRORS.append(f"V16: verification_gate unreadable: {exc}")
     if int(gf.get("session_ensure_timeout_sec") or 0) < 120:
         WARNINGS.append(
             "V16: graph_freshness.session_ensure_timeout_sec < 120 "
@@ -857,6 +901,57 @@ def check_v16_codegraph_mandate():
     print("  V16: graph_freshness timeouts + snippet ✓")
 
 
+def check_fullstack_globs():
+    """FRONTEND 去项目特例与裸 js；BACKEND/DATABASE 薄层 glob 必须存在。"""
+    frontend = os.path.join(BASE, "rules", "FRONTEND.md")
+    backend = os.path.join(BASE, "rules", "BACKEND.md")
+    database = os.path.join(BASE, "rules", "DATABASE.md")
+    try:
+        with open(frontend, "r", encoding="utf-8") as fh:
+            front = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V16: cannot read FRONTEND.md: {exc}")
+        return
+    if "teoms-web" in front.lower():
+        ERRORS.append("V16: FRONTEND.md must not default to teoms-web")
+    if "**/*.{vue,jsx,tsx,css,less,scss,html}" not in front:
+        ERRORS.append(
+            "V16: FRONTEND.md glob must be vue,jsx,tsx,css,less,scss,html (no bare js)"
+        )
+    if re.search(r"\*\.js(?:\s|,|'|\"|$)", front):
+        ERRORS.append("V16: FRONTEND.md must not glob bare *.js")
+    for path, needle, label in (
+        (backend, "**/{api,server,backend,services}/**/*.{ts,js}", "BACKEND.md"),
+        (database, "**/migrations/**", "DATABASE.md"),
+    ):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V16: cannot read {label}: {exc}")
+            continue
+        if needle not in text:
+            ERRORS.append(f"V16: {label} missing glob {needle!r}")
+
+
+def check_live_policy_bans():
+    """现行政策文件禁止硬编码旧轮次 / 只读免审旁路（史留 CHANGELOG）。"""
+    for rel in LIVE_POLICY_PATHS:
+        path = os.path.join(BASE, rel)
+        if not os.path.isfile(path):
+            ERRORS.append(f"V16: live policy missing {rel}")
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError as exc:
+            ERRORS.append(f"V16: cannot read {rel}: {exc}")
+            continue
+        for ban in LIVE_POLICY_BANS:
+            if ban in text:
+                ERRORS.append(f"V16: {rel} hardcodes {ban!r}")
+
+
 def check_v17_bare_except_extended():
     """V17: R16 扩展 — 裸 except 扫描（hooks/ + scripts/，含 bare except: 和 except Exception:）"""
     import re as re_mod
@@ -868,8 +963,8 @@ def check_v17_bare_except_extended():
         "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [
-        os.path.expanduser("~/.claude/hooks"),
-        os.path.expanduser("~/.claude/scripts"),
+        os.path.join(BASE, "hooks"),
+        os.path.join(BASE, "scripts"),
     ]
     violations = []
 

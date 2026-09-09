@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.16
+# Hooks 钩子系统 v5.17
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.17 变更（v11.5.0）**：七维（含问题是否解决）；审查前刷图相位 `graph`；`review_max_rounds=5`；批次聚合 verdict；文档 in scope。Cursor Guard 1.2.12。`deploy-editor-graph-hooks.ps1 -Scope editors|all`。
 > **v5.16 变更（v11.4.13）**：图谱保鲜 deny 覆盖 Glob/everything；`CallDynamicTool` 解包 namespace+toolName；everything 无图与 Glob 同级 deny，不再当 Grep/Glob 产品 fallback。Cursor Guard 仍 1.2.11（matcher 增量）。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
@@ -175,4 +176,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.16（v11.4.13）| 19 注册激活 + 5 未注册；图谱保鲜 deny Grep/Glob/everything；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2_
+_版本：5.17（v11.5.0）| 19 注册激活 + 5 未注册；七维独立审查；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2_

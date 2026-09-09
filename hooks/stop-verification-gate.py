@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+Stop Hook: 完成验证硬门（v11.5.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+有交付物编辑即双审：审查前刷图；eng-reviewer 七维一次找齐；修改走 change-implementer。每轮全新开审（禁止 resume）。干净 PASS 即停。最多 review_max_rounds 轮。apply_review_verdict 同步 PASS（须已有 reviews；缺七维或 PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
 R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
@@ -65,7 +65,8 @@ DEFAULT_CFG = {
     "require_review_verdict": True,
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
-    "review_max_rounds": 3,
+    "review_max_rounds": 5,
+    "require_refresh_before_review": True,
 }
 
 CODE_EXTENSIONS = {
@@ -443,7 +444,9 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         if any("预期符合性" in r for r in reasons):
             lines.append("对照 plan/spec tasks，禁止静默缩范围。")
     if any("R20" in r or "会话终验" in r for r in reasons):
-        lines.append("输出短 R20：满足/遗漏/错改/漏改/原功能/影响范围（漏改含文档；原功能含证据）。")
+        lines.append(
+            "输出短 R20 七维：满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决（漏改含文档；原功能含证据）。"
+        )
     lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行 DONE_WITH_CONCERNS；跳过请说「跳过验证」）")
     return "\n".join(lines)
 
@@ -644,7 +647,7 @@ def main():
                         entry["ts"] = time.time()
                         state[session_id] = entry
                         save_state(state)
-                    max_rounds = int(cfg.get("review_max_rounds", 3))
+                    max_rounds = int(cfg.get("review_max_rounds", 5))
                     rounds = int(entry.get("review_rounds") or 0)
                     phase = dual_pass_phase(entry, cfg)
                     if phase == "capped":
@@ -659,9 +662,15 @@ def main():
                         )
                     elif phase == "verify":
                         pass
+                    elif phase == "graph":
+                        reasons.append(
+                            "审查前须增量刷新双图（codegraph sync + code-review-graph update）。"
+                            "SessionStart ensure 不能代替 last_edit 之后的刷新。刷图后再全新开审。"
+                        )
                     elif phase == "review":
                         reasons.append(
-                            "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
+                            "有改动双审：须委派全新 eng-reviewer 对照原始要求做七维审查（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决），"
+                            "一次找齐全部问题（禁止 resume、禁止改文件、禁止发现一条就停审），"
                             f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
                         )
                     elif (

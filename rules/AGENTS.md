@@ -13,7 +13,7 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 > 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
 
-## gstack 审查 6 + 补全 3 + 跨模型 1（v11.4.12）
+## gstack 审查 6 + 补全 3 + 跨模型 1（v11.5）
 
 审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
 
@@ -51,12 +51,15 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 产品/新功能     → + ceo-reviewer
 UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）
 DX体验变更      → + dx-reviewer
+测试边界        → + qa
 安全敏感变更    → + security-reviewer（全量审计走其深度模式=原cso OWASP+STRIDE）
 infra/配置      → CEO Review 可跳过
 跨模型验证      → + codex-reviewer (gstack /codex)
 部署/发布       → skill/ship（完整闭环按需启用 catalog/land-and-deploy）
 iOS 变更        → 按需启用 catalog/ios-specialist
 ```
+
+**一轮 = 改 → 验 → 审查前刷图一次 → 本批全新七维审查。** 同轮多审查者合计 +1 轮（`quality_gates.review_max_rounds`）。无依赖：同一条消息多个 `Task` 并行；有依赖串行。刷一次图再 fan-out。主会话合并完整清单；批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过，再派**一次** `change-implementer`。审查 prompt 必须写明：本轮已刷新、使用 CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius。政策 SSOT → `skills/verification-before-completion/SKILL.md`。
 
 ## 禁止（防互博）
 

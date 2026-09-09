@@ -54,12 +54,17 @@
     ],
     "reviewer_agents": [
       "eng-reviewer",
+      "ceo-reviewer",
+      "designer",
+      "dx-reviewer",
       "qa",
+      "security-reviewer",
       "code-reviewer"
     ],
     "require_reviewer_min_files": 1,
-    "review_max_rounds": 3,
-    "review_cycle": "modify-verify-review",
+    "review_max_rounds": 5,
+    "review_cycle": "modify-verify-graph-review",
+    "require_refresh_before_review": true,
     "require_requirements_replay": true,
     "requirement_fingerprint": true,
     "require_review_verdict": true,
@@ -81,7 +86,8 @@
     "require_both_graphs": true,
     "subproject_discovery": true,
     "subproject_max_children": 8,
-    "description": "v11.4.9 图谱保鲜硬门：SessionStart/sessionEnd 双图 ensure/refresh；已有图时 CLI 失败记警告不阻断；无图 PreToolUse deny；仅验证全绿后 sync.ps1。子项目 depth-1 封顶。"
+    "require_refresh_before_review": true,
+    "description": "v11.5：任务开始 ensure、每轮审查前增量 refresh（last_edit 之后）、任务完成 Stop refresh。无新鲜图禁止开审。已有图 CLI 失败记警告不阻断；无图 PreToolUse deny。"
   },
   "issue_tracker": {
     "enabled": true,

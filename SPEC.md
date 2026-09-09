@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.4.13 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门（会话起止 ensure/refresh 双图、已有图 CLI 失败不阻断、无图 deny、验绿后 sync.ps1）+ Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 短 R20 + 有改动即双审 + TDD/SDD 显式触发 + 问题指纹追踪 + 验证追踪覆盖 MCP 写工具 + 多编辑器同步 1+N + 工程原则整合 + 会话终验 R20 | UA removed | cbm 已禁用
+> 版本：11.5.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；`review_max_rounds=5`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -128,7 +128,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | agentic-orchestrator | ③执行 |
 | code-explorer        | ③执行 |
 
-## gstack 审查 6+3+1（v11.4.11 引入 change-implementer；v11.4.12 一次找齐+每轮全新开审）
+## gstack 审查 6+3+1（v11.5 七维 + 审查前刷图；v11.4.11 引入 change-implementer）
 
 **审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer（深度模式=原 cso 全量审计）
 **补全 (supplement)**：sre, doc-writer, change-implementer
@@ -317,7 +317,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 | Plugin                     | 状态 | 提供                      | 说明                                                     |
 | -------------------------- | ---- | ------------------------- | -------------------------------------------------------- |
-| superpowers 6.2.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
+| superpowers 6.3.0          | ✅   | SessionStart + 方法论技能 | 五柱之一，随上游自动更新                                 |
 | claude-mem 13.13.1         | ✅   | 6 hooks + 记忆技能        | 五柱之一（R18 记忆优先）                                 |
 | code-review                | ✅   | 审查技能                  | 与 eng-reviewer 互补                                     |
 | commit-commands            | ✅   | Git 快捷命令              | —                                                        |
@@ -360,4 +360,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.4.13 | 日期：2026-09-07 | 五柱×五阶段×三横切 | MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱保鲜硬门 + Cursor 完成门不再 followup + 审查一次找齐再集中改 + 每轮独立审查必须全新开审 + 审查只找问题、修改走 change-implementer + 短 R20 + 有改动即双审 + L0–L3 + 同步 1+N + 工程原则整合 + 会话终验 R20
+> 版本：11.5.0 | 日期：2026-09-09 | 五柱×五阶段×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；review_max_rounds=5）+ 全栈 glob + Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N
