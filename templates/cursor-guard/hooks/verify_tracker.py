@@ -127,6 +127,9 @@ def main() -> None:
         })
         entry["ts"] = now
         entry.setdefault("started_ts", now)
+        entry.setdefault("edited_files", [])
+        entry.setdefault("verify_commands", [])
+        entry.setdefault("reviews", [])
         if cwd:
             entry["cwd"] = cwd
 
@@ -157,6 +160,16 @@ def main() -> None:
             for path in paths:
                 entry["edited_files"].append({"path": path, "ts": now})
                 changed = True
+            try:
+                r20e = import_claude_lib(claude_home, "r20_replay")
+                if r20e.clear_review_pass_if_counted(entry, paths):
+                    changed = True
+            except Exception as e:
+                print(f"verify_tracker: clear_review_pass_if_counted failed: {e}", file=sys.stderr)
+                if any(p and not str(p).lower().endswith(".plan.md") for p in paths):
+                    if entry.get("review_pass_ok") is True:
+                        entry["review_pass_ok"] = False
+                        changed = True
         elif tool_name in ("Shell", "Bash"):
             command = extract_shell_command(data)
             if command and is_verify_command(command, patterns):
@@ -170,47 +183,39 @@ def main() -> None:
             except Exception as e:
                 print(f"verify_tracker: graph refresh stamp failed: {e}", file=sys.stderr)
         elif tool_name in ("Task", "Agent"):
-            sub = str(
-                data.get("subagent_type")
-                or tool_input.get("subagent_type")
-                or data.get("description")
-                or ""
-            )
             reviewer = None
+            resumed = bool(tool_input.get("resume")) if isinstance(tool_input, dict) else False
             try:
                 r20 = import_claude_lib(claude_home, "r20_replay")
-                reviewer = r20.identify_reviewer(sub, reviewers)
+                blob = r20.reviewer_dispatch_blob(tool_input, extra=data)
+                reviewer = r20.identify_reviewer(blob, reviewers)
+                resumed = bool(r20.is_resumed_subagent(tool_input))
+                if reviewer:
+                    r20.note_reviewer_dispatch(entry, reviewer, now, resumed=resumed)
+                    changed = True
             except Exception as e:
-                print(f"verify_tracker: identify_reviewer unavailable: {e}", file=sys.stderr)
+                print(f"verify_tracker: reviewer dispatch unavailable: {e}", file=sys.stderr)
+                sub = str(
+                    data.get("subagent_type")
+                    or tool_input.get("subagent_type")
+                    or data.get("description")
+                    or tool_input.get("prompt")
+                    or ""
+                )
                 lowered = sub.lower()
                 for name in reviewers:
-                    if str(name).lower() in lowered:
+                    n = str(name).lower()
+                    if n in lowered and (len(n) > 3 or "-" in n):
                         reviewer = name
                         break
-            if reviewer:
-                resumed = False
-                try:
-                    r20 = import_claude_lib(claude_home, "r20_replay")
-                    resumed = bool(r20.is_resumed_subagent(tool_input))
-                except Exception as e:
-                    print(f"verify_tracker: is_resumed_subagent unavailable: {e}", file=sys.stderr)
-                    resumed = bool(tool_input.get("resume"))
-                if resumed:
+                if reviewer and not resumed:
+                    entry.setdefault("reviews", []).append({"agent": reviewer, "ts": now})
+                    entry["review_pass_ok"] = False
+                    changed = True
+                elif reviewer and resumed:
                     entry.setdefault("skipped_resumed_reviews", []).append(
                         {"agent": reviewer, "ts": now}
                     )
-                    changed = True
-                else:
-                    last_rev = 0.0
-                    for item in entry.get("reviews") or []:
-                        last_rev = max(last_rev, float(item.get("ts", 0) or 0))
-                    last_edit = 0.0
-                    for item in entry.get("edited_files") or []:
-                        last_edit = max(last_edit, float(item.get("ts", 0) or 0))
-                    if last_edit > last_rev:
-                        entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
-                    entry["reviews"].append({"agent": reviewer, "ts": now})
-                    entry["review_pass_ok"] = False
                     changed = True
 
         try:

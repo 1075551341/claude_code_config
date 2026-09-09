@@ -65,6 +65,8 @@ def main() -> None:
             if not entry.get("non_simple"):
                 entry["non_simple"] = True
                 changed = True
+        if r20.attach_review_text(entry, text):
+            changed = True
         if r20.apply_review_verdict(entry, text):
             changed = True
         if r20.replay_ok(text):

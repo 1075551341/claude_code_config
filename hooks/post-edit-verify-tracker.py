@@ -21,12 +21,15 @@ from issue_state import claude_home  # noqa: E402  仅取 CLAUDE_HOME 解析，�
 from first_edit_verify import compose_message, fresh_edit_paths, load_first_edit_message  # noqa: E402
 from crg_track import record_crg_call  # noqa: E402
 from r20_replay import (  # noqa: E402
+    clear_review_pass_if_counted,
+    identify_reviewer,
+    is_graph_refresh_call,
     is_plan_artifact,
     is_resumed_subagent,
-    is_graph_refresh_call,
-    identify_reviewer,
+    note_reviewer_dispatch,
     record_plan_tool,
     record_pre_review_graph_refresh,
+    reviewer_dispatch_blob,
 )
 
 CLAUDE_HOME = str(claude_home())
@@ -226,6 +229,9 @@ def main():
     })
     entry["ts"] = now
     entry.setdefault("started_ts", now)
+    entry.setdefault("edited_files", [])
+    entry.setdefault("verify_commands", [])
+    entry.setdefault("reviews", [])
     if cwd:
         entry["cwd"] = cwd
 
@@ -238,6 +244,8 @@ def main():
         plan_only = bool(paths) and all(is_plan_artifact(p) for p in paths)
         for path in paths:
             entry["edited_files"].append({"path": path, "ts": now})
+            changed = True
+        if clear_review_pass_if_counted(entry, paths):
             changed = True
         fresh = [] if plan_only else fresh_edit_paths(entry, paths)
         if fresh:
@@ -265,31 +273,18 @@ def main():
             if record_pre_review_graph_refresh(entry, now):
                 changed = True
     elif tool_name in ("Task", "Agent"):
-        agent = str(tool_input.get("subagent_type") or tool_input.get("description") or "")
-        reviewer = identify_reviewer(agent, cfg["reviewer_agents"])
+        blob = reviewer_dispatch_blob(tool_input)
+        reviewer = identify_reviewer(blob, cfg["reviewer_agents"])
         if reviewer:
-            if is_resumed_subagent(tool_input):
-                entry.setdefault("skipped_resumed_reviews", []).append(
-                    {"agent": reviewer, "ts": now}
-                )
+            resumed = is_resumed_subagent(tool_input)
+            if note_reviewer_dispatch(entry, reviewer, now, resumed=resumed):
                 changed = True
+            if resumed:
                 first_edit_msg = (
                     f"{first_edit_msg}\n\n{RESUMED_REVIEW_REMINDER}"
                     if first_edit_msg
                     else RESUMED_REVIEW_REMINDER
                 )
-            else:
-                last_rev = 0.0
-                for item in entry.get("reviews") or []:
-                    last_rev = max(last_rev, float(item.get("ts", 0) or 0))
-                last_edit = 0.0
-                for item in entry.get("edited_files") or []:
-                    last_edit = max(last_edit, float(item.get("ts", 0) or 0))
-                if last_edit > last_rev:
-                    entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
-                entry["reviews"].append({"agent": reviewer, "ts": now})
-                entry["review_pass_ok"] = False
-                changed = True
 
     if is_graph_refresh_call(tool_name, tool_input):
         if record_pre_review_graph_refresh(entry, now):

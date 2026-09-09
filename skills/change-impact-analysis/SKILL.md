@@ -94,4 +94,4 @@ source: internal
 
 - 阶段 1 清单为空 → **拒绝执行**（先让用户明确变更范围）
 - 阶段 3 残留 > 0 → **不可声称完成**（回到阶段 2）
-- 全部通过 → 进入 verification-before-completion（五维/R20 核对范围含本清单全部相关项，禁止只验已编辑文件）
+- 全部通过 → 进入 verification-before-completion（R20 七维核对范围含本清单全部相关项，禁止只验已编辑文件）

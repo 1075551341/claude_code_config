@@ -28,14 +28,18 @@ _FIELD_RE = re.compile(
     rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
-_GRAPH_SHELL_RE = re.compile(r"\b(codegraph|code-review-graph)\b", re.I)
-_GRAPH_ACTION_RE = re.compile(r"\b(init|sync|index|build|update)\b", re.I)
+_GRAPH_PAIR_RE = re.compile(
+    r"\b(codegraph|code-review-graph)(?:\s+|-)(init|sync|index|build|update)\b",
+    re.I,
+)
 _GRAPH_MCP_MARKERS = (
     "build_or_update",
     "codegraph_sync",
     "codegraph_init",
     "codegraph_index",
 )
+_NO_REVIEWER_STEM = frozenset({"code"})
+DEFAULT_DOC_EXTS = (".md", ".txt", ".rst", ".markdown")
 _IMPACT_TOKENS = (
     "crg",
     "get_impact_radius",
@@ -154,20 +158,118 @@ def review_dimensions_ok(text: str) -> bool:
 
 
 def identify_reviewer(agent_blob: str, reviewer_agents=None) -> str | None:
-    """从 Task/Agent 描述识别审查者（含 ceo/designer/dx/security 简称）。"""
-    blob = (agent_blob or "").strip().lower()
+    """从 Task/Agent 描述识别审查者。
+
+    全名（eng-reviewer、security-reviewer、designer…）可出现在 blob 任意处。
+    简称（ceo / dx / security / qa）仅当整个 blob 或首个 token 精确等于该词，
+    避免 code-explorer 命中 code-reviewer、或正文里的 security 误识别。
+    永不使用 stem ``code``。
+    """
+    blob = (agent_blob or "").strip()
     if not blob:
         return None
+    lower = blob.lower()
     names = [str(n) for n in (reviewer_agents or DEFAULT_REVIEWER_AGENTS) if n]
     names.sort(key=len, reverse=True)
     for name in names:
         n = name.lower()
-        if n in blob:
-            return name
+        if "-" in n or len(n) > 3:
+            if n in lower:
+                return name
+    first = lower.split()[0]
+    first = first.split("/")[-1].strip(".,;:\"'`")
+    for name in names:
+        n = name.lower()
         stem = n[:-9] if n.endswith("-reviewer") else n
-        if stem and re.search(rf"(?:^|[^a-z0-9]){re.escape(stem)}(?:$|[^a-z0-9])", blob):
+        if not stem or stem in _NO_REVIEWER_STEM:
+            continue
+        if lower == stem or lower == n or first == stem or first == n:
             return name
     return None
+
+
+def reviewer_dispatch_blob(tool_input=None, extra=None) -> str:
+    """拼接 Task/Agent 的 subagent_type + description + prompt（含嵌套 arguments）。"""
+    parts: list[str] = []
+
+    def add(blob) -> None:
+        if not isinstance(blob, dict):
+            return
+        for key in ("subagent_type", "description", "prompt"):
+            val = blob.get(key)
+            if isinstance(val, str) and val.strip():
+                parts.append(val.strip())
+        for nest in ("arguments", "tool_input", "input"):
+            nested = blob.get(nest)
+            if isinstance(nested, dict):
+                add(nested)
+
+    add(extra)
+    add(tool_input)
+    return " ".join(parts)
+
+
+def note_reviewer_dispatch(entry: dict, reviewer: str, ts: float, *, resumed: bool = False) -> bool:
+    """记录审查委派。同轮连派不增加 review_rounds；resume 不计入 reviews。"""
+    if not isinstance(entry, dict) or not reviewer:
+        return False
+    stamp = float(ts or 0)
+    if resumed:
+        entry.setdefault("skipped_resumed_reviews", []).append(
+            {"agent": reviewer, "ts": stamp}
+        )
+        return True
+    reviews = entry.setdefault("reviews", [])
+    if not isinstance(reviews, list):
+        reviews = []
+        entry["reviews"] = reviews
+    last_rev = _last_item_ts(reviews)
+    last_edit = _last_item_ts(entry.get("edited_files") or [])
+    if last_edit > last_rev:
+        entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
+    reviews.append({"agent": reviewer, "ts": stamp})
+    entry["last_review_dispatch_ts"] = stamp
+    entry["review_pass_ok"] = False
+    return True
+
+
+def _current_round_reviews(entry: dict) -> list:
+    reviews = [item for item in (entry.get("reviews") or []) if isinstance(item, dict)]
+    edit_ts = _last_item_ts(counted_edit_items(entry))
+    if edit_ts <= 0:
+        return reviews
+    return [item for item in reviews if float(item.get("ts") or 0) > edit_ts]
+
+
+def attach_review_text(entry: dict, text: str) -> bool:
+    """把审查正文填到本轮最后一条空 reviews[].text。仅 capture 调用。"""
+    blob = (text or "").strip()
+    if not blob or not isinstance(entry, dict):
+        return False
+    round_reviews = _current_round_reviews(entry)
+    for item in reversed(round_reviews):
+        if not str(item.get("text") or "").strip():
+            item["text"] = blob
+            return True
+        return False
+    return False
+
+
+def clear_review_pass_if_counted(entry: dict, paths) -> bool:
+    """非计划制品的新编辑使既有 review_pass_ok 失效。"""
+    if not isinstance(entry, dict):
+        return False
+    if not any(p and not is_plan_artifact(str(p)) for p in (paths or [])):
+        return False
+    if entry.get("review_pass_ok") is True:
+        entry["review_pass_ok"] = False
+        return True
+    return False
+
+
+def _looks_like_review_verdict(text: str) -> bool:
+    blob = text or ""
+    return "NEEDS-CHANGES" in blob or bool(re.search(r"\bPASS\b", blob))
 
 
 def _verdict_unclean(text: str) -> bool:
@@ -179,37 +281,43 @@ def _verdict_unclean(text: str) -> bool:
     )
 
 
-def _round_review_texts(entry: dict, extra: str = "") -> list[str]:
-    """本轮 reviews[] 正文 + 当前回复；供批次聚合。"""
-    reviews = list(entry.get("reviews") or [])
-    blob = (extra or "").strip()
-    if blob and reviews and not str(reviews[-1].get("text") or "").strip():
-        reviews[-1]["text"] = blob
-        entry["reviews"] = reviews
-    edit_ts = _last_item_ts(counted_edit_items(entry))
-    round_items = [
-        item for item in reviews if float(item.get("ts") or 0) > edit_ts
-    ] or reviews
+def _round_review_texts(entry: dict, extra: str = "") -> tuple[list[str], bool, list]:
+    """本轮 reviews[] 已捕获正文 + 可选当前回复。不改写空 text。"""
+    round_items = _current_round_reviews(entry)
+    has_empty = False
     texts: list[str] = []
     for item in round_items:
         body = str(item.get("text") or "").strip()
-        if body and body not in texts:
+        if not body:
+            has_empty = True
+            continue
+        if body not in texts:
             texts.append(body)
-    if blob and blob not in texts:
+    blob = (extra or "").strip()
+    if blob and _looks_like_review_verdict(blob) and blob not in texts:
         texts.append(blob)
-    return texts
+    return texts, has_empty, round_items
 
 
 def apply_review_verdict(entry: dict, text: str) -> bool:
     """按本轮 reviews[] 批次聚合写入 review_pass_ok。禁止自报 PASS。
 
+    不把父消息填进空 reviews[].text（那是 r20_capture.attach_review_text 的职责）。
+    本轮存在空 text 的审查槽 → 不能 PASS。
     批次内任一 NEEDS-CHANGES、缺七维、或不干净 PASS → 整轮不通过。
-    全部干净 PASS 且已有 reviews 才记 pass。
+    全部干净 PASS 且本轮审查槽均有正文才记 pass。
     """
-    texts = _round_review_texts(entry, text)
-    if not texts:
+    if not isinstance(entry, dict):
         return False
-    unclean = any(_verdict_unclean(blob) for blob in texts)
+    texts, has_empty, round_items = _round_review_texts(entry, text)
+    extra = (text or "").strip()
+    if not round_items:
+        if extra and "NEEDS-CHANGES" in extra:
+            if entry.get("review_pass_ok") is not False:
+                entry["review_pass_ok"] = False
+                return True
+        return False
+    unclean = has_empty or (not texts) or any(_verdict_unclean(blob) for blob in texts)
     if unclean:
         if entry.get("review_pass_ok") is not False:
             entry["review_pass_ok"] = False
@@ -218,7 +326,7 @@ def apply_review_verdict(entry: dict, text: str) -> bool:
     all_pass = all(
         review_verdict_ok(blob) and re.search(r"\bPASS\b", blob) for blob in texts
     )
-    if all_pass and (entry.get("reviews") or []) and not entry.get("review_pass_ok"):
+    if all_pass and not entry.get("review_pass_ok"):
         entry["review_pass_ok"] = True
         return True
     return False
@@ -245,10 +353,29 @@ def counted_edit_items(entry: dict) -> list:
     return out
 
 
-def has_unverified_edits(entry: dict) -> bool:
-    """本会话有（非计划制品）编辑且最后一次编辑后无验证命令。"""
+def is_doc_path(path: str, doc_exts=None) -> bool:
+    """是否为完成门口径的文档路径（.md/.txt/.rst/.markdown）。"""
+    ext = os.path.splitext(str(path or ""))[1].lower()
+    skip = {str(x).lower() for x in (doc_exts or DEFAULT_DOC_EXTS)}
+    return bool(ext) and ext in skip
+
+
+def counted_edits_are_docs_only(entry: dict, doc_exts=None) -> bool:
     edited = counted_edit_items(entry)
     if not edited:
+        return False
+    return all(is_doc_path(str(item.get("path") or ""), doc_exts) for item in edited)
+
+
+def has_unverified_edits(entry: dict) -> bool:
+    """本会话有（非计划制品）代码编辑且最后一次编辑后无验证命令。
+
+    纯文档会话不要求 pytest：否则 README 会卡在 verify，进不了刷图/审查。
+    """
+    edited = counted_edit_items(entry)
+    if not edited:
+        return False
+    if counted_edits_are_docs_only(entry):
         return False
     last_edit_ts = max((item.get("ts", 0) for item in edited), default=0)
     if last_edit_ts == 0:
@@ -404,7 +531,7 @@ def cursor_should_followup(entry: dict, data: dict | None = None) -> bool:
 
 def unique_code_edit_count(entry: dict, doc_exts=None) -> int:
     """会话内非文档、非计划制品编辑路径去重计数。"""
-    skip = {str(x).lower() for x in (doc_exts or (".md", ".txt", ".rst", ".markdown"))}
+    skip = {str(x).lower() for x in (doc_exts or DEFAULT_DOC_EXTS)}
     seen = set()
     for item in counted_edit_items(entry):
         path = str(item.get("path") or "")
@@ -449,27 +576,32 @@ def graph_fresh_for_review(entry: dict, cfg: dict | None = None) -> bool:
 
 
 def is_graph_refresh_call(tool_name: str, tool_input=None) -> bool:
-    """Bash/MCP 是否为 codegraph 或 CRG 的 init/sync/build/update。"""
+    """Bash/MCP 是否为 codegraph 或 CRG 的 init/sync/build/update。
+
+    Shell 必须是相邻的 CLI+动作（``codegraph sync`` / ``code-review-graph update``）。
+    MCP 标记只看工具名，不扫描 Bash command，避免 ``echo codegraph; npm run build``。
+    """
     raw = (tool_name or "").strip()
     blob = tool_input if isinstance(tool_input, dict) else {}
     cmd = str(blob.get("command") or blob.get("cmd") or "")
-    if _GRAPH_SHELL_RE.search(cmd) and _GRAPH_ACTION_RE.search(cmd):
+    if _GRAPH_PAIR_RE.search(cmd):
         return True
-    hay = " ".join(
+    name_hay = " ".join(
         part
         for part in (
             raw,
             str(blob.get("toolName") or ""),
             str(blob.get("name") or ""),
-            cmd,
         )
         if part
-    ).lower()
-    if any(marker in hay.replace("-", "_") for marker in _GRAPH_MCP_MARKERS):
+    ).lower().replace("-", "_")
+    if any(marker in name_hay for marker in _GRAPH_MCP_MARKERS):
         return True
     inner = blob.get("arguments") or blob.get("tool_input") or blob.get("input")
     if isinstance(inner, dict) and inner is not blob:
-        return is_graph_refresh_call(str(inner.get("toolName") or inner.get("name") or ""), inner)
+        return is_graph_refresh_call(
+            str(inner.get("toolName") or inner.get("name") or ""), inner
+        )
     return False
 
 

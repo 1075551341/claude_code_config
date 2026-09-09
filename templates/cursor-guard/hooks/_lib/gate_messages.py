@@ -38,6 +38,24 @@ FALLBACKS = {
 }
 
 
+def _fill_placeholders(text: str, claude_home: Path) -> str:
+    """Local fallback when gate_reader cannot be imported. Keep {{review_max_rounds}} live."""
+    raw = text or ""
+    if "{{review_max_rounds}}" not in raw:
+        return raw
+    rounds = 5
+    try:
+        import json
+
+        qg = Path(claude_home) / "config" / "quality_gates.json"
+        data = json.loads(qg.read_text(encoding="utf-8"))
+        vg = data.get("verification_gate") or {}
+        rounds = int(vg.get("review_max_rounds") or data.get("review_max_rounds") or 5)
+    except Exception as e:
+        print(f"gate_messages: review_max_rounds fallback 5: {e}", file=sys.stderr)
+    return raw.replace("{{review_max_rounds}}", str(rounds))
+
+
 def _local_load(name: str, claude_home: Path) -> str:
     fallback = FALLBACKS[name]
     start_mark, end_mark = SECTIONS[name]
@@ -47,10 +65,11 @@ def _local_load(name: str, claude_home: Path) -> str:
         start = content.index(start_mark) + len(start_mark)
         end = content.index(end_mark) if end_mark else len(content)
         section = content[start:end].strip()
-        return section if section else fallback
+        raw = section if section else fallback
     except (OSError, ValueError) as e:
         print(f"gate_messages: read {name} failed: {e}", file=sys.stderr)
-        return fallback
+        raw = fallback
+    return _fill_placeholders(raw, claude_home)
 
 
 def load_gate(name: str, claude_home: Path) -> str:

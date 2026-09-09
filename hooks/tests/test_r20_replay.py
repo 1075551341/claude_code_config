@@ -549,10 +549,20 @@ def test_cursor_should_followup() -> None:
         and empty.get("review_pass_ok") is not True,
     )
     with_rev = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    applied_empty = r20_replay.apply_review_verdict(with_rev, REVIEW_PASS)
     check(
-        "PASS with reviews sets ok",
-        r20_replay.apply_review_verdict(with_rev, REVIEW_PASS) is True
-        and with_rev.get("review_pass_ok") is True,
+        "apply_review_verdict does not fill empty review text",
+        not str((with_rev.get("reviews") or [{}])[0].get("text") or "").strip(),
+    )
+    check(
+        "empty review text cannot PASS",
+        applied_empty is True and with_rev.get("review_pass_ok") is not True,
+    )
+    filled = {"reviews": [{"agent": "eng-reviewer", "ts": 1, "text": REVIEW_PASS}]}
+    check(
+        "PASS with review text sets ok",
+        r20_replay.apply_review_verdict(filled, "") is True
+        and filled.get("review_pass_ok") is True,
     )
     no_dims = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
     check(
@@ -560,11 +570,10 @@ def test_cursor_should_followup() -> None:
         r20_replay.apply_review_verdict(no_dims, "Independent review PASS") is True
         and no_dims.get("review_pass_ok") is False,
     )
-    unclean = {"reviews": [{"agent": "eng-reviewer", "ts": 1}]}
+    unclean = {"reviews": [{"agent": "eng-reviewer", "ts": 1, "text": REVIEW_PASS.replace("PASS", "PASS；README 须同步")}]}
     check(
         "PASS with 须同步 is unclean",
-        r20_replay.apply_review_verdict(unclean, REVIEW_PASS.replace("PASS", "PASS；README 须同步"))
-        is True
+        r20_replay.apply_review_verdict(unclean, "") is True
         and unclean.get("review_pass_ok") is False,
     )
     needs = {"reviews": [{"agent": "eng-reviewer", "ts": 1}], "review_pass_ok": True}
@@ -586,6 +595,15 @@ def test_cursor_should_followup() -> None:
         r20_replay.apply_review_verdict(batch, REVIEW_PASS) is True
         and batch.get("review_pass_ok") is False,
     )
+    stale = {
+        "edited_files": [{"path": "a.py", "ts": 5}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": REVIEW_PASS}],
+    }
+    check(
+        "parent PASS after new edit ignored",
+        r20_replay.apply_review_verdict(stale, REVIEW_PASS) is False
+        and stale.get("review_pass_ok") is not True,
+    )
     check(
         "identify ceo short name",
         r20_replay.identify_reviewer("ceo") == "ceo-reviewer",
@@ -601,6 +619,83 @@ def test_cursor_should_followup() -> None:
     check(
         "identify security short name",
         r20_replay.identify_reviewer("security") == "security-reviewer",
+    )
+    check(
+        "identify code-explorer is not reviewer",
+        r20_replay.identify_reviewer("code-explorer") is None,
+    )
+    check(
+        "identify mid-sentence security is not reviewer",
+        r20_replay.identify_reviewer("fix the security of the hook") is None,
+    )
+    check(
+        "identify implementer is not reviewer",
+        r20_replay.identify_reviewer("change-implementer") is None,
+    )
+    check(
+        "identify generalPurpose is not reviewer",
+        r20_replay.identify_reviewer("generalPurpose") is None,
+    )
+    check(
+        "identify eng-reviewer in prompt",
+        r20_replay.identify_reviewer("You are eng-reviewer. Read only.") == "eng-reviewer",
+    )
+    blob = r20_replay.reviewer_dispatch_blob(
+        {
+            "subagent_type": "generalPurpose",
+            "description": "Independent review",
+            "prompt": "You are eng-reviewer. Tools: Read/Grep only.",
+        }
+    )
+    check(
+        "dispatch blob reads prompt",
+        r20_replay.identify_reviewer(blob) == "eng-reviewer",
+    )
+    same = {"edited_files": [{"path": "a.py", "ts": 1}], "reviews": []}
+    r20_replay.note_reviewer_dispatch(same, "eng-reviewer", 2)
+    r20_replay.note_reviewer_dispatch(same, "ceo-reviewer", 3)
+    check(
+        "same-round dispatch increments once",
+        int(same.get("review_rounds") or 0) == 1 and len(same.get("reviews") or []) == 2,
+    )
+    cap = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+    }
+    check("attach fills empty review", r20_replay.attach_review_text(cap, REVIEW_PASS) is True)
+    check(
+        "attached then verdict passes",
+        r20_replay.apply_review_verdict(cap, "") is True
+        and cap.get("review_pass_ok") is True,
+    )
+    passed = {"review_pass_ok": True}
+    check(
+        "counted edit clears review pass",
+        r20_replay.clear_review_pass_if_counted(passed, ["a.py"]) is True
+        and passed.get("review_pass_ok") is False,
+    )
+    keep = {"review_pass_ok": True}
+    check(
+        "plan artifact does not clear review pass",
+        r20_replay.clear_review_pass_if_counted(keep, ["foo.plan.md"]) is False
+        and keep.get("review_pass_ok") is True,
+    )
+    check(
+        "md only without verify is graph not verify",
+        r20_replay.dual_pass_phase(
+            {"edited_files": [{"path": "README.md", "ts": 1}]},
+        )
+        == "graph",
+    )
+    check(
+        "md only with pre-review graph is review",
+        r20_replay.dual_pass_phase(
+            {
+                "edited_files": [{"path": "README.md", "ts": 1}],
+                "last_pre_review_graph_ts": 2,
+            }
+        )
+        == "review",
     )
     check(
         "resume str is resumed",
@@ -621,6 +716,36 @@ def test_cursor_should_followup() -> None:
     check(
         "graph shell is refresh call",
         r20_replay.is_graph_refresh_call("Bash", {"command": "codegraph sync"}) is True,
+    )
+    check(
+        "graph pair with crg update is refresh call",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "codegraph sync && code-review-graph update"}
+        )
+        is True,
+    )
+    check(
+        "codegraph init -i is refresh call",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "codegraph init -i"}) is True,
+    )
+    check(
+        "echo codegraph plus npm build is not refresh",
+        r20_replay.is_graph_refresh_call(
+            "Bash", {"command": "echo codegraph; npm run build"}
+        )
+        is False,
+    )
+    check(
+        "echo codegraph_sync is not refresh",
+        r20_replay.is_graph_refresh_call("Bash", {"command": "echo codegraph_sync"}) is False,
+    )
+    check(
+        "mcp tool name codegraph_sync is refresh",
+        r20_replay.is_graph_refresh_call("codegraph_sync", {}) is True,
+    )
+    check(
+        "codegraph_explore is not refresh",
+        r20_replay.is_graph_refresh_call("codegraph_explore", {}) is False,
     )
     check(
         "pytest is not graph refresh",
@@ -647,7 +772,7 @@ def test_gate_reader_sections() -> None:
     check("verify mentions followup or R20", "R20" in verify)
     check("verify seven dims", "问题是否解决" in verify)
     check("verify no 只读免审", "只读免审" not in verify)
-    check("verify rounds from json", "最多 5 轮" in verify or "最多 {{review_max_rounds}}" not in verify)
+    check("verify rounds from json", "最多 5 轮" in verify)
     check("p0 points at task-triage", "task-triage" in p0)
     check("impact not include first_edit heading", "初次修改验收门" not in impact)
     check("verify not include impact heading", "变更影响门" not in verify)
@@ -761,6 +886,56 @@ def test_claude_tracker_first_edit_injects() -> None:
             counted = len(entry.get("reviews") or []) == 0
         check("tracker resume not counted as review", skipped and counted)
 
+        gp_payload = json.dumps(
+            {
+                "session_id": "gp-review-test",
+                "tool_name": "Write",
+                "tool_input": {"file_path": str(Path(tmp) / "b.py")},
+                "cwd": tmp,
+            }
+        )
+        subprocess.run(
+            cmd,
+            input=gp_payload,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        gp_task = json.dumps(
+            {
+                "session_id": "gp-review-test",
+                "tool_name": "Task",
+                "tool_input": {
+                    "subagent_type": "generalPurpose",
+                    "description": "Independent review",
+                    "prompt": "You are eng-reviewer. Tools Read/Grep only. Do not edit.",
+                },
+                "cwd": tmp,
+            }
+        )
+        gp_run = subprocess.run(
+            cmd,
+            input=gp_task,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        check("tracker generalPurpose review exit 0", gp_run.returncode == 0)
+        gp_counted = False
+        gp_agent = ""
+        if state_path.exists():
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            gp_entry = state.get("gp-review-test") or {}
+            gp_reviews = gp_entry.get("reviews") or []
+            gp_counted = len(gp_reviews) == 1 and int(gp_entry.get("review_rounds") or 0) == 1
+            gp_agent = str((gp_reviews[0] or {}).get("agent") or "") if gp_reviews else ""
+        check(
+            "tracker records generalPurpose prompt as eng-reviewer",
+            gp_counted and gp_agent == "eng-reviewer",
+        )
+
 
 def test_impact_diff_superset_blocked() -> None:
     """清单外变更（脏集−基线−声明 ≠ ∅）→ 返回额外文件列表。"""
@@ -842,6 +1017,14 @@ def test_fingerprint_weak_only_noop() -> None:
     check("weak-only noop pass", r20_replay.replay_ok(VALID, reqs) is True)
 
 
+def test_stop_does_not_stamp_pre_review_graph() -> None:
+    src = (HOOKS_DIR / "stop-verification-gate.py").read_text(encoding="utf-8")
+    check(
+        "stop does not stamp pre-review graph",
+        "record_pre_review_graph_refresh" not in src,
+    )
+
+
 def test_review_verdict_ok() -> None:
     check("verdict PASS detected", r20_replay.review_verdict_ok("eng-reviewer 结论：PASS — 无阻断项") is True)
     check("verdict NEEDS-CHANGES detected", r20_replay.review_verdict_ok("review verdict: NEEDS-CHANGES") is True)
@@ -886,6 +1069,7 @@ def main() -> int:
     test_fingerprint_coverage_fail()
     test_fingerprint_weak_only_noop()
     test_review_verdict_ok()
+    test_stop_does_not_stamp_pre_review_graph()
     test_positive_string_content()
     test_positive_list_content()
     test_empty_template_rejected()

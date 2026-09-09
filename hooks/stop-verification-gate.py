@@ -31,6 +31,7 @@ from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAU
 from r20_replay import (  # noqa: E402
     apply_review_verdict,
     counted_edit_items,
+    dual_pass_in_scope,
     dual_pass_phase,
     impact_diff_check,
     is_awaiting_plan,
@@ -616,6 +617,15 @@ def main():
             else:
                 check_warnings = []
                 reasons = []
+                last_msg = last_assistant_message(transcript_path)
+                verdict_cfg_on = cfg.get("require_review_verdict", True)
+                verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
+                if apply_review_verdict(entry, last_msg):
+                    entry["ts"] = time.time()
+                    state[session_id] = entry
+                    save_state(state)
+                max_rounds = int(cfg.get("review_max_rounds", 5))
+                rounds = int(entry.get("review_rounds") or 0)
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
                     roots = refresh_roots
@@ -639,16 +649,24 @@ def main():
                             "项目已建 .code-review-graph/ 但最后一次代码编辑后未调用 CRG"
                             "（get_minimal_context / get_impact_radius / detect_changes / get_review_context）"
                         )
-                    total_changed = len({f["path"] for f in code_files} | set(untracked))
-                    verdict_cfg_on = cfg.get("require_review_verdict", True)
-                    last_msg = last_assistant_message(transcript_path)
-                    verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
-                    if apply_review_verdict(entry, last_msg):
-                        entry["ts"] = time.time()
-                        state[session_id] = entry
-                        save_state(state)
-                    max_rounds = int(cfg.get("review_max_rounds", 5))
-                    rounds = int(entry.get("review_rounds") or 0)
+                    # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
+                    changed_paths = [f["path"] for f in code_files] + list(untracked)
+                    if (
+                        changed_paths
+                        and not any(is_test_path(p) for p in changed_paths)
+                        and repo_has_test_infra(roots)
+                        and not has_test_evidence(entry, last_edit_ts)
+                    ):
+                        reasons.append(
+                            "非功能变更回归保持：本次变更未新增/修改任何测试文件，且最后一次编辑后无测试运行记录"
+                            "（lint/类型检查不足以证明原功能未变）。请运行既有测试并贴出输出，"
+                            "或说明该仓库无相关测试覆盖"
+                        )
+                    if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
+                        reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
+
+                delivery_in_scope = dual_pass_in_scope(entry, cfg)
+                if delivery_in_scope or code_files or untracked:
                     phase = dual_pass_phase(entry, cfg)
                     if phase == "capped":
                         print(
@@ -682,21 +700,6 @@ def main():
                             f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
                             "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
                         )
-                    # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
-                    changed_paths = [f["path"] for f in code_files] + list(untracked)
-                    if (
-                        changed_paths
-                        and not any(is_test_path(p) for p in changed_paths)
-                        and repo_has_test_infra(roots)
-                        and not has_test_evidence(entry, last_edit_ts)
-                    ):
-                        reasons.append(
-                            "非功能变更回归保持：本次变更未新增/修改任何测试文件，且最后一次编辑后无测试运行记录"
-                            "（lint/类型检查不足以证明原功能未变）。请运行既有测试并贴出输出，"
-                            "或说明该仓库无相关测试覆盖"
-                        )
-                    if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
-                        reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
 
                 # 方案A：清单制品差集校验（v11.3.6）— 当前脏集−基线集 ⊄ 声明清单 → 错改/漏改硬证据
                 igate = load_impact_gate()

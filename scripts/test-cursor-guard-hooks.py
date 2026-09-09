@@ -1156,6 +1156,47 @@ def main() -> int:
             ),
             note="resume 上一轮审查者不计入独立审查",
         )
+        sid_gp = "review-generalpurpose-prompt-test"
+        now_gp = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_gp: {
+                        "ts": now_gp,
+                        "cwd": str(Path(tempfile.gettempdir())),
+                        "edited_files": [{"path": "a.py", "ts": now_gp - 10}],
+                        "verify_commands": [{"command": "pytest", "ts": now_gp - 9}],
+                        "reviews": [],
+                        "review_rounds": 0,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        gp_payload = {
+            "tool_name": "Task",
+            "tool_input": {
+                "subagent_type": "generalPurpose",
+                "description": "Independent review",
+                "prompt": "You are eng-reviewer. Read-only seven-dimension review.",
+            },
+            "conversation_id": sid_gp,
+            "cwd": str(Path(tempfile.gettempdir())),
+        }
+        r_gp = run_hook("verify_tracker.py", gp_payload)
+        st_gp = json.loads(vg_path.read_text(encoding="utf-8"))
+        entry_gp = st_gp.get(sid_gp) or {}
+        results["tests"]["verify_tracker_generalpurpose_prompt"] = finish_case(
+            r_gp,
+            behavior=(
+                (r_gp.get("exit") == 0)
+                and int(entry_gp.get("review_rounds") or 0) == 1
+                and len(entry_gp.get("reviews") or []) == 1
+                and str((entry_gp.get("reviews") or [{}])[0].get("agent") or "")
+                == "eng-reviewer"
+            ),
+            note="Cursor generalPurpose + prompt 中的 eng-reviewer 计入独立审查",
+        )
         entry_inc["edited_files"] = list(entry_inc.get("edited_files") or []) + [
             {"path": "b.py", "ts": time.time()}
         ]
@@ -1268,7 +1309,39 @@ def main() -> int:
                 (r_graph.get("exit") == 0)
                 and float(entry_g.get("last_pre_review_graph_ts") or 0) > now_g - 10
             ),
-            note="审查前 codegraph/CRG 刷新写入 last_pre_review_graph_ts",
+            note="codegraph sync && code-review-graph update 记审查前刷图戳",
+        )
+        sid_false = "graph-refresh-false-positive-test"
+        now_f = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_false: {
+                        "ts": now_f,
+                        "edited_files": [{"path": "a.py", "ts": now_f - 10}],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_false = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Shell",
+                "tool_input": {"command": "echo codegraph; npm run build"},
+                "conversation_id": sid_false,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        st_f = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_f = st_f.get(sid_false) or {}
+        results["tests"]["verify_tracker_graph_refresh_not_false_positive"] = finish_case(
+            r_false,
+            behavior=(
+                (r_false.get("exit") == 0)
+                and float(entry_f.get("last_pre_review_graph_ts") or 0) == 0
+            ),
+            note="echo codegraph; npm run build 不得记审查前刷图戳",
         )
 
     results["tests"]["sync_no_keyword"] = run_hook(
