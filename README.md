@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.5.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 五阶段 × 三横切 | **v11.6.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.5.0）                                                                 |
+| `SPEC.md`       | 配置法典（v11.6.0）                                                                 |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -35,9 +35,9 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
 ```
 
 - 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
@@ -50,12 +50,13 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 
 ```powershell
 python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
-powershell scripts/check.ps1        # 一致性体检
+pwsh scripts/check.ps1              # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v11.5.0**（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
+- 当前：**v11.6.0**（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
+- 前版：v11.5.0（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.4.13（2026-09-07）— MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；everything 非 Glob/非 R17。Guard 1.2.11
 - 前版：v11.4.12（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.11（2026-09-01）— 独立审查只找问题；修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。Guard 1.2.10；DSH 2.10 / OpenCode 1.10

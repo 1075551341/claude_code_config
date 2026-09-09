@@ -34,7 +34,7 @@
     跳过变更检测（hash/link 对比）强制重写。
 
 .EXAMPLE
-    pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则（PS5.1 回退用 powershell）
+    pwsh -ExecutionPolicy Bypass -File sync.ps1                 # 默认：根 6 + plugin 规则（需 pwsh 7.5+）
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All            # + skills/ + agents/ junction
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -All -DryRun    # 预演
     pwsh -ExecutionPolicy Bypass -File sync.ps1 -ProjectRules   # 投放当前项目 .cursor/rules
@@ -46,7 +46,7 @@
     v11 曾收敛为仅 Cursor；v11.1 按用户决策恢复多编辑器（qoder-cn/trae-cn/workbuddy，
     以 config/sync-manifest.json editors 段为单源），sync.sh（Linux/macOS）维持已删。
 #>
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param(
     [switch]$DryRun,
@@ -258,7 +258,7 @@ function Sync-File {
     if (-not $PreferCopy) {
         $linkErr = $null
         try {
-            # cmd mklink 优先 — New-Item SymbolicLink 在部分 PS5.1 宿主下静默失败
+            # cmd mklink 优先 — New-Item SymbolicLink 在部分宿主下静默失败
             $mklinkOut = & cmd.exe /c "mklink `"$DstPath`" `"$SrcPath`"" 2>&1
             if ((Test-Path -LiteralPath $DstPath) -and (IsLink $DstPath)) {
                 Write-Ok "Symlinked: $Label"

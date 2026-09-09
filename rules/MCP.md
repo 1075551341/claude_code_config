@@ -61,9 +61,9 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 
 ### 3b. 编辑器 MCP spawn（R9 平台约束，不在铁律表展开）
 
-Windows 用户命令与脚本示例优先 `pwsh`，禁止 `powershell -Command` 与 `cd + 重定向`写文件（R9）。
+Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），禁止 `powershell -Command`、禁止回退 5.1、禁止 `cd + 重定向`写文件（R9）。
 
-**例外（仅 MCP 启动包装）**：编辑器/客户端用 `powershell.exe` 间接拉起 `scripts/python-mcp.ps1`、`chrome-devtools-mcp.ps1`、`playwright-mcp.ps1`、`context7-mcp.ps1`（Qoder Go 客户端等 spawn 兼容）。这些包装不受「优先 pwsh」约束，禁止把该例外写回 CLAUDE.md 铁律表或当成用户 Shell 默认。
+编辑器 `mcp.json` **应** spawn `pwsh` 拉起 `scripts/*-mcp.ps1`。Qoder 等客户端若仍 fork `powershell.exe`，视为宿主配置错误：把 command 改成 `pwsh`，不要在包装脚本里保留 5.1 分支。包装脚本不是用户 Shell 默认，也不豁免 `#Requires 7.5`。
 
 ### 4. 本地代码三工具 + everything 分工（防互博）
 

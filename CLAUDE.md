@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.5.0**（七维独立审查 + 审查前刷图 + 全栈 glob。史→`CHANGELOG.md`）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.6.0**（工具链 SSOT：pwsh 7.5+ / pnpm 11。史→`CHANGELOG.md`）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用）— 详见 `rules/CORE.md`
@@ -87,13 +87,13 @@ Bug(多文件/根因不明/执行升档) → triage → systematic-debugging →
 | R6 | 非简单 | ①→⑤全流程 | — |
 | R7 | 交叉验证 | 完成前验证清单 | — |
 | R8 | 高危确认 | 删数据/强推main前确认 | — |
-| R9 | 命令安全 | Windows 优先 pwsh(PS7+)；禁 cd+重定向/`powershell -Command`；编辑器 MCP spawn → `rules/MCP.md` | — |
+| R9 | 命令安全 | Windows 一律 pwsh 7.5+；禁 cd+重定向/`powershell -Command`；MCP spawn → `rules/MCP.md` | — |
 | R10 | 简洁优先 | 高内聚低耦合易迭代 | — |
 | R11 | 安全默认 | 不信任输入、无硬编码密钥 | — |
 | R12 | 子Agent隔离 | fresh context+制品通信 | CORE.md |
 | R13 | 制品存活 | 跨会话持久化 | CORE.md |
 | R14 | 版本克制 | 非必要不升major | CORE.md |
-| R15 | 包管理器 | pnpm优先；npm兜底 | CORE.md |
+| R15 | 包管理器 | pnpm 11；缺则 BLOCKED | CORE.md |
 | R16 | 错误暴漏 | 禁止裸except:pass | CORE.md |
 | R17 | 代码探索 | codegraph 首选；cbm 已禁用；禁跳级 | CORE.md |
 | R18 | 记忆优先 | 为什么/约定/偏好→claude-mem | CORE.md |
@@ -150,6 +150,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 | 归属/harness | MANIFEST.yaml |
 | 法典/变更史 | SPEC.md + CHANGELOG.md |
 | 铁律/编码/图谱 | rules/CORE.md |
+| 工具链地板 | config/toolchain.yaml |
 | 工作流/Agent/MCP | rules/WORKFLOW.md / AGENTS.md / MCP.md |
 | 同步 | docs/SYNC_GUIDE.md |
 | 记忆 | claude-mem (R18) |

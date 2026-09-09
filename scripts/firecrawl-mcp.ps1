@@ -1,3 +1,4 @@
+#Requires -Version 7.5
 # Firecrawl MCP 启动包装：从用户/系统环境变量读取 API Key，避免 mcp.json 硬编码或 ${} 不展开
 $ErrorActionPreference = 'Stop'
 

@@ -10,8 +10,8 @@ alwaysApply: false
 ## 版本与工具链
 
 ```
-Python 版本：3.11+（推荐 3.12）
-包管理：uv / poetry / pip + venv
+Python 版本：3.12+（地板 → config/toolchain.yaml）
+包管理：uv（缺则 BLOCKED，禁止静默回退 pip/poetry）
 格式化：ruff format / black
 Lint：ruff check / flake8
 类型检查：mypy / pyright

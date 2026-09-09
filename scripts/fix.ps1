@@ -47,9 +47,9 @@
 
 .EXAMPLE
     # 全部命令（三选一）
-    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1           # 只诊断，不改动
-    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1 -Fix      # 应用修复：部署 launcher + 改写 settings.json
-    powershell -ExecutionPolicy Bypass -File scripts/fix.ps1 -Restore  # 回滚：移除 launcher，恢复直调 python
+    pwsh -ExecutionPolicy Bypass -File scripts/fix.ps1           # 只诊断，不改动
+    pwsh -ExecutionPolicy Bypass -File scripts/fix.ps1 -Fix      # 应用修复：部署 launcher + 改写 settings.json
+    pwsh -ExecutionPolicy Bypass -File scripts/fix.ps1 -Restore  # 回滚：移除 launcher，恢复直调 python
 
 .NOTES
     修复后核对：
@@ -57,7 +57,7 @@
       powershell -File scripts/check.ps1  # S4 段落检查 hook 安全
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param(
     [switch]$Fix,
@@ -393,7 +393,7 @@ Write-Host ""
 # ==============================================================
 if (-not $Fix -and -not $Restore) {
     Write-Host "  执行以下命令应用全部修复:" -ForegroundColor Yellow
-    Write-Host "  powershell -ExecutionPolicy Bypass -File fix.ps1 -Fix" -ForegroundColor Green
+    Write-Host "  pwsh -ExecutionPolicy Bypass -File fix.ps1 -Fix" -ForegroundColor Green
     Write-Host ""
     exit 0
 }
@@ -622,5 +622,5 @@ Write-Host ""
 Write-Host "  CLI 中 Hook 仍会全量执行（终端有控制台，hwnd!=0）" -ForegroundColor DarkGray
 Write-Host "  若需在任意环境强制跑全量 Hook: 设置 CLAUDE_HOOK_FORCE_CLI=1" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  撤销: powershell -ExecutionPolicy Bypass -File fix.ps1 -Restore" -ForegroundColor DarkGray
+Write-Host "  撤销: pwsh -ExecutionPolicy Bypass -File fix.ps1 -Restore" -ForegroundColor DarkGray
 Write-Host ""

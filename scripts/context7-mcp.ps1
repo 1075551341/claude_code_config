@@ -1,12 +1,13 @@
-#Requires -Version 5.1
+#Requires -Version 7.5
 <#
 .SYNOPSIS
     context7 MCP 启动包装器（2026-07-31 Qoder 兼容修复）
 
 .DESCRIPTION
     Qoder 的 Go MCP 客户端直接 fork/exec Volta shim (npx.exe) 会失败或 30s 超时
-    （错误: The parameter is incorrect / context deadline exceeded）。
-    通过 powershell.exe 间接启动 npx 可绕过该问题（crawl/firecrawl 已验证此链路）。
+    （错误: The parameter is incorrect / context deadline exceeded），
+    故经 PowerShell 包装再启 node。mcp.json 应 spawn pwsh（#Requires 7.5）。
+    若客户端仍 fork powershell.exe，改 mcp.json，不要把 5.1 当第二标准。
 #>
 $ErrorActionPreference = 'Stop'
 # r3(2026-07-31): npx（无论 @latest 还是固定版本）在 Qoder 环境 30s 超时；改用 node 绝对路径直启包入口，完全绕开 npx

@@ -5,6 +5,8 @@ globs: ["*.go", "go.mod"]
 
 # Go 开发规则
 
+> Go 1.22+ → `config/toolchain.yaml`
+
 ## 项目结构
 
 - 遵循 Go 标准布局：cmd/、internal/、pkg/、api/、web/

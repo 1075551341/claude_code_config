@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.19 (v11.5.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.20 (v11.6.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -71,7 +71,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 - **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`（v11.4.1：原 `~/.claude/.cursor/`、`.trae/` 误生成残留已清理）
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：根文件 + 插件规则（PS5.1 回退用 powershell）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：根文件 + 插件规则（需 pwsh 7.5+）
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
@@ -79,7 +79,7 @@ pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 
 ---
 
-## 合并到本机 Claude 并同步（v11.5.0）
+## 合并到本机 Claude 并同步（v11.6.0）
 
 在 **Windows、配置仓即 `~/.claude`** 的前提下：
 
@@ -260,6 +260,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.20 (v11.6.0)**：工具链 SSOT `config/toolchain.yaml`（pwsh 7.5+ / pnpm 11）；缺工具 BLOCKED；脚本 `#Requires -Version 7.5`。Guard 仍 1.2.15。
 - **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.15；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。
 - **v20.18 (v11.4.13)**：MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；sync.ps1 仍不复制编辑器 mcp.json。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。

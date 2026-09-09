@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.5.0）。
+"""图谱保鲜（codegraph + CRG）— 双端/多端共用（v11.6.0）。
 
 任务开始 ensure；审查前增量 refresh（last_edit 之后）；任务完成 Stop refresh。
 已有图时 CLI 失败记警告不阻断。无图 blocked → PreToolUse deny。
@@ -1126,7 +1126,7 @@ def refresh_incremental(
 
 
 def which_pwsh() -> str | None:
-    return which_tool("pwsh") or which_tool("powershell")
+    return which_tool("pwsh")
 
 
 def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
@@ -1139,7 +1139,11 @@ def run_sync_ps1(timeout_sec: int | None = None) -> tuple[bool, str]:
         return False, f"sync.ps1 不存在: {script}"
     exe = which_pwsh()
     if not exe:
-        return False, "pwsh/powershell 未找到"
+        return False, (
+            "pwsh 未找到。安装 PowerShell 7.5+："
+            "winget install --id Microsoft.PowerShell。"
+            "禁止使用 Windows PowerShell 5.1。"
+        )
     args = [
         exe,
         "-NoProfile",

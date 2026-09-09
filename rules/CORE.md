@@ -69,7 +69,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 - 默认 UTF-8 无 BOM；保留目标文件既有编码/BOM/EOL 风格，禁止全文件重写时改变行尾（机械防护 → `hooks/pre-encoding-snapshot.py` + `post-encoding-check.py`）
 - **文件内容写入一律用 Edit/Write 工具**，禁止 `echo >/>></tee/Set-Content/Out-File/heredoc` 等 shell 重定向写内容（PS5.1 默认 ANSI 是乱码重灾区；命令级警告 → `hooks/pre-bash-guard.py` 编码误用组）
-- Windows 一律 `pwsh` 禁 `powershell -Command`（R9）；含中文输出的命令先确保 `[Console]::OutputEncoding=UTF8`
+- Windows 一律 `pwsh` 7.5+，禁 `powershell -Command` 与回退 5.1（R9）；含中文输出的命令先确保 `[Console]::OutputEncoding=UTF8`
 - 检测到乱码（U+FFFD/GBK 特征串/非法 UTF-8）立即回滚本次修改并精准恢复原片段，**禁止在损坏内容上继续叠加修改**；二进制/非文本文件禁 Read/Edit
 
 ## 工程原则
@@ -95,7 +95,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 | R12 | 子 Agent 隔离 | fresh context + 结构化制品通信，禁止共享可变状态                                                                                                                                                                                     |
 | R13 | 制品存活      | PROJECT/REQUIREMENTS/ROADMAP/STATE/CONTEXT 跨会话持久化                                                                                                                                                                              |
 | R14 | 版本克制      | 非必要不升 major；优先 patch/minor；major 需明确收益或用户确认                                                                                                                                                                       |
-| R15 | 包管理器      | Node 生态默认 `pnpm`；不可用时或项目仅 npm 时用 `npm`                                                                                                                                                                                |
+| R15 | 包管理器      | Node 默认 pnpm 11；尊重 lockfile；缺声明的管理器 → BLOCKED（安装命令 → `config/toolchain.yaml`）。禁止 PATH 无 pnpm 时改用 npm                                                                                                      |
 | R16 | 错误暴漏      | 禁止裸 `except:pass`，异常必须传播或显式处理并报告                                                                                                                                                                                   |
 | R17 | 代码探索优先  | 严格：codegraph → claude-mem；codebase-memory **已禁用**；禁止跳级                                                                                                                                                                   |
 | R18 | 记忆优先      | 「为什么/约定/偏好」查 claude-mem；禁止塞入 codegraph/cbm                                                                                                                                                                            |
@@ -197,6 +197,6 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 
 - 自动维护 `README.md`；最小改动集；环境配置走 `.env`，禁止硬编码
 - 沟通语言：中文；代码仅在明确要求或上下文需要时输出完整代码块
-- Windows 终端：优先 `pwsh`（PowerShell 7+ 稳定版）；脚本注释示例统一 pwsh 化。编辑器 MCP spawn / `powershell.exe` → `rules/MCP.md`
+- Windows 终端：一律 `pwsh` 7.5+（脚本 `#Requires -Version 7.5`）；缺则 BLOCKED。编辑器 MCP spawn → `rules/MCP.md`
 - Git 规范 → `rules/GIT.md`；提交/PR → `skills/git-workflow`、`skills/pr-workflow`
 - Karpathy 四原则 → `skills/karpathy-guidelines/SKILL.md`（L3 按需）

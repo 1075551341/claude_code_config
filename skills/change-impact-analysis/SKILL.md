@@ -56,7 +56,7 @@ source: internal
    → 残留 > 0 → 回到阶段 2 继续修改
 
 ② 构建/类型/Lint 验证
-   → npm run build / pnpm run typecheck / pnpm run lint
+   → pnpm run build / pnpm run typecheck / pnpm run lint
 
 ③ 回归保持核验（非功能变更必须）
    → 重构/格式/配置/重命名类非功能变更：核验原功能行为不变

@@ -8,6 +8,7 @@ globs: "**/*.{vue,jsx,tsx,css,less,scss,html}"
 
 > 配合核心规则使用，仅在前端文件 glob 匹配时加载。
 > 项目级覆盖（含具体框架 ESLint/Vue/React 模板）→ `catalog/rules/`，禁止把某一仓库的栈当全局默认。
+> 工具链地板（Node 22+ / pnpm 11）→ `config/toolchain.yaml`。缺工具 BLOCKED，禁止静默回退 npm。
 
 ## 技术选型
 

@@ -26,10 +26,10 @@ Claude: /finishing-a-development-branch → 运行检查 → 确认可合并 →
 
 ```bash
 # 运行所有检查
-□ 测试通过（npm test / pytest）
-□ Lint 通过（npm run lint / ruff check）
+□ 测试通过（pnpm test / pytest）
+□ Lint 通过（pnpm run lint / ruff check）
 □ 类型检查通过（tsc --noEmit / mypy）
-□ 构建成功（npm run build）
+□ 构建成功（pnpm run build）
 ```
 
 ### 2. Git 状态检查

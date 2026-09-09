@@ -9,6 +9,7 @@ globs:
 # 后端规则（薄层）
 
 > 配合 CORE 使用。项目级覆盖（框架模板、目录约定）→ `catalog/rules/RULES_BACKEND.md`。允许与 FRONTEND glob 重叠，禁止互斥 if-else。
+> 语言/运行时地板 → `config/toolchain.yaml`。缺工具 BLOCKED，禁止静默回退。
 
 ## API
 

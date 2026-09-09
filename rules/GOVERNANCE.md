@@ -45,9 +45,11 @@ description: 治理详情规则 — R14/R15/R16 适用范围、注释模板、�
 
 ## R15 适用范围（Node / JS 包管理器）
 
-- **默认**：`pnpm install` / `pnpm add` / `pnpm run` / `pnpm exec` / `pnpm dlx`
-- **尊重项目**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 `pnpm` → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm
-- **npm 兜底**：本机无 pnpm、pnpm 执行失败且用户未要求换工具链、或脚本/文档明确写 `npm` 时
+版本地板与缺工具处置 → `config/toolchain.yaml`（SSOT）。
+
+- **默认新工作**：pnpm 11（`corepack enable && corepack prepare pnpm@11 --activate`）
+- **尊重项目 lockfile**：已有 `pnpm-lock.yaml` 或 `packageManager` 含 pnpm → 必须用 pnpm；仅 `package-lock.json` 且无 pnpm 配置 → 用 npm（项目约定，不是本机缺 pnpm 时的回退）
+- **缺声明的管理器**：BLOCKED，给出安装命令。禁止「PATH 上没有 pnpm 就改用 npm」
 - **禁止**：在 pnpm 项目中混用 `npm install` 生成/改写 lock（避免双 lock 漂移）
 
 ## 注释规则与模板
@@ -225,9 +227,9 @@ codegraph MCP 默认仅 4 工具（`codegraph_explore`/`codegraph_node`/`codegra
 
 **终端环境规范（Windows）**：
 
-- 优先 `pwsh`（PowerShell 7+ 稳定版）：PS5.1 在编码（默认 GBK/UTF-16LE）、管道行为、异常处理、跨平台路径上与 PS7 有实质差异，易引发脚本异常
-- 脚本注释/文档示例统一 `pwsh -ExecutionPolicy Bypass -File <脚本>`；PS5.1 环境回退用 `powershell`
-- 编辑器 MCP spawn / `powershell.exe` 例外 → `rules/MCP.md`
+- 一律 `pwsh`（PowerShell 7.5+）：PS5.1 在编码（默认 GBK/UTF-16LE）、管道行为、异常处理、跨平台路径上与 7 有实质差异，易引发脚本异常
+- 脚本 `#Requires -Version 7.5`；文档示例 `pwsh -ExecutionPolicy Bypass -File <脚本>`。缺 pwsh → BLOCKED + `winget install --id Microsoft.PowerShell`。禁止回退 Windows PowerShell 5.1
+- 编辑器 `mcp.json` 应 spawn `pwsh`。Qoder 若仍 fork `powershell.exe` 是宿主配置问题，修 mcp.json，不是第二套用户 Shell 标准 → `rules/MCP.md`
 
 ## API 设计
 

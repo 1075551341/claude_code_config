@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V19 共 19 项静态检查（结构/铁律/hook/MCP/INDEX 一致性）。
+"""配置一致性校验 — V1-V20 共 20 项静态检查（结构/铁律/hook/MCP/INDEX/工具链）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
-    powershell -File scripts/check.ps1       # 上层健康检查，内部会调用本脚本
+    pwsh -File scripts/check.ps1             # 上层健康检查，内部会调用本脚本
 
 检查项：V1 触发词冲突 / V2 agent 职责重叠 / V3 CORE.md / V4 铁律一致 /
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
-V19 三大 INDEX 与磁盘双向一致。
+V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -420,6 +420,7 @@ def main():
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
+    check_v20_toolchain()
 
     report(
         agents=len(agent_names),
@@ -431,13 +432,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (19 checks) ===")
+    print("=== .claude v11 VALIDATION (20 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
+        "V19", "V20",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -1150,6 +1152,95 @@ def check_v19_index_disk_sync():
         indexed("rules-INDEX.md", r"\[[^\]]+\]\(rules/([^)/]+\.md)\)", 1),
         disk_rules,
     )
+
+
+def check_v20_toolchain():
+    """V20: 工具链 SSOT — pwsh 7.5 / pnpm；live 脚本无 5.1 Requires；which_pwsh 不回退 powershell。"""
+    path = os.path.join(BASE, "config", "toolchain.yaml")
+    if not os.path.isfile(path):
+        ERRORS.append("V20: config/toolchain.yaml missing")
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read toolchain.yaml: {exc}")
+        return
+    data = {}
+    if yaml:
+        try:
+            loaded = yaml.safe_load(raw)
+            if isinstance(loaded, dict):
+                data = loaded
+        except yaml.YAMLError as exc:
+            ERRORS.append(f"V20: toolchain.yaml unreadable: {exc}")
+            return
+    windows = data.get("windows") if isinstance(data.get("windows"), dict) else {}
+    node = data.get("node") if isinstance(data.get("node"), dict) else {}
+    ps_min = str(windows.get("powershell_min") or "")
+    pkg = str(node.get("package_manager") or "")
+    if not ps_min:
+        m = re.search(r'powershell_min:\s*"([^"]+)"', raw)
+        ps_min = m.group(1) if m else ""
+    if not pkg:
+        m = re.search(r"package_manager:\s*(\S+)", raw)
+        pkg = (m.group(1) if m else "").strip()
+    if ps_min != "7.5":
+        ERRORS.append(f"V20: windows.powershell_min={ps_min!r} expected '7.5'")
+    if pkg != "pnpm":
+        ERRORS.append(f"V20: node.package_manager={pkg!r} expected 'pnpm'")
+
+    scripts_dir = os.path.join(BASE, "scripts")
+    if os.path.isdir(scripts_dir):
+        for name in sorted(os.listdir(scripts_dir)):
+            if not name.endswith(".ps1"):
+                continue
+            script_path = os.path.join(scripts_dir, name)
+            try:
+                with open(script_path, "r", encoding="utf-8-sig") as fh:
+                    text = fh.read()
+            except OSError as exc:
+                ERRORS.append(f"V20: cannot read scripts/{name}: {exc}")
+                continue
+            if "#Requires -Version 5.1" in text:
+                ERRORS.append(f"V20: scripts/{name} still has #Requires -Version 5.1")
+            if "#Requires -Version 7.5" not in text:
+                ERRORS.append(f"V20: scripts/{name} missing #Requires -Version 7.5")
+
+    gf = os.path.join(BASE, "hooks", "_lib", "graph_freshness.py")
+    try:
+        with open(gf, "r", encoding="utf-8") as fh:
+            src = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read graph_freshness.py: {exc}")
+        return
+    m = re.search(r"def which_pwsh\([^)]*\)[^\n]*\n((?:[ \t].*\n)+)", src)
+    body = m.group(1) if m else ""
+    if not body:
+        ERRORS.append("V20: which_pwsh definition not found")
+    else:
+        if 'which_tool("powershell")' in body or "which_tool('powershell')" in body:
+            ERRORS.append("V20: which_pwsh must not fall back to powershell")
+        if 'which_tool("pwsh")' not in body and "which_tool('pwsh')" not in body:
+            ERRORS.append('V20: which_pwsh must call which_tool("pwsh")')
+
+    claude_path = os.path.join(BASE, "CLAUDE.md")
+    try:
+        with open(claude_path, "r", encoding="utf-8") as fh:
+            claude = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read CLAUDE.md: {exc}")
+        return
+    r15 = re.search(r"\| R15 \|[^\n]+", claude)
+    if not r15:
+        ERRORS.append("V20: CLAUDE.md R15 row missing")
+    else:
+        row = r15.group(0)
+        if "兜底" in row:
+            ERRORS.append("V20: CLAUDE.md R15 must not contain 兜底")
+        if "pnpm" not in row:
+            ERRORS.append("V20: CLAUDE.md R15 must mention pnpm")
+    print("  V20: toolchain floors + pwsh-only which_pwsh ✓")
 
 
 if __name__ == "__main__":

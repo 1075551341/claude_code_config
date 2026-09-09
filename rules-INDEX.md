@@ -1,6 +1,6 @@
 # Rules 索引
 
-> 自动生成 | 源：`rules/` | v11.5.0（12 全量；BACKEND/DATABASE 薄层 glob；FRONTEND 去项目特例）
+> 自动生成 | 源：`rules/` | v11.6.0（12 全量；工具链指针 → config/toolchain.yaml；BACKEND/DATABASE 薄层 glob）
 
 ## alwaysApply — 骨架层
 

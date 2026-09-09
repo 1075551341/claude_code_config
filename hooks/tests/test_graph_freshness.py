@@ -638,6 +638,16 @@ def test_explore_router_contract() -> None:
     ))
 
 
+def test_which_pwsh_pwsh_only() -> None:
+    import inspect
+    src = inspect.getsource(gf.which_pwsh)
+    check("which_pwsh uses pwsh", 'which_tool("pwsh")' in src)
+    check(
+        "which_pwsh does not fall back to powershell",
+        'which_tool("powershell")' not in src,
+    )
+
+
 def main() -> int:
     print("test_graph_freshness")
     test_eligible_and_empty_registry()
@@ -656,6 +666,7 @@ def main() -> int:
     test_subprojects_depth1_no_grandchild()
     test_merge_hooks_idempotent()
     test_explore_router_contract()
+    test_which_pwsh_pwsh_only()
     print(f"\n{len(PASSED)} passed, {len(FAILED)} failed")
     if FAILED:
         print("FAILED:", ", ".join(FAILED))

@@ -17,7 +17,7 @@
 .EXAMPLE
     pwsh -File scripts/deploy-editor-graph-hooks.ps1 -Scope editors
 #>
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 [CmdletBinding()]
 param(

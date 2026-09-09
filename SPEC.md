@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.5.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；`review_max_rounds=5`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
+> 版本：11.6.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；`review_max_rounds=5`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 

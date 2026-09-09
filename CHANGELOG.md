@@ -2,6 +2,15 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v11.6.0 工具链 SSOT：pwsh 7.5+ / pnpm 11 / 语言地板（2026-09-09）
+
+- **单一地板**：`config/toolchain.yaml`。缺工具 → BLOCKED + 安装命令。禁止 if-else 静默回退到 Windows PowerShell 5.1 / npm / pip。
+- **R9 / R15**：Windows 一律 `pwsh` 7.5+（`#Requires -Version 7.5`）；Node 默认 pnpm 11。尊重已有 lockfile 是项目约定，不是 PATH 上没有 pnpm 时改用 npm。
+- **MCP spawn**：`mcp.json` 应启动 `pwsh`。Qoder 仍 fork `powershell.exe` 时改宿主配置，不在包装脚本里保留 5.1 分支（`rules/MCP.md` §3b）。
+- **运行时**：`which_pwsh()` 只认 `pwsh`；live `scripts/*.ps1` 无 `#Requires -Version 5.1`。Cursor Guard 仍 **1.2.15**（未改 hook 模板）。
+- **validate_config V20**：钉 `powershell_min: "7.5"`、`package_manager: pnpm`、脚本 Requires、`which_pwsh` 不回退、CLAUDE.md R15 不含「兜底」。
+- **语言指针**：FRONTEND/BACKEND 与 catalog `RULES_{PYTHON,TYPESCRIPT,GO,JAVA,RUST,CSHARP,DART,RUBY}` 指向 yaml 地板，不在 alwaysApply 再加规则。
+
 ## v11.5.0 全新七维审查 + 图谱硬门 + 全栈可落地（2026-09-09）
 
 - **审查政策单一 SSOT**：`skills/verification-before-completion/SKILL.md`。有交付即只读独立审查（**含文档**）；废除只读完成旁路。每轮全新七维（满足/遗漏/错改/漏改/原功能/影响范围/**问题是否解决**）；禁止 `resume`、禁止边审边改。`review_max_rounds=5`（`max_blocks` 仍为 3）。无依赖审查者同一消息并行；批次任一 NEEDS-CHANGES / 七维缺项压过 PASS。

@@ -19,7 +19,7 @@ description: Cursor 编辑器全局独有配置指南（与 Claude Code 低耦�
 ## 部署
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 ```
 
 完全退出并重启 Cursor → Settings → Hooks 查看执行记录。
@@ -55,7 +55,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 验证（一键回归，推荐）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
 ```
 
 部署后回归：`... -Deploy`。报告：`scripts/test-guard-result.json`。

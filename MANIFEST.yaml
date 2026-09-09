@@ -1,9 +1,9 @@
-# 组件唯一归属源 — 防左右手互博 — v11.5.0
+# 组件唯一归属源 — 防左右手互博 — v11.6.0
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.5.0"
+version: "11.6.0"
 updated: "2026-09-09"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -370,6 +370,13 @@ concerns:
     stage: skeleton
     status: reference # v10.11: 官方安装路径文档（npm 弃用）
     note: "Windows: irm https://claude.ai/install.ps1 | iex"
+
+  toolchain:
+    owner: config/toolchain.yaml
+    source: local
+    stage: execute
+    note: "v11.6 平台/运行时/包管理器 SSOT；缺工具 BLOCKED；禁止 PS5.1/npm/pip 静默回退。R9/R15 指针。"
+    depends_on: [rules/CORE.md, rules/GOVERNANCE.md, rules/MCP.md]
 
   coding_philosophy:
     owner: skill/karpathy-guidelines

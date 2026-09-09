@@ -52,7 +52,7 @@ description: 安全开发、安全审计、漏洞修复相关任务时启用
 6. 安全配置：禁用目录列表 / 移除默认账户 / 关闭调试 / 安全 Headers / CORS 白名单
 7. XSS：textContent 优先 / DOMPurify 清理 / CSP 配置
 8. 反序列化：JSON 优先 / pickle 用白名单 / 禁止 pickle 不可信数据
-9. 组件漏洞：定期 npm audit / pip audit / 及时更新依赖
+9. 组件漏洞：定期 pnpm audit / pip audit / 及时更新依赖
 10. 日志监控：记录登录/敏感操作/失败访问/系统异常，不含敏感数据
 ```
 
@@ -128,7 +128,7 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 ```
 
 □ settings deny + acceptEdits □ pre-bash-guard + post-secret-detector □ /sandbox
-□ strict: lasso 注入扫描（可选） □ npm audit + 技能来源审查
+□ strict: lasso 注入扫描（可选） □ pnpm audit + 技能来源审查
 
 ```
 
