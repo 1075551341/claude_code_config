@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.21 (v11.6.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.22 (v11.6.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -260,6 +260,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.22 (v11.6.0)**：Guard 1.2.17 Shell 警告 `powershell`→pwsh（allow）；V20 钉 `package_manager: pnpm` 与 `command: powershell.exe`；`sync_runner.resolve_pwsh`。
 - **v20.21 (v11.6.0)**：mcp.json / Cursor 粘贴 spawn `pwsh`；Guard 1.2.16 `sync_runner` 只认 pwsh。
 - **v20.20 (v11.6.0)**：工具链 SSOT `config/toolchain.yaml`（pwsh 7.5+ / pnpm 11）；缺工具 BLOCKED；脚本 `#Requires -Version 7.5`。Guard 1.2.15。
 - **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.15；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。

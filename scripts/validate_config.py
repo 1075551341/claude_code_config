@@ -1187,6 +1187,8 @@ def check_v20_toolchain():
         pkg = (m.group(1) if m else "").strip()
     if ps_min != "7.5":
         ERRORS.append(f"V20: windows.powershell_min={ps_min!r} expected '7.5'")
+    if pkg != "pnpm":
+        ERRORS.append(f"V20: node.package_manager={pkg!r} expected 'pnpm'")
     python_cfg = data.get("python") if isinstance(data.get("python"), dict) else {}
     missing_tool = str(data.get("missing_tool") or "")
     pnpm_major = str(node.get("pnpm_major") or "")
@@ -1215,7 +1217,10 @@ def check_v20_toolchain():
         except OSError as exc:
             ERRORS.append(f"V20: cannot read {rel}: {exc}")
             continue
-        if '"command": "powershell"' in live:
+        if re.search(
+            r"""["']command["']\s*:\s*["']powershell(?:\.exe)?["']""",
+            live,
+        ):
             ERRORS.append(f"V20: {rel} still has command powershell; must spawn pwsh")
 
     sync_runner = os.path.join(
@@ -1227,10 +1232,30 @@ def check_v20_toolchain():
     except OSError as exc:
         ERRORS.append(f"V20: cannot read sync_runner.py: {exc}")
     else:
-        if re.search(r'args\s*=\s*\[[^\]]*"powershell"', runner, re.S):
+        if re.search(
+            r"""(?:which\(|args\s*=\s*\[[^\]]*)["']powershell(?:\.exe)?["']""",
+            runner,
+            re.S,
+        ):
             ERRORS.append("V20: Guard sync_runner must not spawn powershell")
+        if "def resolve_pwsh" not in runner:
+            ERRORS.append("V20: Guard sync_runner must define resolve_pwsh")
         if "shutil.which(\"pwsh\")" not in runner and "shutil.which('pwsh')" not in runner:
             ERRORS.append("V20: Guard sync_runner must resolve pwsh")
+
+    shell_patterns = os.path.join(
+        BASE, "templates", "cursor-guard", "hooks", "_lib", "shell_patterns.py"
+    )
+    try:
+        with open(shell_patterns, "r", encoding="utf-8") as fh:
+            patterns = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V20: cannot read shell_patterns.py: {exc}")
+    else:
+        if r"powershell(?:\.exe)?" not in patterns:
+            ERRORS.append(
+                "V20: Guard shell_patterns WARN must include powershell (align pre-bash-guard)"
+            )
 
     scripts_dir = os.path.join(BASE, "scripts")
     if os.path.isdir(scripts_dir):

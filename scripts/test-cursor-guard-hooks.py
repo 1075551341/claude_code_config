@@ -650,6 +650,27 @@ def main() -> int:
         and r_deny["stdout"].get("permission") == "deny",
     )
 
+    r_ps_warn = run_hook("shell_guard.py", {"command": "powershell -File x.ps1"})
+    ps_out = r_ps_warn.get("stdout") if isinstance(r_ps_warn.get("stdout"), dict) else {}
+    ps_msg = stdout_text(r_ps_warn)
+    results["tests"]["shell_guard_powershell_warn"] = finish_case(
+        r_ps_warn,
+        behavior=(
+            ps_out.get("permission") == "allow"
+            and "agent_message" in ps_out
+            and "pwsh" in ps_msg
+            and "R9" in ps_msg
+        ),
+        note="powershell is warn+allow (not deny); nudge pwsh/R9",
+    )
+
+    r_pwsh_ok = run_hook("shell_guard.py", {"command": "pwsh -File x.ps1"})
+    results["tests"]["shell_guard_pwsh_no_warn"] = finish_case(
+        r_pwsh_ok,
+        behavior=(r_pwsh_ok.get("stdout") or {}) == {},
+        note="pwsh must not trigger the powershell.exe warning",
+    )
+
     results["tests"]["secret_scan_clean"] = run_hook(
         "prompt_secret_scan.py", {"prompt": "hello world"}
     )
