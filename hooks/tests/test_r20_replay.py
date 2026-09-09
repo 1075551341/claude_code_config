@@ -772,6 +772,21 @@ def test_cursor_should_followup() -> None:
         "pipe 状态 PASS is a verdict",
         r20_replay.primary_verdict("[一句话] | 状态: PASS") == "PASS",
     )
+    check(
+        "Chinese 结论 PASS is a verdict",
+        r20_replay.primary_verdict("结论：PASS") == "PASS",
+    )
+    check(
+        "Chinese 独立审查 NEEDS-CHANGES is a verdict",
+        r20_replay.primary_verdict("独立审查 NEEDS-CHANGES") == "NEEDS-CHANGES",
+    )
+    check(
+        "当前状态 PASS does not overwrite 结论 NEEDS-CHANGES",
+        r20_replay.primary_verdict(
+            "结论：NEEDS-CHANGES\n当前状态: 单元测试 PASS"
+        )
+        == "NEEDS-CHANGES",
+    )
     needs_then_instr = (
         "Independent review NEEDS-CHANGES\n"
         "- 满足：结论行截断未修（承认）\n"

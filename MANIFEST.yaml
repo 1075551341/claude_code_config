@@ -448,7 +448,7 @@ concerns:
     owner: templates/cursor-guard
     source: local
     stage: execute
-    note: "Cursor Guard v1.2.14 — 结论整行解析；capture 身份不读 prompt。v1.2.13 — 填槽绑定审查者身份；结论只认标题行。v1.2.12 — 七维 + 审查前刷图；resume 审查 Task 不计入 reviews。完成门不 followup。~/.cursor 独立；低耦合 Claude"
+    note: "Cursor Guard v1.2.15 — 结论标题 Unicode 字母边界。v1.2.14 — 结论整行解析；capture 身份不读 prompt。v1.2.13 — 填槽绑定审查者身份；结论只认标题行。v1.2.12 — 七维 + 审查前刷图；resume 审查 Task 不计入 reviews。完成门不 followup。~/.cursor 独立；低耦合 Claude"
     # post-sync-on-edit 已移除（Cursor 侧走 sync_on_edit.py）；post-codegraph-sync 已于 v11
     # 双侧退役（codegraph v1.5 MCP 自动同步），此处保留 excludes 防止未来重复挂载
     excludes: [hook/post-sync-on-edit, hook/post-codegraph-sync]

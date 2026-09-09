@@ -28,9 +28,11 @@ _FIELD_RE = re.compile(
     re.S,
 )
 _HEADING_RE = re.compile(
-    r"(?:独立审查(?:\s*/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|"
-    r"Independent\s+review|结论|判断|Verdict|状态)"
-    r"\b",
+    r"(?<!\w)(?:"
+    r"独立审查(?:\s*/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|"
+    r"Independent\s+review|结论|判断|Verdict|"
+    r"状态"
+    r")(?!\w)",
     re.I,
 )
 _INSTRUCTIONAL_VERDICT_RE = re.compile(

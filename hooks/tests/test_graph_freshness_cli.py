@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import io
 import json
+import re
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -130,6 +132,72 @@ def test_plugin_once_markers() -> None:
     check("verify-gate line verdict", "primaryVerdict" in vg_text)
     check("verify-gate review_max_rounds", "review_max_rounds=5" in vg_text)
     check("verify-gate no old round cap", "最多 3 轮" not in vg_text)
+    check("verify-gate unicode heading lookaround", r"(?<!\p{L})" in vg_text and r"(?!\p{L})" in vg_text)
+    check("verify-gate 漏改 accepts 注释", "文档|注释|无文档影响" in vg_text)
+
+
+def test_verify_gate_cjk_heading() -> None:
+    """Run the actual HEADING_RE from verify-gate.ts in Node (JS \\b is ASCII-only)."""
+    vg = ROOT / "templates" / "editor-graph-hooks" / "verify-gate.ts"
+    vg_text = vg.read_text(encoding="utf-8")
+    match = re.search(r"const HEADING_RE =\s*(/(?:\\.|[^/\n])+/iu);", vg_text)
+    check("HEADING_RE literal extractable", match is not None)
+    if not match:
+        return
+    script = f"""
+const HEADING_RE = {match.group(1)};
+const INSTRUCTIONAL = /\\bPASS\\s*(?:或|\\/|or)\\s*NEEDS-CHANGES\\b/i;
+function strip(line) {{
+  let s = line.trim();
+  s = s.replace(/^#{{1,6}}\\s*/, "");
+  s = s.replace(/^[-*]\\s+/, "");
+  return s.replace(/^\\*+|\\*+$/g, "").trim();
+}}
+function primaryVerdict(text) {{
+  let last = null;
+  for (const raw of (text || "").split("\\n")) {{
+    const line = strip(raw);
+    if (!line) continue;
+    HEADING_RE.lastIndex = 0;
+    if (!HEADING_RE.test(line)) continue;
+    if (INSTRUCTIONAL.test(line)) continue;
+    const hasPass = /\\bPASS\\b/.test(line);
+    const hasNeeds = /\\bNEEDS-CHANGES\\b/.test(line);
+    if (hasPass && hasNeeds) continue;
+    if (hasNeeds) last = "NEEDS-CHANGES";
+    else if (hasPass) last = "PASS";
+  }}
+  return last;
+}}
+const fails = [];
+function eq(name, a, b) {{
+  if (a !== b) fails.push(name + ": " + JSON.stringify(a) + " !== " + JSON.stringify(b));
+}}
+eq("结论 PASS", primaryVerdict("结论：PASS"), "PASS");
+eq("独立审查 NC", primaryVerdict("独立审查 NEEDS-CHANGES"), "NEEDS-CHANGES");
+eq("状态 PASS", primaryVerdict("状态: PASS"), "PASS");
+eq("会话终验 PASS", primaryVerdict("## 会话终验（R20） PASS"), "PASS");
+eq("instructional", primaryVerdict("结论：PASS / NEEDS-CHANGES"), null);
+eq("当前状态", primaryVerdict("结论：NEEDS-CHANGES\\n当前状态: 单元测试 PASS"), "NEEDS-CHANGES");
+eq("Independent", primaryVerdict("Independent review PASS"), "PASS");
+eq("pipe 状态", primaryVerdict("[一句话] | 状态: PASS"), "PASS");
+if (fails.length) {{
+  console.error(fails.join("\\n"));
+  process.exit(1);
+}}
+console.log("ok");
+"""
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    check(
+        "node CJK heading verdicts",
+        proc.returncode == 0 and (proc.stdout or "").strip() == "ok",
+        (proc.stderr or proc.stdout or "")[:400],
+    )
 
 
 def test_r20_check_portable() -> None:
@@ -154,6 +222,7 @@ def main() -> int:
     test_missing_cli_blocks()
     test_disabled_config()
     test_plugin_once_markers()
+    test_verify_gate_cjk_heading()
     test_r20_check_portable()
     print(f"passed checks, failed={FAILED}")
     return 0 if FAILED == 0 else 1

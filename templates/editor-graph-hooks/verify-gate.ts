@@ -114,8 +114,9 @@ function fieldValue(text: string, name: string): string {
 }
 
 const INSTRUCTIONAL_VERDICT = /\bPASS\s*(?:或|\/|or)\s*NEEDS-CHANGES\b/i;
+// Unicode letter lookaround — JS `\b` is ASCII-only and never matches after CJK.
 const HEADING_RE =
-  /(?:独立审查(?:\s*\/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|Independent\s+review|结论|判断|Verdict|状态)\b/i;
+  /(?<!\p{L})(?:独立审查(?:\s*\/\s*会话终验)?|会话终验(?:[（(]R20[）)])?|Independent\s+review|结论|判断|Verdict|状态)(?!\p{L})/iu;
 const SOLVED_LEGEND = /已解决\s*[|/]\s*未解决\s*[|/]\s*部分解决/;
 
 function stripVerdictMarkup(line: string): string {
@@ -130,7 +131,9 @@ function primaryVerdict(text: string): "PASS" | "NEEDS-CHANGES" | null {
   let last: "PASS" | "NEEDS-CHANGES" | null = null;
   for (const raw of (text || "").split("\n")) {
     const line = stripVerdictMarkup(raw);
-    if (!line || !HEADING_RE.test(line)) continue;
+    if (!line) continue;
+    HEADING_RE.lastIndex = 0;
+    if (!HEADING_RE.test(line)) continue;
     if (INSTRUCTIONAL_VERDICT.test(line)) continue;
     const hasPass = /\bPASS\b/.test(line);
     const hasNeeds = /\bNEEDS-CHANGES\b/.test(line);
@@ -151,7 +154,7 @@ function checkR20(text: string): boolean {
   if (EMPTY_SAT.has(sat.toLowerCase())) return false;
   const missed = fieldValue(text, "漏改");
   if (!missed) return false;
-  if (!/(文档|无文档影响)/.test(missed) && !/[\\/]|\.\w{2,8}\b/.test(missed))
+  if (!/(文档|注释|无文档影响)/.test(missed) && !/[\\/]|\.\w{2,8}\b/.test(missed))
     return false;
   const orig = fieldValue(text, "原功能");
   if (!orig || !/(证据|测试|冒烟)/.test(orig)) return false;
