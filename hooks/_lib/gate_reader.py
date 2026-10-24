@@ -46,7 +46,7 @@ def _review_max_rounds(claude_home: Path) -> int:
         return int((data.get("verification_gate") or {}).get("review_max_rounds") or 3)
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         print(f"gate_reader: review_max_rounds fallback 3: {exc}", file=sys.stderr)
-        return 5
+        return 3
 
 
 def fill_placeholders(text: str, claude_home: Path | None = None) -> str:

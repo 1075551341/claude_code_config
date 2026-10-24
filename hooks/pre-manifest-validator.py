@@ -33,6 +33,9 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/executing-plans": "execution",
     "skill/subagent-driven-development": "multi_agent",
     "skill/test-driven-development": "tdd",
+    "skill/requesting-code-review": "code_review_request",
+    "skill/receiving-code-review": "code_review_receive",
+    "skill/finishing-a-development-branch": "ship_pipeline",
     # L3 信号
     "skill/deep-research": "deep_research",
     "skill/adr-management": "adr",
@@ -55,6 +58,7 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/skill-creator": "planning",  # v11: writing-skills 并入 skill-creator
     # Agents — 阶段角色（v13：其余核心 agent 已删，能力回归主会话 + skills）
     "agent/planner": "planning",
+    "agent/change-implementer": "change_implementer",
     # Agents — gstack 审查 (6)
     "agent/eng-reviewer": "gstack_eng",
     "agent/ceo-reviewer": "gstack_ceo",
@@ -64,10 +68,10 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/security-reviewer": "gstack_security",
     # Agents — 跨模型 + catalog 变体（v11: cso/release-engineer/product-manager/design-engineer
     # 已删或并入；catalog 降级 agent 保留映射——项目内复制启用时仍受归属校验）
-    "agent/cross-model-reviewer": "gstack_codex",
+    "agent/cross-model-reviewer": "gstack_cross_model",
     "agent/performance-engineer": "gstack_eng",
     "agent/design-shotgun": "design_pipeline",
-    "agent/pair-agent": "agentic_orchestrator",
+    "agent/pair-agent": "multi_agent",
     "agent/land-and-deploy": "land_and_deploy",
     "agent/ios-specialist": "gstack_ios",
     # MCP

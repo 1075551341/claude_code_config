@@ -18,6 +18,8 @@
 - **上下文窗口**：`context_thresholds` 删别名解析；`model-context-windows.json` 出厂为空（v2）；窗口来自模型名后缀 / 本机登记 / 显式 `autoCompactWindow`；V17 只在窗口可确认时比较上限。
 - **validate_config**：组件清单与上限对齐 9/26/6/14；V4 只检查保留的铁律编号；删除全栈 glob 检查；live policy 新增禁词（「最多 5 轮」「放行并标 DONE_WITH_CONCERNS」「模型匹配低」）；V20 R15 检查适配单行铁律索引；V21 增加 lint。
 - **测试**：`test_workflow_spine.py` 重写（48 项：校验 / 漂移 / lint / 旧键拒绝 / 完成门 / 两道关 / 轮次上限 / 上下文窗口）；`test_r20_replay.py` 新增两道关用例（197 项）。
+- **审查修正（第 1 轮独立审查）**：`review_bars_ok` 只按结论开头判失败（「无静默回归」不再误杀），证据词接受 证据/观察/evidence，去掉 `**` 粗体标记再解析；审查契约渲染两道门的逐字输出行，eng-reviewer / verification 模板 / `/review` 同步；`gate_reader` 与 Guard `gate_messages` 回退轮次 5→3；`scripts/test-cursor-guard-hooks.py` 夹具补两道门行；`pre-manifest-validator` 恢复 requesting/receiving-code-review、finishing-a-development-branch 映射，新增 change-implementer，cross-model-reviewer / pair-agent 指向现存 concern。
+- **已知限制**：Stop 机械门只在有交付编辑（`review.min_files: 1`）时触发；无编辑任务（调研/问答）的「独立审查必过」由流程规则（CLAUDE.md / verification skill / CORE R1）约束，不由 hook 阻断。未知模型的 `autoCompactWindow` 不再按 200K 封顶。
 - **迁移**：`git pull` → `python scripts/workflow.py check` → 若 v12 `apply-settings --write` 写过 `settings.json`，按需删除其中的推理强度键与别名重定向环境变量，自己选择会话模型 → `pwsh -File scripts/sync.ps1 -All`（Cursor 侧再跑 `deploy-cursor-guard.ps1`）。Guard 仍 1.2.17。
 
 ## v12.0.0 配置驱动主干：`config/workflow.yaml` 单一调度面（2026-10-24）

@@ -82,10 +82,12 @@ source: obra/superpowers
 - 原功能：保持（证据：<命令>）
 - 影响范围：CRG / IMPACT / blast-radius
 - 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
+- 符合预期要求：通过 | 不通过（证据：原始要求逐条 → 对应改动）
+- 原功能保持：通过 | 不通过（证据：<测试/validate/check 观察输出> + 相对起点的行为差异）
 结论：PASS / NEEDS-CHANGES   （主会话终验状态：DONE 仅当独立审查 PASS；否则 BLOCKED）
 ```
 
-Stop 硬门（`r20_replay.py`）要求：含 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；「满足」非空且每个需求指纹关键词须承认/反驳/弃权；「漏改」含 `文档`/`注释`/`无文档影响`/路径；「原功能」含 `证据`/`测试`/`冒烟`；「影响范围」含 `CRG`/`get_impact_radius`/`IMPACT`/`blast-radius`/`影响面`；「问题是否解决」含三态之一与观察证据。DSH / OpenCode 用便携 `r20_check.py`。
+Stop 硬门（`r20_replay.py`）要求：含 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；「满足」非空且每个需求指纹关键词须承认/反驳/弃权；「漏改」含 `文档`/`注释`/`无文档影响`/路径；「原功能」含 `证据`/`测试`/`冒烟`；「影响范围」含 `CRG`/`get_impact_radius`/`IMPACT`/`blast-radius`/`影响面`；「问题是否解决」含三态之一与观察证据。审查者 PASS 另须两道门行（`review_bars_ok`）：「符合预期要求」「原功能保持」各一行、结论不以 不通过/未满足/NEEDS-CHANGES 开头、正文含 `证据`/`观察`/`evidence`。DSH / OpenCode 用便携 `r20_check.py`。
 
 ## 质量门（`config/quality_gates.json`，Stop 门消费）
 

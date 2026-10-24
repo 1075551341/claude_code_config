@@ -43,7 +43,7 @@ def _fill_placeholders(text: str, claude_home: Path) -> str:
     raw = text or ""
     if "{{review_max_rounds}}" not in raw:
         return raw
-    rounds = 5
+    rounds = 3
     try:
         import json
 

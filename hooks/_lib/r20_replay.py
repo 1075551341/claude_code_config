@@ -213,18 +213,24 @@ def review_dimensions_ok(text: str) -> bool:
 
 # PASS 两道门（名称须与 config/workflow.yaml review.pass_requires.*.label 一致，V21 校验）
 PASS_BAR_LABELS = ("符合预期要求", "原功能保持")
-_BAR_FAIL_TOKENS = ("不满足", "未满足", "不通过", "未通过", "回归")
+_BAR_EVIDENCE_RE = re.compile(r"证据|观察|evidence", re.I)
+# 只看结论开头：正文里「无静默回归」「未满足项已修」之类描述不算自认失败
+_BAR_FAIL_RE = re.compile(
+    r"^[\s:：\-—*`]*(?:不通过|未通过|不满足|未满足|部分满足|NEEDS-CHANGES|FAIL(?:ED)?\b)",
+    re.I,
+)
 
 
 def review_bars_ok(text: str) -> bool:
-    """PASS 须逐道写两道门结论 + 证据；任一缺失、无证据或自认不满足 → 不算干净 PASS。"""
+    """PASS 须逐道写两道门结论 + 证据；任一缺失、无证据或结论为不通过 → 不算干净 PASS。"""
+    plain = (text or "").replace("**", "")
     for label in PASS_BAR_LABELS:
-        val = field_value(text or "", label)
+        val = field_value(plain, label)
         if not val or val.strip().lower() in _FIELD_BLANK:
             return False
-        if "证据" not in val:
+        if not _BAR_EVIDENCE_RE.search(val):
             return False
-        if any(tok in val for tok in _BAR_FAIL_TOKENS):
+        if _BAR_FAIL_RE.search(val):
             return False
     return True
 

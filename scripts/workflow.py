@@ -324,6 +324,8 @@ def body_review_contract(spine: dict) -> str:
         "- **PASS 必须同时满足两道门**，逐道写结论 + 证据；任一道缺证据或不满足即 "
         f"`{rv['verdicts'][1]}`：",
         *[f"  {x}" for x in _bars(spine)],
+        "- 输出须含以下两行（机械门按行解析：结论以 通过/不通过 开头，正文须含「证据」；缺行或不通过 = PASS 不成立）：",
+        *[f"  `- {b['label']}：通过|不通过（证据：…）`" for b in rv["pass_requires"].values()],
     ])
 
 

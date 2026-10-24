@@ -1437,6 +1437,14 @@ def test_pass_requires_both_bars():
     check("bars: 原功能保持 without 证据 rejected", not r20_replay.review_bars_ok(no_ev))
     regress = base + "- 符合预期要求：满足（证据：逐条对应）\n- 原功能保持：不满足（证据：test_x 回归）\n"
     check("bars: self-reported regression rejected", not r20_replay.review_bars_ok(regress))
+    no_regress = base + "- 符合预期要求：通过（证据：目标逐条对应）\n- 原功能保持：通过，证据：197 passed，无静默回归\n"
+    check("bars: 「无静默回归」 wording accepted", r20_replay.review_bars_ok(no_regress))
+    bold = base + "- **符合预期要求**：通过（证据：逐条对应）\n- **原功能保持**：通过（证据：check 全绿）\n"
+    check("bars: bold labels accepted", r20_replay.review_bars_ok(bold))
+    english = base + "- 符合预期要求：pass (evidence: diff review)\n- 原功能保持：pass (evidence: 48 passed)\n"
+    check("bars: English evidence accepted", r20_replay.review_bars_ok(english))
+    needs = base + "- 符合预期要求：NEEDS-CHANGES（证据：缺 X）\n- 原功能保持：通过（证据：ok）\n"
+    check("bars: NEEDS-CHANGES verdict rejected", not r20_replay.review_bars_ok(needs))
     check("bars: 原功能保持 does not shadow 原功能 field",
           r20_replay.field_value(REVIEW_PASS, "原功能") == "保持（证据：pytest）")
     entry = {

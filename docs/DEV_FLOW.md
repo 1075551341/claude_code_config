@@ -11,7 +11,7 @@
 | 审查路由、七维、轮次上限 | 子 Agent 用哪个模型（不传 = 继承会话） |
 | 就绪定义与交审自检 | 上下文窗口大小（模型名后缀 `[1M]`、`autoCompactWindow` 或本机登记表） |
 
-`python scripts/workflow.py check` 做三件事：校验配置（每条轨道都含 ④验证、完成定义覆盖全部轨道、轮次 ≤3、七维与 `hooks/_lib/r20_replay.py` 一致、无孤儿 agent）、检测派生块漂移、跑 **model-agnostic lint**（全仓命中模型 ID / 厂商档位别名 / effort 键即失败；历史 CHANGELOG / docs/archive / docs/research / docs/ADR 除外）。`validate_config.py` V21 调用它。
+`python scripts/workflow.py check` 做三件事：校验配置（每条轨道都含 ④验证、完成定义覆盖全部轨道、轮次 ≤3、七维与 `hooks/_lib/r20_replay.py` 一致、无孤儿 agent）、检测派生块漂移、跑 **model-agnostic lint**（全仓命中模型 ID / 厂商档位别名 / effort 键，或 agents/commands/skills（含 catalog）frontmatter 带 `model:`/`effort:` 即失败；豁免：CHANGELOG、docs/archive|research|ADR、plugins/、hooks/tests/、scripts/workflow.py 自身）。`validate_config.py` V21 调用它。
 
 ### 用户如何选模型
 

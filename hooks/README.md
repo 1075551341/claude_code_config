@@ -162,7 +162,7 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 换模型：`python scripts/sync-compact-window.py` 或新开 Claude Code 会话。
 
-⛔ 窗口可确认时（`known_context_tokens()` 非空）`autoCompactWindow` 不得超过它；未知模型以调用方显式设置为准。勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。本包不登记任何厂商模型。
+⛔ 窗口可确认时（`known_context_tokens()` 非空）`autoCompactWindow` 不得超过它；未知模型以调用方显式设置为准（不再按 200K 封顶：换到更小窗口的模型时，请给模型名加窗口后缀、本机登记，或同步改 `autoCompactWindow`）。勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。本包不登记任何厂商模型。
 
 ## 设计原则
 

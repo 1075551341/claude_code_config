@@ -45,6 +45,8 @@ REVIEW_PASS = (
     "- 原功能：保持（证据：pytest）\n"
     "- 影响范围：CRG get_impact_radius\n"
     "- 问题是否解决：已解决（证据：pytest）\n"
+    "- 符合预期要求：通过（证据：需求逐条对应）\n"
+    "- 原功能保持：通过（证据：pytest 全绿）\n"
 )
 
 TRANSIENT_STATE_FILES = (
