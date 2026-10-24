@@ -7,18 +7,17 @@
 
 ```
 全局 skills/ → 五柱核心，会话自动匹配触发（清单见 ~/.claude/skills-INDEX.md）
-catalog/skills/ (104) → 领域专用 + v11 降级变体，按需复制到项目
+catalog/skills/ (100) → 领域专用 + v11 降级变体，按需复制到项目
 ```
 
 ## v11 新入 catalog（原全局降级）
 
 `browser-qa` · `claude-to-deerflow` · `instinct-learning` · `office-hours`（并入原 product-manager 六问框架）· `onboarding-guide` · `taste-memory`
 
-## 同名项消歧（v10.17）
+## 同名项（v12 已清零）
 
-`deep-research`、`git-workflow` 在顶层 `~/.claude/skills/` 也存在。**顶层为权威实现**
-（INDEX 与 `commands/` 均指向它），本目录同名项是变体副本，仅在复制到项目时使用，
-不要在全局会话中加载或引用。
+v12 删除了与顶层同名的变体（`deep-research`、`git-workflow`、`git-worktrees`、`code-refactor`）；需要时用顶层
+`skills/` 的权威版本。新增 catalog skill 不得与顶层同名（`gen-catalog-index.py` 消歧表应保持「无」）。
 
 ## 复制命令
 
@@ -43,7 +42,7 @@ python ~/.claude/scripts/migrate-from-legacy.py --project . --skill python-backe
 | 移动 | 8+ | react-native, flutter-widget, ios-swiftui |
 | 测试 | 6+ | unit-testing, e2e-playwright, api-testing |
 | 文档 | 5+ | api-documentation, changelog-generator, readme-builder |
-| 工具 | 7+ | code-refactor, git-workflow, data-migration |
+| 工具 | 5+ | data-migration, changelog-generator |
 
 ## 与全局 skills/ 的关系
 

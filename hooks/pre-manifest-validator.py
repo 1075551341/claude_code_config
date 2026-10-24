@@ -43,7 +43,6 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/claude-to-deerflow": "deer_flow_bridge",  # v11 降级 catalog，映射保留
 
     "skill/git-workflow": "git_workflow",
-    "skill/pr-workflow": "pr_workflow",
     "skill/claude-mem-maintenance": "claude_mem_maintenance",
     "skill/autoplan": "autoplan",
     "skill/ship": "ship_pipeline",
@@ -62,10 +61,9 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/using-git-worktrees": "workstreams",
     "skill/skill-creator": "planning",  # v11: writing-skills 并入 skill-creator
     "skill/structured-artifacts": "gsd_context",
-    # Agents — 核心 7
+    # Agents — 核心 6（v12 code-reviewer 并入 eng-reviewer）
     "agent/planner": "planning",
     "agent/code-explorer": "multi_agent",
-    "agent/code-reviewer": "code_review_receive",
     "agent/build-error-resolver": "debugging",
     "agent/architect": "brainstorming",
     "agent/spec-reviewer": "spec_review",
@@ -130,7 +128,7 @@ def load_excludes():
 # plugin vs skill 互斥检测
 PLUGIN_SKILL_CONFLICTS: dict[str, str] = {
     "security-guidance": "security-reviewer 已覆盖安全审查",
-    "code-review": "requesting-code-review + code-reviewer 已覆盖",
+    "code-review": "requesting-code-review + eng-reviewer 已覆盖",
 }
 
 

@@ -97,11 +97,17 @@ writing-plans 原子任务
 
 ## 模型选择
 
-| 任务级别  | 模型   | 场景                         |
-| --------- | ------ | ---------------------------- |
-| P0 (关键) | Opus   | 核心逻辑、安全敏感、复杂算法 |
-| P1 (重要) | Sonnet | 业务逻辑、数据模型           |
-| P2 (一般) | Haiku  | 格式化、简单修复、文档       |
+<!-- spine:priority-tiers -->
+> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。
+
+| 任务级别 | 档 | 当前模型 |
+| --- | --- | --- |
+| P0 | `frontier` | `claude-opus-5-5` |
+| P1 | `mid` | `claude-sonnet-5-5` |
+| P2 | `light` | `claude-haiku-5-5` |
+
+派发时：Claude Code `Task` 传档位别名（或 `inherit`）；Cursor 传上表 Cursor slug（见 CURSOR-EDITOR 派生表）。
+<!-- /spine:priority-tiers -->
 
 ## 与 writing-plans 的对接
 

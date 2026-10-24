@@ -54,6 +54,7 @@ DEFAULT_REVIEWER_AGENTS = [
     "dx-reviewer",
     "qa",
     "security-reviewer",
+    "codex-reviewer",
     "code-reviewer",
 ]
 

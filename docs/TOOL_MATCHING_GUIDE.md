@@ -47,7 +47,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 | 本机按文件名（跨仓/全盘）   | everything_search                             | 内置 Glob（仅当前工作区） |
 | OpenSpec 规格变更           | openspec CLI + `/opsx:*`                      | rules/OPENSPEC.md   |
 | 查库文档/API (L1)           | Context7：`resolve-library-id` → `query-docs` | Exa 单次            |
-| GitHub PR/Issue             | `gh` CLI                                      | pr-workflow skill   |
+| GitHub PR/Issue             | `gh` CLI                                      | ship skill          |
 | 本地 Git 历史               | `git` CLI（经 Bash）                          | git-workflow skill  |
 | 网页抓取/搜索 (L2/L3)       | firecrawl + Exa（双源交叉）                   | —                   |
 | 深度调研 (L3)               | skills/deep-research                          | /deep-research      |

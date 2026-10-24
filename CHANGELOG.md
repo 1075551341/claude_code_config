@@ -2,6 +2,25 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v12.0.0 配置驱动主干：`config/workflow.yaml` 单一调度面（2026-10-24）
+
+- **主干 SSOT**：新增 `config/workflow.yaml`，集中定义 `models`（profile anthropic/kimi/deepseek/single × 档位 frontier/mid/light，含 Claude 别名、具体模型、Cursor slug、上下文、effort 能力）、`roles`（agent → 档位 + effort）、`constraints`（审查者档位 ≥ 修改者）、`triage`、`stages`（进入/退出门）、`tracks`（simple/bug/non_simple/research）、`quality`（就绪定义 / 交审自检 / 验证档）、`review`（七维 + 提示、结论、轮次 5 / 阻断 3、路由、旧名）。换模型只改 `models.active_profile`。
+- **渲染器**：新增 `scripts/workflow.py`（`check` / `render` / `show [--profile]` / `apply-settings [--write]`）。重写 34 个派生目标：agents frontmatter `model`/`effort`、审查者 `spine:review-contract`、change-implementer/planner `spine:ready-contract`、6 个命令的 `spine:stage-gate`、CLAUDE.md / DEV_FLOW / AGENTS / task-triage / SDD / verification / CURSOR-EDITOR.mdc 的派生块，以及 `quality_gates.json`、`guard-config.json`、`model-context-windows.json`、`templates/claude-settings/model.snippet.json` 与 OpenCode `verify-gate.ts` 轮次文案。`apply-settings` 合并 `ANTHROPIC_DEFAULT_*_MODEL` 并移除会覆盖路由的 `CLAUDE_CODE_SUBAGENT_MODEL`。
+- **一次通过**：就绪定义与交审自检进入修改者/规划者；审查者契约与 verification 七维同源渲染；V21 校验 hooks `r20_replay._REQUIRED` 与配置七维一致。
+- **去重合并**：`agents/code-reviewer` 并入 `eng-reviewer`（旧名留在 `review.legacy_reviewer_names`，hooks 仍识别）；`skills/pr-workflow` 并入 `skills/ship`，`finishing-a-development-branch` 改为指向 ship 的薄壳。删除 catalog 同名副本（agents：ceo-reviewer/designer/eng-reviewer/qa/security-reviewer/security/context-rot-monitor；skills：deep-research/git-workflow/git-worktrees/code-refactor），以及未注册 hooks（pre-tmux-reminder/pre-loop-guard/pre-suggest-compact/stop-context-monitor）。计数：skills 36→35，agents 17→16，catalog 100/41/15。
+- **validate_config**：新增 V21（主干校验 + 派生块漂移）；V16 改为与 `workflow.yaml` 比对轮次/阻断（不再硬编码）；V5 要求 `workflow_spine` concern。`gen-catalog-index.py` 支持 `CLAUDE_HOME`。
+- **文档**：新增 `docs/DEV_FLOW.md`（推荐开发流程 + 换模型示例 + v11→v12 迁移）；CLAUDE.md 五阶段/门控块改为派生的「工作流主干」；MANIFEST `phases` → `workflow_spine`，新增 `workflow_spine` / `model_routing` concern。
+- **审查修正**：
+  - OpenCode `verify-gate.ts` 的 `review_max_rounds=<n>` 纳入派生；`show` 同时打印阶段/轨道；V16 无 PyYAML 时 WARN 跳过；`apply-settings` 只删前一 profile 写入的重定向，保留网关自定义值并逐项提示，兼容 `env: null`，保留 `opus[1m]` 等后缀；`deploy-cursor-guard.ps1` 让 `verification.reviewer_agents` 始终跟随模板；codex-reviewer 输出先填七维。
+  - `codex-reviewer` 补进 hooks 默认审查者名单与「you are …」识别。V21 要求 `review.routing` + `legacy_reviewer_names` 与 `r20_replay.DEFAULT_REVIEWER_AGENTS` 一致。
+  - `context_thresholds` 把 `opus`/`sonnet`/`haiku`（含 `[1m]` 后缀）经 `ANTHROPIC_DEFAULT_*_MODEL` 解析为具体模型，避免按 200K 兜底计算压缩窗口。
+  - `apply-settings` 切换 profile 时清掉上一 profile 残留的别名重定向、`effortLevel` 与别名 `model`，并提示会覆盖路由的 `env.ANTHROPIC_MODEL`。备份改为已 gitignore 的 `settings.json.bak_<时间戳>`。
+  - ⓢ交付改为 `on_demand`（不在任何 track 内，R19：用户明确要求才提交/开 PR）；学习恢复为 ⑤。
+  - 删除无消费方的 `fresh_reviewer_each_round` 与 `fast`。`refresh_graph_before_review` 必须为 true。`verify_tiers` 渲染进 /verify 门控。
+  - frontmatter 插入跳过块标量 description。
+  - 回归测试 `hooks/tests/test_workflow_spine.py`（31 项）。
+- **迁移**：`git pull` →（Kimi / DeepSeek / 网关用户先改 `models.active_profile` 并 `render`）→ `python scripts/workflow.py check` → `python scripts/workflow.py apply-settings --write` → `pwsh -File scripts/sync.ps1 -All`；若本机 `settings.json` 仍注册已删 hook，按 `templates/claude-settings/hooks.snippet.json` 清理。Guard 仍 1.2.17。
+
 ## v11.6.0 工具链 SSOT：pwsh 7.5+ / pnpm 11 / 语言地板（2026-09-09）
 
 - **单一地板**：`config/toolchain.yaml`。缺工具 → BLOCKED + 安装命令。禁止 if-else 静默回退到 Windows PowerShell 5.1 / npm / pip。

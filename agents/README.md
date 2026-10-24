@@ -1,14 +1,16 @@
 # Agents 智能体库
 
-> **全局 17 个**（7 核心 + 6 gstack 审查 + 3 补全 + 1 跨模型）+ **catalog/agents/** 领域库
+> **全局 16 个**（6 核心 + 6 gstack 审查 + 3 补全 + 1 跨模型）+ **catalog/agents/** 领域库
+>
+> 每个 agent 的档位 / effort / 模型由 `config/workflow.yaml` `roles` 决定，`python scripts/workflow.py render` 写入 frontmatter；勿手改 `model:` / `effort:`。
 
 完整索引 → [agents-INDEX.md](../agents-INDEX.md)
 
 ---
 
-## 核心 7
+## 核心 6
 
-planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
+planner | code-explorer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
 
 ## gstack 审查 6（skeleton）
 
@@ -22,6 +24,7 @@ sre | doc-writer | **change-implementer**
 
 codex-reviewer
 
+> v12 去向：code-reviewer→eng-reviewer（代码层视角）。
 > v11 去向：cso→security-reviewer 深度模式；release-engineer→skills/ship；product-manager→catalog office-hours；design-engineer→skills/design-pipeline；design-shotgun/pair-agent/ios-specialist/land-and-deploy/performance-engineer→`catalog/agents/`（按需复制）。
 
 ---
@@ -36,11 +39,11 @@ codex-reviewer
 
 **审查路由 SSOT**：仅 `~/.claude/agents/` gstack。MANIFEST `excludes: plugin/compound-engineering/*`。
 
-### 推荐常驻（核心 7 + 审查 6）
+### 推荐常驻（核心 6 + 审查 6）
 
 | 类别   | Agents                                                                                                      |
 | ------ | ----------------------------------------------------------------------------------------------------------- |
-| 核心 7 | planner, code-explorer, code-reviewer, build-error-resolver, architect, spec-reviewer, agentic-orchestrator |
+| 核心 6 | planner, code-explorer, build-error-resolver, architect, spec-reviewer, agentic-orchestrator |
 | 审查 6 | eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer                                    |
 | 补全   | sre, doc-writer, change-implementer                                                                         |
 

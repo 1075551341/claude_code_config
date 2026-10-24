@@ -19,6 +19,12 @@ description: 设计方案与原子任务分解（②规格阶段，触发 writin
 | 大功能多阶段 | `.planning/phases/` |
 | 小功能 | `spec/<project>/` |
 
-## 门控
+<!-- spine:stage-gate -->
+## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-方案已评估 ✓ | 任务有成功标准 ✓ | 无静默缩 scope ✓
+- 阶段：②规格 | skill：`skills/writing-plans/SKILL.md` | 角色：planner（frontier / high）
+- 进入：设计已批准
+- 退出（全部满足才进入下一阶段）：
+  - spec-validation 通过，无静默缩 scope
+  - 就绪定义（quality.definition_of_ready）全部满足
+<!-- /spine:stage-gate -->

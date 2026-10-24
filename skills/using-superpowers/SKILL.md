@@ -99,7 +99,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | 架构决策 | adr-management                                                  |
 | 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
 | Git 提交 | git-workflow                                                    |
-| 开 PR    | pr-workflow                                                     |
+| 开 PR    | ship                                                            |
 | 输出冗长 | caveman-compress                                                |
 
 ## Token

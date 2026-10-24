@@ -101,13 +101,26 @@ pwsh -ExecutionPolicy Bypass -File check.ps1
 pwsh -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
-### `validate_config.py` — 配置校验（V1–V20）
+### `workflow.py` — 工作流主干（v12）
+
+`config/workflow.yaml` 是模型档/角色/阶段门/质量标准/审查契约的唯一调度面；本脚本校验它并渲染全部派生内容（目标清单见 `docs/DEV_FLOW.md`「派生清单」）。
+
+```powershell
+python scripts/workflow.py check                    # 校验 + 漂移检测（V21 调用；有漂移 exit 1）
+python scripts/workflow.py render                   # 写回派生内容
+python scripts/workflow.py show --profile deepseek  # 预览某 profile 的模型/角色/阶段
+python scripts/workflow.py apply-settings --write   # 合并模型键进 ~/.claude/settings.json（备份 .bak_<时间戳>）
+```
+
+回归：`python hooks/tests/test_workflow_spine.py`。
+
+### `validate_config.py` — 配置校验（V1–V21）
 
 ```powershell
 python scripts/validate_config.py    # 含 R16 裸 except 扫描、核心 hooks 存在性、loading_tier 等
 ```
 
-V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
+V21（v12 新增）调用 `workflow.py` 校验主干并检测派生块漂移。V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
 
 ### `python-mcp.ps1` — Python 系 MCP 启动包装
 

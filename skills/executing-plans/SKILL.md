@@ -23,7 +23,7 @@ loading_tier: L2
 
 ## 双审（修改→验证→刷图→审查；角色分离）
 
-> 政策 SSOT → `skills/verification-before-completion/SKILL.md`。轮次 → `config/quality_gates.json` `review_max_rounds`。
+> 政策 SSOT → `skills/verification-before-completion/SKILL.md`。轮次 → `config/workflow.yaml` `review.max_rounds`。
 
 一轮 = **修改** → **验证**（贴观察输出）→ **审查前增量刷图** → **独立七维审查**。
 
@@ -33,7 +33,7 @@ loading_tier: L2
 - **主会话**：编排 + 跑验证命令 + R20；不在审查回合自己改代码。
 
 **提前结束**：独立审查干净 `PASS`（七维齐全、无必须修项）且与验证结论一致 → **立即结束**。
-**再开一轮**：审查给出完整未满足清单后，派**一次** `change-implementer` 集中改齐。改完再验证后全新派审。满 `review_max_rounds` → `BLOCKED` / `DONE_WITH_CONCERNS`。禁止边审边改、禁止只连审不改。
+**再开一轮**：审查给出完整未满足清单后，派**一次** `change-implementer` 集中改齐。改完再验证后全新派审。满 `review.max_rounds` → `BLOCKED` / `DONE_WITH_CONCERNS`。禁止边审边改、禁止只连审不改。
 
 计划未批准 / 仅计划文件 / 纯澄清问答（无交付）→ 不进入完成态，不走本循环。
 

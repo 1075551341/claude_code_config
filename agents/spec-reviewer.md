@@ -1,6 +1,8 @@
 ---
 name: spec-reviewer
 description: 规格/计划文档审查。触发词：审查 spec、审查计划、doc review。
+model: sonnet
+effort: high
 tools: [Read, Grep, Glob]
 skills:
   - spec-validation

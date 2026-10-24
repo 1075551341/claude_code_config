@@ -1,6 +1,8 @@
 ---
 name: architect
 description: 系统架构设计。触发词：架构设计、技术选型、系统设计、architecture。
+model: opus
+effort: high
 tools: [Read, Write, Grep, Glob]
 skills:
   - brainstorming

@@ -1,10 +1,11 @@
-# 组件唯一归属源 — 防左右手互博 — v11.6.0
+# 组件唯一归属源 — 防左右手互博 — v12.0.0
+# 调度（模型/角色/阶段/门控/审查）不在本文件 → config/workflow.yaml（唯一调度面）
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "11.6.0"
-updated: "2026-09-09"
+version: "12.0.0"
+updated: "2026-10-24"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -50,7 +51,7 @@ module_resolver:
     - [claude-mem:smart-explore, codegraph_explore]
     - [feature-dev:code-architect, architect]
     - [feature-dev:code-explorer, code-explorer]
-    - [feature-dev:code-reviewer, code-reviewer]
+    - [feature-dev:code-reviewer, eng-reviewer] # v12: code-reviewer 并入 eng-reviewer
     - [deep_research, firecrawl_agent]
     - [land_and_deploy, release_engineer] # v11: release-engineer 已并入 skill/ship；互斥仅防历史回潮
     - [agentic_orchestrator, pair_agent] # v11: pair-agent 已降级 catalog；启用时仍受此互斥约束
@@ -165,27 +166,30 @@ loading_tiers:
     - skill/adr-management
     - skill/workstream-management
     - skill/git-workflow
-    - skill/pr-workflow
+    - skill/ship
     - skill/claude-mem-maintenance
   L3_dispatch: [agents/*, mcp/*, rules/* lazy globs] # was L4, merged per v10.2 D4
   note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
 
-phases:
-  plan:
-    { stage: ①规划, command: /discuss, pillar: superpowers, gate: HARD-GATE }
-  spec:
-    { stage: ②规格, command: /plan, pillar: openspec, gate: spec-validation }
-  execute: { stage: ③执行, command: /execute, pillar: gsd, gate: build-pass }
-  verify: { stage: ④验证, command: /verify, pillar: gstack, gate: quality-gate }
-  learn:
-    {
-      stage: ⑤学习,
-      command: /compact,
-      pillar: claude_mem,
-      gate: pattern-extracted,
-    }
+# v12: 原 phases 表迁入 config/workflow.yaml stages/tracks（含 entry/exit 门、角色档位）；本文件不再双写
+workflow_spine: config/workflow.yaml
 
 concerns:
+  workflow_spine:
+    owner: config/workflow.yaml
+    source: local
+    stage: all
+    note: "v12 唯一调度面：models(profile→任意后端) + roles(agent→档位/effort) + stages/tracks(entry/exit 门) + quality(一次通过契约) + review(轮次/维度/路由)。scripts/workflow.py render 写派生块；validate_config V21 防漂移。说明 docs/DEV_FLOW.md"
+    depends_on: [scripts/workflow.py, hooks/_lib/r20_replay.py, docs/DEV_FLOW.md]
+
+  model_routing:
+    owner: config/workflow.yaml
+    source: local
+    stage: all
+    note: "agent frontmatter model=档位别名（opus/sonnet/haiku）或 inherit；profile 经 ANTHROPIC_DEFAULT_*_MODEL 重定向（apply-settings 合并 settings.json）；Cursor slug 派生到 CURSOR-EDITOR.mdc。禁止手写 agent model/effort。"
+    excludes: [env/CLAUDE_CODE_SUBAGENT_MODEL]
+    depends_on: [templates/claude-settings/model.snippet.json, config/model-context-windows.json]
+
   brainstorming:
     owner: skill/brainstorming
     source: obra/superpowers
@@ -235,7 +239,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v11.5.0 — 有交付即七维独立审查（含文档）；审查前刷图；review_max_rounds=5；max_blocks=3。政策 SSOT verification-before-completion + quality_gates.json + r20_replay.py。Claude Stop exit 2；Cursor 完成门不 followup。"
+    note: "v12 — 有交付即七维独立审查（含文档）；审查前刷图。轮次/阻断/维度/路由 SSOT = config/workflow.yaml review（render 同步 quality_gates.json）；政策正文 verification-before-completion；机械门 r20_replay.py。Claude Stop exit 2；Cursor 完成门不 followup。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -262,7 +266,7 @@ concerns:
 
   code_review_receive:
     owner: skill/receiving-code-review
-    delegates: [agent/code-reviewer]
+    delegates: [agent/eng-reviewer] # v12: code-reviewer 并入
     source: obra/superpowers
     stage: verify
 
@@ -397,7 +401,7 @@ concerns:
       [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer]
     source: garrytan/gstack
     stage: verify
-    delegates: [agent/code-reviewer, agent/spec-reviewer]
+    delegates: [agent/spec-reviewer]
     depends_on:
       [
         agents/eng-reviewer,
@@ -447,9 +451,9 @@ concerns:
     note: "R17 — 代码探索首选，先于 Grep；v1.5 起 MCP server 自带 watcher 自动同步（300ms 静默窗 + connect-time catch-up），post-codegraph-sync hook 已于 v11 退役"
 
   context_monitor:
-    owner: rules/CORE.md # 未注册 hook：stop-context-monitor 文件保留，由 Cursor Guard 阈值/原生机制覆盖（v10.10 对齐运行态）
+    owner: rules/CORE.md # v12: stop-context-monitor / pre-suggest-compact 已删（Claude 原生 autoCompact + Cursor Guard 阈值覆盖）
     source: affaan-m/ECC
-    depends_on: [hook/pre-suggest-compact, rules/CORE.md]
+    depends_on: [rules/CORE.md, hooks/_lib/context_thresholds.py]
 
   cursor_guard:
     owner: templates/cursor-guard
@@ -515,11 +519,6 @@ concerns:
     note: "v10.14 引入 — 审查/验证专用图谱：TESTED_BY 测试缺口、detect_changes 风险评分、review-delta、pre_merge_check。与 codegraph 互补（codegraph=R17 探索主位；CRG=审查/验证专用）。项目内 code-review-graph build 建图。v11.4 升钉 2.3.8（2.3.7 明示 no breaking；token 预算硬顶利好 detect_changes）"
     depends_on: [mcp/codegraph, skills/verification-before-completion]
 
-  tmux_reminder:
-    owner: hook/pre-tmux-reminder
-    source: affaan-m/ECC
-    note: ECC pre:bash:tmux-reminder — 长运行命令非tmux环境警告
-
   taste_memory:
     owner: catalog/skills/taste-memory # v11 降级 catalog（design-pipeline 内保留指针）
     source: garrytan/gstack
@@ -545,9 +544,8 @@ concerns:
         firecrawl:firecrawl-agent,
         tool/WebFetch,
         tool/WebSearch,
-        catalog/skills/deep-research,
       ]
-    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。v10.17 消歧：权威实现是 skills/deep-research/（INDEX 与 commands/deep-research.md 均指向它），catalog/skills/deep-research 只是变体副本，勿加载。"
+    note: "deep-research = L3 结构化调研(Firecrawl+Exa+Context7)；firecrawl-agent = 非调研场景纯数据提取。场景互斥。v10.5.2: 禁止WebFetch/WebSearch替代双源。v12：catalog 变体已删除，唯一实现 skills/deep-research/。"
 
   git_workflow:
     owner: skill/git-workflow
@@ -555,13 +553,6 @@ concerns:
     stage: ship
     loading_tier: L3
     note: User Rules 迁出；显式 commit 时 Read
-
-  pr_workflow:
-    owner: skill/pr-workflow
-    source: user-rules-migration
-    stage: ship
-    loading_tier: L3
-    note: User Rules 迁出；显式开 PR 时 Read
 
   claude_mem_maintenance:
     owner: skill/claude-mem-maintenance
@@ -602,7 +593,7 @@ concerns:
   mcp_remote_explore:
     owner: config/.mcp.json
     note: grep（grep.app 跨公开仓搜索）在 `.mcp.json` 常驻；github **不写 MCP**（plugin 关，用 gh CLI）。本地代码搜索一律 codegraph，勿用 grep MCP 替代
-    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/pr-workflow]
+    depends_on: [docs/TOOL_MATCHING_GUIDE.md, skills/ship]
 
   gstack_eng:
     owner: agent/eng-reviewer
@@ -662,8 +653,9 @@ concerns:
     note: "autoplan 仅用于审查后自动优化（CEO→Design→Eng→DX），不替代 brainstorming HARD-GATE。先 brainstorming 人机对话确定方向，autoplan 在 verify 阶段自动串联。"
 
   ship_pipeline:
-    owner: skill/ship # v11: agent/release-engineer 已并入本技能（管线正文含 CI 模板引用）
+    owner: skill/ship # v11: agent/release-engineer 并入；v12: skill/pr-workflow + finishing-a-development-branch 正文并入
     source: garrytan/gstack
+    note: "finishing-a-development-branch 保留为指向 ship 的薄壳（覆盖上游 superpowers 同名技能），此 excludes 防两套分支完成流程并存"
     excludes: [skill/finishing-a-development-branch]
 
   context_engineering:
@@ -695,7 +687,7 @@ concerns:
   architecture_improvement:
     owner: skill/improve-codebase-architecture
     source: mattpocock/skills
-    excludes: [skill/brainstorming, agent/code-reviewer]
+    excludes: [skill/brainstorming]
     stage: execute
 
   instinct_v2:
@@ -854,8 +846,8 @@ p0_skills:
   - systematic-debugging
   - task-triage
 
-global_skills_max: 36 # v11: 45→36（6 降级 catalog + context-engineering 删除 + frontend-refactor-proposer/writing-skills 并入）
-global_agents_max: 17 # v11.4.11: 16→17（补 change-implementer）
+global_skills_max: 35 # v12: 36→35（pr-workflow 并入 ship）
+global_agents_max: 16 # v12: 17→16（code-reviewer 并入 eng-reviewer）
 global_rules_max: 12 # v11.5: 10→12（BACKEND + DATABASE 薄层 glob）
 
 # superagent_forge 幽灵登记已于 v11 删除（引用的 .codeartsdoer/specs 与 agents/superagent_forge 路径均不存在，codearts 编辑器未安装）
@@ -891,11 +883,8 @@ harness:
       - stop-session-summary
       - stop-readme-updater
     # 文件在 hooks/ 但未注册：Claude Code 原生机制或 Cursor Guard 已覆盖，保留备用
+    # v12: pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor 已删除（git 可回溯）
     unregistered:
-      - pre-tmux-reminder
-      - pre-loop-guard
-      - pre-suggest-compact
-      - stop-context-monitor
       - stop-graph-freshness # TRAE/Qoder Stop；CC 已并入 stop-verification-gate
     disabled:
       - pre-task-planner

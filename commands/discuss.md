@@ -19,6 +19,12 @@ description: 需求讨论与对齐（①规划阶段入口）
 - 技术约束 | 时间/资源约束 | 不做的事: ...
 ```
 
-## 门控
+<!-- spine:stage-gate -->
+## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-需求无歧义 ✓ | 验收标准可量化 ✓ | 用户确认 ✓（未过门控 → 回到 grill 继续澄清）
+- 阶段：①规划 | skill：`skills/brainstorming/SKILL.md` | 角色：session（frontier / high）
+- 进入：非简单（triage 判定）
+- 退出（全部满足才进入下一阶段）：
+  - grill ≤5 问收敛，验收标准可量化
+  - HARD-GATE：用户批准设计
+<!-- /spine:stage-gate -->

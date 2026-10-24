@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v11.1.1（36 全量 = L1×4 + L2×5 + L3×27；catalog 变体见 `catalog/INDEX.md`）
+> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v12.0.0（35 全量 = L1×4 + L2×5 + L3×26；档位/模型 → `config/workflow.yaml`；catalog 变体见 `catalog/INDEX.md`）
 
 ## L1 — 会话常驻 (4)
 
@@ -19,7 +19,7 @@
 | 3调试 | [systematic-debugging](skills/systematic-debugging/SKILL.md)                     | 根因分析/5Why      |
 | 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 完成前交叉验证     |
 
-## L3 — 信号触发 (27)
+## L3 — 信号触发 (26)
 
 ### 显式触发工作流（v10.15 起默认关闭，仅用户明确要求时启用）
 
@@ -69,9 +69,8 @@
 ### Git与发布
 
 - [git-workflow](skills/git-workflow/SKILL.md) — Git 工作流
-- [pr-workflow](skills/pr-workflow/SKILL.md) — PR 工作流
-- [ship](skills/ship/SKILL.md) — 发布管线（v11 并入 release-engineer）
-- [finishing-a-development-branch](skills/finishing-a-development-branch/SKILL.md) — 开发分支完成处理
+- [ship](skills/ship/SKILL.md) — 交付管线唯一正文（v12 并入 pr-workflow + 分支完成）
+- [finishing-a-development-branch](skills/finishing-a-development-branch/SKILL.md) — 薄壳 → ship（覆盖上游同名技能）
 
 ### 优化与学习
 
@@ -80,6 +79,13 @@
 ### 导航与引导
 
 - [triage](skills/triage/SKILL.md) — Bug分类（P0-P3）
+
+## v12 变更（原全局 → 去向）
+
+| 原 skill | 去向 |
+| --- | --- |
+| pr-workflow | 并入 `skills/ship/`（开 PR 流程） |
+| finishing-a-development-branch | 正文并入 `skills/ship/`；本名保留薄壳覆盖上游 |
 
 ## v11 变更（原全局 → 去向）
 

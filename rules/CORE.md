@@ -114,7 +114,7 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 6. 影响范围（CRG `get_impact_radius` / IMPACT / blast）
 7. **问题是否解决**（已解决 / 未解决 / 部分解决 + 观察证据）
 
-核对范围 = 影响面全部相关项（非仅已编辑文件）。独立审查只读、一次找齐；**每轮全新开审**（禁止 `resume`）；开审前须在 `last_edit` 之后增量刷双图。修改只走 `change-implementer`。禁止边审边改。轮次与委派 → `skills/verification-before-completion/SKILL.md` + `config/quality_gates.json` `review_max_rounds`。未输出不得声称完成。
+核对范围 = 影响面全部相关项（非仅已编辑文件）。独立审查只读、一次找齐；**每轮全新开审**（禁止 `resume`）；开审前须在 `last_edit` 之后增量刷双图。修改只走 `change-implementer`。禁止边审边改。轮次与委派 → `skills/verification-before-completion/SKILL.md` + `config/workflow.yaml` `review.max_rounds`。未输出不得声称完成。
 
 ### R17-R18 代码理解工具优先级（严格递进，禁止跳级）
 
@@ -198,5 +198,5 @@ Agent 异常 → 主 Agent 判断：**重试**（瞬态，≤R5 上限2次）→
 - 自动维护 `README.md`；最小改动集；环境配置走 `.env`，禁止硬编码
 - 沟通语言：中文；代码仅在明确要求或上下文需要时输出完整代码块
 - Windows 终端：一律 `pwsh` 7.5+（脚本 `#Requires -Version 7.5`）；缺则 BLOCKED。编辑器 MCP spawn → `rules/MCP.md`
-- Git 规范 → `rules/GIT.md`；提交/PR → `skills/git-workflow`、`skills/pr-workflow`
+- Git 规范 → `rules/GIT.md`；提交 → `skills/git-workflow`；PR/交付 → `skills/ship`
 - Karpathy 四原则 → `skills/karpathy-guidelines/SKILL.md`（L3 按需）

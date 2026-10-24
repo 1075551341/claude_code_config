@@ -130,7 +130,7 @@ def test_plugin_once_markers() -> None:
     check("verify-gate r20_check mention", "r20_check.py" in vg_text)
     check("verify-gate 问题是否解决", "问题是否解决" in vg_text)
     check("verify-gate line verdict", "primaryVerdict" in vg_text)
-    check("verify-gate review_max_rounds", "review_max_rounds=5" in vg_text)
+    check("verify-gate review_max_rounds", re.search(r"review_max_rounds=\d+", vg_text) is not None)
     check("verify-gate no old round cap", "最多 3 轮" not in vg_text)
     check("verify-gate unicode heading lookaround", r"(?<!\p{L})" in vg_text and r"(?!\p{L})" in vg_text)
     check("verify-gate 漏改 accepts 注释", "文档|注释|无文档影响" in vg_text)

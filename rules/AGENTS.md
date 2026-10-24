@@ -5,15 +5,15 @@ description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理
 
 # Agent 协作规则
 
-> 归属矩阵 → `MANIFEST.yaml` | 核心 7 个 → `agents/README.md`
+> 归属矩阵 → `MANIFEST.yaml` | 角色 → 档位/effort/模型 → `config/workflow.yaml` `roles`（派生到各 agent frontmatter）| 清单 → `agents/README.md`
 
-## 核心 7
+## 核心 6
 
-planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
+planner | code-explorer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator（v12：code-reviewer 并入 eng-reviewer）
 
 > 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
 
-## gstack 审查 6 + 补全 3 + 跨模型 1（v11.5）
+## gstack 审查 6 + 补全 3 + 跨模型 1
 
 审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
 
@@ -21,7 +21,7 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 > v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline Phase 2；product-manager 删除（与 office-hours 重叠）；pair-agent / ios-specialist / land-and-deploy / design-shotgun / performance-engineer 降级 `catalog/agents/`（按需复制）。
 
-位置：`agents/`（全局 17）+ `catalog/agents/`（按需复制）
+位置：`agents/`（全局 16）+ `catalog/agents/`（按需复制，不含全局同名副本）
 
 ## 何时委派
 
@@ -32,7 +32,7 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 | 多模块并行 | agentic-orchestrator |
 | 构建失败 | build-error-resolver |
 | spec 审查 | spec-reviewer |
-| 代码审查 | code-reviewer + eng-reviewer（只找问题，禁止改文件） |
+| 代码审查 | eng-reviewer（只找问题，禁止改文件） |
 | 落实修改 | 审查未满足项 | change-implementer（禁止审查） |
 | 产品决策 | ceo-reviewer |
 | UI/UX 审查 | designer + dx-reviewer |
@@ -46,20 +46,23 @@ planner | code-explorer | code-reviewer | build-error-resolver | architect | spe
 
 ## 审查路由规则
 
+<!-- spine:review-routing -->
 ```
-所有变更        → eng-reviewer（只找问题；修复 → change-implementer）
-产品/新功能     → + ceo-reviewer
-UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）
-DX体验变更      → + dx-reviewer
-测试边界        → + qa
-安全敏感变更    → + security-reviewer（全量审计走其深度模式=原cso OWASP+STRIDE）
-infra/配置      → CEO Review 可跳过
-跨模型验证      → + codex-reviewer (gstack /codex)
-部署/发布       → skill/ship（完整闭环按需启用 catalog/land-and-deploy）
-iOS 变更        → 按需启用 catalog/ios-specialist
+always       → eng-reviewer
+product      → + ceo-reviewer
+ui           → + designer, dx-reviewer
+api_dx       → + dx-reviewer
+tests        → + qa
+security     → + security-reviewer
+cross_model  → + codex-reviewer
 ```
 
-**一轮 = 改 → 验 → 审查前刷图一次 → 本批全新七维审查。** 同轮多审查者合计 +1 轮（`quality_gates.review_max_rounds`）。无依赖：同一条消息多个 `Task` 并行；有依赖串行。刷一次图再 fan-out。主会话合并完整清单；批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过，再派**一次** `change-implementer`。审查 prompt 必须写明：本轮已刷新、使用 CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius。政策 SSOT → `skills/verification-before-completion/SKILL.md`。
+> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。档位：审查者 ≥ `change-implementer`；旧名 `code-reviewer` 仍被 hooks 识别为审查委派。
+<!-- /spine:review-routing -->
+
+按需补充（catalog，不在主干路由内）：多方案 UI 探索 → `catalog/agents/design-shotgun`；部署闭环 → `skill/ship` + `catalog/agents/land-and-deploy`；iOS → `catalog/agents/ios-specialist`。infra/配置变更可跳过 product 组。
+
+**一轮 = 改 → 验 → 审查前刷图一次 → 本批全新七维审查。** 同轮多审查者合计 +1 轮（`config/workflow.yaml` `review.max_rounds`）。无依赖：同一条消息多个 `Task` 并行；有依赖串行。刷一次图再 fan-out。主会话合并完整清单；批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过，再派**一次** `change-implementer`。审查 prompt 必须写明：本轮已刷新、使用 CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius。政策 SSOT → `skills/verification-before-completion/SKILL.md`。
 
 ## 禁止（防互博）
 
@@ -88,3 +91,4 @@ iOS 变更        → 按需启用 catalog/ios-specialist
 
 - 按 MANIFEST concern→owner 路由，禁止并行多 orchestrator
 - 按能力委派（探索/计划/审查/执行），非按 agent 名称堆叠
+- 派发模型按 `config/workflow.yaml` `roles` / `triage.task_priority_tiers` 选档；禁止在 prompt 里临时指定与配置冲突的模型
