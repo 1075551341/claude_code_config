@@ -1108,7 +1108,8 @@ def test_gate_reader_sections() -> None:
     check("verify mentions followup or R20", "R20" in verify)
     check("verify seven dims", "问题是否解决" in verify)
     check("verify no 只读免审", "只读免审" not in verify)
-    check("verify rounds from json", "最多 5 轮" in verify)
+    _rounds = json.loads((HOOKS_DIR.parent / "config" / "quality_gates.json").read_text(encoding="utf-8"))["verification_gate"]["review_max_rounds"]
+    check("verify rounds from json", f"最多 {_rounds} 轮" in verify)
     check("p0 points at task-triage", "task-triage" in p0)
     check("impact not include first_edit heading", "初次修改验收门" not in impact)
     check("verify not include impact heading", "变更影响门" not in verify)

@@ -67,7 +67,7 @@ DEFAULT_DOC_EXTS = (".md", ".txt", ".rst", ".markdown")
 _ROLE_YOU_ARE_REVIEWER = re.compile(
     r"\byou are\s+(?:an?\s+)?("
     r"eng-reviewer|ceo-reviewer|security-reviewer|dx-reviewer|"
-    r"code-reviewer|designer|qa)\b",
+    r"codex-reviewer|code-reviewer|designer|qa)\b",
     re.I,
 )
 _IMPACT_TOKENS = (
@@ -172,6 +172,7 @@ DEFAULT_REVIEWER_AGENTS = (
     "dx-reviewer",
     "qa",
     "security-reviewer",
+    "codex-reviewer",
     "code-reviewer",
 )
 

@@ -135,6 +135,10 @@ if (-not (Test-Path $cfgDst) -or $Force) {
         # 导致模板升版后部署副本永远停留在旧版本（test-cursor-guard-hooks 的
         # deploy_config 用例长期不过就是这个原因）。
         $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force
+        # v12：reviewer_agents 由 config/workflow.yaml review 段渲染，属配置所有而非用户偏好，始终跟随模板。
+        if ($tpl.verification -and $tpl.verification.reviewer_agents -and $usr.verification) {
+            $usr.verification | Add-Member -NotePropertyName reviewer_agents -NotePropertyValue $tpl.verification.reviewer_agents -Force
+        }
         # v1.2.8：完成门不用裸词「完成」（避免「所有都完成后」回灌）。旧部署保留了用户值，须跟模板对齐。
         if ($tpl.verification -and $usr.verification) {
             $oldKws = @($usr.verification.prompt_keywords)

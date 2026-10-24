@@ -95,19 +95,39 @@ def _strip_model_suffix(model: str) -> tuple[str, int | None]:
     return base, _parse_suffix_tokens(m.group(1), registry)
 
 
+_ALIAS_ENV = {
+    "opus": "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "sonnet": "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "haiku": "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+}
+
+
+def _resolve_alias(name: str, env_block: dict) -> str:
+    """opus/sonnet/haiku（可带 [1m] 等后缀）→ ANTHROPIC_DEFAULT_*_MODEL 指向的具体模型。"""
+    m = _SUFFIX_RE.search(name)
+    base = (name[: m.start()] if m else name).strip().lower()
+    key = _ALIAS_ENV.get(base)
+    if not key:
+        return name
+    target = os.environ.get(key) or env_block.get(key)
+    if not target:
+        return name
+    return str(target).strip() + (name[m.start():].strip() if m else "")
+
+
 def active_model_name() -> str:
+    settings = _load_settings()
+    env_block = settings.get("env") or {}
+    name = ""
     for key in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"):
         val = os.environ.get(key)
         if val:
-            return val.strip()
-    settings = _load_settings()
-    env_block = settings.get("env") or {}
-    for key in ("ANTHROPIC_MODEL",):
-        val = env_block.get(key)
-        if val:
-            return str(val).strip()
-    model = settings.get("model")
-    return str(model).strip() if model else ""
+            name = val.strip()
+            break
+    if not name:
+        val = env_block.get("ANTHROPIC_MODEL") or settings.get("model")
+        name = str(val).strip() if val else ""
+    return _resolve_alias(name, env_block) if name else ""
 
 
 def _hud_observed_window() -> int | None:
@@ -137,7 +157,10 @@ def resolve_model_context_tokens(model: str | None = None) -> int:
         except ValueError:
             pass
 
-    name = (model or active_model_name()).strip()
+    if model:
+        name = _resolve_alias(model.strip(), _load_settings().get("env") or {})
+    else:
+        name = active_model_name()
     registry = _load_registry()
     default = int(registry.get("default_tokens") or 200_000)
 

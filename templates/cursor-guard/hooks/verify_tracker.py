@@ -45,6 +45,7 @@ DEFAULT_REVIEWER_AGENTS = [
     "dx-reviewer",
     "qa",
     "security-reviewer",
+    "codex-reviewer",
     "code-reviewer",
 ]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
