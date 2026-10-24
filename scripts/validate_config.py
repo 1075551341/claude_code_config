@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V20 共 20 项静态检查（结构/铁律/hook/MCP/INDEX/工具链）。
+"""配置一致性校验 — V1-V21 共 21 项静态检查（结构/铁律/hook/MCP/INDEX/工具链/工作流主干）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
@@ -9,7 +9,8 @@
 V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny 路径 /
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
-V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）。
+V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）/
+V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移（scripts/workflow.py check）。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -57,8 +58,9 @@ V20_SCRIPT_PWSH_PS_FALLBACK_RE = re.compile(
     r"[\s\S]{0,400}?powershell(?:\.exe)?",
 )
 
+# v12: code-reviewer 并入 eng-reviewer
 CORE_AGENTS = {
-    "planner", "code-explorer", "code-reviewer", "build-error-resolver",
+    "planner", "code-explorer", "build-error-resolver",
     "architect", "spec-reviewer", "agentic-orchestrator",
 }
 GSTACK_REVIEW_AGENTS = {
@@ -70,7 +72,7 @@ GSTACK_SUPPLEMENT_AGENTS = {
     "sre", "doc-writer", "codex-reviewer", "change-implementer",
 }
 REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 17  # v11.4.11: 7 核心 + 6 审查 + 3 补全 + 1 跨模型
+GLOBAL_AGENTS_MAX = 16  # v12: 6 核心 + 6 审查 + 3 补全 + 1 跨模型
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
@@ -97,7 +99,7 @@ REQUIRED_SKILLS = (
     P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
     | MATTPOCOCK_SKILLS | V9_SKILLS
 )
-GLOBAL_SKILLS_MAX = 36  # v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
+GLOBAL_SKILLS_MAX = 35  # v12: pr-workflow 并入 ship；v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
 
 # v11.5: BACKEND.md + DATABASE.md 薄层 glob；FRONTEND 去项目特例
 GLOBAL_RULES = {
@@ -120,6 +122,7 @@ LIVE_POLICY_PATHS = (
     "skills/requesting-code-review/SKILL.md",
     "skills/change-impact-analysis/SKILL.md",
     "templates/cursor-guard/rules/CURSOR-EDITOR.mdc",
+    "docs/DEV_FLOW.md",
     "commands/verify.md",
     "agents/eng-reviewer.md",
     "hooks/_lib/gate_messages.md",
@@ -254,7 +257,7 @@ def v5_manifest_completeness():
         "brainstorming", "planning", "verification", "debugging", "memory",
         "gstack_review", "gstack_eng", "shell_token", "output_token",
         "change_spec", "phase_planning", "context_engineering",
-        "change_implementer",
+        "change_implementer", "workflow_spine",
     }
     missing = required - set(concerns.keys())
     if missing:
@@ -440,6 +443,7 @@ def main():
     check_v18_codebase_memory_optional()
     check_v19_index_disk_sync()
     check_v20_toolchain()
+    check_v21_workflow_spine()
 
     report(
         agents=len(agent_names),
@@ -451,14 +455,14 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v11 VALIDATION (20 checks) ===")
+    print("=== .claude v12 VALIDATION (21 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
-        "V19", "V20",
+        "V19", "V20", "V21",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
@@ -525,9 +529,8 @@ def check_v11_hook_exception_propagation():
         "stop-verification-gate.py",
         "stop-session-summary.py", "stop-readme-updater.py",
     ]
+    # v12: pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor 已删除
     optional_hooks = [
-        "pre-tmux-reminder.py", "pre-loop-guard.py",
-        "pre-suggest-compact.py", "stop-context-monitor.py",
         "stop-graph-freshness.py",
     ]
     hooks_dir = os.path.join(BASE, "hooks")
@@ -949,13 +952,26 @@ def check_v16_codegraph_mandate():
         return
     if not bool(gf.get("require_refresh_before_review")):
         ERRORS.append("V16: graph_freshness.require_refresh_before_review must be true")
+    spine_path = os.path.join(BASE, "config", "workflow.yaml")
     try:
         with open(qg_path, "r", encoding="utf-8") as fh:
             vg = json.load(fh).get("verification_gate") or {}
-        if int(vg.get("review_max_rounds") or 0) != 5:
-            ERRORS.append("V16: verification_gate.review_max_rounds must be 5")
-        if int(vg.get("max_blocks") or 0) != 3:
-            ERRORS.append("V16: verification_gate.max_blocks must stay 3")
+        if not yaml:
+            WARNINGS.append("V16: PyYAML missing — skipped quality_gates vs config/workflow.yaml review comparison")
+            return
+        review = {}
+        if os.path.isfile(spine_path):
+            with open(spine_path, "r", encoding="utf-8") as fh:
+                review = (yaml.safe_load(fh) or {}).get("review") or {}
+        for gate_key, spine_key in (("review_max_rounds", "max_rounds"), ("max_blocks", "max_blocks")):
+            want = review.get(spine_key)
+            if want is None:
+                ERRORS.append(f"V16: config/workflow.yaml review.{spine_key} missing")
+            elif int(vg.get(gate_key) or 0) != int(want):
+                ERRORS.append(
+                    f"V16: verification_gate.{gate_key}={vg.get(gate_key)!r} != workflow.yaml "
+                    f"review.{spine_key}={want!r} — run scripts/workflow.py render"
+                )
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
         ERRORS.append(f"V16: verification_gate unreadable: {exc}")
     if int(gf.get("session_ensure_timeout_sec") or 0) < 120:
@@ -1037,7 +1053,6 @@ def check_v17_bare_except_extended():
     # Infrastructure files exempt from V17 (launchers, guards)
     INFRA_EXEMPT = {
         "_editor_hook_launcher.py",
-        "pre-loop-guard.py",      # L4 isolation layer, by design
     }
     scan_dirs = [
         os.path.join(BASE, "hooks"),
@@ -1345,6 +1360,44 @@ def check_v20_toolchain():
         if "pnpm" not in row:
             ERRORS.append("V20: CLAUDE.md R15 must mention pnpm")
     print("  V20: toolchain floors + pwsh-only which_pwsh ✓")
+
+
+def check_v21_workflow_spine():
+    """V21: config/workflow.yaml 是唯一调度面 — 校验 schema，并要求全部派生内容与之一致。"""
+    if not yaml:
+        WARNINGS.append("V21: PyYAML not installed, skipping workflow spine check")
+        return
+    script = os.path.join(BASE, "scripts", "workflow.py")
+    if not os.path.isfile(os.path.join(BASE, "config", "workflow.yaml")):
+        ERRORS.append("V21: config/workflow.yaml missing")
+        return
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location("workflow_spine", script)
+    if spec is None or spec.loader is None:
+        ERRORS.append("V21: scripts/workflow.py missing")
+        return
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        root = Path(BASE)
+        spine = mod.load_spine(root)
+        errs = mod.validate(spine, root)
+        for e in errs:
+            ERRORS.append(f"V21: {e}")
+        if errs:
+            return
+        resolved = mod.Resolved(spine)
+        drift = mod.diff_targets(root, mod.build_targets(root, resolved))
+    except (OSError, ImportError, SyntaxError, ValueError, KeyError, TypeError,
+            getattr(mod, "SpineError", ValueError), yaml.YAMLError) as exc:
+        ERRORS.append(f"V21: workflow spine unreadable: {type(exc).__name__}: {exc}")
+        return
+    for rel in drift:
+        ERRORS.append(f"V21: derived content drift in {rel.as_posix()} — run scripts/workflow.py render")
+    if not drift:
+        print(f"  V21: workflow spine profile={resolved.profile_name} derived targets in sync ✓")
 
 
 if __name__ == "__main__":

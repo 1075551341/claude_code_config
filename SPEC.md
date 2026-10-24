@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：11.6.0 | 五柱×五阶段×三横切 | L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；`review_max_rounds=5`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
+> 版本：12.0.0 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`**（任意模型 profile × 角色档位/effort × 阶段 entry/exit 门 × 审查轮次/维度/路由 → `scripts/workflow.py render` 派生，V21 防漂移）+ L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；轮次 → workflow.yaml `review.max_rounds`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -13,6 +13,7 @@ FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(�
 REVIEW   = gstack 6审查 + 3补全 + 1跨模型
 OPTIMIZE = RTK(shell token) + caveman(输出token)
 INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
+SPINE    = config/workflow.yaml（models/roles/stages/tracks/quality/review）→ scripts/workflow.py render → agents/commands/CLAUDE.md/quality_gates.json/settings 片段
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -27,13 +28,8 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## 五阶段处理流程
 
-```
-用户输入 → ①规划(/discuss) → ②规格(/plan) → ③执行(/execute) → ④验证(/verify) → ⑤学习(/compact)
-              │                  │               │                 │                  │
-          grill→HARD-GATE     spec-valid      主会话直接执行      gstack审查       pattern提取
-          Red Flags表        OpenSpec格式     原子任务(2-5min)    quality-gate    claude-mem SSOT
-          一次一问            三轨互斥      SDD/TDD 仅显式触发    反合理化         上下文压缩
-```
+> v12：阶段、轨道（simple / bug / non_simple / research）、每阶段 entry/exit 门与执行角色的档位全部定义在 `config/workflow.yaml` `stages` / `tracks`；派生表见 `CLAUDE.md`「工作流主干」与 `docs/DEV_FLOW.md`。本文件不再复写流程图。
+> 一次通过契约：`quality.definition_of_ready`（③执行前）+ `quality.self_check`（交审前，与审查者同一份七维）。
 
 > **③ 执行默认不启用 TDD/SDD（v10.15）**：仅用户显式要求（TDD/测试先行/子Agent派发）才 Read `test-driven-development` / `subagent-driven-development`。判定与 grill 规则 SSOT → `skills/task-triage/SKILL.md`。
 
@@ -55,11 +51,11 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 | 类型         | v11    | 说明                                                                                                                                                                                   |
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 全局 skills  | 36     | P0 路由集 6 + supplement 30（v11: 45→36，6 降级 catalog + 3 删并）                                                                                                                     |
-| 全局 agents  | 17     | core 7 + 审查 6 + 补全 3 + 跨模型 1（v11.4.11：16→17，补 change-implementer）                                                                                                             |
+| 全局 skills  | 35     | P0 路由集 6 + supplement 29（v12: pr-workflow 并入 ship；v11: 45→36）                                                                                                                     |
+| 全局 agents  | 16     | core 6 + 审查 6 + 补全 3 + 跨模型 1（v12：code-reviewer 并入 eng-reviewer）；档位/effort → workflow.yaml `roles`                                                                                                             |
 | 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 8 + glob 3（FRONTEND/BACKEND/DATABASE；不含 README）                                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
-| 全局 hooks   | 18     | 注册激活 18 + 未注册 5 + 分发器 2（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.17）                                                              |
+| 全局 hooks   | 18     | 注册激活 18 + 未注册 1 + 分发器 2（v12 删 4 个未注册 hook）（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.17）                                                              |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
 | 全局 plugins | 18     | installed_plugins 18；开关 SSOT → `rules/MCP.md` 验证清单（context7/exa/playwright/firecrawl=true；chrome-devtools/github=false；不写 MCP）                                                                                                                           |
 | 可选外部     | 2      | deer-flow 2.0 + task-master MCP                                                                                                                                                        |
@@ -91,9 +87,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## Workflow Skills
 
-**Superpowers 12**：using-superpowers, brainstorming, writing-plans(原子), executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development(两阶段审查), using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch（writing-skills 已并入 skill-creator 前言）
+**Superpowers 12**：using-superpowers, brainstorming, writing-plans(原子), executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development(两阶段审查), using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch（v12 起为指向 ship 的薄壳；writing-skills 已并入 skill-creator 前言）
 
-**扩展 4（v11）**：autoplan, design-pipeline, ship, structured-artifacts（office-hours/browser-qa 降级 catalog；context-engineering 删除，rules/CONTEXT.md 为唯一正文）
+**扩展 4（v11）**：autoplan, design-pipeline, ship（v12 并入 pr-workflow）, structured-artifacts（office-hours/browser-qa 降级 catalog；context-engineering 删除，rules/CONTEXT.md 为唯一正文）
 
 **Meta 5**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress, change-impact-analysis
 
@@ -116,12 +112,11 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## 核心 Agents (7)
+## 核心 Agents (6)
 
 | Agent                | 阶段  |
 | -------------------- | ----- |
 | planner              | ①规划 |
-| code-reviewer        | ④验证 |
 | build-error-resolver | ③执行 |
 | architect            | ①规划 |
 | spec-reviewer        | ②规格 |
@@ -166,7 +161,6 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 学习loop (Stop/PreCompact)
 ├─ pre-compact-state → 压缩前快照 → ~/.claude/state.json
-├─ stop-context-monitor → GateGuard（loop/scope/cost）
 ├─ stop-session-summary → 会话摘要
 ├─ stop-readme-updater → README更新
 └─ pattern提取 → ⑤学习默认 claude-mem observation（`catalog/skills/instinct-learning` v11 降级，按需复制）
@@ -192,7 +186,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | ------------------------- | ----------------------------------------- |
 | module_resolver.conflicts | MANIFEST.yaml                             |
 | LOCAL_HOOK_PROFILE        | hooks/README.md                           |
-| GateGuard 概念            | stop-context-monitor, pre-suggest-compact |
+| GateGuard 概念            | v12 已删（Claude 原生 autoCompact + Cursor Guard 阈值覆盖） |
 
 **禁止**安装 everything-claude-code 插件（duplicate hooks）。与 voidtools `everything` MCP（elis132/everything-mcp）不是同一物。
 
@@ -360,4 +354,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：11.6.0 | 日期：2026-09-09 | 五柱×五阶段×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；review_max_rounds=5）+ 全栈 glob + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N
+> 版本：12.0.0 | 日期：2026-10-24 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：模型档/角色/阶段门/审查契约）×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；轮次/阻断见 workflow.yaml `review`）+ 全栈 glob + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N

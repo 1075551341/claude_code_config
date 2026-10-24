@@ -49,9 +49,37 @@ alwaysApply: true
 - Cursor `stop` **不能** `permission: deny`（仅 shell/MCP 能 deny）
 - **不再**用 `followup_message` 做完成验证（会变成假用户回合、刷会话面板、loop_count 重置后反复注入）
 - Stop hook 仅做图谱 refresh / 全绿后 `sync.ps1`，不发完成门 followup
-- **有交付物编辑即双审（规则驱动）**：`change-implementer` 修改 → 验证（观察输出）→ 审查前增量刷图 → `eng-reviewer`（及并行路由）七维一次找齐（禁止改文件）；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮全新开审**（禁止 `resume`；轮次 → `quality_gates.review_max_rounds`）。政策 → verification-before-completion。计划未批准 / 仅计划文件 / 纯澄清问答不进入完成态。
+- **有交付物编辑即双审（规则驱动）**：`change-implementer` 修改 → 验证（观察输出）→ 审查前增量刷图 → `eng-reviewer`（及并行路由）七维一次找齐（禁止改文件）；干净 PASS 即停；清单齐后再派修改者集中改齐；**每轮全新开审**（禁止 `resume`；轮次 → `~/.claude/config/workflow.yaml` `review.max_rounds`）。政策 → verification-before-completion。计划未批准 / 仅计划文件 / 纯澄清问答不进入完成态。
 - 计划未批准 / CreatePlan / 仅计划文件 → 禁止声称完成（规则约束，不靠 hook 续轮）
 - 每个文件首次编辑后注入五维迷你验收（计划制品跳过）；核对范围 = 该文件 + blast-radius 全部相关项
+
+## 子代理模型路由（派生自 `config/workflow.yaml`）
+
+派发 `Task` 时按角色传下表「Cursor Task `model`」（`inherit` = 不传，继承会话）。换后端/档位只改 `~/.claude/config/workflow.yaml` 后 `python ~/.claude/scripts/workflow.py render`，再 `sync.ps1`。
+
+<!-- spine:cursor-models -->
+| 角色 | 档位 | effort | Claude Code `model` | Cursor Task `model` |
+| --- | --- | --- | --- | --- |
+| session | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| planner | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| architect | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| agentic-orchestrator | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| change-implementer | mid | high | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| build-error-resolver | mid | medium | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| spec-reviewer | mid | high | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| sre | mid | medium | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| code-explorer | light | low | `haiku`（claude-haiku-5-5） | `composer-2.5-fast` |
+| doc-writer | light | medium | `haiku`（claude-haiku-5-5） | `composer-2.5-fast` |
+| eng-reviewer | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| security-reviewer | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| codex-reviewer | frontier | high | `opus`（claude-opus-5-5） | `claude-opus-5-5-high` |
+| ceo-reviewer | mid | medium | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| designer | mid | medium | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| dx-reviewer | mid | medium | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+| qa | mid | high | `sonnet`（claude-sonnet-5-5） | `claude-sonnet-5-5-medium` |
+
+> effort 只作用于 Claude Code；Cursor slug 按档位固定（effort / fast 已编码在 slug 中）。
+<!-- /spine:cursor-models -->
 
 ## 工具路由
 

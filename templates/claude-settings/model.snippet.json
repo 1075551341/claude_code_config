@@ -1,0 +1,11 @@
+{
+  "_comment": "派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。合并：python scripts/workflow.py apply-settings --write",
+  "_profile": "anthropic",
+  "model": "opus",
+  "env": {
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-5-5"
+  },
+  "effortLevel": "high"
+}

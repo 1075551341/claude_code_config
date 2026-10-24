@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v11.6.0**（工具链 SSOT：pwsh 7.5+ / pnpm 11。史→`CHANGELOG.md`）
+> 五柱×五阶段×三横切 | 归属→`MANIFEST.yaml` | 法典→`SPEC.md` | **v12.0.0**（配置驱动主干 `config/workflow.yaml`：任意模型 + 一次通过。史→`CHANGELOG.md`）
 
 **五柱**：Superpowers v6.3.0(方法论，插件随上游自动更新) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用）— 详见 `rules/CORE.md`
@@ -14,7 +14,7 @@ layer: router
 ## 总纲链（Tool-First Read，禁止凭记忆执行）
 
 1. **路由入口** — 本文件（编辑器目录 `CLAUDE.md` 软链 → `~/.claude/CLAUDE.md`）
-2. **归属矩阵** — `MANIFEST.yaml`（含 harness 清单：hooks 注册/命令/MCP profile）
+2. **调度主干** — `config/workflow.yaml`（模型/角色/阶段/门控/审查）；**归属矩阵** — `MANIFEST.yaml`（组件归属 + harness 清单）
 3. **发现索引** — `skills-INDEX.md` | `agents-INDEX.md` | `rules-INDEX.md`
 4. **法典** — `SPEC.md`（变更史 → `CHANGELOG.md`）
 5. **按需加载**：`skills/<name>/SKILL.md` | `agents/<name>.md` | `rules/<name>.md`（治理详参 → `rules/GOVERNANCE.md`）
@@ -48,32 +48,48 @@ layer: router
 | L2 | writing-plans / spec-validation / executing-plans / verification / debugging | 阶段触发 Read 全文 |
 | L3 | 其他 skills/rules/agents/MCP/Firecrawl/Exa | description + slash，按需 Read |
 
-## 五阶段流程（SSOT）
+## 工作流主干（SSOT = `config/workflow.yaml`）
 
-> 入口：疑似重复/相关历史 → `claude-mem search`（R18）→ using-superpowers + task-triage（Phase0）。
+> 模型 / 档位 / effort / 阶段 / 门控 / 审查轮次 **只改 `config/workflow.yaml`** → `python scripts/workflow.py render`。下方两表为派生块，勿手改。流程说明 → `docs/DEV_FLOW.md`。
+> 入口：疑似重复/相关历史 → `claude-mem search`（R18）→ using-superpowers + task-triage（Phase0）。Bug 根因 → systematic-debugging；调研 → deep-research（L3 双源）。
 
-```
-简单 → change-impact → 一次改齐 → ④验证 → 审查前刷图 → 全新只读独立审查 → 短 R20
-Bug(多文件/根因不明/执行升档) → triage → systematic-debugging → ④全量（同上审查）
-非简单 → ①grill(≤5) → ①规划(brainstorming HARD-GATE) → ②规格(writing-plans)
-       → ③执行(executing-plans) → ④验证(verification-before-completion)
-       → ⑤学习
-非简单调研 → deep-research（L3 双源）
-```
+<!-- spine:flow -->
+| 阶段 | 命令 | skill | 角色（档/effort） | 退出门 |
+| --- | --- | --- | --- | --- |
+| ⓪分类 | — | task-triage | session（frontier / high） | 输出分类契约：大类 \| 需改文件 \| 模型档(当前≥所需) \| verify_tier \| 置信度 \| 成功标准 |
+| ⓑ根因 | — | systematic-debugging | session（frontier / high） | 根因证据一行（失败日志 / 断点 / 最小复现）；修复点与回归验证命令写入影响清单 |
+| ⓡ调研 | — | deep-research | session（frontier / high） | 关键结论 ≥2 个独立来源交叉验证，标注时效与可信度 |
+| ①规划 | /discuss | brainstorming | session（frontier / high） | grill ≤5 问收敛，验收标准可量化；HARD-GATE：用户批准设计 |
+| ②规格 | /plan | writing-plans | planner（frontier / high） | spec-validation 通过，无静默缩 scope；就绪定义（quality.definition_of_ready）全部满足 |
+| ③执行 | /execute | executing-plans | change-implementer（mid / high） | 清单内文件一次改齐（含文档/注释/INDEX/版本戳）；构建/类型/Lint 通过；R16 无静默吞异常；提交审查前自检（quality.self_check）通过 |
+| ④验证 | /verify | verification-before-completion | session（frontier / high） | verify_tier 对应清单全部附命令证据；审查前刷图（last_edit 之后）；本轮全新审查批次全部 PASS（review.routing） |
+| ⑤学习 | /compact | memory-compression | session（frontier / high） | claude-mem 记录模式/决策（R18） |
+| ⓢ交付 | /ship | ship | session（frontier / high） | 用户要求的交付物完成（commit / PR / 发布），CI 绿 |
 
-> 分类 → `skills/task-triage/SKILL.md`。任意大类完成前均须验证。**审查/R20/轮次/图谱** 正文只在 verification skill + `config/quality_gates.json`（`review_max_rounds`；`max_blocks` 仍为 Stop 验证阻断）。计划未批准 / 仅 `*.plan.md` / 纯澄清问答（无交付）不进入完成态。简单旁路不 Read executing-plans/subagent-driven-development。
+- **simple**：⓪分类 → ③执行 → ④验证
+- **bug**：⓪分类 → ⓑ根因 → ③执行 → ④验证
+- **non_simple**：⓪分类 → ①规划 → ②规格 → ③执行 → ④验证 → ⑤学习
+- **research**：⓪分类 → ⓡ调研 → ④验证
+- **按需**：ⓢ交付（不在轨道内；用户明确要求时进入，R19）
+- **审查**：一轮 = 改 → 验 → 刷图 → 并行全新审查；上限 5 轮（Stop 阻断 3 次）；必派 eng-reviewer。
+<!-- /spine:flow -->
+
+<!-- spine:models -->
+当前 profile：**anthropic** — Anthropic API / Claude Platform（默认）
+
+| 档位 | Claude Code 别名 → 模型 | Cursor slug | 上下文 |
+| --- | --- | --- | --- |
+| frontier | `opus` → `claude-opus-5-5` | `claude-opus-5-5-high` | 1000000 |
+| mid | `sonnet` → `claude-sonnet-5-5` | `claude-sonnet-5-5-medium` | 1000000 |
+| light | `haiku` → `claude-haiku-5-5` | `composer-2.5-fast` | 200000 |
+<!-- /spine:models -->
+
+> **一次通过**：③执行前满足就绪定义（验收标准 / 完整影响清单 / 预选验证命令 / 预选审查者）；交审前用同一份七维自检。R20 七维（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决；配置/修改必须与文档/注释同步）。审查政策 → verification skill。Claude Stop exit 2；Cursor 无完成门 followup。计划未批准 / 仅 `*.plan.md` / 纯澄清问答不进入完成态。简单旁路不 Read executing-plans/subagent-driven-development。
 
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
 
 **状态机**：DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED
 **显式触发**：TDD 与 SDD **仅用户明确要求时启用**。
-
-```
-门控: ① HARD-GATE 批准设计  ② spec-validation + 成功标准  ③ 构建/Lint + R16
-④ 质量门 + 交叉验证 + R20 七维（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决；配置/修改必须与文档/注释同步）
-   改→验→审查前刷图→并行全新审查。政策 → verification skill。Claude Stop exit 2；Cursor 无完成门 followup
-⑤ claude-mem pattern
-```
 
 ## 铁律 R1–R20
 
@@ -129,7 +145,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 ## 审查路由
 
-> 正文 → `rules/AGENTS.md`；政策/七维/轮次 → verification skill。必派 `eng-reviewer`；产品 `+ceo-reviewer`；UI `+designer`+`dx-reviewer`；安全 `+security-reviewer`；测试边界 `+qa`。无依赖同一消息并行 Task；有依赖串行。审查者只读；修改只走 `change-implementer`。
+> 路由 = `config/workflow.yaml` `review.routing`（派生到 `rules/AGENTS.md`）；政策 → verification skill。无依赖同一消息并行 Task；有依赖串行。审查者只读；修改只走 `change-implementer`。
 
 ## 命令速查
 
@@ -147,6 +163,7 @@ MANIFEST → P0路由集(6) → 全局 skill → catalog → agent → MCP
 
 | 内容 | 位置 |
 | ---------------- | ---------------------------------------------------------------------------------------- |
+| 调度主干（模型/阶段/门控） | config/workflow.yaml + docs/DEV_FLOW.md |
 | 归属/harness | MANIFEST.yaml |
 | 法典/变更史 | SPEC.md + CHANGELOG.md |
 | 铁律/编码/图谱 | rules/CORE.md |

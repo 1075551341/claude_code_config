@@ -29,7 +29,7 @@
 | 目录                 | 数量                       | 用途                                                                                                                      |
 | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/`             | 19 注册激活                | standard profile（settings.json 已注册）                                                                                  |
-| `hooks/`（未注册 5） | 5                          | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor / stop-graph-freshness（TRAE/Qoder Stop） |
+| `hooks/`（未注册 1） | 1                          | stop-graph-freshness（TRAE/Qoder Stop）；v12 删除 pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor |
 | `hooks/_lib/`        | 11 py + `gate_messages.md` | 上列 + `graph_freshness.py`（双图 ensure / deny / 验绿后 sync.ps1）                                                       |
 
 ---

@@ -1,13 +1,14 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.6.0** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 阶段主干 × 三横切 | **v12.0.0** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.6.0）                                                                 |
+| `SPEC.md`       | 配置法典（v12.0.0）                                                                 |
+| `config/workflow.yaml` | 工作流主干：模型 profile/档位、角色、阶段门、质量标准、审查契约（`scripts/workflow.py` 渲染） |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -16,15 +17,15 @@
 
 | 目录         | 内容                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------ |
-| `skills/`    | 36 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
-| `agents/`    | 17 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
+| `skills/`    | 35 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
+| `agents/`    | 16 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
 | `rules/`     | 12 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
-| `hooks/`     | 生命周期钩子（19 注册激活 + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
+| `hooks/`     | 生命周期钩子（注册激活（`settings.json`） + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
 | `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
 | `docs/`      | SYNC_GUIDE + research/（调研 SSOT）+ ADR/（RUNTIME_PLAYBOOK 已并入 CLAUDE.md/rules） |
-| `scripts/`   | sync.ps1、validate_config.py、check.ps1                                              |
+| `scripts/`   | sync.ps1、validate_config.py、workflow.py、check.ps1                                 |
 | `templates/` | OpenSpec/GSD/DESIGN 模板                                                             |
-| `catalog/`   | 按需变体库 107+48+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
+| `catalog/`   | 按需变体库 100+41+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
 
 ## 五柱骨架
 
@@ -49,13 +50,16 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 ## 验证
 
 ```powershell
-python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
+python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描；V21 主干同步）
+python scripts/workflow.py check    # 主干校验 + 生成块漂移
+python hooks/tests/test_workflow_spine.py  # 主干回归（全 profile / 约束 / 漂移）
 pwsh scripts/check.ps1              # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v11.6.0**（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.17。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
+- 当前：**v12.0.0**（2026-10-24）— 配置驱动主干 `config/workflow.yaml`：换模型只改 `models.active_profile`（anthropic/kimi/deepseek/single），`scripts/workflow.py render` 重写 agent frontmatter、审查契约、阶段门、质量门与上下文窗口；合并 code-reviewer→eng-reviewer、pr-workflow→ship，删 catalog 同名重复与 4 个未注册 hook。Guard 1.2.17。落地：`git pull` → 非 Anthropic 后端先改 `models.active_profile` 并 `render` → `python scripts/workflow.py check` → `apply-settings --write` → `sync-compact-window.py` → `sync.ps1 -All`（见 `docs/DEV_FLOW.md` 迁移）。
+- 前版：v11.6.0（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.17。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.5.0（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.4.13（2026-09-07）— MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；everything 非 Glob/非 R17。Guard 1.2.11
 - 前版：v11.4.12（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12

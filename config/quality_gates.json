@@ -17,7 +17,10 @@
     },
     "impact_manifest_gate": {
       "enabled": true,
-      "platforms": ["claude-code", "cursor"],
+      "platforms": [
+        "claude-code",
+        "cursor"
+      ],
       "description": "清单制品+diff差集校验（design-v2 方案A）：PostToolUse 记 git 基线并提醒落盘 IMPACT 制品；Stop 门比对 当前脏集−基线集 ⊆ 清单集，超集=followup（错改/漏改硬证据）。非git仓库静默降级 DONE_WITH_CONCERNS"
     }
   },
@@ -59,6 +62,7 @@
       "dx-reviewer",
       "qa",
       "security-reviewer",
+      "codex-reviewer",
       "code-reviewer"
     ],
     "require_reviewer_min_files": 1,

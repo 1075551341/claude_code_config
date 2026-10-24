@@ -1,12 +1,11 @@
 # Agents 索引
 
-> 自动生成 | 源：`agents/` | v11.6.0（17 全量；catalog 变体见 `catalog/agents/`）
+> 自动生成 | 源：`agents/` | v12.0.0（16 全量；档位/effort/模型 → `config/workflow.yaml` `roles`；catalog 变体见 `catalog/agents/`）
 
-## 核心 7
+## 核心 6
 
 - [planner](agents/planner.md) — 薄编排：调用 writing-plans skill
 - [code-explorer](agents/code-explorer.md) — 只读代码探索
-- [code-reviewer](agents/code-reviewer.md) — 代码审查（不改代码）
 - [build-error-resolver](agents/build-error-resolver.md) — 构建/编译/类型错误修复
 - [architect](agents/architect.md) — 系统架构设计
 - [spec-reviewer](agents/spec-reviewer.md) — 规格/计划文档审查
@@ -14,7 +13,7 @@
 
 ## gstack 审查 6
 
-- [eng-reviewer](agents/eng-reviewer.md) — 工程审查（所有变更必须通过）
+- [eng-reviewer](agents/eng-reviewer.md) — 工程 + 代码审查（所有变更必须通过；v12 并入 code-reviewer）
 - [ceo-reviewer](agents/ceo-reviewer.md) — 产品决策审查（含六问框架要点）
 - [designer](agents/designer.md) — UI/UX 审查
 - [dx-reviewer](agents/dx-reviewer.md) — 开发体验审查
@@ -30,6 +29,12 @@
 ## 跨模型 1
 
 - [codex-reviewer](agents/codex-reviewer.md) — 跨模型独立审查（发现 Claude 盲点）
+
+## v12 变更（原全局 → 去向）
+
+| 原 agent | 去向 |
+| --- | --- |
+| code-reviewer | 并入 `agents/eng-reviewer.md`（代码层视角）；hooks 仍识别旧名 |
 
 ## v11 变更（原全局 → 去向）
 
