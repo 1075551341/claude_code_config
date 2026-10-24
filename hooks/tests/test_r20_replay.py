@@ -1445,6 +1445,29 @@ def test_pass_requires_both_bars():
     check("bars: English evidence accepted", r20_replay.review_bars_ok(english))
     needs = base + "- 符合预期要求：NEEDS-CHANGES（证据：缺 X）\n- 原功能保持：通过（证据：ok）\n"
     check("bars: NEEDS-CHANGES verdict rejected", not r20_replay.review_bars_ok(needs))
+    good_req = "- 符合预期要求：通过（证据：逐条对应）\n"
+    for bad in (
+        "通过|不通过（证据：…）",
+        "部分通过（证据：需求 3 未做）",
+        "基本通过，但需求3未实现（证据：diff）",
+        "否（证据：hook X 失效）",
+        "❌ 不通过（证据：回归）",
+        "【不通过】证据：回归",
+        "未验证（证据：无）",
+        "待定",
+        "有回归：hook X 失效（证据：test_x）",
+        "Fails requirement 3 (evidence: diff)",
+        "NO",
+        "通过（证据：无）",
+        "通过（证据：…）",
+        "通过",
+    ):
+        txt = base + good_req + f"- 原功能保持：{bad}\n### P0\n- 证据：别处的证据不算\n"
+        check(f"bars: non-compliant 原功能保持 rejected: {bad}", not r20_replay.review_bars_ok(txt))
+    star = base + "* 符合预期要求：通过（证据：逐条对应）\n* 原功能保持：通过（证据：48 passed）\n"
+    check("bars: '* ' list prefix accepted", r20_replay.review_bars_ok(star))
+    numbered = base + "1. 符合预期要求：通过（证据：逐条对应）\n2. 原功能保持：✅ 通过（证据：check OK）\n"
+    check("bars: numbered list prefix accepted", r20_replay.review_bars_ok(numbered))
     check("bars: 原功能保持 does not shadow 原功能 field",
           r20_replay.field_value(REVIEW_PASS, "原功能") == "保持（证据：pytest）")
     entry = {

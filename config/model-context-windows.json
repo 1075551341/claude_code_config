@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "description": "上下文窗口登记表（模型无关：出厂不登记任何模型）。优先用模型名后缀 [1M]/[200K] 或 settings.json autoCompactWindow；需要时在本机 model_tokens 里自行登记 \"<模型名>\": <tokens>。",
+  "description": "上下文窗口登记表（模型无关：出厂不登记任何模型）。优先用模型名后缀 [1M]/[200K] 或 settings.json autoCompactWindow；需要登记时写到同目录 gitignore 的 model-context-windows.local.json：{\"model_tokens\": {\"<模型名>\": <tokens>}}（覆盖本表同名项，git pull 不冲突）。",
   "suffix_tokens": {
     "1M": 1000000,
     "256K": 262144,

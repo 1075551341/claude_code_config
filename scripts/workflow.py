@@ -40,14 +40,20 @@ TOP_KEYS = ("stages", "tracks", "completion", "quality", "review")
 # ── model-agnostic lint ───────────────────────────────────────────
 # 本包只描述角色/阶段/门控；模型与推理强度由调用方决定。下列模式命中即视为把配置绑到了具体模型或档位。
 MODEL_PATTERNS = (
-    r"\bclaude-(?:opus|sonnet|haiku|instant)\w*",
+    r"\bclaude-(?:opus|sonnet|haiku|instant|\d)\w*",
     r"\b(?:opus|sonnet|haiku)\b",
+    r"\bgpt\b",
     r"\bgpt-?\d[\w.]*",
-    r"\bo[134]-(?:mini|preview|pro)\b",
+    r"\bo[134](?:-(?:mini|preview|pro))?\b",
     r"\bkimi\b",
+    r"\bmoonshot\b",
     r"\bk[23]-\d+k\b",
     r"\bdeepseek\b",
+    r"\bminimax\b",
+    r"\bgemini\b",
     r"\bgemini-?\d",
+    r"\bllama\b",
+    r"\bmistral\b",
     r"\bgrok-?\d",
     r"\bcomposer-\d",
     r"\bqwen-?\d",
@@ -324,8 +330,12 @@ def body_review_contract(spine: dict) -> str:
         "- **PASS 必须同时满足两道门**，逐道写结论 + 证据；任一道缺证据或不满足即 "
         f"`{rv['verdicts'][1]}`：",
         *[f"  {x}" for x in _bars(spine)],
-        "- 输出须含以下两行（机械门按行解析：结论以 通过/不通过 开头，正文须含「证据」；缺行或不通过 = PASS 不成立）：",
-        *[f"  `- {b['label']}：通过|不通过（证据：…）`" for b in rv["pass_requires"].values()],
+        "- 输出须含以下两行，每道门单独一行（机械门逐行解析：PASS 时该行以「通过」开头、同一行写非空证据；"
+        "「基本通过 / 部分通过 / 待定」或缺行都不算 PASS；不通过时写「不通过」并给 NEEDS-CHANGES）：",
+        *[f"  `- {b['label']}：通过（证据：<观察到的具体输出或逐条对应>）`" for b in rv["pass_requires"].values()],
+        "- 本契约的输出要求优先于上文个人模板：七维各一行 + 两道门两行 + 结论行，缺一本轮无效。",
+        "- 审查者多为只读：「原功能保持」以主会话附带的测试 / validate / check 观察输出与相对起点的行为差异为证据，"
+        "并核对它与 diff 一致；未附或对不上即 NEEDS-CHANGES。",
     ])
 
 

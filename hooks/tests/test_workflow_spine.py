@@ -67,6 +67,14 @@ with tempfile.TemporaryDirectory() as tmp:
     check("lint flags vendor tier alias in prose", any(h.startswith("rules.md:1") for h in hits))
     check("lint flags effort key in config", any(h.startswith("config.json:1") for h in hits))
     check("lint ignores CHANGELOG history", not any("CHANGELOG" in h for h in hits))
+    for i, phrase in enumerate((
+        "推荐使用 MiniMax", "GPT Image 生成", "use Gemini for this", "run Llama locally",
+        "Mistral is best", "Moonshot backend", "try o1 here", "claude-3-5 works",
+    )):
+        (root / f"p{i}.md").write_text(phrase + "\n", encoding="utf-8")
+    hits = wf.lint(root)
+    for i, phrase in enumerate(("minimax", "gpt", "gemini", "llama", "mistral", "moonshot", "o1", "claude-3")):
+        check(f"lint flags {phrase}", any(h.startswith(f"p{i}.md:1") for h in hits))
 
 # ── 完成门：独立审查强制 ──
 check("review not required rejected",

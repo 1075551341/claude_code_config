@@ -53,7 +53,7 @@ source: obra/superpowers
 - **全新**：新开 `Task`，禁止 `resume`；对照原始要求 + 当前 diff + 本轮新鲜图谱全量重扫，上轮清单不得限定范围；审查者只读；修改只走 `change-implementer`；禁止边审边改。
 - **审查前刷图**：`last_edit` 之后增量刷新双图（`graph_freshness` `refresh_incremental`），`last_pre_review_graph_ts > last_edit_ts` 才能派审；SessionStart ensure / Stop refresh 不算；失败禁止开审。同轮并行审查者共享这一次刷新。
 - **路由**：`rules/AGENTS.md`（必派 eng-reviewer）。无依赖审查者同一消息并行。
-- **派发 prompt 必带**：原始要求原文；本轮已刷新；CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius；按七维输出。
+- **派发 prompt 必带**：原始要求原文；起点 tip 与变更清单；主会话已观察到的验证输出原文（测试 / validate / check）及相对起点的行为差异（审查者多为只读工具，须凭此核对「原功能保持」）；本轮已刷新；CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius；按七维输出。
 - **整轮判定**：任一审查者 `NEEDS-CHANGES` / 七维缺项 / 「PASS 但列必须修项」→ 整轮不通过 → 汇总完整清单派一次 `change-implementer` 集中改齐 → 验证 → 刷图 → 全新开审。
 - **干净 PASS**（全部审查者 PASS、七维有效、与验证证据一致）→ 任务完成，不再派审。
 - **轮次用尽仍未 PASS** → `BLOCKED`：向用户报告剩余问题与证据；不得声称完成，不得改记「跳过审查」。

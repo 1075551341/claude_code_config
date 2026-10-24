@@ -90,10 +90,11 @@
 | --- | --- |
 | `models` 多厂商 profiles、`roles` 档位 + effort、`triage` 档位 | 删除。模型与 effort 由调用方决定；agent frontmatter 不再有 `model` / `effort` |
 | `workflow.py show --profile` / `apply-settings` / `templates/claude-settings/model.snippet.json` | 删除。`settings.json` 由用户自己管理 |
-| `config/model-context-windows.json` 登记各厂商模型 | 出厂为空表；窗口来自模型名后缀、`autoCompactWindow` 或本机自行登记 |
+| `config/model-context-windows.json` 登记各厂商模型 | 出厂为空表；窗口来自模型名后缀、`autoCompactWindow` 或本机 `model-context-windows.local.json`（gitignore） |
 | 审查上限 5 轮；用尽后 DONE_WITH_CONCERNS 放行 | 上限 3 轮；用尽 = BLOCKED（未完成）；每条轨道含审查门 |
 | 16 agents / 35 skills / 12 rules / 18 commands | 9 / 26 / 6 / 14（去向见 CHANGELOG v13.0.0） |
 | v12 跨模型审查者（名含厂商） | `cross-model-reviewer`（去厂商化） |
+| `review.legacy_reviewer_names`：hooks 仍把旧名子代理（v12 前 code-reviewer、v12 跨模型审查者）计为审查者 | 删除：只认现行 7 个审查者名；旧名子代理的输出不再计入独立审查 |
 
 已部署用户：
 

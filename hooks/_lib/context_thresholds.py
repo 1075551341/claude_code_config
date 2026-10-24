@@ -5,7 +5,7 @@ Claude Code 上下文窗口与压缩阈值 SSOT（模型无关：本包不登记
 模型最大窗口 known_context_tokens（未知返回 None）：
   1. env.CLAUDE_CODE_MAX_CONTEXT_TOKENS
   2. 模型名后缀 [1M] / [200K] / …
-  3. config/model-context-windows.json model_tokens（出厂为空，用户本机自行登记）
+  3. config/model-context-windows.json model_tokens（出厂为空）+ 本机 model-context-windows.local.json（gitignore）
   4. 无模型名时：claude-hud context-cache 实测 context_window_size
 
 有效压缩窗口 ctx_window_tokens：
@@ -52,19 +52,30 @@ def _load_settings() -> dict:
     return {}
 
 
-@lru_cache(maxsize=1)
-def _load_registry() -> dict:
-    path = _registry_path()
+def _read_json(path: Path) -> dict | None:
     try:
         if path.is_file():
-            return json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
     except (OSError, json.JSONDecodeError):
         pass
-    return {
+    return None
+
+
+@lru_cache(maxsize=1)
+def _load_registry() -> dict:
+    registry = _read_json(_registry_path()) or {
         "suffix_tokens": {"1M": 1_000_000, "200K": 200_000, "128K": 128_000},
         "model_tokens": {},
         "default_tokens": 200_000,
     }
+    # 本机登记放 gitignore 的 .local.json，避免 git pull 冲突
+    local = _read_json(_registry_path().with_name("model-context-windows.local.json"))
+    if local:
+        merged = dict(registry.get("model_tokens") or {})
+        merged.update(local.get("model_tokens") or {})
+        registry = {**registry, "model_tokens": merged}
+    return registry
 
 
 def _parse_suffix_tokens(suffix: str, registry: dict) -> int | None:

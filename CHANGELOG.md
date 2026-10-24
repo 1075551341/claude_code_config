@@ -8,7 +8,7 @@
 - **推理强度外置**：去掉 per-agent effort、profile→effort 矩阵与所有派生块中的 effort；由被调用模型自身设置决定。
 - **模型无关 lint**：`workflow.py lint`（也在 `check` 与 validate_config V21 内）扫描全仓的模型 ID / 档位别名 / effort 键 / 子代理模型环境变量，以及 agent/skill/command frontmatter 的 `model:` / `effort:`；豁免 CHANGELOG、docs/archive|research|ADR、plugins/、hooks/tests/。
 - **完成定义（硬要求）**：新增 `completion`：四条轨道（simple / bug / non_simple / research）全部要求独立审查；完成 = ④验证观察证据 + 本轮全新独立审查 PASS。轮次用尽仍未 PASS ⇒ **BLOCKED（未完成）**，不再「DONE_WITH_CONCERNS 放行」；用户显式豁免最多 DONE_WITH_CONCERNS。简单任务不豁免审查。校验器要求每条轨道含 ④验证、`required_on_tracks` 覆盖全部轨道。
-- **PASS 两道关（硬要求）**：`review.pass_requires` = 符合预期要求（逐条对照目标/验收标准，无遗漏、无破坏需求的越界改动）+ 原功能保持（相对起点无静默回归，附测试 / validate / check / 行为 diff 证据，有意行为变更逐条列出）。审查者契约、verification skill、/review、CI 模板同源渲染；`r20_replay.review_bars_ok` 机械校验两字段非空、含「证据」、无失败词，缺任一则 PASS 不算干净；V21 校验标签与 hooks `PASS_BAR_LABELS` 一致。
+- **PASS 两道关（硬要求）**：`review.pass_requires` = 符合预期要求（逐条对照目标/验收标准，无遗漏、无破坏需求的越界改动）+ 原功能保持（相对起点无静默回归，附测试 / validate / check / 行为 diff 证据，有意行为变更逐条列出）。审查者契约与 verification skill 由主干同源渲染（含两道关逐字输出行），/review 与手写 CI 模板同步措辞；`r20_replay.review_bars_ok` 机械校验两道关各一行（规则见下方第 2 轮修正），缺任一则 PASS 不算干净；V21 校验标签与 hooks `PASS_BAR_LABELS` 一致。
 - **一次通过 ≤3 轮**：`review.max_rounds` 默认 3，校验器上限 3；`max_blocks` ≥ `max_rounds`。Stop 门、Cursor Guard、OpenCode/editor 文案的回退默认值 5→3；阻断/轮次用尽提示状态 = BLOCKED。
 - **大幅精简**：
   - agents 16→9：删 code-explorer、architect、agentic-orchestrator、build-error-resolver、spec-reviewer、sre、doc-writer（去向见 `agents/README.md`）；跨模型审查者更名 `cross-model-reviewer` 并去厂商化。校验器要求无孤儿 agent（每个 agent 是阶段角色或路由审查者）。
@@ -17,8 +17,10 @@
   - commands 18→14：删 /clear、/status（编辑器内置）、/office-hours（catalog 技能）、/autoplan（审查路由在 workflow.yaml）。
 - **上下文窗口**：`context_thresholds` 删别名解析；`model-context-windows.json` 出厂为空（v2）；窗口来自模型名后缀 / 本机登记 / 显式 `autoCompactWindow`；V17 只在窗口可确认时比较上限。
 - **validate_config**：组件清单与上限对齐 9/26/6/14；V4 只检查保留的铁律编号；删除全栈 glob 检查；live policy 新增禁词（「最多 5 轮」「放行并标 DONE_WITH_CONCERNS」「模型匹配低」）；V20 R15 检查适配单行铁律索引；V21 增加 lint。
-- **测试**：`test_workflow_spine.py` 重写（48 项：校验 / 漂移 / lint / 旧键拒绝 / 完成门 / 两道关 / 轮次上限 / 上下文窗口）；`test_r20_replay.py` 新增两道关用例（197 项）。
+- **测试**：`test_workflow_spine.py` 重写（56 项：校验 / 漂移 / lint / 旧键拒绝 / 完成门 / 两道关 / 轮次上限 / 上下文窗口）；`test_r20_replay.py` 新增两道关正反例（217 项）；`scripts/test-cursor-guard-hooks.py`（模板隔离运行）69/69。
 - **审查修正（第 1 轮独立审查）**：`review_bars_ok` 只按结论开头判失败（「无静默回归」不再误杀），证据词接受 证据/观察/evidence，去掉 `**` 粗体标记再解析；审查契约渲染两道门的逐字输出行，eng-reviewer / verification 模板 / `/review` 同步；`gate_reader` 与 Guard `gate_messages` 回退轮次 5→3；`scripts/test-cursor-guard-hooks.py` 夹具补两道门行；`pre-manifest-validator` 恢复 requesting/receiving-code-review、finishing-a-development-branch 映射，新增 change-implementer，cross-model-reviewer / pair-agent 指向现存 concern。
+- **审查修正（第 2 轮独立审查）**：`review_bars_ok` 改白名单——每道关单独一行、以「通过/满足/PASS/✅」开头、同一行不得含不通过类词、证据非空（照抄模板、「部分通过」「待定」「❌」「证据：无」均拒绝）；字段解析接受 `*`/`•`/编号列表前缀；契约声明优先于个人模板，并要求主会话把观察到的测试/validate 输出与相对起点的行为差异交给只读审查者；lint 补 minimax/gpt/gemini/llama/mistral/moonshot/o1/claude-数字 形式，清掉 skill-reviewer 与 design-pipeline 的模型名；上下文登记改用 gitignore 的 `config/model-context-windows.local.json`；`templates/taskmaster/README.md` 去掉已删 `/office-hours` 命令引用。
+- **有意行为变更**：hooks 不再把旧名子代理（v12 前 code-reviewer、v12 跨模型审查者）计为独立审查（`legacy_reviewer_names` 删除）；Stop 门轮次/阻断用尽状态由 DONE_WITH_CONCERNS 改为 BLOCKED；默认轮次 5→3；PASS 必须带两道关行。
 - **已知限制**：Stop 机械门只在有交付编辑（`review.min_files: 1`）时触发；无编辑任务（调研/问答）的「独立审查必过」由流程规则（CLAUDE.md / verification skill / CORE R1）约束，不由 hook 阻断。未知模型的 `autoCompactWindow` 不再按 200K 封顶。
 - **迁移**：`git pull` → `python scripts/workflow.py check` → 若 v12 `apply-settings --write` 写过 `settings.json`，按需删除其中的推理强度键与别名重定向环境变量，自己选择会话模型 → `pwsh -File scripts/sync.ps1 -All`（Cursor 侧再跑 `deploy-cursor-guard.ps1`）。Guard 仍 1.2.17。
 

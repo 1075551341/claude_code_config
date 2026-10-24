@@ -5,7 +5,7 @@
 ## 何时用
 
 - 需要 PRD 格式 backlog，但不用 Task Master MCP 外部依赖
-- 产品需求已从 `/office-hours` 或 brainstorming 产出
+- 产品需求已从 brainstorming（或 catalog `office-hours` 技能） 产出
 
 ## 与 writing-plans 边界
 

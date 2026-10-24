@@ -154,7 +154,7 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 | 层                    | 配置                                              | 窗口           | 阈值                    |
 | --------------------- | ------------------------------------------------- | -------------- | ----------------------- |
-| **窗口解析**          | 模型名 `[1M]` 等后缀 → 本机登记 `config/model-context-windows.json`（出厂为空）→ 显式 `autoCompactWindow` | 调用方决定 | — |
+| **窗口解析**          | 模型名 `[1M]` 等后缀 → 登记表 `config/model-context-windows.json`（出厂为空）+ 本机 `model-context-windows.local.json`（gitignore）→ 显式 `autoCompactWindow` | 调用方决定 | — |
 | **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步）          | ≤ 已知窗口     | **70%** 自动 `/compact` |
 | **Hook 建议**         | `hooks/_lib/context_thresholds.py`                | 同上（封顶）   | 70% 建议 / **90% 强制** |
 | **HUD 状态条**        | claude-hud plugin                                 | API 实测       | 与模型一致              |

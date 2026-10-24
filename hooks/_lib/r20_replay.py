@@ -22,9 +22,10 @@ _PATH_RE = re.compile(
 _FIELD_NAMES = (
     "符合预期要求|原功能保持|满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决"
 )
+_FIELD_PREFIX = r"(?:[-*•]|\d+[.)、])?"
 _FIELD_RE = re.compile(
-    rf"(?:^|\n)\s*-?\s*({_FIELD_NAMES})\s*[：:][ \t]*(.*?)(?="
-    rf"(?:\n\s*-?\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
+    rf"(?:^|\n)\s*{_FIELD_PREFIX}\s*({_FIELD_NAMES})\s*[：:][ \t]*(.*?)(?="
+    rf"(?:\n\s*{_FIELD_PREFIX}\s*(?:{_FIELD_NAMES})\s*[：:])|\n结论|$)",
     re.S,
 )
 _HEADING_RE = re.compile(
@@ -213,24 +214,26 @@ def review_dimensions_ok(text: str) -> bool:
 
 # PASS 两道门（名称须与 config/workflow.yaml review.pass_requires.*.label 一致，V21 校验）
 PASS_BAR_LABELS = ("符合预期要求", "原功能保持")
-_BAR_EVIDENCE_RE = re.compile(r"证据|观察|evidence", re.I)
-# 只看结论开头：正文里「无静默回归」「未满足项已修」之类描述不算自认失败
-_BAR_FAIL_RE = re.compile(
-    r"^[\s:：\-—*`]*(?:不通过|未通过|不满足|未满足|部分满足|NEEDS-CHANGES|FAIL(?:ED)?\b)",
-    re.I,
-)
+# 白名单：本行结论须以通过类词开头（「基本通过」「部分通过」「否」「❌」等一律不算）
+_BAR_PASS_RE = re.compile(r"^[\s`【\[(（]*(?:通过|满足|PASS\b|✅)", re.I)
+# 模板图例（通过|不通过）原样照抄或同行自相矛盾
+_BAR_CONTRADICT_RE = re.compile(r"不通过|未通过|不满足|未满足|NEEDS-CHANGES", re.I)
+_BAR_EVIDENCE_RE = re.compile(r"(?:证据|观察|evidence)\s*[：:]?\s*([^）)]*)", re.I)
+_BAR_EMPTY_EVIDENCE = {"", "无", "…", "...", "……", "none", "n/a", "na", "-", "—", "略", "待补"}
 
 
 def review_bars_ok(text: str) -> bool:
-    """PASS 须逐道写两道门结论 + 证据；任一缺失、无证据或结论为不通过 → 不算干净 PASS。"""
+    """PASS 须逐道单独一行：「<门>：通过（证据：<非空>）」；缺行、非通过开头、同行含不通过、证据为空 → 不算干净 PASS。"""
     plain = (text or "").replace("**", "")
     for label in PASS_BAR_LABELS:
         val = field_value(plain, label)
-        if not val or val.strip().lower() in _FIELD_BLANK:
+        line = val.splitlines()[0].strip() if val else ""
+        if not line or line.lower() in _FIELD_BLANK:
             return False
-        if not _BAR_EVIDENCE_RE.search(val):
+        if not _BAR_PASS_RE.search(line) or _BAR_CONTRADICT_RE.search(line):
             return False
-        if _BAR_FAIL_RE.search(val):
+        ev = _BAR_EVIDENCE_RE.search(line)
+        if not ev or ev.group(1).strip(" ：:，,。.;；").lower() in _BAR_EMPTY_EVIDENCE:
             return False
     return True
 
