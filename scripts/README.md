@@ -101,15 +101,15 @@ pwsh -ExecutionPolicy Bypass -File check.ps1
 pwsh -ExecutionPolicy Bypass -File check.ps1 -Quick   # 跳过 MCP 连通性，更快
 ```
 
-### `workflow.py` — 工作流主干（v12）
+### `workflow.py` — 工作流主干（v13）
 
-`config/workflow.yaml` 是模型档/角色/阶段门/质量标准/审查契约的唯一调度面；本脚本校验它并渲染全部派生内容（目标清单见 `docs/DEV_FLOW.md`「派生清单」）。
+`config/workflow.yaml` 是阶段/轨道/完成定义/质量标准/独立审查契约（≤3 轮、两道关）的唯一调度面；不含任何模型或推理强度。本脚本校验它、渲染派生内容（目标清单见 `docs/DEV_FLOW.md`「派生清单」），并 lint 全仓禁止模型/推理强度绑定。
 
 ```powershell
-python scripts/workflow.py check                    # 校验 + 漂移检测（V21 调用；有漂移 exit 1）
-python scripts/workflow.py render                   # 写回派生内容
-python scripts/workflow.py show --profile deepseek  # 预览某 profile 的模型/角色/阶段
-python scripts/workflow.py apply-settings --write   # 合并模型键进 ~/.claude/settings.json（备份 .bak_<时间戳>）
+python scripts/workflow.py check    # 校验 + 漂移 + 模型无关 lint（V21 调用；任一失败 exit 1）
+python scripts/workflow.py render   # 写回派生内容
+python scripts/workflow.py show     # 打印轨道/完成定义/审查契约
+python scripts/workflow.py lint     # 仅跑模型无关 lint
 ```
 
 回归：`python hooks/tests/test_workflow_spine.py`。
@@ -120,7 +120,7 @@ python scripts/workflow.py apply-settings --write   # 合并模型键进 ~/.clau
 python scripts/validate_config.py    # 含 R16 裸 except 扫描、核心 hooks 存在性、loading_tier 等
 ```
 
-V21（v12 新增）调用 `workflow.py` 校验主干并检测派生块漂移。V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
+V21 调用 `workflow.py` 校验主干、检测派生块漂移并跑模型无关 lint。V19（v10.17 新增）比对三大 INDEX 与磁盘双向一致：INDEX 不得引用已删除项，磁盘上的 skill/agent/rule 也不得漏登记。该检查原在 `scripts/tests/_simtest.py`，随该脚本删除移植进来，并顺带补上了此前无人覆盖的 rules-INDEX。
 
 ### `python-mcp.ps1` — Python 系 MCP 启动包装
 

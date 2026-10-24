@@ -1,6 +1,6 @@
 # 平台 / 运行时 / 包管理器 SSOT（v11.6）
 # 缺工具 → BLOCKED，给出安装命令。禁止 if-else 静默回退到旧工具（PS5.1 / npm / pip）。
-# 语言规则与 GOVERNANCE/CORE 只指向本文件，不在 alwaysApply 再加一条规则。
+# 语言规则与 CORE 只指向本文件，不在 alwaysApply 再加一条规则。
 
 missing_tool: BLOCKED
 

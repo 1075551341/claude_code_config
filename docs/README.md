@@ -9,7 +9,7 @@
 | 文档 | 描述 |
 | ---- | ---- |
 
-<!-- v11: RUNTIME_PLAYBOOK 已并入 CLAUDE.md（决策树）/ rules/CONTEXT.md（auto-compact）/ rules/MCP.md（双平台工具） -->
+<!-- v11: RUNTIME_PLAYBOOK 已并入 CLAUDE.md（决策树）/ rules/CORE.md（阈值）/ rules/MCP.md（双平台工具） -->
 
 | [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md) | Cursor 插件/MCP 边界 |
 | [CURSOR_EDITOR_SETUP.md](CURSOR_EDITOR_SETUP.md) | Cursor 编辑器专有设置 |

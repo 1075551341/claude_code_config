@@ -1,13 +1,13 @@
 # Skills 索引
 
-> 自动生成 | 源：`skills/` | 分级来自 MANIFEST loading_tiers | v12.0.0（35 全量 = L1×4 + L2×5 + L3×26；档位/模型 → `config/workflow.yaml`；catalog 变体见 `catalog/INDEX.md`）
+> 源：`skills/` | 分级来自 MANIFEST loading_tiers | v13.0.0（26 全量 = L1×4 + L2×5 + L3×17；流程/审查 SSOT → `config/workflow.yaml`；本包不绑定模型与推理强度；catalog 变体见 `catalog/INDEX.md`）
 
 ## L1 — 会话常驻 (4)
 
 - [using-superpowers](skills/using-superpowers/SKILL.md) — 技能发现与 Tool-First 路由
 - [change-impact-analysis](skills/change-impact-analysis/SKILL.md) — 变更影响分析，改前必执行
 - [brainstorming](skills/brainstorming/SKILL.md) — HARD-GATE 方案设计（非简单任务必加载）
-- [task-triage](skills/task-triage/SKILL.md) — 判定 SSOT：Phase0盘点；简单=关联需改≤2+白名单+六维全低+模型匹配低+attempt=1（缺一不可）；持续处理执行升档；非简单先 grill；完成前均须验证
+- [task-triage](skills/task-triage/SKILL.md) — 分类 SSOT：Phase0 盘点；简单=关联需改≤2+白名单+五维全低+attempt=1；简单不豁免独立审查
 
 ## L2 — 阶段门控 (5)
 
@@ -16,50 +16,40 @@
 | 2规格 | [writing-plans](skills/writing-plans/SKILL.md)                                   | 原子级实施计划     |
 | 2规格 | [spec-validation](skills/spec-validation/SKILL.md)                               | spec可验证验收标准 |
 | 3执行 | [executing-plans](skills/executing-plans/SKILL.md)                               | 按计划逐步执行     |
-| 3调试 | [systematic-debugging](skills/systematic-debugging/SKILL.md)                     | 根因分析/5Why      |
-| 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 完成前交叉验证     |
+| 3调试 | [systematic-debugging](skills/systematic-debugging/SKILL.md)                     | 根因分析（含原 triage 分级） |
+| 4验证 | [verification-before-completion](skills/verification-before-completion/SKILL.md) | 验证 + 独立审查（两道关）+ 完成定义 |
 
-## L3 — 信号触发 (26)
+## L3 — 信号触发 (17)
 
-### 显式触发工作流（v10.15 起默认关闭，仅用户明确要求时启用）
+### 显式触发工作流（仅用户明确要求时启用）
 
-- [test-driven-development](skills/test-driven-development/SKILL.md) — RED-GREEN-REFACTOR（loading_tier: L3）
-- [subagent-driven-development](skills/subagent-driven-development/SKILL.md) — 子Agent两阶段审查（loading_tier: L3）
+- [test-driven-development](skills/test-driven-development/SKILL.md) — RED-GREEN-REFACTOR
+- [subagent-driven-development](skills/subagent-driven-development/SKILL.md) — 子Agent派发 + 两阶段审查
 
 ### 调研与决策
 
-- [deep-research](skills/deep-research/SKILL.md) — L3 深度调研（Firecrawl+Exa+V1-V5验证）
+- [deep-research](skills/deep-research/SKILL.md) — 深度调研（Firecrawl+Exa+交叉验证）
 - [adr-management](skills/adr-management/SKILL.md) — 架构决策记录管理
 
-### 审查与质量
+### 审查（薄壳，覆盖上游同名技能 → verification-before-completion）
 
-- [requesting-code-review](skills/requesting-code-review/SKILL.md) — 请求代码审查
-- [receiving-code-review](skills/receiving-code-review/SKILL.md) — 接收审查反馈
-- [autoplan](skills/autoplan/SKILL.md) — 自动CEO-Design-Eng审查流水线
+- [requesting-code-review](skills/requesting-code-review/SKILL.md) — 薄壳 → 独立审查契约
+- [receiving-code-review](skills/receiving-code-review/SKILL.md) — 薄壳 → 集中改齐流程
 
 ### 设计与UI
 
-- [design-pipeline](skills/design-pipeline/SKILL.md) — 设计管线（探索-对比板-HTML；v11 并入 design-engineer Phase 2）
+- [design-pipeline](skills/design-pipeline/SKILL.md) — 设计管线（探索-对比板-HTML）
 
 ### 上下文与记忆
 
 - [memory-compression](skills/memory-compression/SKILL.md) — 上下文压缩与跨会话记忆
 - [claude-mem-maintenance](skills/claude-mem-maintenance/SKILL.md) — claude-mem 记忆维护
+- [caveman-compress](skills/caveman-compress/SKILL.md) — 输出压缩（caveman模式）
 
-### 代码架构
+### 技能治理
 
-- [improve-codebase-architecture](skills/improve-codebase-architecture/SKILL.md) — 代码库架构改进
-- [karpathy-guidelines](skills/karpathy-guidelines/SKILL.md) — Karpathy 四原则
-- [structured-artifacts](skills/structured-artifacts/SKILL.md) — GSD 结构化制品管理
-
-### 重构与技能治理
-
-- [code-refactoring](skills/code-refactoring/SKILL.md) — 行为保持重构（圈复杂度/坏味道/安全重构；v11 并入前端提案模式）
-- [frontend-library-advisor](skills/frontend-library-advisor/SKILL.md) — 前端 npm 库选型推荐
-- [frontend-design-pattern-applier](skills/frontend-design-pattern-applier/SKILL.md) — 前端坏味道→设计模式重构
 - [skill-creator](skills/skill-creator/SKILL.md) — 创建/更新有效技能指南
 - [skill-reviewer](skills/skill-reviewer/SKILL.md) — skill 合规性审查
-- [test-edge-case-analyzer](skills/test-edge-case-analyzer/SKILL.md) — 边界测试场景发现
 
 ### 执行与编排
 
@@ -69,31 +59,18 @@
 ### Git与发布
 
 - [git-workflow](skills/git-workflow/SKILL.md) — Git 工作流
-- [ship](skills/ship/SKILL.md) — 交付管线唯一正文（v12 并入 pr-workflow + 分支完成）
+- [ship](skills/ship/SKILL.md) — 交付管线唯一正文（前置：独立审查 PASS）
 - [finishing-a-development-branch](skills/finishing-a-development-branch/SKILL.md) — 薄壳 → ship（覆盖上游同名技能）
 
-### 优化与学习
-
-- [caveman-compress](skills/caveman-compress/SKILL.md) — 输出压缩（caveman模式）
-
-### 导航与引导
-
-- [triage](skills/triage/SKILL.md) — Bug分类（P0-P3）
-
-## v12 变更（原全局 → 去向）
+## v13 变更（原全局 → 去向）
 
 | 原 skill | 去向 |
 | --- | --- |
-| pr-workflow | 并入 `skills/ship/`（开 PR 流程） |
-| finishing-a-development-branch | 正文并入 `skills/ship/`；本名保留薄壳覆盖上游 |
+| karpathy-guidelines | 删除；四原则并入 `rules/CORE.md` 开发习惯 |
+| triage | 删除；P0-P3 分级并入 `systematic-debugging` / `task-triage` |
+| autoplan | 删除；审查路由 → `config/workflow.yaml` review.routing |
+| structured-artifacts | 删除；制品约定 → `rules/CORE.md` R13 |
+| improve-codebase-architecture / code-refactoring | 删除；行为保持靠 R20「原功能保持」审查关 |
+| frontend-library-advisor / frontend-design-pattern-applier / test-edge-case-analyzer | 删除；领域知识按需 → `catalog/` |
 
-## v11 变更（原全局 → 去向）
-
-| 原 skill                                                                                             | 去向                                                                    |
-| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| office-hours / instinct-learning / onboarding-guide / claude-to-deerflow / browser-qa / taste-memory | 降级 `catalog/skills/`（按需复制进项目）                                |
-| context-engineering                                                                                  | 删除（正文并入 `rules/CONTEXT.md`）                                     |
-| frontend-refactor-proposer                                                                           | 并入 `skills/code-refactoring/`（子文档 frontend-refactor-proposal.md） |
-| writing-skills                                                                                       | 并入 `skills/skill-creator/`（前言：技能编写元理念）                    |
-
-> superpowers 系 13 技能（brainstorming/writing-plans/…）为本地深度定制版（五阶段/门控/verify_tier 集成，相似度<10%），**保留本地权威**，插件版仅作上游参考。
+> superpowers 同名技能为本地定制版或薄壳，**本地权威**；删除同名本地技能会让上游插件版生效，故审查/分支完成类保留薄壳。

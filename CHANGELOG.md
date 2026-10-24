@@ -2,6 +2,24 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v13.0.0 模型无关 · 一次通过 · 独立审查门（2026-10-24）
+
+- **不绑定模型**：配置、agents、rules、skills、hooks、CLAUDE.md、Cursor 规则与 `workflow.yaml` 不再出现模型 ID、厂商档位别名或「用某模型」措辞。删除 `workflow.yaml` 的 `models` / `roles` / `constraints` / `triage` / `legacy_reviewer_names`，删除 `workflow.py show --profile` 与 `apply-settings`、`templates/claude-settings/model.snippet.json`、`catalog/skills/claude-api`；agents 与 ~40 个 catalog agents 的 frontmatter 去掉 `model:`；CURSOR-EDITOR.mdc 厂商模型表换成「完成定义」派生块；CI 模板去掉 `model:`。模型由会话 / settings / 编辑器 / Task 传参决定，agent 一律继承。
+- **推理强度外置**：去掉 per-agent effort、profile→effort 矩阵与所有派生块中的 effort；由被调用模型自身设置决定。
+- **模型无关 lint**：`workflow.py lint`（也在 `check` 与 validate_config V21 内）扫描全仓的模型 ID / 档位别名 / effort 键 / 子代理模型环境变量，以及 agent/skill/command frontmatter 的 `model:` / `effort:`；豁免 CHANGELOG、docs/archive|research|ADR、plugins/、hooks/tests/。
+- **完成定义（硬要求）**：新增 `completion`：四条轨道（simple / bug / non_simple / research）全部要求独立审查；完成 = ④验证观察证据 + 本轮全新独立审查 PASS。轮次用尽仍未 PASS ⇒ **BLOCKED（未完成）**，不再「DONE_WITH_CONCERNS 放行」；用户显式豁免最多 DONE_WITH_CONCERNS。简单任务不豁免审查。校验器要求每条轨道含 ④验证、`required_on_tracks` 覆盖全部轨道。
+- **PASS 两道关（硬要求）**：`review.pass_requires` = 符合预期要求（逐条对照目标/验收标准，无遗漏、无破坏需求的越界改动）+ 原功能保持（相对起点无静默回归，附测试 / validate / check / 行为 diff 证据，有意行为变更逐条列出）。审查者契约、verification skill、/review、CI 模板同源渲染；`r20_replay.review_bars_ok` 机械校验两字段非空、含「证据」、无失败词，缺任一则 PASS 不算干净；V21 校验标签与 hooks `PASS_BAR_LABELS` 一致。
+- **一次通过 ≤3 轮**：`review.max_rounds` 默认 3，校验器上限 3；`max_blocks` ≥ `max_rounds`。Stop 门、Cursor Guard、OpenCode/editor 文案的回退默认值 5→3；阻断/轮次用尽提示状态 = BLOCKED。
+- **大幅精简**：
+  - agents 16→9：删 code-explorer、architect、agentic-orchestrator、build-error-resolver、spec-reviewer、sre、doc-writer（去向见 `agents/README.md`）；跨模型审查者更名 `cross-model-reviewer` 并去厂商化。校验器要求无孤儿 agent（每个 agent 是阶段角色或路由审查者）。
+  - skills 35→26：删 karpathy-guidelines（并入 CORE 开发习惯）、triage（并入 systematic-debugging 分诊）、autoplan、structured-artifacts、improve-codebase-architecture、code-refactoring、frontend-library-advisor、frontend-design-pattern-applier、test-edge-case-analyzer；requesting/receiving-code-review 与 finishing-a-development-branch 保留为薄壳（防上游同名插件技能接管）。task-triage 去掉「模型匹配」维（六维→五维）。
+  - rules 12→6：删 WORKFLOW、CONTEXT、GOVERNANCE、FRONTEND、BACKEND、DATABASE；CORE 重写为一张铁律表（R2/R6/R7/R10 退役，R1 = 证据 + 独立审查 PASS）+ 开发习惯 + 工具路由 + 阈值。
+  - commands 18→14：删 /clear、/status（编辑器内置）、/office-hours（catalog 技能）、/autoplan（审查路由在 workflow.yaml）。
+- **上下文窗口**：`context_thresholds` 删别名解析；`model-context-windows.json` 出厂为空（v2）；窗口来自模型名后缀 / 本机登记 / 显式 `autoCompactWindow`；V17 只在窗口可确认时比较上限。
+- **validate_config**：组件清单与上限对齐 9/26/6/14；V4 只检查保留的铁律编号；删除全栈 glob 检查；live policy 新增禁词（「最多 5 轮」「放行并标 DONE_WITH_CONCERNS」「模型匹配低」）；V20 R15 检查适配单行铁律索引；V21 增加 lint。
+- **测试**：`test_workflow_spine.py` 重写（48 项：校验 / 漂移 / lint / 旧键拒绝 / 完成门 / 两道关 / 轮次上限 / 上下文窗口）；`test_r20_replay.py` 新增两道关用例（197 项）。
+- **迁移**：`git pull` → `python scripts/workflow.py check` → 若 v12 `apply-settings --write` 写过 `settings.json`，按需删除其中的推理强度键与别名重定向环境变量，自己选择会话模型 → `pwsh -File scripts/sync.ps1 -All`（Cursor 侧再跑 `deploy-cursor-guard.ps1`）。Guard 仍 1.2.17。
+
 ## v12.0.0 配置驱动主干：`config/workflow.yaml` 单一调度面（2026-10-24）
 
 - **主干 SSOT**：新增 `config/workflow.yaml`，集中定义 `models`（profile anthropic/kimi/deepseek/single × 档位 frontier/mid/light，含 Claude 别名、具体模型、Cursor slug、上下文、effort 能力）、`roles`（agent → 档位 + effort）、`constraints`（审查者档位 ≥ 修改者）、`triage`、`stages`（进入/退出门）、`tracks`（simple/bug/non_simple/research）、`quality`（就绪定义 / 交审自检 / 验证档）、`review`（七维 + 提示、结论、轮次 5 / 阻断 3、路由、旧名）。换模型只改 `models.active_profile`。

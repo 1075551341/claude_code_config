@@ -10,7 +10,7 @@ V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
 V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）/
-V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移（scripts/workflow.py check）。
+V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移 + 无模型/推理强度绑定（scripts/workflow.py check）。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -58,64 +58,40 @@ V20_SCRIPT_PWSH_PS_FALLBACK_RE = re.compile(
     r"[\s\S]{0,400}?powershell(?:\.exe)?",
 )
 
-# v12: code-reviewer 并入 eng-reviewer
-CORE_AGENTS = {
-    "planner", "code-explorer", "build-error-resolver",
-    "architect", "spec-reviewer", "agentic-orchestrator",
+# v13: 9 agents = 2 stage roles + 7 independent reviewers (config/workflow.yaml SSOT)
+STAGE_AGENTS = {"planner", "change-implementer"}
+REVIEW_AGENTS = {
+    "eng-reviewer", "ceo-reviewer", "designer", "dx-reviewer", "qa",
+    "security-reviewer", "cross-model-reviewer",
 }
-GSTACK_REVIEW_AGENTS = {
-    "eng-reviewer", "ceo-reviewer", "designer", "dx-reviewer", "qa", "security-reviewer",
-}
-# v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline；
-# product-manager 删除；performance-engineer/pair-agent/ios-specialist/land-and-deploy/design-shotgun 降级 catalog/agents/
-GSTACK_SUPPLEMENT_AGENTS = {
-    "sre", "doc-writer", "codex-reviewer", "change-implementer",
-}
-REQUIRED_AGENTS = CORE_AGENTS | GSTACK_REVIEW_AGENTS | GSTACK_SUPPLEMENT_AGENTS
-GLOBAL_AGENTS_MAX = 16  # v12: 6 核心 + 6 审查 + 3 补全 + 1 跨模型
+REQUIRED_AGENTS = STAGE_AGENTS | REVIEW_AGENTS
+GLOBAL_AGENTS_MAX = 9
 
 P0_SKILLS = {
     "using-superpowers", "brainstorming", "change-impact-analysis",
     "verification-before-completion", "systematic-debugging", "task-triage",
 }
+# superpowers 同名：本地定制或薄壳，删除会让上游插件版生效
 WORKFLOW_SKILLS = {
     "writing-plans", "executing-plans", "test-driven-development",
     "subagent-driven-development", "using-git-worktrees", "receiving-code-review",
     "requesting-code-review", "finishing-a-development-branch",
-}  # v11: writing-skills 并入 skill-creator 前言
-META_SKILLS = {
-    "memory-compression", "spec-validation", "karpathy-guidelines", "caveman-compress",
 }
-# v11: office-hours/browser-qa/instinct-learning/onboarding-guide/claude-to-deerflow/taste-memory 降级 catalog/skills/；
-# context-engineering 删除（rules/CONTEXT.md 为唯一正文）；frontend-refactor-proposer 并入 code-refactoring
-EXTENSION_SKILLS = {
-    "autoplan", "design-pipeline", "ship", "structured-artifacts",
+SUPPORT_SKILLS = {
+    "memory-compression", "spec-validation", "caveman-compress",
+    "design-pipeline", "ship", "workstream-management", "adr-management",
 }
-MATTPOCOCK_SKILLS = {"triage", "improve-codebase-architecture"}
-V9_SKILLS = {
-    "workstream-management", "adr-management",
-}
-REQUIRED_SKILLS = (
-    P0_SKILLS | WORKFLOW_SKILLS | META_SKILLS | EXTENSION_SKILLS
-    | MATTPOCOCK_SKILLS | V9_SKILLS
-)
-GLOBAL_SKILLS_MAX = 35  # v12: pr-workflow 并入 ship；v11 定稿：superpowers 系 12 技能均为本地深度定制（相似度<10%），保留本地权威；writing-skills 并入 skill-creator
+REQUIRED_SKILLS = P0_SKILLS | WORKFLOW_SKILLS | SUPPORT_SKILLS
+GLOBAL_SKILLS_MAX = 26
 
-# v11.5: BACKEND.md + DATABASE.md 薄层 glob；FRONTEND 去项目特例
-GLOBAL_RULES = {
-    "CORE.md", "SECURITY.md", "GIT.md", "WORKFLOW.md",
-    "AGENTS.md", "MCP.md", "CONTEXT.md", "OPENSPEC.md",
-    "FRONTEND.md", "GOVERNANCE.md", "BACKEND.md", "DATABASE.md",
-}
-GLOBAL_RULES_MAX = 12
+GLOBAL_RULES = {"CORE.md", "AGENTS.md", "GIT.md", "MCP.md", "OPENSPEC.md", "SECURITY.md"}
+GLOBAL_RULES_MAX = 6
+IRON_LAWS = ("R1", "R3", "R4", "R5", "R8", "R9", "R11", "R12", "R13", "R14",
+             "R15", "R16", "R17", "R18", "R19", "R20")
 LIVE_POLICY_PATHS = (
     "CLAUDE.md",
     "rules/CORE.md",
     "rules/AGENTS.md",
-    "rules/GOVERNANCE.md",
-    "rules/FRONTEND.md",
-    "rules/BACKEND.md",
-    "rules/DATABASE.md",
     "skills/verification-before-completion/SKILL.md",
     "skills/executing-plans/SKILL.md",
     "skills/task-triage/SKILL.md",
@@ -124,10 +100,12 @@ LIVE_POLICY_PATHS = (
     "templates/cursor-guard/rules/CURSOR-EDITOR.mdc",
     "docs/DEV_FLOW.md",
     "commands/verify.md",
+    "commands/review.md",
     "agents/eng-reviewer.md",
     "hooks/_lib/gate_messages.md",
 )
-LIVE_POLICY_BANS = ("最多 3 轮", "只读免审")
+# 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成
+LIVE_POLICY_BANS = ("只读免审", "最多 5 轮", "放行并标 DONE_WITH_CONCERNS", "模型匹配低")
 
 
 def check_json(path, label):
@@ -215,17 +193,12 @@ def v4_iron_laws_consistency():
         core = fh.read()
     with open(claude_path, "r", encoding="utf-8") as fh:
         claude = fh.read()
-    for i in range(1, 21):
-        if i == 0:
-            continue
-        tag = f"R{i}"
-        if tag not in claude and tag not in core:
+    for tag in IRON_LAWS:
+        if not re.search(rf"(?<![A-Za-z0-9]){tag}(?![0-9])", claude + "\n" + core):
             ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
     for tag in ("R17", "R18", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
-    if "Karpathy" not in core or "Karpathy" not in claude:
-        ERRORS.append("V4: Karpathy principles missing from CORE.md or CLAUDE.md")
     verif_path = os.path.join(BASE, "skills", "verification-before-completion", "SKILL.md")
     extra = core
     if os.path.exists(verif_path):
@@ -412,8 +385,8 @@ def main():
     if os.path.isdir(commands_dir):
         required_commands = {
             "discuss", "plan", "execute", "verify", "ship", "review",
-            "compact", "clear", "status", "propose", "apply", "archive",
-            "autoplan", "office-hours", "workstream", "adr", "deep-research", "sync",
+            "compact", "propose", "apply", "archive",
+            "workstream", "adr", "deep-research", "sync",
         }
         cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
         missing_cmds = required_commands - cmd_files
@@ -437,7 +410,6 @@ def main():
     check_v15_loading_tiers()
     check_v16_codegraph_mandate()
     check_live_policy_bans()
-    check_fullstack_globs()
     check_v17_bare_except_extended()
     check_v17_auto_compact_window()
     check_v18_codebase_memory_optional()
@@ -455,7 +427,7 @@ def main():
 
 
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v12 VALIDATION (21 checks) ===")
+    print("=== .claude v13 VALIDATION (21 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
@@ -825,7 +797,7 @@ def check_v14_cursor_guard_v11():
 
 
 def check_v17_auto_compact_window():
-    """V17: autoCompactWindow 须与当前模型解析窗口一致，且不得超过模型最大上下文."""
+    """V17: autoCompactWindow 有效；模型窗口可确认时不得超过且应一致（未知模型以调用方设置为准）."""
     settings_path = os.path.join(BASE, "settings.json")
     registry_path = os.path.join(BASE, "config", "model-context-windows.json")
     if not os.path.isfile(settings_path):
@@ -845,8 +817,7 @@ def check_v17_auto_compact_window():
     try:
         from context_thresholds import (  # noqa: WPS433
             active_model_name,
-            recommended_autocompact_window,
-            resolve_model_context_tokens,
+            known_context_tokens,
         )
     except ImportError as exc:
         ERRORS.append(f"V17: cannot import context_thresholds: {exc}")
@@ -860,8 +831,7 @@ def check_v17_auto_compact_window():
     warn_pct = env.get("CLAUDE_COMPACT_WARN_PCT")
     force_pct = env.get("CLAUDE_COMPACT_FORCE_PCT")
 
-    expected = recommended_autocompact_window(model)
-    model_max = resolve_model_context_tokens(model)
+    model_max = known_context_tokens(model)
 
     if env_window is not None:
         WARNINGS.append(
@@ -869,7 +839,7 @@ def check_v17_auto_compact_window():
             "use autoCompactWindow + config/model-context-windows.json (动态解析)"
         )
         try:
-            if int(env_window) > model_max:
+            if model_max is not None and int(env_window) > model_max:
                 ERRORS.append(
                     f"V17: CLAUDE_CODE_AUTO_COMPACT_WINDOW={env_window} exceeds "
                     f"model max {model_max} for {model!r}"
@@ -879,13 +849,13 @@ def check_v17_auto_compact_window():
 
     if not isinstance(window, int) or window <= 0:
         ERRORS.append(f"V17: autoCompactWindow={window!r} invalid — run scripts/sync-compact-window.py")
-    elif window > model_max:
+    elif model_max is not None and window > model_max:
         ERRORS.append(
             f"V17: autoCompactWindow={window} exceeds model max {model_max} for {model!r}"
         )
-    elif window != expected:
+    elif model_max is not None and window != model_max:
         WARNINGS.append(
-            f"V17: autoCompactWindow={window} != resolved {expected} for {model!r} "
+            f"V17: autoCompactWindow={window} != known max {model_max} for {model!r} "
             "— run scripts/sync-compact-window.py"
         )
 
@@ -900,7 +870,7 @@ def check_v17_auto_compact_window():
         WARNINGS.append(f"V17: CLAUDE_COMPACT_FORCE_PCT={force_pct!r} expected '90'")
 
     if not any(e.startswith("V17:") for e in ERRORS):
-        print(f"  V17: autoCompactWindow {window} / model {model!r} max {model_max} ✓")
+        print(f"  V17: autoCompactWindow {window} / model {model!r} max {model_max or 'caller-defined'} ✓")
 
 
 def check_v16_codegraph_mandate():
@@ -994,41 +964,8 @@ def check_v16_codegraph_mandate():
     print("  V16: graph_freshness timeouts + snippet ✓")
 
 
-def check_fullstack_globs():
-    """FRONTEND 去项目特例与裸 js；BACKEND/DATABASE 薄层 glob 必须存在。"""
-    frontend = os.path.join(BASE, "rules", "FRONTEND.md")
-    backend = os.path.join(BASE, "rules", "BACKEND.md")
-    database = os.path.join(BASE, "rules", "DATABASE.md")
-    try:
-        with open(frontend, "r", encoding="utf-8") as fh:
-            front = fh.read()
-    except OSError as exc:
-        ERRORS.append(f"V16: cannot read FRONTEND.md: {exc}")
-        return
-    if "teoms-web" in front.lower():
-        ERRORS.append("V16: FRONTEND.md must not default to teoms-web")
-    if "**/*.{vue,jsx,tsx,css,less,scss,html}" not in front:
-        ERRORS.append(
-            "V16: FRONTEND.md glob must be vue,jsx,tsx,css,less,scss,html (no bare js)"
-        )
-    if re.search(r"\*\.js(?:\s|,|'|\"|$)", front):
-        ERRORS.append("V16: FRONTEND.md must not glob bare *.js")
-    for path, needle, label in (
-        (backend, "**/{api,server,backend,services}/**/*.{ts,js}", "BACKEND.md"),
-        (database, "**/migrations/**", "DATABASE.md"),
-    ):
-        try:
-            with open(path, "r", encoding="utf-8") as fh:
-                text = fh.read()
-        except OSError as exc:
-            ERRORS.append(f"V16: cannot read {label}: {exc}")
-            continue
-        if needle not in text:
-            ERRORS.append(f"V16: {label} missing glob {needle!r}")
-
-
 def check_live_policy_bans():
-    """现行政策文件禁止硬编码旧轮次 / 只读免审旁路（史留 CHANGELOG）。"""
+    """现行政策文件禁止旧政策残留（免审旁路 / 5 轮 / 耗尽仍完成 / 模型匹配；史留 CHANGELOG）。"""
     for rel in LIVE_POLICY_PATHS:
         path = os.path.join(BASE, rel)
         if not os.path.isfile(path):
@@ -1350,9 +1287,9 @@ def check_v20_toolchain():
     except OSError as exc:
         ERRORS.append(f"V20: cannot read CLAUDE.md: {exc}")
         return
-    r15 = re.search(r"\| R15 \|[^\n]+", claude)
+    r15 = re.search(r"R15[^|\n]+", claude)
     if not r15:
-        ERRORS.append("V20: CLAUDE.md R15 row missing")
+        ERRORS.append("V20: CLAUDE.md R15 entry missing")
     else:
         row = r15.group(0)
         if "兜底" in row:
@@ -1388,17 +1325,18 @@ def check_v21_workflow_spine():
             ERRORS.append(f"V21: {e}")
         if errs:
             return
-        resolved = mod.Resolved(spine)
-        drift = mod.diff_targets(root, mod.build_targets(root, resolved))
+        drift = mod.diff_targets(root, mod.build_targets(root, spine))
+        hits = mod.lint(root)
     except (OSError, ImportError, SyntaxError, ValueError, KeyError, TypeError,
             getattr(mod, "SpineError", ValueError), yaml.YAMLError) as exc:
         ERRORS.append(f"V21: workflow spine unreadable: {type(exc).__name__}: {exc}")
         return
     for rel in drift:
         ERRORS.append(f"V21: derived content drift in {rel.as_posix()} — run scripts/workflow.py render")
-    if not drift:
-        print(f"  V21: workflow spine profile={resolved.profile_name} derived targets in sync ✓")
-
+    for hit in hits:
+        ERRORS.append(f"V21: model/effort binding: {hit}")
+    if not drift and not hits:
+        print("  V21: workflow spine valid, derived targets in sync, no model/effort binding ✓")
 
 if __name__ == "__main__":
     sys.exit(main())

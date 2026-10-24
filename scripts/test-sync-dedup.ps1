@@ -48,7 +48,7 @@ if (-not (Test-Path (Join-Path $pluginRules "CORE.mdc"))) { Fail "CORE.mdc missi
 # 写它等于把正确内容污染成 stale —— 用于验证同步会把内容刷回来。
 "stale" | Set-Content -Path (Join-Path $pluginRules "CORE.md")     -Encoding utf8
 "stale" | Set-Content -Path (Join-Path $pluginRules "core.mdc")    -Encoding utf8
-"stale" | Set-Content -Path (Join-Path $pluginRules "CONTEXT.md")  -Encoding utf8
+"stale" | Set-Content -Path (Join-Path $pluginRules "AGENTS.md")   -Encoding utf8
 if (-not (Test-Path $cursorRules)) { New-Item -ItemType Directory -Path $cursorRules -Force | Out-Null }
 "stale" | Set-Content -Path (Join-Path $cursorRules "CORE.mdc")    -Encoding utf8
 "stale" | Set-Content -Path (Join-Path $cursorRules "MCP.md")      -Encoding utf8

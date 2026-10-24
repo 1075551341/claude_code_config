@@ -1,24 +1,24 @@
 # Rules 索引
 
-> 自动生成 | 源：`rules/` | v11.6.0（12 全量；工具链指针 → config/toolchain.yaml；BACKEND/DATABASE 薄层 glob）
+> 源：`rules/` | v13.0.0（6 全量；只保留方向性禁令 + 开发习惯 + 流程补充；流程/审查/完成定义 SSOT → `config/workflow.yaml`）
 
 ## alwaysApply — 骨架层
 
-- [CORE.md](rules/CORE.md) — 三横切 + 阈值 + 编码规范 + 工程原则 + 铁律 R12-R20 + 图谱三时点 + 变更彻底性
+- [CORE.md](rules/CORE.md) — 铁律（方向性禁令）+ 开发习惯 + 工具路由 R17/R18 + 图谱三时点 + 阈值
 
 ## trigger: model_decision — 按需补充
 
-- [AGENTS.md](rules/AGENTS.md) — 多 Agent 协作、并行审查路由、防互博
-- [CONTEXT.md](rules/CONTEXT.md) — 上下文工程 + 三级阈值策略 + 三态制品
+- [AGENTS.md](rules/AGENTS.md) — 委派、独立审查路由（spine 渲染）、防互博；模型选择不在本包
 - [GIT.md](rules/GIT.md) — Git 分支策略 + Commit 规范 + PR 流程
-- [GOVERNANCE.md](rules/GOVERNANCE.md) — 治理详情（R14/R15/R16 适用范围 + 注释模板 + 变更三阶段 + 最佳实践详参）
 - [MCP.md](rules/MCP.md) — MCP 服务器配置 SSOT + 分组视图 + 编辑器 spawn
 - [OPENSPEC.md](rules/OPENSPEC.md) — OpenSpec delta-spec 规范 + /opsx: 命令链
 - [SECURITY.md](rules/SECURITY.md) — OWASP Top 10 + 密钥管理 + ML 注入防御
-- [WORKFLOW.md](rules/WORKFLOW.md) — 五阶段工作流 + DAG 编排 + deer-flow
 
-## trigger: glob — 文件匹配
+## v13 变更（原全局 → 去向）
 
-- [FRONTEND.md](rules/FRONTEND.md) — 栈无关前端原则 + 设计系统（不含裸 `*.js`）
-- [BACKEND.md](rules/BACKEND.md) — API / 错误处理（`py,go,rs,java,kt,cs` + api/server/backend/services 的 ts/js）
-- [DATABASE.md](rules/DATABASE.md) — 表/查询/事务/migration（`sql,prisma` + `**/migrations/**`）
+| 原 rule | 去向 |
+| --- | --- |
+| WORKFLOW.md | 删除；五阶段/轨道/完成定义 → `config/workflow.yaml` + `docs/DEV_FLOW.md` |
+| CONTEXT.md | 删除；阈值 → `rules/CORE.md`；压缩 → `skills/memory-compression` |
+| GOVERNANCE.md | 删除；R14–R16 并入 `rules/CORE.md` 铁律表 |
+| FRONTEND.md / BACKEND.md / DATABASE.md | 删除；领域规则按需 → `catalog/rules/RULES_*.md` |

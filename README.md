@@ -1,14 +1,14 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 阶段主干 × 三横切 | **v12.0.0** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 阶段主干 × 三横切 | **v13.0.0** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v12.0.0）                                                                 |
-| `config/workflow.yaml` | 工作流主干：模型 profile/档位、角色、阶段门、质量标准、审查契约（`scripts/workflow.py` 渲染） |
+| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + 工作流主干（派生）+ 完成定义 + 铁律索引 |
+| `SPEC.md`       | 配置法典（v13.0.0）                                                                 |
+| `config/workflow.yaml` | 工作流主干：阶段门、轨道、完成定义（独立审查必过）、质量标准、审查契约（≤3 轮、两道关）；不含模型/推理强度（`scripts/workflow.py` 渲染 + lint） |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -17,15 +17,15 @@
 
 | 目录         | 内容                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------ |
-| `skills/`    | 35 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
-| `agents/`    | 16 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
-| `rules/`     | 12 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
+| `skills/`    | 26 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
+| `agents/`    | 9 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
+| `rules/`     | 6 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
 | `hooks/`     | 生命周期钩子（注册激活（`settings.json`） + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
 | `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
 | `docs/`      | SYNC_GUIDE + research/（调研 SSOT）+ ADR/（RUNTIME_PLAYBOOK 已并入 CLAUDE.md/rules） |
 | `scripts/`   | sync.ps1、validate_config.py、workflow.py、check.ps1                                 |
 | `templates/` | OpenSpec/GSD/DESIGN 模板                                                             |
-| `catalog/`   | 按需变体库 100+41+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
+| `catalog/`   | 按需变体库 99+41+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
 
 ## 五柱骨架
 
@@ -51,14 +51,15 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 
 ```powershell
 python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描；V21 主干同步）
-python scripts/workflow.py check    # 主干校验 + 生成块漂移
-python hooks/tests/test_workflow_spine.py  # 主干回归（全 profile / 约束 / 漂移）
+python scripts/workflow.py check    # 主干校验 + 生成块漂移 + 模型无关 lint
+python hooks/tests/test_workflow_spine.py  # 主干回归（校验 / 漂移 / lint / 完成门）
 pwsh scripts/check.ps1              # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v12.0.0**（2026-10-24）— 配置驱动主干 `config/workflow.yaml`：换模型只改 `models.active_profile`（anthropic/kimi/deepseek/single），`scripts/workflow.py render` 重写 agent frontmatter、审查契约、阶段门、质量门与上下文窗口；合并 code-reviewer→eng-reviewer、pr-workflow→ship，删 catalog 同名重复与 4 个未注册 hook。Guard 1.2.17。落地：`git pull` → 非 Anthropic 后端先改 `models.active_profile` 并 `render` → `python scripts/workflow.py check` → `apply-settings --write` → `sync-compact-window.py` → `sync.ps1 -All`（见 `docs/DEV_FLOW.md` 迁移）。
+- 当前：**v13.0.0**（2026-10-24）— 模型无关 · 一次通过 · 独立审查门：配置不再绑定任何模型或推理强度（由会话/settings/调用方决定，`workflow.py lint` 拦截）；每条轨道完成前必须通过全新独立审查（两道关：符合预期要求 + 原功能保持，各附证据），≤3 轮，用尽 = BLOCKED；agents 16→9、skills 35→26、rules 12→6、commands 18→14。Guard 1.2.17。落地：`git pull` → `python scripts/workflow.py check` → 按需清理 v12 写入 settings.json 的推理强度/别名重定向键 → `sync.ps1 -All`（见 `docs/DEV_FLOW.md` 迁移）。
+- 前版：v12.0.0（2026-10-24）— 配置驱动主干 `config/workflow.yaml`（多后端模型 profile + 角色档位，v13 已移除）；合并 code-reviewer→eng-reviewer、pr-workflow→ship，删 catalog 同名重复与 4 个未注册 hook。Guard 1.2.17。
 - 前版：v11.6.0（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.17。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.5.0（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.4.13（2026-09-07）— MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；everything 非 Glob/非 R17。Guard 1.2.11

@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：12.0.0 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`**（任意模型 profile × 角色档位/effort × 阶段 entry/exit 门 × 审查轮次/维度/路由 → `scripts/workflow.py render` 派生，V21 防漂移）+ L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点（任务开始 ensure / 审查前 refresh / 完成后 Stop refresh）+ 七维独立审查（含文档；审查前刷图；轮次 → workflow.yaml `review.max_rounds`）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 全栈 glob（FRONTEND/BACKEND/DATABASE）+ 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
+> 版本：13.0.0 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`（模型/推理强度无关）**：阶段 entry/exit 门 × 轨道 × 完成定义（每条轨道独立审查必过，两道关：符合预期要求 + 原功能保持）× 审查 ≤3 轮/七维/路由 → `scripts/workflow.py render` 派生 + lint 拦模型绑定，V21 防漂移；模型与推理强度由会话/settings/调用方决定 + L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -10,10 +10,10 @@
 ```
 RUNTIME  = Superpowers(方法论) + GSD Redux(上下文) + OpenSpec(规格) + gstack(审查) + claude-mem(记忆)
 FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(实证)
-REVIEW   = gstack 6审查 + 3补全 + 1跨模型
+REVIEW   = 独立审查者 7（eng 必审 + ceo/designer/dx/qa/security/cross-model 按路由）；完成 = 审查 PASS（两道关）
 OPTIMIZE = RTK(shell token) + caveman(输出token)
 INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
-SPINE    = config/workflow.yaml（models/roles/stages/tracks/quality/review）→ scripts/workflow.py render → agents/commands/CLAUDE.md/quality_gates.json/settings 片段
+SPINE    = config/workflow.yaml（stages/tracks/completion/quality/review；无模型/推理强度）→ scripts/workflow.py render → agents/commands/CLAUDE.md/quality_gates.json；lint 全仓拦模型绑定
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -28,7 +28,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ## 五阶段处理流程
 
-> v12：阶段、轨道（simple / bug / non_simple / research）、每阶段 entry/exit 门与执行角色的档位全部定义在 `config/workflow.yaml` `stages` / `tracks`；派生表见 `CLAUDE.md`「工作流主干」与 `docs/DEV_FLOW.md`。本文件不再复写流程图。
+> v13：阶段、轨道（simple / bug / non_simple / research）、每阶段 entry/exit 门、完成定义（`completion`：每条轨道独立审查必过，耗尽 = BLOCKED）全部定义在 `config/workflow.yaml`；派生表见 `CLAUDE.md`「工作流主干」与 `docs/DEV_FLOW.md`。本文件不再复写流程图。
 > 一次通过契约：`quality.definition_of_ready`（③执行前）+ `quality.self_check`（交审前，与审查者同一份七维）。
 
 > **③ 执行默认不启用 TDD/SDD（v10.15）**：仅用户显式要求（TDD/测试先行/子Agent派发）才 Read `test-driven-development` / `subagent-driven-development`。判定与 grill 规则 SSOT → `skills/task-triage/SKILL.md`。
@@ -40,20 +40,20 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 | 柱          | 来源                  | 职责                                    | 骨架                        | 执行                                                                                       | 护栏                                                   |
 | ----------- | --------------------- | --------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
 | Superpowers | obra/superpowers      | 方法论 + P0 + HARD-GATE                 | P0×6                        | brainstorming→writing-plans(原子)→execute→verify（TDD 仅显式触发）                         | def-in-depth + 反合理化                                |
-| GSD Redux   | open-gsd/gsd-core     | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先         | 上下文工程能力（正文在 rules/CONTEXT.md，非已删同名 skill；subagent 两阶段审查仅显式触发） | read-before-edit + canonical-source + trust-but-verify |
-| OpenSpec    | Fission-AI/OpenSpec   | 规格格式 core OPSX                      | 三轨互斥                    | spec-validation + opsx 全链                                                                | spec-reviewer门控                                      |
-| gstack      | garrytan/gstack       | 审查角色                                | 审查路由 6+3+1（本地）+ autoplan/ship | eng/ceo/designer/dx/qa/security（只找问题）；修改→change-implementer | browser-qa + quality-gate                              |
+| GSD Redux   | open-gsd/gsd-core     | 上下文工程 + 阈值 (原 gsd-build 已归档) | 三级阈值 + 制品优先         | 上下文工程能力（阈值在 rules/CORE.md，压缩在 skill/memory-compression；subagent 两阶段审查仅显式触发） | read-before-edit + canonical-source + trust-but-verify |
+| OpenSpec    | Fission-AI/OpenSpec   | 规格格式 core OPSX                      | 三轨互斥                    | spec-validation + opsx 全链                                                                | spec-validation 门控                                   |
+| gstack      | garrytan/gstack       | 审查角色                                | 审查路由（workflow.yaml review.routing）+ ship | eng/ceo/designer/dx/qa/security/cross-model（只找问题）；修改→change-implementer | browser-qa + quality-gate                              |
 | claude-mem  | thedotmack/claude-mem | 跨会话记忆                              | SSOT 渐进式披露             | mem-search/timeline/knowledge-agent                                                        | MEMORY.md↔claude-mem统一 + Chroma                      |
 
 ---
 
 ## 规模约束
 
-| 类型         | v11    | 说明                                                                                                                                                                                   |
+| 类型         | v13    | 说明                                                                                                                                                                                   |
 | ------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 全局 skills  | 35     | P0 路由集 6 + supplement 29（v12: pr-workflow 并入 ship；v11: 45→36）                                                                                                                     |
-| 全局 agents  | 16     | core 6 + 审查 6 + 补全 3 + 跨模型 1（v12：code-reviewer 并入 eng-reviewer）；档位/effort → workflow.yaml `roles`                                                                                                             |
-| 全局 rules   | 12     | alwaysApply 1(CORE) + model_decision 8 + glob 3（FRONTEND/BACKEND/DATABASE；不含 README）                                                                                                |
+| 全局 skills  | 26     | L1×4 + L2×5 + L3×17（v13: 35→26，去向见 skills-INDEX）                                                                                                                     |
+| 全局 agents  | 9      | 阶段角色 2（planner / change-implementer）+ 独立审查者 7；agent 不声明模型/推理强度，继承调用方                                                                                                             |
+| 全局 rules   | 6      | alwaysApply 1(CORE) + model_decision 5（不含 README；领域规则 → catalog/rules）                                                                                                |
 | CLAUDE.md    | ≤200   | 唯一 L0 入口（v11 并入 ROUTER）：路由链 + P0 + 五阶段 + 铁律                                                                                                                           |
 | 全局 hooks   | 18     | 注册激活 18 + 未注册 1 + 分发器 2（v12 删 4 个未注册 hook）（`_editor_*`）；v11.5 `r20-capture` SubagentStop；Cursor Guard 运行时 23（v1.2.17）                                                              |
 | 全局 MCP     | 5 常驻 | 本地代码3 + everything + grep；debug/fsaccess/ops 见 mcp-configs/                                                                                                                      |
@@ -89,11 +89,9 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 **Superpowers 12**：using-superpowers, brainstorming, writing-plans(原子), executing-plans, verification-before-completion, systematic-debugging, test-driven-development, subagent-driven-development(两阶段审查), using-git-worktrees, receiving-code-review, requesting-code-review, finishing-a-development-branch（v12 起为指向 ship 的薄壳；writing-skills 已并入 skill-creator 前言）
 
-**扩展 4（v11）**：autoplan, design-pipeline, ship（v12 并入 pr-workflow）, structured-artifacts（office-hours/browser-qa 降级 catalog；context-engineering 删除，rules/CONTEXT.md 为唯一正文）
+**支撑 12（v13）**：spec-validation, memory-compression, caveman-compress, claude-mem-maintenance, deep-research, adr-management, design-pipeline, ship, git-workflow, workstream-management, skill-creator, skill-reviewer
 
-**Meta 5**：memory-compression, spec-validation, karpathy-guidelines, caveman-compress, change-impact-analysis
-
-**Mattpocock 2**：triage, improve-codebase-architecture
+**v13 删除 9**：karpathy-guidelines（并入 CORE 开发习惯）、triage（并入 systematic-debugging 分诊）、autoplan、structured-artifacts、improve-codebase-architecture、code-refactoring、frontend-library-advisor、frontend-design-pattern-applier、test-edge-case-analyzer
 
 **项目洞察 1**：codegraph（R17 常驻）；codebase-memory **已禁用**（v10.10+，全盘索引爆 CPU/内存；UA removed v10.5）
 
@@ -112,29 +110,23 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 ---
 
-## 核心 Agents (6)
+## Agents (9)
 
-| Agent                | 阶段  |
-| -------------------- | ----- |
-| planner              | ①规划 |
-| build-error-resolver | ③执行 |
-| architect            | ①规划 |
-| spec-reviewer        | ②规格 |
-| agentic-orchestrator | ③执行 |
-| code-explorer        | ③执行 |
+| Agent | 角色 |
+| --- | --- |
+| planner | ②规格 阶段角色 |
+| change-implementer | ③执行 阶段角色（唯一修改者） |
+| eng-reviewer | 独立审查（每条轨道必审） |
+| ceo-reviewer / designer / dx-reviewer / qa / security-reviewer | 独立审查（按 review.routing 追加；security 深度模式=原 cso） |
+| cross-model-reviewer | 独立审查（用户要求跨模型时；模型由调用方选） |
 
-## gstack 审查 6+3+1（v11.5 七维 + 审查前刷图；v11.4.11 引入 change-implementer）
-
-**审查 (skeleton)**：eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer（深度模式=原 cso 全量审计）
-**补全 (supplement)**：sre, doc-writer, change-implementer
-**跨模型**：codex-reviewer
-**catalog 按需变体**：ios-specialist, design-shotgun, pair-agent, land-and-deploy, performance-engineer（release-engineer→skill/ship；design-engineer→skill/design-pipeline；product-manager 删除）
+**catalog 按需变体**：ios-specialist, design-shotgun, pair-agent, land-and-deploy, performance-engineer。v13 删除：code-explorer, architect, agentic-orchestrator, build-error-resolver, spec-reviewer, sre, doc-writer（去向 → agents/README.md）。
 
 ---
 
 ## 变更彻底性保障
 
-> 详见 `rules/CORE.md` 变更彻底性保障章节
+> 详见 `rules/CORE.md`「开发习惯」与 `skills/change-impact-analysis`
 
 ```
 变更前: CRG get_impact_radius（有图）+ codegraph_explore blast-radius + Grep + MANIFEST depends_on → 清单
@@ -153,7 +145,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 ├─ pre-manifest-validator → 归属冲突检测
 └─ post-secret-detector → 密钥泄露检测
 
-按需级 (profile控制)
+按需级 (LOCAL_HOOK_PROFILE 控制)
 ├─ pre-rtk-rewrite → Shell token优化
 ├─ pre-context-injector → 会话缓存注入
 ├─ post-edit-format → 编辑后格式化
@@ -210,7 +202,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 已删除：`aider-repo-map`、`sequential-thinking`（不要加回）。
 
-Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：RUNTIME_PLAYBOOK 已并入 CLAUDE.md / rules/CONTEXT.md / rules/MCP.md）
+Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIME_PLAYBOOK 已并入 CLAUDE.md / rules/CORE.md / rules/MCP.md）
 
 权威 → `.mcp.json` | 分组 → `mcp/servers.json`
 
@@ -220,7 +212,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 | 场景        | Owner                                                           | 禁止                                              |
 | ----------- | --------------------------------------------------------------- | ------------------------------------------------- |
-| 计划        | skill/writing-plans                                             | hook/pre-task-planner, agent/agentic-orchestrator |
+| 计划        | skill/writing-plans                                             | hook/pre-task-planner                             |
 | 审查        | requesting/receiving-code-review                                | 独立 code-review skill                            |
 | 记忆        | plugin/claude-mem                                               | agent/context-manager                             |
 | Shell token | hook/pre-rtk-rewrite                                            | skill 重复压缩                                    |
@@ -238,9 +230,9 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | #   | 仓库                  | 吸收                                                                                                     | 落地                                                                 |
 | --- | --------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | 1   | obra/superpowers      | 14技能+HARD-GATE+Red Flags+原子任务+两阶段审查                                                           | skills/×12（v11: writing-skills 并入 skill-creator）, hooks/         |
-| 2   | open-gsd/gsd-core     | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 (原 gsd-build/get-shit-done 已归档) | rules/CONTEXT, rules/WORKFLOW                                        |
+| 2   | open-gsd/gsd-core     | 三级阈值+read-before-edit+canonical-source+trust-but-verify+连续执行 (原 gsd-build/get-shit-done 已归档) | rules/CORE, config/workflow.yaml                                     |
 | 3   | Fission-AI/OpenSpec   | proposal→spec→tasks+brownfield+archive                                                                   | templates/openspec/, spec-validation, commands/propose+apply+archive |
-| 4   | garrytan/gstack       | 本地收敛：6审查+3补全+1跨模型（上游曾 5审查+7补全）+浏览器QA+autoplan/ship                                    | agents/×9 + catalog/agents/×5（v11 收敛）                            |
+| 4   | garrytan/gstack       | 本地收敛：7 独立审查者 + 修改者（上游曾 5审查+7补全）+浏览器QA+ship                                         | agents/×9 + catalog/agents/×5                                        |
 | 5   | thedotmack/claude-mem | 渐进式披露+向量搜索+6hook SSOT+15技能                                                                    | plugin/claude-mem                                                    |
 
 ### 结构格式 (6)
@@ -249,10 +241,10 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | --- | --------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
 | 6   | affaan-m/ECC                | MANIFEST+agent路由+instinct-learning v2             | MANIFEST.yaml（含 harness 节，v11 吸收 agent.yaml）, catalog/ |
 | 7   | anthropics/skills           | SKILL.md格式标准+跨平台                             | skills//SKILL.md                                              |
-| 8   | shanraisshan/best-practice  | 15类别200+行                                        | rules/GOVERNANCE 最佳实践详参章（v11 并入）                   |
-| 9   | forrestchang/karpathy       | 四原则+实施规则+量化测试+弱命令转换表               | rules/CORE, karpathy-guidelines                               |
-| 10  | mattpocock/skills           | triage(状态机+P0-P3)+架构改进(8术语+删除测试+Grill) | skills/triage, improve-codebase-architecture                  |
-| 11  | VoltAgent/awesome-design-md | 9章节结构+73品牌+零依赖                             | rules/FRONTEND 设计系统节（v11 并入）, templates/DESIGN.md    |
+| 8   | shanraisshan/best-practice  | 15类别200+行                                        | rules/CORE 开发习惯（v13 精简）                               |
+| 9   | forrestchang/karpathy       | 四原则+实施规则+量化测试+弱命令转换表               | rules/CORE 开发习惯                                           |
+| 10  | mattpocock/skills           | triage(状态机+P0-P3)+架构改进(8术语+删除测试+Grill) | skills/systematic-debugging 分诊节（v13）                     |
+| 11  | VoltAgent/awesome-design-md | 9章节结构+73品牌+零依赖                             | catalog/rules/RULES_FRONTEND.md, templates/DESIGN.md          |
 
 ### 优化工具 (4)
 
@@ -261,7 +253,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | 12  | rtk-ai/rtk                    | Rust CLI 60-90%压缩+100+命令预置 | hooks/pre-rtk-rewrite     |
 | 13  | JuliusBrussee/caveman         | 四级压缩+仅压输出                | skill/caveman-compress    |
 | 14  | github/github-mcp-server      | 80+工具+17工具集                 | .mcp.json (gh)            |
-| 15  | anthropics/claude-code-action | 4后端CI+结构化JSON               | templates/github-actions/ |
+| 15  | anthropics/claude-code-action | CI 审查+结构化JSON（模型由 CI 配置） | templates/github-actions/ |
 
 ### 编排增强 (4)
 
@@ -271,8 +263,8 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | 17  | nextlevelbuilder/ui-ux-pro-max | 67风格+161色板+99UX                                           | catalog/skills/ui-ux-pro-max/ |
 | 29  | DeusData/codebase-memory-mcp   | 知识图谱 L4 架构/ADR/变更                                     | optional-dev.json             |
 | 18  | zilliztech/claude-context      | archived_redirect → cbm                                       | 仅历史卡                      |
-| 19  | bytedance/deer-flow            | LangGraph编排+9层Middleware+Sandbox+claude-to-deerflow bridge | WORKFLOW.md + skill 指针      |
-| 19b | ruvnet/ruflo                   | 蜂群拓扑+HNSW向量记忆+SONA自学习（仅概念参考）                | WORKFLOW.md 概念              |
+| 19  | bytedance/deer-flow            | LangGraph编排+9层Middleware+Sandbox+claude-to-deerflow bridge | catalog/skills/claude-to-deerflow |
+| 19b | ruvnet/ruflo                   | 蜂群拓扑+HNSW向量记忆+SONA自学习（仅概念参考）                | 仅概念参考                    |
 
 ### 参考索引 (5)
 
@@ -280,9 +272,9 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 | --- | -------------------------------- | ----------------------------------- | ---------------------------------------- |
 | 20  | ComposioHQ/awesome-claude-skills | 1000+技能索引+渐进式加载            | catalog/ 索引                            |
 | 21  | hesreallyhim/awesome-claude-code | 配置范式+工具发现                   | 外链索引                                 |
-| 22  | x1xhlol/system-prompts           | 30+提示词比较+实证分析              | rules/GOVERNANCE 系统提示词实证段（v11） |
+| 22  | x1xhlol/system-prompts           | 30+提示词比较+实证分析              | 参考（v13 GOVERNANCE 删除）              |
 | 23  | Chalarangelo/30-seconds-of-code  | 信息架构参考（不直接引入）          | catalog 参考                             |
-| 24  | ruvnet/ruflo                     | 制品持久化模式（蜂群拓扑/HNSW排除） | WORKFLOW.md                              |
+| 24  | ruvnet/ruflo                     | 制品持久化模式（蜂群拓扑/HNSW排除） | rules/CORE R13                           |
 
 ### 安全 (3)
 
@@ -295,7 +287,7 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 | #   | 仓库                   | 吸收                                                                                   | 落地                                   |
 | --- | ---------------------- | -------------------------------------------------------------------------------------- | -------------------------------------- |
-| 27  | colbymchenry/codegraph | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json (optional), rules/CONTEXT.md |
+| 27  | colbymchenry/codegraph | 预索引知识图谱MCP，官方均值 ~16%成本/~47%token/~58%工具调用/~22%更快；MCP默认4工具(F1) | .mcp.json, rules/CORE.md R17           |
 
 ### 插件分发 (1)
 
@@ -354,4 +346,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（v11：
 
 ---
 
-> 版本：12.0.0 | 日期：2026-10-24 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：模型档/角色/阶段门/审查契约）×三横切 | MCP 常驻 5 项 + 图谱三时点 + 七维独立审查（含文档；审查前刷图；轮次/阻断见 workflow.yaml `review`）+ 全栈 glob + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N
+> 版本：13.0.0 | 日期：2026-10-24 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：阶段门/轨道/完成定义/审查契约；无模型/推理强度）×三横切 | 独立审查必过（两道关；≤3 轮；耗尽 BLOCKED）+ MCP 常驻 5 项 + 图谱三时点 + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N

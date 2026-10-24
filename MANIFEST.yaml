@@ -1,10 +1,11 @@
-# 组件唯一归属源 — 防左右手互博 — v12.0.0
-# 调度（模型/角色/阶段/门控/审查）不在本文件 → config/workflow.yaml（唯一调度面）
+# 组件唯一归属源 — 防左右手互博 — v13.0.0
+# 调度（阶段/轨道/完成定义/审查）不在本文件 → config/workflow.yaml（唯一调度面）
+# 本包不绑定任何模型与推理强度：模型由会话/settings/调用方决定（scripts/workflow.py lint 拦截）
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "12.0.0"
+version: "13.0.0"
 updated: "2026-10-24"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
@@ -43,18 +44,13 @@ module_resolver:
     - [change_spec, phase_planning]
     - [plugin/compound-engineering, gstack_review]
     - [task_master_mcp, writing-plans]
-    - [autoplan, brainstorming_design]
-    - [triage, systematic_debugging]
     - [design_pipeline, brainstorming_ui]
     - [claude-mem:make-plan, writing-plans]
     - [claude-mem:do, executing-plans]
     - [claude-mem:smart-explore, codegraph_explore]
-    - [feature-dev:code-architect, architect]
-    - [feature-dev:code-explorer, code-explorer]
     - [feature-dev:code-reviewer, eng-reviewer] # v12: code-reviewer 并入 eng-reviewer
     - [deep_research, firecrawl_agent]
     - [land_and_deploy, release_engineer] # v11: release-engineer 已并入 skill/ship；互斥仅防历史回潮
-    - [agentic_orchestrator, pair_agent] # v11: pair-agent 已降级 catalog；启用时仍受此互斥约束
     - [codebase_memory:search_graph, codegraph_explore]
     - [codebase_memory:semantic_query, claude_context_mcp]
   hook_profile:
@@ -96,7 +92,7 @@ pillars:
           qa-review,
           security-review,
           ios-specialist,
-          codex-review,
+          cross-model-review,
           ml-defense,
           taste-learning,
           pair-agent,
@@ -171,7 +167,7 @@ loading_tiers:
   L3_dispatch: [agents/*, mcp/*, rules/* lazy globs] # was L4, merged per v10.2 D4
   note: "Cursor: L2/L3 用 disable-model-invocation + 显式 Read；Claude Code: layer + using-superpowers 路由"
 
-# v12: 原 phases 表迁入 config/workflow.yaml stages/tracks（含 entry/exit 门、角色档位）；本文件不再双写
+# 阶段/轨道/完成定义 → config/workflow.yaml stages/tracks/completion；本文件不再双写
 workflow_spine: config/workflow.yaml
 
 concerns:
@@ -179,16 +175,8 @@ concerns:
     owner: config/workflow.yaml
     source: local
     stage: all
-    note: "v12 唯一调度面：models(profile→任意后端) + roles(agent→档位/effort) + stages/tracks(entry/exit 门) + quality(一次通过契约) + review(轮次/维度/路由)。scripts/workflow.py render 写派生块；validate_config V21 防漂移。说明 docs/DEV_FLOW.md"
+    note: "v13 唯一调度面（模型/推理强度无关）：stages/tracks(entry/exit 门) + completion(独立审查必过；耗尽=BLOCKED) + quality(一次通过契约) + review(≤3 轮/两道关 pass_requires/七维/路由)。scripts/workflow.py render 写派生块，lint 拦模型绑定；validate_config V21 防漂移。说明 docs/DEV_FLOW.md"
     depends_on: [scripts/workflow.py, hooks/_lib/r20_replay.py, docs/DEV_FLOW.md]
-
-  model_routing:
-    owner: config/workflow.yaml
-    source: local
-    stage: all
-    note: "agent frontmatter model=档位别名（opus/sonnet/haiku）或 inherit；profile 经 ANTHROPIC_DEFAULT_*_MODEL 重定向（apply-settings 合并 settings.json）；Cursor slug 派生到 CURSOR-EDITOR.mdc。禁止手写 agent model/effort。"
-    excludes: [env/CLAUDE_CODE_SUBAGENT_MODEL]
-    depends_on: [templates/claude-settings/model.snippet.json, config/model-context-windows.json]
 
   brainstorming:
     owner: skill/brainstorming
@@ -203,7 +191,7 @@ concerns:
     source: obra/superpowers
     stage: spec
     # pre-task-planner 已移除（见本文件 harness.hooks.disabled），保留于 excludes 防重新引入
-    excludes: [agent/agentic-orchestrator, hook/pre-task-planner]
+    excludes: [hook/pre-task-planner]
     depends_on: [skill/brainstorming]
 
   project_context:
@@ -212,8 +200,7 @@ concerns:
     excludes: [hook/session-start-bootstrap]
 
   multi_agent:
-    owner: agent/agentic-orchestrator
-    skill: skill/subagent-driven-development
+    owner: skill/subagent-driven-development
     source: affaan-m/ECC
     stage: execute
     note: v10.15 默认关闭；仅用户显式要求子Agent派发时启用
@@ -239,7 +226,7 @@ concerns:
       ]
     source: obra/superpowers
     stage: verify
-    note: "v12 — 有交付即七维独立审查（含文档）；审查前刷图。轮次/阻断/维度/路由 SSOT = config/workflow.yaml review（render 同步 quality_gates.json）；政策正文 verification-before-completion；机械门 r20_replay.py。Claude Stop exit 2；Cursor 完成门不 followup。"
+    note: "v13 — 每条轨道完成前独立审查必过（两道关：符合预期要求 + 原功能保持，各附证据；七维）；≤3 轮，耗尽 = BLOCKED，用户豁免最多 DONE_WITH_CONCERNS。SSOT = config/workflow.yaml completion/review（render 同步 quality_gates.json）；政策正文 verification-before-completion；机械门 r20_replay.py。Claude Stop exit 2；Cursor 完成门不 followup。"
 
   debugging:
     owner: skill/systematic-debugging
@@ -272,7 +259,6 @@ concerns:
 
   spec_review:
     owner: skill/spec-validation
-    delegates: [agent/spec-reviewer]
     source: Fission-AI/OpenSpec
     stage: spec
 
@@ -297,7 +283,7 @@ concerns:
     hook: pre-compact-state
     source: open-gsd/gsd-core
     stage: learn
-    depends_on: [rules/CONTEXT.md, rules/CORE.md]
+    depends_on: [rules/CORE.md]
 
   shell_token:
     owner: hook/pre-rtk-rewrite
@@ -330,36 +316,22 @@ concerns:
     stage: spec
 
   ui_token:
-    owner: rules/FRONTEND.md # v11: rules/DESIGN.md 并入 FRONTEND「设计系统」节
+    owner: catalog/rules/RULES_FRONTEND.md # v13: 全局 FRONTEND.md 删除，按需复制进项目
     skill: catalog/skills/ui-ux-pro-max
     source: VoltAgent/awesome-design-md
     stage: spec
 
   backend_api:
-    owner: rules/BACKEND.md
+    owner: catalog/rules/RULES_BACKEND.md
     source: local
     stage: execute
-    note: "v11.5 薄层 glob；项目覆盖 catalog/rules/RULES_BACKEND.md"
+    note: "v13: 全局 BACKEND.md 薄层删除，按需复制进项目"
 
   database:
-    owner: rules/DATABASE.md
+    owner: catalog/rules/RULES_DATABASE.md
     source: local
     stage: execute
-    note: "v11.5 薄层 glob；项目覆盖 catalog/rules/RULES_DATABASE.md"
-
-  codex_plugin_review:
-    owner: config/MANIFEST.yaml
-    source: openai/codex-plugin-cc
-    stage: verify
-    status: reference # v10.11: 评估=不集成（跨模型双倍计费；本地 codex-reviewer 承接）
-    note: 对抗审查模式可注入 codex-reviewer 提示词
-
-  claude_code_router:
-    owner: config/MANIFEST.yaml
-    source: musistudio/claude-code-router
-    stage: execute
-    status: reference # v10.11: 评估=不集成（常驻进程 vs 单供应商 Kimi 直连）
-    note: 内置 Kimi preset；未来多供应商场景重新评估
+    note: "v13: 全局 DATABASE.md 薄层删除，按需复制进项目"
 
   superclaude_framework:
     owner: config/MANIFEST.yaml
@@ -380,28 +352,26 @@ concerns:
     source: local
     stage: execute
     note: "v11.6 平台/运行时/包管理器 SSOT；缺工具 BLOCKED；禁止 PS5.1/npm/pip 静默回退。R9/R15 指针。"
-    depends_on: [rules/CORE.md, rules/GOVERNANCE.md, rules/MCP.md]
+    depends_on: [rules/CORE.md, rules/MCP.md]
 
   coding_philosophy:
-    owner: skill/karpathy-guidelines
-    rules_ref: rules/CORE.md # v11.2.0: CORE.md 新增工程原则节（第一性原理/YAGNI/依赖克制/删除过时优先）
+    owner: rules/CORE.md # v13: skill/karpathy-guidelines 删除，四原则并入 CORE「开发习惯」
     source: multica-ai/andrej-karpathy-skills # v10.11: forrestchang 组织迁移（同仓库双名）
 
   gsd_context:
     owner: skill/subagent-driven-development
     hooks: [pre-read-before-edit]
-    rules_ref: rules/WORKFLOW.md
     source: open-gsd/gsd-core
     stage: execute
-    depends_on: [rules/CONTEXT.md, rules/WORKFLOW.md]
+    depends_on: [rules/CORE.md, config/workflow.yaml]
 
   gstack_review:
     owner: rules/AGENTS.md
     catalog:
-      [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer]
+      [eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer, cross-model-reviewer]
     source: garrytan/gstack
     stage: verify
-    delegates: [agent/spec-reviewer]
+    note: "路由 SSOT = config/workflow.yaml review.routing；任一轨道完成前独立审查必过"
     depends_on:
       [
         agents/eng-reviewer,
@@ -416,7 +386,7 @@ concerns:
     source: open-gsd/gsd-core
     stage: execute
     depends_on:
-      [skill/using-git-worktrees, plugin/thedotmack, rules/WORKFLOW.md]
+      [skill/using-git-worktrees, plugin/thedotmack, config/workflow.yaml]
 
   adr:
     owner: skill/adr-management
@@ -531,7 +501,6 @@ concerns:
     source: bytedance/deer-flow
     stage: execute
     loading_tier: on_demand
-    depends_on: [rules/WORKFLOW.md]
     excludes: [agent/planner, skill/workstream-management]
 
   deep_research:
@@ -616,17 +585,11 @@ concerns:
   gstack_security:
     { owner: agent/security-reviewer, layer: skeleton, stage: verify }
 
-  bestpractice:
-    owner: rules/GOVERNANCE.md # v11: BESTPRACTICE.md 并入 GOVERNANCE「最佳实践详参」章
-    layer: supplement
-    source: shanraisshan/best-practice
-
   governance:
-    owner: rules/GOVERNANCE.md
+    owner: rules/CORE.md
     layer: skeleton
     source: local
-    depends_on: [rules/CORE.md]
-    note: "v10.6.0: CORE 瘦身迁出详情（R14/R15/R16 适用范围、注释模板、变更三阶段、codegraph F1）；v11.2.0: 并入 AGENTS.md 工程决策原则详参 + pwsh 7 终端规范"
+    note: "v13: rules/GOVERNANCE.md 删除；R14–R16 并入 CORE 铁律表，最佳实践详参不再维护"
 
   memory_ssot:
     owner: plugin/thedotmack
@@ -644,14 +607,6 @@ concerns:
     source: garrytan/gstack
     stage: plan
 
-  autoplan:
-    owner: skill/autoplan
-    delegates: [agent/ceo-reviewer, agent/designer, agent/eng-reviewer]
-    source: garrytan/gstack
-    stage: verify
-    excludes: [skill/brainstorming]
-    note: "autoplan 仅用于审查后自动优化（CEO→Design→Eng→DX），不替代 brainstorming HARD-GATE。先 brainstorming 人机对话确定方向，autoplan 在 verify 阶段自动串联。"
-
   ship_pipeline:
     owner: skill/ship # v11: agent/release-engineer 并入；v12: skill/pr-workflow + finishing-a-development-branch 正文并入
     source: garrytan/gstack
@@ -659,21 +614,14 @@ concerns:
     excludes: [skill/finishing-a-development-branch]
 
   context_engineering:
-    owner: rules/CONTEXT.md # v11: skill/context-engineering 已删（与 CORE/CONTEXT 重复+cbm/UA 残留），规则为唯一正文
+    owner: rules/CORE.md # v13: rules/CONTEXT.md 删除；阈值在 CORE，压缩在 skill/memory-compression
     source: open-gsd/gsd-core
-    depends_on: [rules/CORE.md, rules/WORKFLOW.md]
+    depends_on: [skill/memory-compression]
 
   manifest_validation:
     owner: hook/pre-manifest-validator
     source: local
     note: PreToolUse校验MANIFEST归属，防互博
-
-  triage:
-    owner: skill/triage
-    source: mattpocock/skills
-    excludes: [skill/systematic-debugging]
-    stage: plan
-    note: "triage = 未知Bug分类(P0-P3优先级)；systematic-debugging = 已知Bug根因分析。互斥不重叠。"
 
   task_triage:
     owner: skill/task-triage
@@ -681,14 +629,8 @@ concerns:
     stage: plan
     loading_tier: L1
     depends_on: [skill/using-superpowers, skill/brainstorming]
-    excludes: [skill/triage, catalog/skills/grill-with-docs]
-    note: "v10.13.0 — 两大类(简单/非简单)+使用类型细分；简单=Phase0+关联需改≤2+白名单+六维全低+模型匹配+attempt=1；持续处理执行升档非简单；非简单先 grill 再进 brainstorming；triage=bug P0-P3 分级(L3)互补不重叠"
-
-  architecture_improvement:
-    owner: skill/improve-codebase-architecture
-    source: mattpocock/skills
-    excludes: [skill/brainstorming]
-    stage: execute
+    excludes: [catalog/skills/grill-with-docs]
+    note: "v10.13.0 — 两大类(简单/非简单)+使用类型细分；简单=Phase0+关联需改≤2+白名单+五维全低+attempt=1（v13 去掉模型匹配维）；简单不豁免独立审查；持续处理执行升档非简单；非简单先 grill 再进 brainstorming；bug P0-P3 分诊在 systematic-debugging"
 
   instinct_v2:
     owner: catalog/skills/instinct-learning # v11 降级 catalog（学习产物统一 claude-mem，本能提取按需）
@@ -714,7 +656,7 @@ concerns:
     stage: skeleton
 
   deer_flow:
-    owner: rules/WORKFLOW.md
+    owner: catalog/skills/claude-to-deerflow
     source: bytedance/deer-flow
     version: "2.0"
     stage: execute
@@ -722,7 +664,7 @@ concerns:
     excludes: [agent/planner, skill/workstream-management]
 
   ruflo:
-    owner: rules/WORKFLOW.md
+    owner: config/MANIFEST.yaml
     source: ruvnet/ruflo
     stage: execute
     note: reference_only — 蜂群拓扑概念仅文档参考，不深度集成
@@ -735,25 +677,25 @@ concerns:
     stage: verify
     note: iOS 专用审查 (ios-qa/ios-fix/ios-design-review/ios-clean/ios-sync)
 
-  gstack_codex:
-    owner: agent/codex-reviewer
+  gstack_cross_model:
+    owner: agent/cross-model-reviewer
     source: garrytan/gstack
     version: "0.19"
     stage: verify
-    note: Codex 跨模型独立审查，与 eng-reviewer 互补
+    note: 跨模型独立审查（模型由调用方选，须异于实现者），与 eng-reviewer 互补
 
   gstack_ml_defense:
     owner: rules/SECURITY.md
     source: garrytan/gstack
     version: "0.19"
     stage: verify
-    note: 22MB 本地 ML 分类器 + canary tokens + Haiku 转录检查 三层注入防御
+    note: 22MB 本地 ML 分类器 + canary tokens + 小模型转录检查 三层注入防御
 
   ci_claude_code_action:
     owner: templates/github-actions/
     source: anthropics/claude-code-action
     stage: ship
-    note: CI模板引用，4后端 + 结构化JSON输出
+    note: CI模板引用（模型由 CI 配置/secrets 决定）+ 结构化JSON输出 + 两道关审查结论
 
   claude_context_mcp:
     owner: config/.mcp.json
@@ -762,7 +704,7 @@ concerns:
     status: archived_redirect
     successor: colbymchenry/codegraph # cbm 已禁用，语义/探索位由 codegraph 承接
     note: v10.4 归档 — 语义搜索位由 codegraph 替代（cbm 已禁用）
-    excludes: [agent/code-explorer, codebase_memory_mcp]
+    excludes: [codebase_memory_mcp]
 
   codebase_memory_mcp:
     owner: mcp-configs/optional-dev.json
@@ -771,8 +713,8 @@ concerns:
     stage: execute
     loading: disabled # v10.10: 永久禁用 — 启用后疯狂消耗 CPU/内存（全盘索引）
     note: 已禁用；全盘索引爆 CPU/内存，codegraph 全权替代（CORE R17）；禁止启用
-    excludes: [claude_context_mcp, agent/code-explorer]
-    depends_on: [rules/CONTEXT.md]
+    excludes: [claude_context_mcp]
+    depends_on: [rules/MCP.md]
 
   design_pipeline:
     owner: skill/design-pipeline
@@ -782,7 +724,7 @@ concerns:
     note: "brainstorming = 架构级设计决策；design-pipeline = UI/视觉级设计(shotgun→对比板→HTML)。不同层级，不互博。"
 
   gstack_learn:
-    owner: rules/WORKFLOW.md
+    owner: plugin/thedotmack
     source: garrytan/gstack
     stage: learn
     note: 跨会话学习管理，与 claude-mem 互补（项目级 vs 会话级）
@@ -800,21 +742,14 @@ concerns:
     excludes: [agent/release-engineer] # 已删（并入 skill/ship），保留防回潮
     note: "land-and-deploy = 完整部署流程(approved PR→verified production)；轻量发布走 skill/ship。"
 
-  agentic_orchestrator:
-    owner: agent/agentic-orchestrator
-    source: local
-    stage: execute
-    excludes: [agent/pair-agent] # v11: pair-agent 降级 catalog，按需启用时仍受互斥约束
-    note: "agentic-orchestrator = 通用多Agent编排；pair-agent（catalog）= 仅浏览器协作场景。agentic-orchestrator 主。"
-
   deer_dag:
-    owner: rules/WORKFLOW.md
+    owner: catalog/skills/claude-to-deerflow
     source: bytedance/deer-flow
     stage: execute
     note: DAG四阶段（拆解→调度→整合→验证）+ 状态机
 
   claude_mem_search:
-    owner: rules/CONTEXT.md
+    owner: rules/CORE.md # R18
     source: thedotmack/claude-mem
     stage: execute
     note: search→timeline→get_observations 三层渐进式检索，~10x token 节省
@@ -846,9 +781,9 @@ p0_skills:
   - systematic-debugging
   - task-triage
 
-global_skills_max: 35 # v12: 36→35（pr-workflow 并入 ship）
-global_agents_max: 16 # v12: 17→16（code-reviewer 并入 eng-reviewer）
-global_rules_max: 12 # v11.5: 10→12（BACKEND + DATABASE 薄层 glob）
+global_skills_max: 26 # v13: 35→26（删 9，见 skills-INDEX「v13 变更」）
+global_agents_max: 9 # v13: 16→9（2 阶段角色 + 7 独立审查者）
+global_rules_max: 6 # v13: 12→6（WORKFLOW/CONTEXT/GOVERNANCE/FRONTEND/BACKEND/DATABASE 删除）
 
 # superagent_forge 幽灵登记已于 v11 删除（引用的 .codeartsdoer/specs 与 agents/superagent_forge 路径均不存在，codearts 编辑器未安装）
 
@@ -898,10 +833,6 @@ harness:
         ship,
         review,
         compact,
-        clear,
-        status,
-        office-hours,
-        autoplan,
         workstream,
         adr,
         deep-research,

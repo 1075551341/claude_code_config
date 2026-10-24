@@ -94,7 +94,7 @@ pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\deploy-edit
 ```
 
 4. **完全退出再打开 Cursor**（仅 Reload 往往不重扫 local plugin）。
-5. 校验：`pwsh -File scripts\check.ps1`；插件规则含 `BACKEND.mdc` / `DATABASE.mdc`。
+5. 校验：`pwsh -File scripts\check.ps1`；插件规则 = `rules/*.md`（6）+ `00-CLAUDE.mdc` + `CURSOR-EDITOR.mdc`，v13 删除的 6 条规则由台账孤儿清除。
 
 Claude Code **零同步**。`sync.ps1` 仍不碰 `settings.json` / `.mcp.json` / `hooks/`。`-Scope editors` 只合并 TRAE/Qoder，不复制 DSH/OpenCode 便携文件。
 
@@ -246,7 +246,7 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 | CLAUDE（含路由）/ CORE             | 双端 sync          | 源文件去重       |
 | plugin-\* rules                    | 仅 Cursor          | 禁插件即消失     |
 | User Rules                         | 仅 Cursor Settings | 指针 + L3 skills |
-| lazy rules (GIT/FRONTEND/OPENSPEC) | L0 路由按需 Read   | glob 触发        |
+| lazy rules (GIT/MCP/OPENSPEC)      | L0 路由按需 Read   | glob 触发        |
 
 | 等级  | 内容                                         | Cursor 机制                         |
 | ----- | -------------------------------------------- | ----------------------------------- |
