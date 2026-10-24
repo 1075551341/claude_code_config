@@ -62,11 +62,10 @@
       "dx-reviewer",
       "qa",
       "security-reviewer",
-      "codex-reviewer",
-      "code-reviewer"
+      "cross-model-reviewer"
     ],
     "require_reviewer_min_files": 1,
-    "review_max_rounds": 5,
+    "review_max_rounds": 3,
     "review_cycle": "modify-verify-graph-review",
     "require_refresh_before_review": true,
     "require_requirements_replay": true,
@@ -79,7 +78,9 @@
       ".txt",
       ".rst",
       ".markdown"
-    ]
+    ],
+    "on_rounds_exhausted": "BLOCKED",
+    "user_waiver_status": "DONE_WITH_CONCERNS"
   },
   "graph_freshness": {
     "enabled": true,

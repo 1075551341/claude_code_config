@@ -22,7 +22,7 @@ FALLBACKS = {
         "【门控 · 完成前必做】\n"
         "Read ~/.claude/skills/verification-before-completion/SKILL.md，"
         "贴出验证证据并输出七维 R20（含问题是否解决）后方可声称完成。"
-        "审查前刷图；全新只读独立审查最多 {{review_max_rounds}} 轮。"
+        "审查前刷图；全新只读独立审查（两道门：符合预期要求 / 原功能保持）PASS 才算完成，最多 {{review_max_rounds}} 轮，用尽=BLOCKED。"
     ),
     "impact": (
         "【门控 · 每个文件首次编辑前必做】\n"
@@ -43,9 +43,9 @@ def _review_max_rounds(claude_home: Path) -> int:
     path = claude_home / "config" / "quality_gates.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return int((data.get("verification_gate") or {}).get("review_max_rounds") or 5)
+        return int((data.get("verification_gate") or {}).get("review_max_rounds") or 3)
     except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
-        print(f"gate_reader: review_max_rounds fallback 5: {exc}", file=sys.stderr)
+        print(f"gate_reader: review_max_rounds fallback 3: {exc}", file=sys.stderr)
         return 5
 
 

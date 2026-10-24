@@ -24,7 +24,7 @@ const R20_RULE =
   "计划未落地、仅 *.plan.md、零编辑不要终审、不要注入完成令。" +
   "满足须承认/反驳/弃权；漏改写无文档影响或路径；原功能附证据；影响范围含 CRG/IMPACT/blast。" +
   "有代码改动：审查一次找齐（禁止改文件）；每轮全新开审（禁止 resume）；清单齐后再开一次实现回合集中改齐。" +
-  "干净 PASS 即停。禁止边审边改耗轮次，review_max_rounds=5；禁止只连审不改。" +
+  "独立审查 PASS 才算完成（两道门：符合预期要求 / 原功能保持，各附证据）；干净 PASS 即停。禁止边审边改耗轮次，review_max_rounds=3，用尽=BLOCKED 未完成；禁止只连审不改。" +
   "机械门与 scripts/r20_check.py 对齐（结论只认标题行，跳过教学句）。无观察输出不得声称完成。";
 
 const EDIT_TOOLS = new Set(["edit", "write", "patch", "multiedit"]);

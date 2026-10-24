@@ -45,8 +45,7 @@ DEFAULT_REVIEWER_AGENTS = [
     "dx-reviewer",
     "qa",
     "security-reviewer",
-    "codex-reviewer",
-    "code-reviewer",
+    "cross-model-reviewer",
 ]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
 FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
@@ -202,7 +201,7 @@ def main() -> None:
                             changed = True
             except Exception as e:
                 print(f"verify_tracker: reviewer dispatch unavailable: {e}", file=sys.stderr)
-                # 兜底不按子串识别，避免 code-explorer 命中 code-reviewer
+                # 兜底不按子串识别，避免非审查者名（如 code-explorer）按子串误命中审查者
 
         try:
             r20g = import_claude_lib(claude_home, "r20_replay")

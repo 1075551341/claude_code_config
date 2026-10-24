@@ -19,7 +19,7 @@ from pathlib import Path
 
 MANIFEST_PATH = Path.home() / ".claude" / "MANIFEST.yaml"
 
-# intent → MANIFEST concern key — 全覆盖 63 skills+agents（v10.2）
+# intent → MANIFEST concern key — 覆盖全局 skills+agents 与常用 catalog 变体
 TOOL_INTENT_MAP: dict[str, str] = {
     # P0 路由集 (5)
     "skill/using-superpowers": "bootstrap",
@@ -27,16 +27,13 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "skill/brainstorming": "brainstorming",
     "skill/verification-before-completion": "verification",
     "skill/systematic-debugging": "debugging",
-    # L2 门控 (8)
+    # L2 门控
     "skill/writing-plans": "planning",
     "skill/spec-validation": "spec_review",
     "skill/executing-plans": "execution",
     "skill/subagent-driven-development": "multi_agent",
     "skill/test-driven-development": "tdd",
-    "skill/requesting-code-review": "code_review_request",
-    "skill/receiving-code-review": "code_review_receive",
-    "skill/triage": "triage",
-    # L3 信号 (10)
+    # L3 信号
     "skill/deep-research": "deep_research",
     "skill/adr-management": "adr",
     "skill/workstream-management": "workstreams",
@@ -44,30 +41,20 @@ TOOL_INTENT_MAP: dict[str, str] = {
 
     "skill/git-workflow": "git_workflow",
     "skill/claude-mem-maintenance": "claude_mem_maintenance",
-    "skill/autoplan": "autoplan",
     "skill/ship": "ship_pipeline",
     "skill/office-hours": "office_hours",  # v11 降级 catalog，映射保留
     # Supplement（v11: context-engineering 已删；catalog 降级技能保留映射——项目内复制启用时仍受归属校验）
     "skill/memory-compression": "context_rot",
     "skill/caveman-compress": "output_token",
     "skill/instinct-learning": "instinct_v2",
-    "skill/improve-codebase-architecture": "architecture_improvement",
     "skill/design-pipeline": "design_pipeline",
     "skill/taste-memory": "taste_memory",
     "skill/browser-qa": "gstack_qa",
     "skill/onboarding-guide": "onboarding",
-    "skill/karpathy-guidelines": "coding_philosophy",
-    "skill/finishing-a-development-branch": "ship_pipeline",
     "skill/using-git-worktrees": "workstreams",
     "skill/skill-creator": "planning",  # v11: writing-skills 并入 skill-creator
-    "skill/structured-artifacts": "gsd_context",
-    # Agents — 核心 6（v12 code-reviewer 并入 eng-reviewer）
+    # Agents — 阶段角色（v13：其余核心 agent 已删，能力回归主会话 + skills）
     "agent/planner": "planning",
-    "agent/code-explorer": "multi_agent",
-    "agent/build-error-resolver": "debugging",
-    "agent/architect": "brainstorming",
-    "agent/spec-reviewer": "spec_review",
-    "agent/agentic-orchestrator": "multi_agent",
     # Agents — gstack 审查 (6)
     "agent/eng-reviewer": "gstack_eng",
     "agent/ceo-reviewer": "gstack_ceo",
@@ -75,11 +62,9 @@ TOOL_INTENT_MAP: dict[str, str] = {
     "agent/dx-reviewer": "gstack_dx",
     "agent/qa": "gstack_qa",
     "agent/security-reviewer": "gstack_security",
-    # Agents — gstack 补全 3 + catalog 变体（v11: cso/release-engineer/product-manager/design-engineer
+    # Agents — 跨模型 + catalog 变体（v11: cso/release-engineer/product-manager/design-engineer
     # 已删或并入；catalog 降级 agent 保留映射——项目内复制启用时仍受归属校验）
-    "agent/sre": "gstack_sre",
-    "agent/doc-writer": "gstack_eng",
-    "agent/codex-reviewer": "gstack_codex",
+    "agent/cross-model-reviewer": "gstack_codex",
     "agent/performance-engineer": "gstack_eng",
     "agent/design-shotgun": "design_pipeline",
     "agent/pair-agent": "agentic_orchestrator",

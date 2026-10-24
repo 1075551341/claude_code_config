@@ -40,6 +40,10 @@ VALID = (
     "结论：DONE"
 )
 SOLVED_LINE = "- 问题是否解决：已解决（证据：python hooks/tests/test_r20_replay.py）\n"
+BARS = (
+    "- 符合预期要求：满足（证据：原始要求逐条对应改动）\n"
+    "- 原功能保持：满足（证据：pytest 全绿；无有意行为变更）\n"
+)
 REVIEW_PASS = (
     "Independent review PASS\n"
     "- 满足：需求已落地（承认）\n"
@@ -49,6 +53,7 @@ REVIEW_PASS = (
     "- 原功能：保持（证据：pytest）\n"
     "- 影响范围：CRG get_impact_radius\n"
     "- 问题是否解决：已解决（证据：pytest）\n"
+    + BARS
 )
 IMPACT_LINE = "- 影响范围：已审查 CRG get_impact_radius 与 IMPACT 清单\n"
 
@@ -840,7 +845,8 @@ def test_cursor_should_followup() -> None:
         "- 原功能：保持（证据：pytest）\n"
         "- 影响范围：CRG get_impact_radius\n"
         "- 问题是否解决：已解决（证据：pytest）\n"
-        "结论：PASS\n"
+        + BARS
+        + "结论：PASS\n"
     )
     mentioned_entry = {
         "edited_files": [{"path": "a.py", "ts": 1}],
@@ -1421,6 +1427,29 @@ def test_crg_track() -> None:
     check("block message includes 短 R20", "短 R20" in msg)
 
 
+def test_pass_requires_both_bars():
+    base = REVIEW_PASS.replace(BARS, "")
+    check("bars: both present with evidence ok", r20_replay.review_bars_ok(REVIEW_PASS))
+    check("bars: missing both rejected", not r20_replay.review_bars_ok(base))
+    only_req = base + "- 符合预期要求：满足（证据：逐条对应）\n"
+    check("bars: missing 原功能保持 rejected", not r20_replay.review_bars_ok(only_req))
+    no_ev = base + "- 符合预期要求：满足（证据：逐条对应）\n- 原功能保持：满足\n"
+    check("bars: 原功能保持 without 证据 rejected", not r20_replay.review_bars_ok(no_ev))
+    regress = base + "- 符合预期要求：满足（证据：逐条对应）\n- 原功能保持：不满足（证据：test_x 回归）\n"
+    check("bars: self-reported regression rejected", not r20_replay.review_bars_ok(regress))
+    check("bars: 原功能保持 does not shadow 原功能 field",
+          r20_replay.field_value(REVIEW_PASS, "原功能") == "保持（证据：pytest）")
+    entry = {
+        "edited_files": [{"path": "a.py", "ts": 1}],
+        "reviews": [{"agent": "eng-reviewer", "ts": 2, "text": base + "结论：PASS\n"}],
+    }
+    r20_replay.apply_review_verdict(entry, "")
+    check("bars: PASS without bars does not complete task", entry.get("review_pass_ok") is not True)
+    entry["reviews"][0]["text"] = REVIEW_PASS + "结论：PASS\n"
+    r20_replay.apply_review_verdict(entry, "")
+    check("bars: PASS with both bars completes task", entry.get("review_pass_ok") is True)
+
+
 def main() -> int:
     print("=== R20 replay marker tests ===")
     test_crg_track()
@@ -1452,6 +1481,7 @@ def main() -> int:
     test_impact_diff_superset_blocked()
     test_impact_diff_subset_passes()
     test_impact_diff_disabled_skip()
+    test_pass_requires_both_bars()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0
 

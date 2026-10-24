@@ -20,7 +20,7 @@ _PATH_RE = re.compile(
     r"(?:[A-Za-z]:)?[\\/][\w.\\/-]+|\S+\.(?:md|mdc|py|ts|tsx|js|json|ya?ml|toml|txt)\b"
 )
 _FIELD_NAMES = (
-    "满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决"
+    "符合预期要求|原功能保持|满足|遗漏|错改|漏改|原功能|影响范围|影响面|问题是否解决"
 )
 _FIELD_RE = re.compile(
     rf"(?:^|\n)\s*-?\s*({_FIELD_NAMES})\s*[：:][ \t]*(.*?)(?="
@@ -67,7 +67,7 @@ DEFAULT_DOC_EXTS = (".md", ".txt", ".rst", ".markdown")
 _ROLE_YOU_ARE_REVIEWER = re.compile(
     r"\byou are\s+(?:an?\s+)?("
     r"eng-reviewer|ceo-reviewer|security-reviewer|dx-reviewer|"
-    r"codex-reviewer|code-reviewer|designer|qa)\b",
+    r"cross-model-reviewer|designer|qa)\b",
     re.I,
 )
 _IMPACT_TOKENS = (
@@ -172,8 +172,7 @@ DEFAULT_REVIEWER_AGENTS = (
     "dx-reviewer",
     "qa",
     "security-reviewer",
-    "codex-reviewer",
-    "code-reviewer",
+    "cross-model-reviewer",
 )
 
 
@@ -210,6 +209,24 @@ def review_dimensions_ok(text: str) -> bool:
     if _SOLVED_LEGEND.search(solved):
         return False
     return any(token in solved for token in _SOLVED_TOKENS)
+
+
+# PASS 两道门（名称须与 config/workflow.yaml review.pass_requires.*.label 一致，V21 校验）
+PASS_BAR_LABELS = ("符合预期要求", "原功能保持")
+_BAR_FAIL_TOKENS = ("不满足", "未满足", "不通过", "未通过", "回归")
+
+
+def review_bars_ok(text: str) -> bool:
+    """PASS 须逐道写两道门结论 + 证据；任一缺失、无证据或自认不满足 → 不算干净 PASS。"""
+    for label in PASS_BAR_LABELS:
+        val = field_value(text or "", label)
+        if not val or val.strip().lower() in _FIELD_BLANK:
+            return False
+        if "证据" not in val:
+            return False
+        if any(tok in val for tok in _BAR_FAIL_TOKENS):
+            return False
+    return True
 
 
 def _strip_verdict_markup(line: str) -> str:
@@ -293,7 +310,7 @@ def identify_reviewer(agent_blob: str, reviewer_agents=None) -> str | None:
 
     全名（eng-reviewer、security-reviewer、designer…）可出现在 blob 任意处。
     简称（ceo / dx / security / qa）仅当整个 blob 或首个 token 精确等于该词，
-    避免 code-explorer 命中 code-reviewer、或正文里的 security 误识别。
+    避免非审查者名（如 code-explorer）按子串误命中审查者、或正文里的 security 误识别。
     永不使用 stem ``code``。
     """
     blob = (agent_blob or "").strip()
@@ -424,6 +441,8 @@ def _verdict_unclean(text: str) -> bool:
         return True
     if primary_verdict(blob) != "PASS":
         return True
+    if not review_bars_ok(blob):
+        return True
     return bool(_UNCLEAN_PASS_RE.search(blob))
 
 
@@ -474,7 +493,9 @@ def apply_review_verdict(entry: dict, text: str) -> bool:
             entry["review_pass_ok"] = False
             return True
         return False
-    all_pass = all(primary_verdict(blob) == "PASS" and review_dimensions_ok(blob) for blob in texts)
+    all_pass = all(
+        primary_verdict(blob) == "PASS" and review_dimensions_ok(blob) and review_bars_ok(blob) for blob in texts
+    )
     if all_pass and not entry.get("review_pass_ok"):
         entry["review_pass_ok"] = True
         return True
@@ -822,7 +843,7 @@ def dual_pass_phase(entry: dict, cfg: dict | None = None) -> str:
         return "skip"
     if entry.get("review_pass_ok"):
         return "done"
-    max_rounds = int(cfg.get("review_max_rounds", 5))
+    max_rounds = int(cfg.get("review_max_rounds", 3))
     rounds = int(entry.get("review_rounds") or 0)
     if rounds >= max_rounds:
         return "capped"

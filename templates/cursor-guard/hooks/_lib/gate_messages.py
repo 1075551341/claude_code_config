@@ -20,7 +20,7 @@ FALLBACKS = {
     "verify": (
         "【门控 · 完成前必做】\n"
         "有未验证编辑时才执行（仅 Claude Stop / 人工 Read；Cursor 不注入本段）。\n"
-        "贴观察输出；R20 七维（含问题是否解决）。审查前刷图；全新只读独立审查最多 {{review_max_rounds}} 轮。"
+        "贴观察输出；R20 七维（含问题是否解决）。审查前刷图；全新只读独立审查（两道门：符合预期要求 / 原功能保持）PASS 才算完成，最多 {{review_max_rounds}} 轮，用尽=BLOCKED。"
         "政策 → verification-before-completion。"
     ),
     "impact": (
@@ -50,9 +50,9 @@ def _fill_placeholders(text: str, claude_home: Path) -> str:
         qg = Path(claude_home) / "config" / "quality_gates.json"
         data = json.loads(qg.read_text(encoding="utf-8"))
         vg = data.get("verification_gate") or {}
-        rounds = int(vg.get("review_max_rounds") or data.get("review_max_rounds") or 5)
+        rounds = int(vg.get("review_max_rounds") or data.get("review_max_rounds") or 3)
     except Exception as e:
-        print(f"gate_messages: review_max_rounds fallback 5: {e}", file=sys.stderr)
+        print(f"gate_messages: review_max_rounds fallback 3: {e}", file=sys.stderr)
     return raw.replace("{{review_max_rounds}}", str(rounds))
 
 

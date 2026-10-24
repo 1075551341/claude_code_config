@@ -1,105 +1,34 @@
-# 工作流主干（Workflow Spine）— v12 唯一调度面
+# 工作流主干（Workflow Spine）— v13 唯一调度面：阶段 / 门控 / 完成定义 / 审查
 #
-# 改模型 / 档位 / 阶段 / 门控 / 审查轮次 → 只改本文件，然后：
-#   python scripts/workflow.py render          # 把派生内容写回 agents/commands/CLAUDE.md/quality_gates.json …
-#   python scripts/workflow.py check           # 漂移检测（validate_config V21 调用；CI/提交前跑）
-#   python scripts/workflow.py show            # 打印当前 profile 下「谁用什么模型/effort」
-#   python scripts/workflow.py apply-settings  # 把模型键合并进 ~/.claude/settings.json（默认 dry-run）
+# 本文件只描述「角色、阶段、门控、习惯」，不描述「用哪个模型」：
+#   - 模型由调用方决定（会话 /model、settings.json、编辑器模型选择器、Task 调用方传参）。
+#   - 推理强度（effort / thinking）只由实际被调用的模型及其自身设置决定。
+#   - 本包任何文件不得写模型 ID / 厂商档位 / effort 档；`workflow.py check` 的 model-agnostic lint 强制。
 #
-# 派生目标与标记块见 docs/DEV_FLOW.md「派生清单」。禁止手改 <!-- spine:* --> 标记块内文本。
+#   python scripts/workflow.py render   # 把派生块写回 agents/commands/CLAUDE.md/quality_gates.json …
+#   python scripts/workflow.py check    # 校验 + 漂移 + model-agnostic lint（validate_config V21 调用）
+#   python scripts/workflow.py show     # 打印阶段 / 轨道 / 完成定义
+#
+# 派生目标见 docs/DEV_FLOW.md「派生清单」。禁止手改 <!-- spine:* --> 标记块内文本。
 
-schema: 1
-pack_version: "12.0.0"
+schema: 2
+pack_version: "13.0.0"
 
-# ── 1. 模型 ───────────────────────────────────────────────────────
-# 档位（tier）是模型无关的能力档；profile 把档位映射到任意后端的具体模型。
-# Claude Code：agent frontmatter 写档位别名（opus/sonnet/haiku），profile 通过
-#   ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL 把别名重定向到具体模型 → 换后端不改 agent 文件。
-# Cursor：Task 工具 model 参数用 profile 的 cursor slug（CURSOR-EDITOR.mdc 派生表）；Cursor 的 effort / fast
-#   直接编码在 slug 里（如 -high / -fast），roles.*.effort 只作用于 Claude Code。
-models:
-  active_profile: anthropic
-  tier_order: [light, mid, frontier] # 低 → 高；评审档不得低于实现档（constraints）
-  claude_code_alias: { frontier: opus, mid: sonnet, light: haiku }
-  profiles:
-    anthropic:
-      description: Anthropic API / Claude Platform（默认）
-      agent_model: alias # alias=写档位别名 | inherit=全部继承会话模型（单模型后端）
-      supports_effort: true
-      tiers:
-        frontier: { claude_code: claude-opus-5-5, cursor: claude-opus-5-5-high, context_tokens: 1000000 }
-        mid: { claude_code: claude-sonnet-5-5, cursor: claude-sonnet-5-5-medium, context_tokens: 1000000 }
-        light: { claude_code: claude-haiku-5-5, cursor: composer-2.5-fast, context_tokens: 200000 }
-    kimi:
-      description: Kimi K3 直连（cc-switch）；三档同模型，档位差异只靠 prompt 分工
-      agent_model: alias
-      supports_effort: false
-      tiers:
-        frontier: { claude_code: k3-256k, cursor: inherit, context_tokens: 262144 }
-        mid: { claude_code: k3-256k, cursor: inherit, context_tokens: 262144 }
-        light: { claude_code: k3-256k, cursor: inherit, context_tokens: 262144 }
-    deepseek:
-      description: DeepSeek V4（cc-switch）；pro 做规划/审查，flash 做探索/文档
-      agent_model: alias
-      supports_effort: false
-      tiers:
-        frontier: { claude_code: deepseek-v4-pro, cursor: inherit, context_tokens: 200000 }
-        mid: { claude_code: deepseek-v4-pro, cursor: inherit, context_tokens: 200000 }
-        light: { claude_code: deepseek-v4-flash, cursor: inherit, context_tokens: 128000 }
-    single:
-      description: 任意单模型后端（网关/本地模型）；全部 agent 继承会话模型，不写 env 重定向
-      agent_model: inherit
-      supports_effort: false
-      tiers:
-        frontier: { claude_code: inherit, cursor: inherit }
-        mid: { claude_code: inherit, cursor: inherit }
-        light: { claude_code: inherit, cursor: inherit }
-
-# ── 2. 角色 → 档位 + effort ──────────────────────────────────────
-# session = 主会话；其余键 = agents/<name>.md（render 写 frontmatter model/effort）。
-# effort ∈ low|medium|high|xhigh（profile.supports_effort=false 时不写）。
-roles:
-  session: { tier: frontier, effort: high }
-  planner: { tier: frontier, effort: high }
-  architect: { tier: frontier, effort: high }
-  agentic-orchestrator: { tier: frontier, effort: high }
-  change-implementer: { tier: mid, effort: high }
-  build-error-resolver: { tier: mid, effort: medium }
-  spec-reviewer: { tier: mid, effort: high }
-  sre: { tier: mid, effort: medium }
-  code-explorer: { tier: light, effort: low }
-  doc-writer: { tier: light, effort: medium }
-  eng-reviewer: { tier: frontier, effort: high }
-  security-reviewer: { tier: frontier, effort: high }
-  codex-reviewer: { tier: frontier, effort: high }
-  ceo-reviewer: { tier: mid, effort: medium }
-  designer: { tier: mid, effort: medium }
-  dx-reviewer: { tier: mid, effort: medium }
-  qa: { tier: mid, effort: high }
-
-constraints:
-  reviewer_min_tier_of: change-implementer # 每个审查者档位 ≥ 修改者档位（首轮审查才有意义）
-
-# ── 3. 分类 → 所需档位（task-triage ⑥模型匹配）────────────────────
-triage:
-  required_tier: { all_low: light, any_mid: mid, any_high_or_blacklist: frontier }
-  attempt_escalation: 2 # attempt ≥ 此值 → 执行升档非简单 + verify_tier=全量
-  task_priority_tiers: { P0: frontier, P1: mid, P2: light } # 子任务派发（SDD / orchestrator）按优先级选档
-
-# ── 4. 阶段（stage）与轨道（track）─────────────────────────────────
-# 每阶段 entry/exit 是「一次通过」契约：exit 全部满足才进入下一阶段，不靠事后返工。
+# ── 1. 阶段（stage）与轨道（track）─────────────────────────────────
+# role = session（主会话）或 agents/<name>.md；agent 不声明 model/effort，一律继承调用方。
+# 每阶段 exit 是「一次通过」契约：exit 全部满足才进入下一阶段。
 stages:
   triage:
     label: ⓪分类
     skill: task-triage
     role: session
     exit:
-      - 输出分类契约：大类 | 需改文件 | 模型档(当前≥所需) | verify_tier | 置信度 | 成功标准
+      - 输出分类契约：大类 | 需改文件 | verify_tier | 置信度 | 成功标准
   debug:
     label: ⓑ根因
     skill: systematic-debugging
     role: session
-    entry: [Bug 类（多文件 / 根因不明 / 执行升档）]
+    entry: [Bug 类（多文件 / 根因不明 / 持续处理）]
     exit:
       - 根因证据一行（失败日志 / 断点 / 最小复现）
       - 修复点与回归验证命令写入影响清单
@@ -137,7 +66,7 @@ stages:
     exit:
       - 清单内文件一次改齐（含文档/注释/INDEX/版本戳）
       - 构建/类型/Lint 通过；R16 无静默吞异常
-      - 提交审查前自检（quality.self_check）通过
+      - 交审前自检（quality.self_check）通过
   verify:
     label: ④验证
     command: verify
@@ -147,7 +76,7 @@ stages:
     exit:
       - verify_tier 对应清单全部附命令证据
       - 审查前刷图（last_edit 之后）
-      - 本轮全新审查批次全部 PASS（review.routing）
+      - 本轮全新独立审查全部 PASS（completion + review.routing）
   learn:
     label: ⑤学习
     command: compact
@@ -160,16 +89,30 @@ stages:
     skill: ship
     role: session
     on_demand: true # 不在任何 track 内；用户明确要求提交/开 PR 时才进入（R19）
-    entry: [验证阶段 exit 满足, 用户明确要求提交 / 开 PR / 发布]
+    entry: [任务已完成（completion.done_when 全部满足）, 用户明确要求提交 / 开 PR / 发布]
     exit: [用户要求的交付物完成（commit / PR / 发布），CI 绿]
 
+# 每条轨道都含 verify → 每类任务都经过独立审查门（completion.required_on_tracks）。
 tracks:
   simple: [triage, execute, verify]
   bug: [triage, debug, execute, verify]
   non_simple: [triage, discuss, spec, execute, verify, learn]
   research: [triage, research, verify]
 
-# ── 5. 一次通过质量契约 ───────────────────────────────────────────
+# ── 2. 完成定义（硬要求）────────────────────────────────────────────
+# 没有独立审查 PASS ⇒ 任务未完成。自检 / 实现者自签 / 验证命令全绿都不能替代。
+completion:
+  independent_review_required: true
+  required_on_tracks: [simple, bug, non_simple, research] # 无「简单 / 只读 / 文档」豁免
+  done_when:
+    - verify_tier 清单全部附观察到的命令输出
+    - 本轮全新独立审查者（非实现者、未 resume）给出 PASS，七维齐全，且 review.pass_requires 两道门（符合预期要求 + 原功能保持）均附证据通过
+  # 轮次用尽仍未 PASS ⇒ 状态 BLOCKED（未完成），不是 DONE / DONE_WITH_CONCERNS，也不是「跳过审查」。
+  on_rounds_exhausted: BLOCKED
+  # 唯一豁免：用户本轮显式说出 quality_gates.json verification_gate.skip_keywords 之一；此时状态同样不是 DONE。
+  user_waiver_status: DONE_WITH_CONCERNS
+
+# ── 3. 一次通过质量契约 ───────────────────────────────────────────
 quality:
   definition_of_ready:
     - 验收标准：每条一行、可验证、用户已确认
@@ -183,8 +126,9 @@ quality:
   verify_tiers:
     proportional: 初判简单且 attempt=1：代码级 + 功能级 + 关联文件；贴命令证据
     full: 非简单或持续处理：比例全部 + 交叉验证全项 + 残留引用
+  attempt_escalation: 2 # attempt ≥ 此值 → 执行升档非简单 + verify_tier=full
 
-# ── 6. 审查 ──────────────────────────────────────────────────────
+# ── 4. 独立审查 ───────────────────────────────────────────────────
 # render 同步到 config/quality_gates.json verification_gate（hooks 消费）与审查者 agent 契约块。
 review:
   # 名称须与 hooks/_lib/r20_replay.py 机械门一致（V21 校验）
@@ -193,14 +137,25 @@ review:
     - { name: 遗漏, hint: 原始要求逐条对照 }
     - { name: 错改, hint: 改了不该改的 }
     - { name: 漏改, hint: 含文档/注释/版本戳/派生块，或「无文档影响」 }
-    - { name: 原功能, hint: 保持 + 测试/冒烟证据 }
+    - { name: 原功能, hint: 相对起点 tip 保持 + 测试/validate/冒烟观察输出；有意行为变更逐条列出 }
     - { name: 影响范围, hint: CRG get_impact_radius / IMPACT / blast-radius }
     - { name: 问题是否解决, hint: 已解决 | 未解决 | 部分解决 + 观察证据，禁止「看起来好了」 }
+  # PASS 的定义：两道门同时满足，缺一即 NEEDS-CHANGES。审查者须对每道门给出证据。
+  pass_requires:
+    requirements_met:
+      label: 符合预期要求
+      check: 每项改动都对应原始要求 / 验收标准；逐条无遗漏；无破坏要求的范围外改动（满足 + 遗漏 + 错改 维）
+      evidence: 原始要求逐条 → 对应改动或明确的反驳/弃权理由
+    original_functionality_preserved:
+      label: 原功能保持
+      check: 起点 tip 上既有的预期行为全部保持，无静默回归；有意的行为变更逐条显式列出并对应原始要求（原功能 维）
+      evidence: 相关测试 / validate / check 脚本的观察输出 + 相对起点 tip 的行为差异说明
   verdicts: [PASS, NEEDS-CHANGES]
-  max_rounds: 5 # 审查轮次上限（一轮 = 改→验→刷图→并行全新审查）
-  max_blocks: 3 # Claude Stop 门最多阻断次数（≠ 轮次）
-  min_files: 1 # 有任何交付编辑即审查
-  refresh_graph_before_review: true # hooks 与 V16 要求恒为 true；保留为显式声明
+  # 一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）。目标是第 1 轮 PASS；上限是保险丝，不是预算。
+  max_rounds: 3
+  max_blocks: 3 # Claude Stop 门最多阻断次数（防死循环；≥ max_rounds）；放行时状态按 completion.on_rounds_exhausted
+  min_files: 1 # Stop 机械门的触发阈值（有交付编辑即强制）；无编辑任务由流程规则强制审查交付物
+  refresh_graph_before_review: true # hooks 与 V16 要求恒为 true
   routing:
     always: [eng-reviewer]
     product: [ceo-reviewer]
@@ -208,5 +163,4 @@ review:
     api_dx: [dx-reviewer]
     tests: [qa]
     security: [security-reviewer]
-    cross_model: [codex-reviewer]
-  legacy_reviewer_names: [code-reviewer] # v12 已并入 eng-reviewer；hooks 仍识别旧名委派
+    cross_model: [cross-model-reviewer] # 由调用方挑一个与实现者不同的模型；本包不指定是哪个

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-"""config/workflow.yaml 主干：全部 profile 可解析、漂移可检出、约束可拦截。"""
+"""config/workflow.yaml 主干：校验、完成门、两道 PASS 门、派生漂移、model-agnostic lint。"""
 from __future__ import annotations
 
-import contextlib
 import copy
 import importlib.util
-import io
 import os
 import sys
 import tempfile
@@ -29,107 +27,102 @@ def check(name: str, cond: bool, detail: str = "") -> None:
     print(f"  [{mark}] {name}" + (f" -- {detail}" if detail and not cond else ""))
 
 
+def rejected(mutate, needle: str) -> bool:
+    bad = copy.deepcopy(spine)
+    mutate(bad)
+    return any(needle in e for e in wf.validate(bad, ROOT))
+
+
 spine = wf.load_spine(ROOT)
 errs = wf.validate(spine, ROOT)
 check("live spine validates", not errs, "; ".join(errs))
-
-active = wf.Resolved(spine)
-live_targets = wf.build_targets(ROOT, active)
+live_targets = wf.build_targets(ROOT, spine)
 check("live derived targets in sync", not wf.diff_targets(ROOT, live_targets))
+check("live tree passes model-agnostic lint", not wf.lint(ROOT), "; ".join(wf.lint(ROOT)[:5]))
 
-for pname in spine["models"]["profiles"]:
-    r = wf.Resolved(spine, pname)
-    targets = wf.build_targets(ROOT, r)
-    eng = targets[Path("agents/eng-reviewer.md")]
-    want = r.agent_model("eng-reviewer")
-    check(f"{pname}: eng-reviewer frontmatter model={want}", f"\nmodel: {want}\n" in eng)
-    has_effort = "\neffort:" in eng.split("---", 2)[1]
-    check(f"{pname}: effort only when supported", has_effort == bool(r.profile.get("supports_effort")))
+# ── model / effort 不得回流 ──
+for legacy in ("models", "roles", "triage", "constraints"):
+    check(f"legacy top-level {legacy!r} rejected", rejected(lambda s, k=legacy: s.update({k: {}}), legacy))
+check("stage-level model rejected", rejected(lambda s: s["stages"]["execute"].update(model="x"), "'model'"))
+check("stage-level effort rejected", rejected(lambda s: s["stages"]["verify"].update(effort="x"), "'effort'"))
+for name in sorted(wf.disk_agents(ROOT)):
+    fm = wf._frontmatter(live_targets[Path("agents") / f"{name}.md"])
+    check(f"{name}: no model/effort in frontmatter",
+          not any(ln.split(":", 1)[0].strip() in ("model", "effort") for ln in fm))
 
-single = wf.Resolved(spine, "single")
-check("single profile routes every role to inherit", all(single.agent_model(n) == "inherit" for n in spine["roles"]))
+fm = "---\nname: x\nmodel: m\ndescription: |\n  a\n  b\neffort: e\ntools: Read\n---\nbody\n"
+out = wf.strip_frontmatter_keys(fm, ("model", "effort"), "x.md")
+check("render strips model/effort, keeps block scalar",
+      out == "---\nname: x\ndescription: |\n  a\n  b\ntools: Read\n---\nbody\n")
 
-check("eng-reviewer always routed", "eng-reviewer" in active.reviewers())
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    (root / "agents").mkdir()
+    (root / "agents" / "x.md").write_text("---\nname: x\nmodel: inherit\n---\n", encoding="utf-8")
+    (root / "rules.md").write_text("pick a vendor-tier alias: opus\n", encoding="utf-8")
+    (root / "config.json").write_text('{"effortLevel": "high"}\n', encoding="utf-8")
+    (root / "CHANGELOG.md").write_text("history may mention sonnet\n", encoding="utf-8")
+    hits = wf.lint(root)
+    check("lint flags agent frontmatter model key", any("agents/x.md" in h and "frontmatter" in h for h in hits))
+    check("lint flags vendor tier alias in prose", any(h.startswith("rules.md:1") for h in hits))
+    check("lint flags effort key in config", any(h.startswith("config.json:1") for h in hits))
+    check("lint ignores CHANGELOG history", not any("CHANGELOG" in h for h in hits))
 
-bad = copy.deepcopy(spine)
-bad["roles"]["eng-reviewer"]["tier"] = "light"
-check("reviewer tier below implementer rejected", any("eng-reviewer" in e and "tier" in e for e in wf.validate(bad, ROOT)))
+# ── 完成门：独立审查强制 ──
+check("review not required rejected",
+      rejected(lambda s: s["completion"].update(independent_review_required=False), "independent_review_required"))
+check("track exemption rejected",
+      rejected(lambda s: s["completion"].update(required_on_tracks=["non_simple"]), "required_on_tracks"))
+check("exhausted rounds must be BLOCKED",
+      rejected(lambda s: s["completion"].update(on_rounds_exhausted="DONE_WITH_CONCERNS"), "on_rounds_exhausted"))
+check("user waiver cannot be DONE", rejected(lambda s: s["completion"].update(user_waiver_status="DONE"), "DONE"))
+check("track without verify rejected", rejected(lambda s: s["tracks"].update(simple=["triage", "execute"]), "verify"))
+check("max_rounds > 3 rejected", rejected(lambda s: s["review"].update(max_rounds=4), "max_rounds"))
+check("max_rounds default is 3", spine["review"]["max_rounds"] == 3)
+check("max_blocks < max_rounds rejected", rejected(lambda s: s["review"].update(max_blocks=2), "max_blocks"))
 
-bad = copy.deepcopy(spine)
-bad["review"]["dimensions"] = bad["review"]["dimensions"][:-1]
-check("dimension drift vs r20_replay rejected", any("r20_replay" in e for e in wf.validate(bad, ROOT)))
+# ── 两道 PASS 门 ──
+check("pass_requires missing bar rejected",
+      rejected(lambda s: s["review"]["pass_requires"].pop("original_functionality_preserved"), "pass_requires"))
+check("pass_requires bar without evidence rejected",
+      rejected(lambda s: s["review"]["pass_requires"]["requirements_met"].pop("evidence"), "evidence"))
+check("pass_requires label drift vs hooks rejected",
+      rejected(lambda s: s["review"]["pass_requires"]["requirements_met"].update(label="x"), "PASS_BAR_LABELS"))
+contract = live_targets[Path("agents/eng-reviewer.md")]
+check("reviewer contract renders both bars",
+      all(b["label"] in contract for b in spine["review"]["pass_requires"].values()))
+check("completion block renders both bars",
+      all(b["label"] in live_targets[Path("CLAUDE.md")] for b in spine["review"]["pass_requires"].values()))
 
-bad = copy.deepcopy(spine)
-bad["tracks"]["simple"] = ["triage", "nope"]
-check("unknown stage in track rejected", any("nope" in e for e in wf.validate(bad, ROOT)))
-
+# ── 结构 ──
+check("dimension drift vs r20_replay rejected",
+      rejected(lambda s: s["review"].update(dimensions=s["review"]["dimensions"][:-1]), "r20_replay"))
+check("unknown stage in track rejected", rejected(lambda s: s["tracks"].update(simple=["triage", "nope", "verify"]), "nope"))
+check("on_demand stage inside a track rejected",
+      rejected(lambda s: s["tracks"]["non_simple"].append("ship"), "on_demand"))
+check("refresh_graph_before_review=false rejected",
+      rejected(lambda s: s["review"].update(refresh_graph_before_review=False), "refresh_graph_before_review"))
+check("reviewer list drift vs hooks defaults rejected",
+      rejected(lambda s: s["review"]["routing"].update(extra=["planner"]), "DEFAULT_REVIEWER_AGENTS"))
+check("eng-reviewer always routed", "eng-reviewer" in spine["review"]["routing"]["always"])
 rel = Path("agents/eng-reviewer.md")
 tampered = dict(live_targets)
 tampered[rel] = live_targets[rel].replace("<!-- /spine:review-contract -->", "x\n<!-- /spine:review-contract -->")
 check("edited generated block reported as drift", rel in wf.diff_targets(ROOT, tampered))
 
-bad = copy.deepcopy(spine)
-bad["tracks"]["non_simple"] = bad["tracks"]["non_simple"] + ["ship"]
-check("on_demand stage inside a track rejected", any("on_demand" in e for e in wf.validate(bad, ROOT)))
-
-bad = copy.deepcopy(spine)
-bad["review"]["refresh_graph_before_review"] = False
-check("refresh_graph_before_review=false rejected", any("refresh_graph_before_review" in e for e in wf.validate(bad, ROOT)))
-
-bad = copy.deepcopy(spine)
-bad["review"]["routing"]["extra"] = ["sre"]
-check("reviewer list drift vs hooks defaults rejected", any("DEFAULT_REVIEWER_AGENTS" in e for e in wf.validate(bad, ROOT)))
-
-frag = wf.settings_fragment(active)
-check("settings fragment never sets CLAUDE_CODE_SUBAGENT_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL" not in frag.get("env", {}))
-
-anth = wf.Resolved(spine, "anthropic")
-user = {"env": {"CLAUDE_CODE_SUBAGENT_MODEL": "x", "KEEP": "1"}, "theme": "dark"}
-on_anth, _ = wf.merge_settings(user, anth)
-check("anthropic merge sets model + redirects + effort",
-      on_anth.get("model") == "opus" and "ANTHROPIC_DEFAULT_OPUS_MODEL" in on_anth["env"] and "effortLevel" in on_anth)
-check("merge keeps unrelated keys", on_anth["env"].get("KEEP") == "1" and on_anth.get("theme") == "dark")
-on_single, _ = wf.merge_settings(on_anth, single)
-check("switch to single drops alias model / redirects / effort",
-      "model" not in on_single and "effortLevel" not in on_single
-      and not any(k.startswith("ANTHROPIC_DEFAULT_") for k in on_single.get("env", {})))
-on_kimi, _ = wf.merge_settings(on_anth, wf.Resolved(spine, "kimi"))
-check("switch to kimi drops effort, repoints redirects",
-      "effortLevel" not in on_kimi and on_kimi["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] == "k3-256k")
-gateway = {"env": {"ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-5-air"}}
-kept, notes = wf.merge_settings(gateway, single)
-check("single keeps gateway-owned redirect", kept["env"].get("ANTHROPIC_DEFAULT_HAIKU_MODEL") == "glm-5-air"
-      and any("kept env.ANTHROPIC_DEFAULT_HAIKU_MODEL" in n for n in notes))
-null_env, _ = wf.merge_settings({"env": None}, single)
-check("env: null tolerated (dropped, no crash)", "env" not in null_env)
-check("empty env object preserved", wf.merge_settings({"env": {}}, single)[0] == {"env": {}})
-check("alias session model keeps [1m] suffix", wf.merge_settings({"model": "opus[1m]"}, anth)[0]["model"] == "opus[1m]")
-with tempfile.TemporaryDirectory() as tmp:
-    sp = Path(tmp) / "settings.json"
-    sp.write_text('{"env": null, "model": "opus"}', encoding="utf-8")
-    with contextlib.redirect_stdout(io.StringIO()):
-        rc = wf.main(["--root", str(ROOT), "apply-settings", "--settings", str(sp)])
-    check("apply-settings dry-run tolerates env: null", rc == 0)
-_, notes = wf.merge_settings({"env": {"ANTHROPIC_MODEL": "k3"}}, anth)
-check("env.ANTHROPIC_MODEL override is reported", any("ANTHROPIC_MODEL" in n for n in notes))
-
-fm = "---\nname: x\ndescription: |\n  line one\n  line two\ntools: Read\n---\nbody\n"
-out = wf.set_frontmatter(fm, {"model": "opus", "effort": "high"}, "x.md")
-check("frontmatter insert skips block-scalar description",
-      "  line two\nmodel: opus\neffort: high\ntools: Read" in out)
-check("frontmatter render idempotent", wf.set_frontmatter(out, {"model": "opus", "effort": "high"}, "x.md") == out)
-
+# ── 上下文窗口：不登记模型，未知模型以调用方设置为准 ──
 sys.path.insert(0, str(ROOT / "hooks" / "_lib"))
 import context_thresholds as ct  # noqa: E402
 
-for key in wf.ALIAS_ENV.values():
+for key in ("CLAUDE_CODE_MAX_CONTEXT_TOKENS", "CLAUDE_CODE_AUTO_COMPACT_WINDOW"):
     os.environ.pop(key, None)
-check("alias resolves via ANTHROPIC_DEFAULT_*_MODEL",
-      ct._resolve_alias("opus", {"ANTHROPIC_DEFAULT_OPUS_MODEL": "k3-256k"}) == "k3-256k")
-check("alias keeps [1m] suffix",
-      ct._resolve_alias("sonnet[1m]", {"ANTHROPIC_DEFAULT_SONNET_MODEL": "m"}) == "m[1m]")
-check("alias without redirect untouched", ct._resolve_alias("haiku", {}) == "haiku")
-check("non-alias model untouched", ct._resolve_alias("claude-opus-5-5", {}) == "claude-opus-5-5")
+check("suffix gives known window", ct.known_context_tokens("any-model[1M]") == 1_000_000)
+check("unregistered model is unknown", ct.known_context_tokens("any-model") is None)
+os.environ["CLAUDE_CODE_AUTO_COMPACT_WINDOW"] = "900000"
+check("unknown model trusts explicit window", ct.ctx_window_tokens("any-model") == 900_000)
+check("known window caps explicit", ct.ctx_window_tokens("any-model[200K]") == 200_000)
+os.environ.pop("CLAUDE_CODE_AUTO_COMPACT_WINDOW")
+check("unknown model without explicit → default", ct.ctx_window_tokens("any-model") == 200_000)
 
 print(f"\n{len(PASSED)} passed, {len(FAILED)} failed")
 sys.exit(1 if FAILED else 0)

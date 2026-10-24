@@ -54,8 +54,7 @@ DEFAULT_REVIEWER_AGENTS = [
     "dx-reviewer",
     "qa",
     "security-reviewer",
-    "codex-reviewer",
-    "code-reviewer",
+    "cross-model-reviewer",
 ]
 
 IMPACT_GATE_KEY = "impact_manifest_gate"

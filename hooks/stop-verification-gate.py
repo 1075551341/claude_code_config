@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Stop Hook: 完成验证硬门（v11.5.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有交付物编辑即双审：审查前刷图；eng-reviewer 七维一次找齐；修改走 change-implementer。每轮全新开审（禁止 resume）。干净 PASS 即停。最多 review_max_rounds 轮。apply_review_verdict 同步 PASS（须已有 reviews；缺七维或 PASS 夹带须同步视为不干净）。
+独立审查是完成的必要条件：审查前刷图；eng-reviewer 七维一次找齐 + 两道门（符合预期要求 / 原功能保持）；修改走 change-implementer。每轮全新开审（禁止 resume）。干净 PASS 即完成。最多 review_max_rounds 轮。apply_review_verdict 同步 PASS（须已有 reviews；缺七维或 PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
-R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
+R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；达 max_blocks 或轮次用尽后放行停机，但状态 = BLOCKED（未完成，不得声称完成）。
 另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
 
 v10.17 新增两项拦截，均针对「改完影响其他功能」：
@@ -66,7 +66,7 @@ DEFAULT_CFG = {
     "require_review_verdict": True,
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
-    "review_max_rounds": 5,
+    "review_max_rounds": 3,
     "require_refresh_before_review": True,
 }
 
@@ -448,7 +448,7 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         lines.append(
             "输出短 R20 七维：满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决（漏改含文档；原功能含证据）。"
         )
-    lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行 DONE_WITH_CONCERNS；跳过请说「跳过验证」）")
+    lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行停机但状态=BLOCKED 未完成；用户显式豁免请说「跳过验证」）")
     return "\n".join(lines)
 
 
@@ -607,11 +607,14 @@ def main():
                     print(f"⚠️ {w}", file=sys.stderr)
 
             if user_skipped:
-                print("⚠️ 用户显式跳过验证 — 本次放行，完成声明按 DONE_WITH_CONCERNS 处理", file=sys.stderr)
+                print(
+                    f"⚠️ 用户显式豁免验证/审查 — 本次放行，状态 = {cfg.get('user_waiver_status', 'DONE_WITH_CONCERNS')}（不是 DONE）",
+                    file=sys.stderr,
+                )
             elif blocks >= int(cfg["max_blocks"]):
                 print(
-                    f"⚠️ 验证硬门已达上限（{blocks} 次）— 放行并标 DONE_WITH_CONCERNS："
-                    "验证证据仍不完整，请用户人工复核",
+                    f"🚫 验证硬门已达上限（{blocks} 次）— 放行停机，状态 = {cfg.get('on_rounds_exhausted', 'BLOCKED')}："
+                    "任务未完成（未通过独立审查/验证），不得声称完成；向用户报告未通过项",
                     file=sys.stderr,
                 )
             else:
@@ -624,7 +627,7 @@ def main():
                     entry["ts"] = time.time()
                     state[session_id] = entry
                     save_state(state)
-                max_rounds = int(cfg.get("review_max_rounds", 5))
+                max_rounds = int(cfg.get("review_max_rounds", 3))
                 rounds = int(entry.get("review_rounds") or 0)
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
@@ -670,7 +673,8 @@ def main():
                     phase = dual_pass_phase(entry, cfg)
                     if phase == "capped":
                         print(
-                            f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
+                            f"🚫 修改→审查已 {rounds}/{max_rounds} 轮仍未通过独立审查 — 状态 = "
+                            f"{cfg.get('on_rounds_exhausted', 'BLOCKED')}（任务未完成，不得声称完成；向用户报告剩余问题）",
                             file=sys.stderr,
                         )
                     elif phase == "modify":
@@ -687,7 +691,8 @@ def main():
                         )
                     elif phase == "review":
                         reasons.append(
-                            "有改动双审：须委派全新 eng-reviewer 对照原始要求做七维审查（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决），"
+                            "独立审查未通过前任务未完成：须委派全新 eng-reviewer 对照原始要求做七维审查（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决），"
+                            "并逐道给出两道门结论 + 证据（符合预期要求；原功能保持：相对起点 tip 的测试/validate 观察输出与有意行为变更），"
                             "一次找齐全部问题（禁止 resume、禁止改文件、禁止发现一条就停审），"
                             f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
                         )

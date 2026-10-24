@@ -10,8 +10,8 @@
 【门控 · 会话开始必做】
 
 1. Read ~/.claude/skills/task-triage/SKILL.md（本会话未读则必读）
-2. 输出分类契约：大类 | 需改文件 | 模型档 | verify_tier | 置信度 | 成功标准
-   简单=Phase0+关联需改≤2+白名单+六维全低+模型匹配+attempt=1；否则非简单（按 skill 路由）
+2. 输出分类契约：大类 | 需改文件 | verify_tier | 置信度 | 成功标准
+   简单=Phase0+关联需改≤2+白名单+五维全低+attempt=1；否则非简单（按 skill 路由）。简单不豁免独立审查
 3. 疑难（或/还是/可能、清单≥3、黑名单、跨模块）禁止直接改；重复问题先 claude-mem。
 
 ## 完成验证门
@@ -20,7 +20,7 @@
 有未验证编辑时才执行。计划未批准 / 本轮零编辑 / 仅计划文件 → 停止，不要续跑。
 Read verification-before-completion；贴观察输出。
 R20 七维各一行：满足（承认/反驳/弃权）/ 遗漏 / 错改 / 漏改（文档/注释或无文档影响）/ 原功能（证据）/ 影响范围（CRG/IMPACT/blast）/ 问题是否解决（已解决|未解决|部分解决+证据）。
-有交付物编辑：修改 → 验证（观察输出）→ 审查前刷图 → 全新只读独立审查（七维一次找齐）。干净 PASS 即停。清单齐后再派 change-implementer 集中改。每轮禁止 resume，最多 {{review_max_rounds}} 轮；禁止边审边改。政策 SSOT → verification-before-completion。
+没有独立审查 PASS = 未完成：修改 → 验证（观察输出）→ 审查前刷图 → 全新只读独立审查（七维一次找齐 + 两道门：符合预期要求 / 原功能保持，各附证据）。干净 PASS 即完成。清单齐后再派 change-implementer 集中改。每轮禁止 resume，最多 {{review_max_rounds}} 轮，用尽 = BLOCKED；禁止边审边改。政策 SSOT → verification-before-completion。
 
 ## 变更影响门
 

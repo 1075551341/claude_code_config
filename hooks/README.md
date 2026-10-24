@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.20
+# Hooks 钩子系统 v5.21
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.21 变更（v13.0.0）**：模型无关 — `context_thresholds` 删别名解析、登记表出厂为空；Stop 门默认 `review_max_rounds=3`，轮次/阻断用尽状态 = BLOCKED（不再 DONE_WITH_CONCERNS 放行）；`r20_replay.review_bars_ok` 要求 PASS 带两道关（符合预期要求 / 原功能保持，各附证据）；审查者名单 `cross-model-reviewer` 取代旧跨模型名。
 > **v5.20 变更（v11.6.0）**：Cursor Guard **1.2.17** — Shell 警告对齐 Claude `pre-bash-guard`（`powershell` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
 > **v5.19 变更（v11.6.0）**：Cursor Guard **1.2.16** — `sync_runner` 只 spawn pwsh。`.mcp.json` / Cursor 粘贴片段 `command: pwsh`。
 > **v5.18 变更（v11.6.0）**：`which_pwsh` 只认 pwsh 7.5+；live 脚本 `#Requires -Version 7.5`。Cursor Guard 1.2.15。
@@ -153,15 +154,15 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 | 层                    | 配置                                              | 窗口           | 阈值                    |
 | --------------------- | ------------------------------------------------- | -------------- | ----------------------- |
-| **模型解析**          | `config/model-context-windows.json` + `[1M]` 后缀 | 按模型动态     | —                       |
-| **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步）          | ≤ 模型最大     | **70%** 自动 `/compact` |
+| **窗口解析**          | 模型名 `[1M]` 等后缀 → 本机登记 `config/model-context-windows.json`（出厂为空）→ 显式 `autoCompactWindow` | 调用方决定 | — |
+| **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步）          | ≤ 已知窗口     | **70%** 自动 `/compact` |
 | **Hook 建议**         | `hooks/_lib/context_thresholds.py`                | 同上（封顶）   | 70% 建议 / **90% 强制** |
 | **HUD 状态条**        | claude-hud plugin                                 | API 实测       | 与模型一致              |
 | **Cursor Guard**      | `guard-config.json`                               | 200K（Cursor） | 70/90                   |
 
 换模型：`python scripts/sync-compact-window.py` 或新开 Claude Code 会话。
 
-⛔ `autoCompactWindow` 不得超过 `resolve_model_context_tokens()`；勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。
+⛔ 窗口可确认时（`known_context_tokens()` 非空）`autoCompactWindow` 不得超过它；未知模型以调用方显式设置为准。勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。本包不登记任何厂商模型。
 
 ## 设计原则
 
@@ -179,4 +180,4 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.20（v11.6.0）| 19 注册激活 + 5 未注册；七维独立审查；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_
+_版本：5.21（v13.0.0）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过；≤3 轮；耗尽 BLOCKED）；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_
