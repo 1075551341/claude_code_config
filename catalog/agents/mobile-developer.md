@@ -1,7 +1,6 @@
 ---
 name: mobile-developer
 description: 负责移动端开发任务。当需要开发React Native应用、Flutter应用、UniApp跨平台应用、微信小程序、H5移动页面、处理移动端适配问题、实现原生功能调用、处理移动端性能优化、实现推送通知时调用此Agent。触发词：移动端、React Native、Flutter、UniApp、小程序、微信小程序、H5、App开发、跨平台、iOS、Android、移动适配、原生功能、推送通知、移动开发。
-model: inherit
 color: cyan
 tools:
   - Read

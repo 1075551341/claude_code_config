@@ -1,7 +1,6 @@
 ---
 name: rust-reviewer
 description: Rust 代码审查专家。当需要审查 Rust 代码、检查所有权规则、评估借用检查、审查 Rust 最佳实践、检查并发安全时调用此 Agent。触发词：审查 Rust、Rust 审查、Rust 代码审查、所有权审查、借用检查、并发审查、rust-review。
-model: inherit
 color: orange
 tools:
   - Read

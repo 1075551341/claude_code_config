@@ -1,7 +1,6 @@
 ---
 name: csharp-reviewer
 description: C# / .NET 代码审查专家。触发：C# 代码审查、.NET 项目质量检查、ASP.NET Core 审查
-model: inherit
 tools:
   - Read
   - Grep

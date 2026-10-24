@@ -183,7 +183,7 @@ def search_and_summarize(query: str) -> str:
 
     # 3. LLM 总结
     response = openai.chat.completions.create(
-        model="gpt-4",
+        model=os.environ["LLM_MODEL"],
         messages=[
             {"role": "system", "content": "基于搜索结果回答问题"},
             {"role": "user", "content": f"问题: {query}\n\n参考资料:\n{context}"}

@@ -1,7 +1,6 @@
 ---
 name: typescript-pro
 description: TypeScript专家，负责TypeScript类型系统和高级特性相关任务。当需要设计复杂TypeScript类型、实现泛型工具类型、解决类型错误、进行TypeScript项目配置优化、实现类型安全的工厂模式/装饰器/依赖注入、将JavaScript迁移为TypeScript、设计类型安全的API接口时调用此Agent。触发词：TypeScript、TS类型、泛型、类型体操、类型推断、tsconfig、类型错误、类型安全、装饰器、枚举、接口设计、类型工具、Utility Types。
-model: inherit
 color: blue
 tools:
   - Read

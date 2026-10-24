@@ -2,7 +2,6 @@
 name: design-shotgun
 description: 设计探索器，生成 4-6 个 AI mockup 变体，浏览器比较板，品味记忆学习。触发词：设计方案、多方案对比、mockup、UI探索、shotgun。
 tools: Read, Write, Bash, Glob, Grep, WebFetch
-model: sonnet
 ---
 
 # Design Shotgun — 多方案设计探索

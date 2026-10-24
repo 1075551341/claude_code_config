@@ -1,8 +1,6 @@
 ---
 name: change-implementer
 description: 落实修改（按批准设计或审查未满足项改文件）。触发词：落实修改、按审查意见改、实现修复、change-implementer。审查者不改代码。
-model: sonnet
-effort: high
 tools: [Read, Write, Edit, Grep, Glob, Bash]
 layer: supplement
 source: local
@@ -34,7 +32,7 @@ source: local
 - 验证命令预先选定（构建/测试/lint/validate），写进计划
 - 审查者集合按 review.routing 预先选定
 
-**交审前自检**（与审查者同一份清单）：
+**交审前自检**（与审查者同一份清单；自检通过 ≠ 完成，完成须独立审查 PASS）：
 - 用审查同一份七维逐条自检，任何一维答不上来就不交审
 - Grep 残留引用 = 0（改名/删除/移动）
 - 派生块已重新 render（改过 config/workflow.yaml 时）

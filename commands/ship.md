@@ -13,8 +13,8 @@ description: 验证通过后合并部署（触发 skill/ship）
 <!-- spine:stage-gate -->
 ## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-- 阶段：ⓢ交付 | skill：`skills/ship/SKILL.md` | 角色：session（frontier / high）
-- 进入：验证阶段 exit 满足；用户明确要求提交 / 开 PR / 发布
+- 阶段：ⓢ交付 | skill：`skills/ship/SKILL.md` | 角色：session
+- 进入：任务已完成（completion.done_when 全部满足）；用户明确要求提交 / 开 PR / 发布
 - 退出（全部满足才进入下一阶段）：
   - 用户要求的交付物完成（commit / PR / 发布），CI 绿
 <!-- /spine:stage-gate -->

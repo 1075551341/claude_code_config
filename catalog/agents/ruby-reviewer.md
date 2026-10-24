@@ -1,7 +1,6 @@
 ---
 name: ruby-reviewer
 description: Ruby/Rails代码审查专家。专注于Ruby惯用法、Rails约定、安全和性能优化。触发词：Ruby审查、Rails审查、Ruby代码、Rails。
-model: inherit
 color: red
 tools:
   - Read

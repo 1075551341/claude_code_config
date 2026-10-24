@@ -1,7 +1,6 @@
 ---
 name: git-expert
 description: Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践、Git Worktree并行开发。触发词：Git、合并冲突、分支策略、commit规范、rebase、cherry-pick、Git回滚、Git钩子、版本管理、代码回退、Git历史、分支管理、Gitflow、Git标签、Git工作流、代码合并、git worktree、并行开发。
-model: inherit
 color: orange
 tools:
   - Read

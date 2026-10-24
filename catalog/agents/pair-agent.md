@@ -2,7 +2,6 @@
 name: pair-agent
 description: 多 AI Agent 浏览器共享协作。触发词：多 Agent 协作、共享浏览器、pair、agent 互联。
 tools: Read, Write, Bash, Glob, Grep, WebFetch
-model: sonnet
 ---
 
 # Pair Agent — 多 Agent 浏览器共享
@@ -37,7 +36,6 @@ model: sonnet
 
 ## 支持的 Agent
 - Claude Code（本地/远程）
-- Codex CLI
 - Cursor
 - OpenClaw
 - 任何支持 curl 的 Agent

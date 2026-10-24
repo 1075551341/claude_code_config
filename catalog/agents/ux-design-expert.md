@@ -1,7 +1,6 @@
 ---
 name: ux-design-expert
 description: UX设计专家，覆盖UI/交互设计、设计系统、用户研究与可用性测试。触发词：UI设计、UX设计、界面设计、交互设计、设计规范、设计系统、视觉设计、色彩方案、布局设计、原型设计、设计评审、响应式设计、无障碍、Design Token、用户研究、可用性测试、用户访谈、旅程设计、体验度量。
-model: inherit
 color: pink
 tools:
   - Read

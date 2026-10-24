@@ -146,7 +146,7 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 | L2 | ARIA/URL blocklist | 已知恶意模式过滤 |
 | L3 | 结构性过滤 | DOM 树异常检测 |
 | L4 | TestSavantAI BERT-small ONNX | 22MB，本地运行，零网络调用 |
-| L4b | Claude Haiku 转录检查 | 低成本快速扫描，异常即熔断 |
+| L4b | 小模型转录检查（模型由调用方选） | 低成本快速扫描，异常即熔断 |
 | L5 | Canary token | 注入诱饵 token，触发即确定性阻断 |
 | L6 | Ensemble 裁决 | L4 AND L4b 都 >= 0.75 才 BLOCK |
 | 可选 L4c | DeBERTa-v3 | 721MB，`GSTACK_SECURITY_ENSEMBLE=deberta` 启用 |
@@ -172,11 +172,11 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 |--------------|----------|--------|
 | 注入(SQL/NoSQL/命令) | §1 参数化查询 | security-reviewer |
 | XSS | §7 输出编码+CSP | security-reviewer |
-| SSRF | §12 URL/metadata限制 | security-reviewer + cso |
+| SSRF | §12 URL/metadata限制 | security-reviewer（深度模式） |
 | 失效认证/授权 | §2+§5 JWT/RBAC | security-reviewer |
 | 敏感数据泄露 | §3 脱敏+密钥管理 | post-secret-detector hook |
 | 访问控制 | §5 资源归属检查 | eng-reviewer |
-| 安全配置错误 | §6+§14 硬化清单 | sre |
+| 安全配置错误 | §6+§14 硬化清单 | security-reviewer |
 | 供应链 | §12 技能/MCP审查 | security-guidance plugin |
 
 **security-reviewer 必检三类**：SQL注入(拼接查询) | XSS(innerHTML未清理) | SSRF(内网URL无校验)

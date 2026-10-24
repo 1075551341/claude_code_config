@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: ★强制执行★ 完成前必须交叉验证，不可跳过
+description: ★强制执行★ 完成前验证 + 独立审查门：无观察证据不声称完成，无独立审查 PASS 不算完成
 triggers: [完成, 声称完成, 验证, check, 确认完成, done, 修好了, 测试通过]
 layer: skeleton
 disable-model-invocation: true
@@ -8,72 +8,55 @@ loading_tier: L2
 source: obra/superpowers
 ---
 
-# 完成前强制交叉验证
+# 完成前验证 + 独立审查门
 
-> **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
-> **verify_tier / 持续处理升档** 的触发 SSOT → `skills/task-triage/SKILL.md`。
-> **审查政策 SSOT（本文件；数字/维度/路由 → `config/workflow.yaml`）**：有交付即只读独立审查（含文档）；每轮全新七维；审查前刷图；最多 `review.max_rounds` 轮；禁止边审边改。Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup。R20 反空模板 → `hooks/_lib/r20_replay.py`。史 → `CHANGELOG.md`。
+> **L2 门控**：④验证阶段 Read 全文。本文件 = 审查政策 SSOT；数字/维度/路由/完成定义 → `config/workflow.yaml`（下方派生块）。升档触发 → `skills/task-triage/SKILL.md`。机械门 → `hooks/stop-verification-gate.py` + `hooks/_lib/r20_replay.py`。
 
-## @Examples
+## 完成定义
 
-```
-用户: "完成了"
-Claude: /verification-before-completion → 按 verify_tier 执行验证清单 → 报告结果
+<!-- spine:completion -->
+**完成定义**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：没有独立审查 PASS ⇒ 任务未完成；适用全部轨道（simple, bug, non_simple, research），简单/只读/文档任务同样适用。
 
-用户: "修好了"
-Claude: /verification-before-completion → 构建+测试+安全检查 → 确认通过
-```
+- verify_tier 清单全部附观察到的命令输出
+- 本轮全新独立审查者（非实现者、未 resume）给出 PASS，七维齐全，且 review.pass_requires 两道门（符合预期要求 + 原功能保持）均附证据通过
+- **PASS = 两道门同时满足**（任一不满足即 NEEDS-CHANGES）：
+  1. **符合预期要求**：每项改动都对应原始要求 / 验收标准；逐条无遗漏；无破坏要求的范围外改动（满足 + 遗漏 + 错改 维）。证据：原始要求逐条 → 对应改动或明确的反驳/弃权理由。
+  2. **原功能保持**：起点 tip 上既有的预期行为全部保持，无静默回归；有意的行为变更逐条显式列出并对应原始要求（原功能 维）。证据：相关测试 / validate / check 脚本的观察输出 + 相对起点 tip 的行为差异说明。
+- 一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）；目标第 1 轮 PASS，上限 **3** 轮。
+- 3 轮仍未 PASS ⇒ **BLOCKED**（未完成），不得声称完成，也不得改为「跳过审查」。
+- 自检、实现者自签、验证命令全绿都不能替代独立审查；仅用户显式豁免时放行，状态记 `DONE_WITH_CONCERNS`。
+<!-- /spine:completion -->
 
-> **铁律：无新鲜验证证据，不声称完成。**
-> **"看起来完成了" ≠ "验证通过了"。**
-> **任何任务完成前必须走此验证流程，无一例外（含初判简单）。禁止「轻量验证」跳过本 skill。**
+适用范围：任何将声称完成或产生交付物的工作——代码、配置、**文档**、调研结论、计划/规格、架构建议。唯一不进入完成态的是：计划未批准 / 仅 `*.plan.md` / 纯澄清问答（这不是免审旁路，而是还没到完成）。
 
-## verify_tier（两档）
+## verify_tier
 
-> **定义 SSOT = 本节**（v11.3.6 所有权收敛）；task-triage 仅引用取值，升档触发仍归 task-triage。
+| 档 | 何时 | 必须项 |
+| --- | --- | --- |
+| **比例** | 初判简单且 attempt=1 且未持续处理 | 构建/类型/Lint（适用项）+ 功能核验 + 关联文件；贴命令输出 |
+| **全量** | 非简单；或持续处理；或已升档 | 比例全部 + 交叉验证（反向构造失败场景、需求回溯、同类遗漏扫描、MANIFEST 一致性）+ 残留引用 = 0 |
 
-| 档       | 何时                                                              | 必须项                                                  |
-| -------- | ----------------------------------------------------------------- | ------------------------------------------------------- |
-| **比例** | 初判简单 **且** attempt=1 **且** 未触发持续处理                   | 代码级（适用项）+ 功能级核验 + 关联文件验证；贴命令证据 |
-| **全量** | 非简单；**或** 持续处理（验证+执行升档）；**或** verify_tier 已升 | 比例全部 + **交叉验证全项** + 残留引用                  |
+证据只认**观察输出**（命令 stdout/stderr、测试结果、文件内容），不认叙述。
 
-持续处理触发（与 task-triage 一致）：同任务 attempt≥2；用户反馈未解决；验失败后继续改；首轮处理后问题仍在。  
-触发后：**verify_tier=全量**，且 **执行升档为非简单**（不再停留简单旁路；路由见 task-triage）。
+## 必做核对（两档同强制）
 
-## 强制验证流程
+- 修改文件已重读确认生效；无调试残留
+- 改名/删除/移动/改签名：Grep 旧名 → 0；行为变更：逐个消费者走查
+- 非功能变更（重构/格式/配置/重命名/文档）：跑既有测试或冒烟，写入「原功能」证据
+- 配置/修改与文档、注释、INDEX、MANIFEST、版本戳同步；不一致 = 未完成（计入「漏改」）
+- 安全：无硬编码密钥；边界输入已校验
 
-```
-任务完成前
-├─ 确认 verify_tier（比例 | 全量）
-├─ 代码级验证（必须，按项目适用）
-├─ 测试级验证（有测试则必须）
-├─ 功能级验证（必须）
-├─ 安全级验证（必须）
-├─ 文档级验证（如涉及公共API）
-├─ 关联文件验证（任何修改必须）
-├─ 交叉验证（verify_tier=全量 必须）
-└─ 会话终验 R20（有编辑必须：七维含问题是否解决）
-```
+## 独立审查
 
-## 独立审查（本文件 = 政策 SSOT）
+**一轮** = 改 → 验 → **刷图** → 并行全新审查（一次找齐）。目标第 1 轮 PASS。
 
-**任务** = 已输出分类契约、且将声称完成 / 产生交付物的工作单元。
-
-| 必须独立审查 | 仍不审（未进入完成态，不是免审旁路） |
-| --- | --- |
-| 任何 counted 编辑（**含文档**）、调研结论、计划/规格、架构建议 | 计划未批准 / 仅 `*.plan.md`；纯澄清问答（无交付、不声称完成） |
-
-简单路径同样：一次改齐 → 验证 → **图谱刷新** → **全新只读独立审查** → 短 R20。
-
-**一轮** = 改 → 验 → **刷图** → 并行全新审查。同轮多审查者合计 +1 轮。数字 SSOT：`config/workflow.yaml` `review.max_rounds` / `review.max_blocks`（render 同步到 `config/quality_gates.json` 供 hooks 消费；`max_blocks` ≠ 审查轮次）。
-
-**全新**（每轮缺一不可）：新开 `Task`/`Agent`，禁止 `resume`；对照 **原始要求 + 当前 diff + 本轮新鲜图谱** 全量重扫（上轮清单不得限定范围）；一次找齐后再给 `PASS` / `NEEDS-CHANGES`；审查者只读；修改只走 `change-implementer`。禁止边审边改。
-
-**审查前刷图**：`last_edit` 之后必须增量 `refresh_incremental`（与 SessionStart `ensure` / Stop refresh 同一套 `graph_freshness` CLI）。`last_pre_review_graph_ts > last_edit_ts` 才允许派审。SessionStart ensure 不能代替此次刷新。Stop 刷新不得记成审查前戳。同一轮并行审查者共享这一次刷新。失败 → **禁止开审**。
-
-**并行路由**（正文 `rules/AGENTS.md`）：必派 `eng-reviewer`；产品 `+ceo-reviewer`；UI `+designer`+`dx-reviewer`；安全 `+security-reviewer`；测试边界 `+qa`。无依赖同一消息多个 `Task`。批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过；再派一次 `change-implementer`。满轮 → `BLOCKED` / `DONE_WITH_CONCERNS`。
-
-**派发 prompt 必须带**：本轮已刷新；CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius；对照原始要求做七维。
+- **全新**：新开 `Task`，禁止 `resume`；对照原始要求 + 当前 diff + 本轮新鲜图谱全量重扫，上轮清单不得限定范围；审查者只读；修改只走 `change-implementer`；禁止边审边改。
+- **审查前刷图**：`last_edit` 之后增量刷新双图（`graph_freshness` `refresh_incremental`），`last_pre_review_graph_ts > last_edit_ts` 才能派审；SessionStart ensure / Stop refresh 不算；失败禁止开审。同轮并行审查者共享这一次刷新。
+- **路由**：`rules/AGENTS.md`（必派 eng-reviewer）。无依赖审查者同一消息并行。
+- **派发 prompt 必带**：原始要求原文；本轮已刷新；CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius；按七维输出。
+- **整轮判定**：任一审查者 `NEEDS-CHANGES` / 七维缺项 / 「PASS 但列必须修项」→ 整轮不通过 → 汇总完整清单派一次 `change-implementer` 集中改齐 → 验证 → 刷图 → 全新开审。
+- **干净 PASS**（全部审查者 PASS、七维有效、与验证证据一致）→ 任务完成，不再派审。
+- **轮次用尽仍未 PASS** → `BLOCKED`：向用户报告剩余问题与证据；不得声称完成，不得改记「跳过审查」。
 
 ### 七维（独立审查与主会话 R20 同一清单）
 
@@ -84,7 +67,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 2. 遗漏（原始要求逐条对照）
 3. 错改（改了不该改的）
 4. 漏改（含文档/注释/版本戳/派生块，或「无文档影响」）
-5. 原功能（保持 + 测试/冒烟证据）
+5. 原功能（相对起点 tip 保持 + 测试/validate/冒烟观察输出；有意行为变更逐条列出）
 6. 影响范围（CRG get_impact_radius / IMPACT / blast-radius）
 7. **问题是否解决**（已解决 | 未解决 | 部分解决 + 观察证据，禁止「看起来好了」）
 <!-- /spine:dimensions -->
@@ -95,228 +78,26 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 - 满足：<各点承认/反驳/弃权>
 - 遗漏：无
 - 错改：无
-- 漏改：无文档影响
+- 漏改：无文档影响 | 已同步 <paths>
 - 原功能：保持（证据：<命令>）
 - 影响范围：CRG / IMPACT / blast-radius
 - 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
-结论：PASS / NEEDS-CHANGES  （主会话终验：DONE | DONE_WITH_CONCERNS）
+结论：PASS / NEEDS-CHANGES   （主会话终验状态：DONE 仅当独立审查 PASS；否则 BLOCKED）
 ```
 
-## 验证准则分解评分（v11.3.5 吸收 llm-as-a-verifier）
+Stop 硬门（`r20_replay.py`）要求：含 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；「满足」非空且每个需求指纹关键词须承认/反驳/弃权；「漏改」含 `文档`/`注释`/`无文档影响`/路径；「原功能」含 `证据`/`测试`/`冒烟`；「影响范围」含 `CRG`/`get_impact_radius`/`IMPACT`/`blast-radius`/`影响面`；「问题是否解决」含三态之一与观察证据。DSH / OpenCode 用便携 `r20_check.py`。
 
-> 来源：github.com/llm-as-a-verifier/llm-as-a-verifier（通用验证框架）。核心：细粒度、分解、重复、消偏、信观察不信叙述。
+## 质量门（`config/quality_gates.json`，Stop 门消费）
 
-1. **观察输出优先**：验证证据 = 命令 stdout/stderr、测试结果、文件内容等**观察输出**；**禁止以 agent 自述/叙述代替证据**（Trust observed output — NOT narration）。
-2. **准则分解（≥2 条）**：验证前显式分解准则逐条核验——**正确性**（结果对不对）/ **根因**（是否修到真因）/ **验证确认**（是否确认修复生效）；按任务类型增删（如安全/性能）。
-3. **细粒度评分**：关键结论用 1–20 评分自评（1=错误，10=边界，20=正确）；<10 不声称完成；禁止「看起来没问题」式二值模糊。
-4. **重复评估**：关键验证项重复评估 ≥2 次（换独立视角/反向验证），结论不一致 → 继续查证，不以单次结果定论。
-5. **成对比较消偏**：方案选择/审查时对候选成对比较，并交换 A/B 顺序复评（消除位置偏差）；候选多时与参照基线比较（O(Nk) 控成本，非全量两两）。
-6. **进度止损（长任务）**：每个原子任务完成后自评进度分（1–20）；连续 2 次 <10 或停滞 → 上报止损或换方案，禁止硬撑。
-7. **满足行三态（v11.4.5，GSD honest-verifier）**：「满足」中每个需求指纹 strong 关键词须 **承认**（已做+证据）/ **反驳**（明确不做+用户依据）/ **弃权**（一句原因）。硬门仍用 `coverage_ok` 关键词覆盖；弃权不算覆盖。禁止空话「全部完成」。
-
-## 验证清单
-
-### 代码级验证（必须通过）
-
-```
-□ 构建通过（零错误、零警告）
-□ 类型检查通过（tsc --noEmit / mypy / cargo check）
-□ Lint 通过（eslint / ruff / clippy）
-□ 所有修改文件已重新读取确认修改生效
-□ 无 console.log / debugger / print() 调试残留
-□ 无 TODO / FIXME / HACK 遗漏（或已记录为 Issue）
-```
-
-### 测试级验证（必须通过）
-
-```
-□ 单元测试全部通过
-□ 修改相关测试已同步更新
-□ 新功能有对应测试覆盖
-□ 无跳过/禁用的测试
-□ fixture/mock/snapshot 与新结构一致（v10.16）
-```
-
-### 功能级验证（必须通过）
-
-```
-□ 核心功能端到端可运行
-□ 错误路径正确处理（非仅 happy path）
-□ 边界情况已考虑
-□ 性能无明显退化
-```
-
-### 安全级验证（必须通过）
-
-```
-□ 无硬编码密钥/凭证/Token
-□ 无 SQL 注入 / XSS / CSRF 风险
-□ 敏感操作有权限检查
-□ 输入验证在系统边界完成
-```
-
-### 交叉验证（verify_tier=全量 必须）
-
-```
-□ 换个视角审视：如果我是代码审查者，会提出什么问题？
-□ 反向验证：尝试构造让方案失败的场景
-□ 需求回溯：方案是否完整覆盖了原始需求？有无偏离？
-□ 一致性检查：修改是否与项目现有风格/模式一致？
-□ 遗漏扫描：是否有同类文件/同类问题未同步修改？
-□ MANIFEST 一致性：修改文件与 concern owner 匹配，depends_on 列表全部确认
-```
-
-### 会话终验 R20（任何有过编辑的会话必须，两档同强制）
-
-按用户**原始要求逐条回放**核对（禁止把实现重做一遍）；测试/lint 证据不能代替本项。改前须已优先成熟方案或全局通用处理（不足时开的特例写入「错改」）。**配置/修改必须与文档、注释、版本戳同步**（不一致 = 未完成，计入「漏改」，须当场派 `change-implementer` 改齐，禁止记 P1 后 PASS 停手）。非功能变更（重构/格式/配置/重命名/文档）「原功能」必须写「保持」并指向测试或冒烟证据；禁止「应该没影响」。七维模板见上文「独立审查」节。
-
-```
-## 会话终验（R20）
-原始要求：<逐条关键词，禁止复述实现>
-- 满足：<各点承认/反驳/弃权>
-- 遗漏：无
-- 错改：无
-- 漏改：无文档影响
-- 原功能：保持（证据：<命令>）
-- 影响范围：CRG / IMPACT / blast-radius
-- 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
-结论：DONE | DONE_WITH_CONCERNS
-```
-
-未输出不得声称完成。Stop 硬门（`hooks/_lib/r20_replay.py`）要求：
-`会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；
-「满足」不可为空/`...`；「漏改」须含 `文档` 或 `注释` 或 `无文档影响` 或路径；「原功能」须含 `证据`/`测试`/`冒烟`（禁止只写「保持」）；「影响范围」须含 `CRG` / `get_impact_radius` / `IMPACT` / `blast-radius` / `影响面`（禁止空/`无`）。「问题是否解决」须含 `已解决` / `未解决` / `部分解决` 与观察证据。
-DSH / OpenCode 用便携 `r20_check.py`（导入 `r20_replay`，无指纹比对）。
-Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / CreatePlan / 仅计划文件禁止声称完成。CallDynamicTool 内层 CreatePlan 必须记账；写 `.plan.md` 不得清 awaiting。
-
-**场景G：初次修改后迷你验收（v11.3.4，每个文件首次成功编辑后 hook 注入一次）**
-
-核对范围 = **本文件 + codegraph/Grep blast-radius 全部相关项**（文档/INDEX/MANIFEST/注释/命令/测试/同类引用），禁止只验当前编辑文件（否则需求/错改/漏改/原功能/工具五问题会复发）。
-
-```
-□ 需求：影响面对照用户原话，未满足标遗漏
-□ 错改：是否改了范围外行为或顺手重构
-□ 漏改：同类引用与 INDEX/MANIFEST/README/注释/命令是否同步（无则写「无文档影响」）
-□ 原功能：非功能变更须给出测试或冒烟证据（禁止「应该没影响」）
-□ 工具：eligible 仓须双图已就绪；有 CRG 图须调用 get_impact_radius 或 detect_changes；codegraph blast-radius；Grep 仅作残留核对（无图禁止 Grep/Glob/everything 当探索主路径）
-```
-
-同一文件第二次编辑不再注入。完成前仍须输出完整 R20（范围同样是影响面全部相关项，非仅已编辑文件）。
-
-### 关联文件验证（任何修改必须执行，分两种场景）
-
-**场景A：修改问题/Bug修复**
-
-```
-□ Grep搜索全项目相同模式 → 找到所有同类问题
-□ 逐个确认是否已修复 → 未修复则必须修复
-□ Grep再次搜索 → 确认零遗漏
-```
-
-**场景B：修改配置/接口/类型**
-
-```
-□ Grep搜索修改的导出/接口/类型名 → 找到所有引用方
-□ 逐个确认引用方是否需要同步 → 需要则必须同步
-□ 构建验证 → 确认零新错误
-```
-
-**场景C：残留引用检测（v10.15 起任何修改必须，两档同强制）**
-
-```
-□ Grep 旧函数名/旧路径/旧配置key/旧接口名 → 结果必须为 0
-□ 残留 > 0 → 回到修改阶段补全，禁止声称完成（R1）
-```
-
-**场景D：非功能变更回归保持（v10.15 新增；v11.3.2 提升为 R20「原功能」必填，任何非功能变更必须）**
-
-```
-□ 变更性质判定：本变更是否为重构/格式/配置/重命名/文档等非功能变更
-□ 是 → 必须核验原功能行为不变：运行既有测试或冒烟核验核心路径
-□ 证据写入 R20「原功能：保持（证据：…）」；禁止"应该没影响"式断言；证据不足 → verify_tier 升全量
-□ 保留必要注释：仅更新失真描述，不做顺手"改进"或注释清理
-```
-
-**场景E：行为变更消费者核验（v10.16 新增）**
-
-```
-□ 函数签名不变但行为变更（加副作用/改返回语义/改默认行为）→ Grep 函数名 → 找到所有消费者
-□ 逐个消费者走查运行时影响：是否依赖旧行为？是否需要同步调整？
-□ 禁止"签名没变所以没影响"式断言；行为变更的辐射面与签名变更等同处理
-```
-
-**场景F：文档/注释与文件/配置一致（v11.4.11 硬门，计入 R20「漏改」）**
-
-```
-□ 本轮改动的文件/配置/frontmatter 是否有对应文档或注释（README/SPEC/CHANGELOG/INDEX/MANIFEST/注释）
-□ 有 → 必须同步更新，禁止只改实现留旧描述；不一致不得声称完成
-□ 改 L0 六根文件/skills/rules/hooks/config → 「漏改」须含 sync.ps1 执行证据或豁免理由（多端 1+N 继承）
-□ 「漏改」须写明：无文档影响 | 已同步 <paths>
-```
-
-**配置影响面速查**（v10.16：每条均须验证引用方处理新结构）：
-
-```
-改了路由 → Grep路由路径 → 找到所有页面/组件 → 验证引用方处理新结构
-改了环境变量 → Grep变量名 → 找到所有读取代码 → 验证引用方处理新结构
-改了类型定义 → Grep类型名 → 找到所有import文件 → 验证引用方处理新结构
-改了API接口 → Grep接口URL/方法名 → 找到所有调用方 → 验证引用方处理新结构
-改了i18n key → Grep key名 → 找到所有引用组件 → 验证引用方处理新结构
-改了公共组件Props → Grep组件名 → 找到所有使用处 → 验证引用方处理新结构
-```
-
-### 文档级验证（如涉及公共API/行为变更）
-
-```
-□ README 已更新
-□ 变更日志已记录
-□ 类型定义已导出/更新
-□ 破坏性变更已标注迁移指南
-```
-
-### 质量门（v11 自 /verify 并入；stop-verification-gate.py 消费 config/quality_gates.json）
-
-```
-□ Schema Drift: ORM/model 变更缺 migration → 启发式提醒（model/ORM 文件变更无 migration）
-□ Security Anchor: auth 相关变更 → 提醒绑定威胁模型
-□ Scope Reduction: 存在活跃 plan/spec 制品 → 强制对照 tasks 清单确认无静默缩范围
-```
-
-### 审查委派（有交付物编辑即启用；政策见上文「独立审查」）
-
-```
-□ 审查前增量刷新双图（last_pre_review_graph_ts > last_edit）；失败禁止开审
-□ 修改 → Task change-implementer（禁止审查者改文件）
-□ 验证（主会话贴观察输出）→ 无依赖审查者同一消息并行；必派 eng-reviewer 七维一次找齐
-□ 每轮审查必须全新 Task/Agent（禁止 resume）；上轮清单仅参考，不得限定本轮扫描范围
-□ 干净 PASS 且七维有效且与验证一致 → 立即结束，禁止再派审查
-□ NEEDS-CHANGES / 七维缺项 → 汇总完整清单后再派一次 change-implementer 集中改齐；再验证后全新开审；轮次 ≤ workflow.yaml review.max_rounds；禁止只连审不改
-□ counted 编辑含文档即 in scope；仅计划未批准 / *.plan.md / 纯澄清问答 skip
-□ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
-```
-
-> 审查者与修改者不得为同一 agent。计划未批准禁止声称完成与审查。
-> 分类 SSOT → `skills/task-triage/SKILL.md`。
+Schema Drift（ORM 变更缺 migration）· Security Anchor（auth 变更绑定威胁模型）· Scope Reduction（活跃 plan/spec 须对照 tasks）· Impact Manifest（脏集 − 基线 ⊆ 声明清单）。
 
 ## 失败与升级
 
-- 验证失败 → **不声称完成**；输出失败项 + 按六维纠错续轮修复（影响面/需求/错改/漏改/原功能/文档），同方案 ≤R5（2 次）
-- 初判简单且继续处理 → `verify_tier=全量` + **执行升档非简单**（Bug 升档可跳过 grill，见 task-triage）
-- 需改膨胀>2 / 黑名单 / 同方案达 R5 仍失败 → 执行升档非简单或 NEEDS_CONTEXT（禁止第 3 次同方案空转）
-- Claude Stop 达 `max_blocks` → 放行并标 `DONE_WITH_CONCERNS`（不启用 ralph-loop / 独立 loop 进程）。Cursor 不靠 followup 续轮。
-
-## 反合理化检查
-
-| 合理化借口         | 反驳                                      |
-| ------------------ | ----------------------------------------- |
-| "我检查过了"       | 重新运行验证命令，输出证据                |
-| "小改动不需要测试" | 任何改动都可能引入回归                    |
-| "测试在 CI 里跑"   | 本地先跑，CI 是最后防线                   |
-| "这个警告一直存在" | 新代码不应增加已有警告数                  |
-| "太简单不需要验证" | 铁律无一例外                              |
-| "轻量验证就够了"   | 禁止跳过本 skill；仅 verify_tier 区分深度 |
+- 验证失败 → 不声称完成；同方案 ≤2 次（R5），再失败换方案或 NEEDS_CONTEXT。
+- 初判简单但继续处理 → `verify_tier=全量` + 执行升档非简单（task-triage）。
+- Claude Stop 达 `max_blocks` → 放行停机，但状态 = `BLOCKED`（未完成），须向用户说明未通过的项。Cursor Stop 不能阻断，同一规则由本文件约束。
+- 用户显式说出 `skip_keywords` 才可豁免审查，状态记 `DONE_WITH_CONCERNS`，不是 DONE。
 
 ## 输出
 
-验证通过 → 输出验证报告（含 verify_tier）+ 已修改文件列表
-验证失败 → 输出失败项 + 修复方案，**不声称完成**
+通过 → 验证报告（verify_tier + 命令输出）+ 独立审查结论 + 已修改文件。未通过 → 失败项 + 下一步，**不声称完成**。

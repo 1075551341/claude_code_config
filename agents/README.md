@@ -1,62 +1,33 @@
 # Agents 智能体库
 
-> **全局 16 个**（6 核心 + 6 gstack 审查 + 3 补全 + 1 跨模型）+ **catalog/agents/** 领域库
+> **全局 9 个**（2 阶段角色 + 7 独立审查者）+ **catalog/agents/** 领域库（按需复制）。
 >
-> 每个 agent 的档位 / effort / 模型由 `config/workflow.yaml` `roles` 决定，`python scripts/workflow.py render` 写入 frontmatter；勿手改 `model:` / `effort:`。
+> agent 不声明 `model` / `effort`：一律继承调用方（会话模型、编辑器选择、Task 传参）。`workflow.py check` 的 lint 拦截任何 model/effort 键。
 
-完整索引 → [agents-INDEX.md](../agents-INDEX.md)
+完整索引 → [agents-INDEX.md](../agents-INDEX.md) | 审查路由 → `rules/AGENTS.md`（派生自 `config/workflow.yaml`）
 
----
+## 阶段角色 2
 
-## 核心 6
+planner（②规格）| change-implementer（③执行 + 落实审查清单）
 
-planner | code-explorer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
+## 独立审查者 7（只找问题，不改文件；PASS 是任务完成的必要条件）
 
-## gstack 审查 6（skeleton）
+eng-reviewer（必审）| ceo-reviewer | designer | dx-reviewer | qa | security-reviewer | cross-model-reviewer
 
-eng-reviewer | ceo-reviewer | designer | **dx-reviewer** | qa | security-reviewer（含原 cso 深度模式）
+## v13 去向
 
-## 补全 3
+| 原 agent | 去向 |
+| --- | --- |
+| code-explorer | 编辑器内置 explore 子代理 + `codegraph_explore`（R17） |
+| architect | `skills/brainstorming`（设计）+ planner（计划） |
+| agentic-orchestrator | 主会话 + `skills/subagent-driven-development` |
+| build-error-resolver | change-implementer + `skills/systematic-debugging` |
+| spec-reviewer | `skills/spec-validation`（②规格 exit） |
+| sre / doc-writer | `skills/ship`；文档同步是 R20「漏改」维的一部分 |
+| 原跨模型审查者（v12 名含厂商） | 更名 `cross-model-reviewer`，去厂商化（调用方选不同模型） |
 
-sre | doc-writer | **change-implementer**
+## 委派原则
 
-## 跨模型 1
-
-codex-reviewer
-
-> v12 去向：code-reviewer→eng-reviewer（代码层视角）。
-> v11 去向：cso→security-reviewer 深度模式；release-engineer→skills/ship；product-manager→catalog office-hours；design-engineer→skills/design-pipeline；design-shotgun/pair-agent/ios-specialist/land-and-deploy/performance-engineer→`catalog/agents/`（按需复制）。
-
----
-
-## Cursor Task 注册 vs 本地 agents
-
-| 来源                    | 机制                                 | Token 影响                          |
-| ----------------------- | ------------------------------------ | ----------------------------------- |
-| `~/.claude/agents/*.md` | sync 联接；Task `subagent_type` 引用 | 每个定义计入 Subagent + Task schema |
-| plugin subagents        | 已禁用 compound-engineering          | 勿重复启用                          |
-| Cursor 内置             | explore, shell, generalPurpose 等    | 保留；按需委派                      |
-
-**审查路由 SSOT**：仅 `~/.claude/agents/` gstack。MANIFEST `excludes: plugin/compound-engineering/*`。
-
-### 推荐常驻（核心 6 + 审查 6）
-
-| 类别   | Agents                                                                                                      |
-| ------ | ----------------------------------------------------------------------------------------------------------- |
-| 核心 6 | planner, code-explorer, build-error-resolver, architect, spec-reviewer, agentic-orchestrator |
-| 审查 6 | eng-reviewer, ceo-reviewer, designer, dx-reviewer, qa, security-reviewer                                    |
-| 补全   | sre, doc-writer, change-implementer                                                                         |
-
-> `context-manager` 已合并至 claude-mem（MANIFEST `memory_ssot`）；勿重复注册。
-
-其余 gstack 补全 / catalog agents：**按需** Task 委派，避免全量注册膨胀。
-
-### 委派原则
-
-- 按 MANIFEST concern→owner 路由，非按名称堆叠
 - 子 Agent fresh context（R12）；制品通信，禁止共享可变状态
-- 简单任务（task-triage 判定=关联需改≤2）不启动多 persona 审查链
-
----
-
-审查路由 → `rules/AGENTS.md` | 归属 → `MANIFEST.yaml`
+- 审查者与修改者不得为同一 agent；每轮审查全新派发，禁止 resume
+- `context-manager` 已合并至 claude-mem；勿重复注册

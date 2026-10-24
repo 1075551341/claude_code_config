@@ -35,4 +35,4 @@ python ~/.claude/scripts/migrate-from-legacy.py --project . --skill diagnose
 | 用 | 不用 |
 |----|------|
 | 顽固 bug 深度循环 | 替代 P0 systematic-debugging |
-| 与 build-error-resolver 配合 | 无复现就改代码 |
+| 与 systematic-debugging 配合 | 无复现就改代码 |

@@ -1,7 +1,6 @@
 ---
 name: python-pro
 description: Python全栈开发专家，负责Python通用开发任务。当需要编写Python脚本、实现Python算法、开发CLI工具、处理文件操作、数据处理、爬虫开发、自动化脚本、Python包开发、异步编程、并发处理时调用此Agent。触发词：Python脚本、Python开发、Python实现、写Python、Python工具、Python自动化、Python爬虫、Python算法、Python并发、asyncio、Python包、pip、venv。
-model: inherit
 color: yellow
 tools:
   - Read

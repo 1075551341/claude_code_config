@@ -22,7 +22,7 @@ description: 设计方案与原子任务分解（②规格阶段，触发 writin
 <!-- spine:stage-gate -->
 ## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-- 阶段：②规格 | skill：`skills/writing-plans/SKILL.md` | 角色：planner（frontier / high）
+- 阶段：②规格 | skill：`skills/writing-plans/SKILL.md` | 角色：planner
 - 进入：设计已批准
 - 退出（全部满足才进入下一阶段）：
   - spec-validation 通过，无静默缩 scope

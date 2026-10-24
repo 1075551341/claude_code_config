@@ -1,7 +1,6 @@
 ---
 name: database-expert
 description: 数据库全栈专家，覆盖架构设计、审查优化、SQL编写与数据迁移。触发词：数据库设计、数据库架构、表设计、索引设计、数据建模、分库分表、数据迁移、数据库选型、PostgreSQL、MySQL、MongoDB、Redis、数据库优化、ER图、SQL查询、慢查询优化、数据库审查、Schema审查、零停机迁移。
-model: inherit
 color: orange
 tools:
   - Read

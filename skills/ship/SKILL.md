@@ -15,7 +15,7 @@ loading_tier: L3
 
 ## 前置（④验证已通过）
 
-- verification-before-completion 全绿，本轮审查批次 PASS
+- 任务已完成：verification-before-completion 全绿，且本轮全新独立审查批次 PASS（两道门：符合预期要求 + 原功能保持）。未 PASS 不进入交付
 - 文档/CHANGELOG/版本戳/派生块已同步（改过 `config/workflow.yaml` → `python scripts/workflow.py check` 通过）
 
 ## 管线
@@ -27,7 +27,7 @@ loading_tier: L3
 5. **推送**：需要时 `git push -u origin HEAD`
 6. **开 PR**：`gh pr create`（HEREDOC body，格式见下）；完成后返回 **PR URL**
 7. **合并策略**（用户要求合并时）：单一特性/提交杂 → squash；提交已整洁且需保留历史 → rebase/merge；合并后清理本地与远程分支
-8. **可选部署**：完整闭环（approved PR → verified production）→ `catalog/agents/land-and-deploy.md`；CI 模板 → `templates/github-actions/`（claude-code-action，4 后端，结构化 JSON 输出）
+8. **可选部署**：完整闭环（approved PR → verified production）→ `catalog/agents/land-and-deploy.md`；CI 审查模板 → `templates/github-actions/claude-review.yml`（不指定模型，用 action 默认或仓库变量）
 
 ## PR 格式
 

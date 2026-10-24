@@ -1,7 +1,6 @@
 ---
 name: api-versioner
 description: 负责API版本管理和向后兼容策略。当需要设计API版本策略、实现版本控制、处理版本迁移、管理API生命周期、实现向后兼容、处理废弃API时调用此Agent。触发词：API版本、版本控制、兼容性、版本迁移、API升级、废弃API、版本策略、v1/v2、backward compatible。
-model: inherit
 color: green
 tools:
   - Read

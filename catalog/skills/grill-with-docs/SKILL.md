@@ -46,4 +46,4 @@ python ~/.claude/scripts/migrate-from-legacy.py --project . --skill grill-with-d
 | 用 | 不用 |
 |----|------|
 | 方案已定后的文档对齐 | 替代 brainstorming HARD-GATE |
-| + structured-artifacts | 重复写 STATE/ROADMAP 流程 |
+| + 项目制品（CORE R13） | 重复写 STATE/ROADMAP 流程 |

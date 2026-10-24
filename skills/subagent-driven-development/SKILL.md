@@ -71,7 +71,7 @@ writing-plans 原子任务
 | 状态               | 含义                   | 后续动作             |
 | ------------------ | ---------------------- | -------------------- |
 | DONE               | 两阶段审查通过，已合并 | 派发下一个任务       |
-| DONE_WITH_CONCERNS | 审查通过但有保留意见   | 记录 concern，继续   |
+| DONE_WITH_CONCERNS | 仅用户显式豁免审查     | 记录 concern，继续   |
 | NEEDS_CONTEXT      | 缺少信息无法继续       | 注入缺失上下文，重试 |
 | BLOCKED            | 依赖外部/方案不可行    | 报告阻塞，等待干预   |
 
@@ -97,17 +97,7 @@ writing-plans 原子任务
 
 ## 模型选择
 
-<!-- spine:priority-tiers -->
-> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。
-
-| 任务级别 | 档 | 当前模型 |
-| --- | --- | --- |
-| P0 | `frontier` | `claude-opus-5-5` |
-| P1 | `mid` | `claude-sonnet-5-5` |
-| P2 | `light` | `claude-haiku-5-5` |
-
-派发时：Claude Code `Task` 传档位别名（或 `inherit`）；Cursor 传上表 Cursor slug（见 CURSOR-EDITOR 派生表）。
-<!-- /spine:priority-tiers -->
+不在本技能决定：子 Agent 的模型与推理强度由调用方（编辑器 Task 参数 / 会话设置）决定，不传即继承会话。
 
 ## 与 writing-plans 的对接
 

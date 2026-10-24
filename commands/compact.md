@@ -15,7 +15,7 @@ description: 战略上下文压缩与模式提取（⑤学习阶段）
 <!-- spine:stage-gate -->
 ## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-- 阶段：⑤学习 | skill：`skills/memory-compression/SKILL.md` | 角色：session（frontier / high）
+- 阶段：⑤学习 | skill：`skills/memory-compression/SKILL.md` | 角色：session
 - 退出（全部满足才进入下一阶段）：
   - claude-mem 记录模式/决策（R18）
 <!-- /spine:stage-gate -->

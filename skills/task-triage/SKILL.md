@@ -1,7 +1,7 @@
 ---
 name: task-triage
-description: 任务分类（简单/非简单两大类+使用类型细分，严格判定）。触发词：任务分诊 | 复杂度判定 | 简单还是复杂 | 六维判定 | 是否访谈
-triggers: [任务分诊, 复杂度判定, 简单还是复杂, 六维判定, 五维判定, 是否访谈]
+description: 任务分类（简单/非简单两大类+使用类型细分，严格判定）。触发词：任务分诊 | 复杂度判定 | 简单还是复杂 | 五维判定 | 是否访谈
+triggers: [任务分诊, 复杂度判定, 简单还是复杂, 五维判定, 是否访谈]
 layer: skeleton
 source: internal
 loading_tier: L1
@@ -16,13 +16,13 @@ loading_tier: L1
 
 ```
 任务
-├── 简单（必须同时满足：Phase0 已盘点 + 关联需改≤2 + 白名单 + 六维全低 + 模型匹配低 + attempt=1）
+├── 简单（必须同时满足：Phase0 已盘点 + 关联需改≤2 + 白名单 + 五维全低 + attempt=1）
 │   ├── 文档类：拼写/格式/注释/文档补写
 │   ├── 实现类：单一纯函数实现（无接口变更）
 │   ├── 配置值类：配置值修改（非结构）
 │   └── Bug类：可复现 + 根因明确 + 关联需改≤2
 └── 非简单（任一条件不满足，或持续处理执行升档）
-    ├── Bug类：多文件/根因不明/需复现 → triage(P0-P3) → systematic-debugging
+    ├── Bug类：多文件/根因不明/需复现 → systematic-debugging
     ├── 功能类：新功能/多文件实现 → grill → brainstorming → 五阶段全链
     ├── 架构类：架构/重构/跨模块设计 → grill → brainstorming
     ├── 配置类：配置结构/hook/rule/skill/agent/MANIFEST/依赖升级/数据迁移 → grill → brainstorming
@@ -36,7 +36,7 @@ loading_tier: L1
 
 ## Phase 0 — 前置盘点（分类前强制）
 
-**未盘点不得宣称「简单」。** 只读探测，**Phase0 不产出文件计数、不允许宣称关联需改≤2**；文件计数以 change-impact 阶段 1 输出清单为准。输出简表后进入六维判定：
+**未盘点不得宣称「简单」。** 只读探测，**Phase0 不产出文件计数、不允许宣称关联需改≤2**；文件计数以 change-impact 阶段 1 输出清单为准。输出简表后进入五维判定：
 
 1. **已知文件/制品**：相关路径、已有 plan/spec/digest、INDEX/MANIFEST 归属
 2. **已知工具**：codegraph 索引是否可用、MCP、hooks/gate 是否已注入
@@ -46,7 +46,7 @@ loading_tier: L1
 
 盘点中发现关联需改将 **>2** 或命中黑名单 → **直接非简单**（跳过「简单候选」）。
 
-## 六维判定矩阵（唯一 SSOT）
+## 五维判定矩阵（唯一 SSOT）
 
 | 维度          | 低(1)            | 中(2)                | 高(3)                                              |
 | ------------- | ---------------- | -------------------- | -------------------------------------------------- |
@@ -55,31 +55,8 @@ loading_tier: L1
 | ③跨模块影响   | 无共享符号       | 局部共享             | 改接口/类型/MANIFEST depends_on 目标/多模块调用链  |
 | ④需求歧义度   | 成功标准可一行写出且用户已确认 | 部分模糊             | 多义/缺成功标准/需用户决策                         |
 | ⑤不可逆性     | 可回退(增改)     | git 可回滚           | 删除/覆盖/强推/数据迁移                            |
-| ⑥模型匹配     | 当前档 ≥ 所需档  | 边界（可做但易返工） | 明显不足 → 强制非简单                              |
-| ⑥注  | 所需档由②③⑤自动派生（全低→light；含中→mid；含高或黑名单→frontier），禁止臆造  |  |  |
 
 **① 计数口径**：change-impact 阶段 1 输出清单中**需 Edit 的逻辑源文件**；Phase0 只读探测不计、不产出计数；同一逻辑文件的 sync/软链/插件镜像副本只计 1。
-
-### ⑥ 模型档映射（防虚报）
-
-档位是模型无关能力档；具体模型由 `config/workflow.yaml` 当前 profile 决定（换后端不改本文件）。当前档按会话实际自报，禁止臆造更高档。
-
-<!-- spine:tier-map -->
-> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。当前 profile：`anthropic`。
-
-| 档 | 当前 profile 模型（Claude Code / Cursor） |
-| --- | --- |
-| `frontier` | `claude-opus-5-5` / `claude-opus-5-5-high` |
-| `mid` | `claude-sonnet-5-5` / `claude-sonnet-5-5-medium` |
-| `light` | `claude-haiku-5-5` / `composer-2.5-fast` |
-
-- 所需档：①–⑤ 全低 → `light`；含中 → `mid`；含高或黑名单 → `frontier`
-- attempt ≥ 2 → 执行升档非简单 + verify_tier=全量
-<!-- /spine:tier-map -->
-
-- `当前档 < 所需档` → ⑥=高 → 非简单（建议换模或走非简单流程）
-- `当前档 = 所需档` 且任务在边界 → ⑥=中 → grill 兜底
-- `当前档 > 所需档` 且其余全低 → ⑥=低（允许简单）
 
 ## 判定顺序（严格收窄）
 
@@ -87,19 +64,18 @@ loading_tier: L1
 1. **关联需改前置**：需 Edit 文件数 **>2** → 直接非简单
 2. **黑名单命中 → 非简单**：删除/移动/重命名文件；改 hook/rule/skill/agent/MANIFEST/配置结构；依赖升级/数据迁移；改共享接口/类型签名；跨模块调用链
 3. **白名单命中（≤2 前提下）→ 简单候选**：文档类(拼写/格式/注释)；实现类(单一纯函数，无接口变更)；配置值类(非结构)；Bug类(可复现+根因明确)
-4. **六维计分**：任一维"高"→非简单；全"低"→简单候选；含"中"→grill 兜底
-5. **⑥ 模型匹配不通过 → 非简单**
-6. **无法判定 → 默认非简单**（兜底 grill）
-7. **分类输出契约**（强制）：见下节
-8. **执行中重估**：清单膨胀>2 / 黑名单新现 → **立即执行升档**非简单；持续处理 → **验证全量 + 执行升档**（见下）
+4. **五维计分**：任一维"高"→非简单；全"低"→简单候选；含"中"→grill 兜底
+5. **无法判定 → 默认非简单**（兜底 grill）
+6. **分类输出契约**（强制）：见下节
+7. **执行中重估**：清单膨胀>2 / 黑名单新现 → **立即执行升档**非简单；持续处理 → **验证全量 + 执行升档**（见下）
 
-**简单 = Phase0 已盘点 + 关联需改≤2 + 白名单 + 六维全低 + 模型匹配低 + attempt=1，缺一不可。**
+**简单 = Phase0 已盘点 + 关联需改≤2 + 白名单 + 五维全低 + attempt=1，缺一不可。** 简单只决定流程长短与 verify_tier，**不豁免独立审查**。
 
 ## 分类输出契约（强制一行）
 
 分类完成后必须输出（可表可句）：
 
-`大类 | 需改文件列表 | 模型档(当前≥所需) | verify_tier | 置信度 | 成功标准(1句)`
+`大类 | 需改文件列表 | verify_tier | 置信度 | 成功标准(1句)`
 
 - verify_tier 两档定义 SSOT → `skills/verification-before-completion/SKILL.md`「verify_tier」节；本文件只引用取值
 - 置信度低 → 按非简单或 grill 处理
@@ -108,7 +84,7 @@ loading_tier: L1
 
 1. Read change-impact → 清单必须**完整且 ≤2**；中途膨胀 >2 → **立即执行升档**（禁止拆成多次「还是简单」）
 2. 拓扑序**一次改齐**关联文件；配置类同步 INDEX + MANIFEST + 相关 docs
-3. `verify_tier=比例`；贴命令证据
+3. `verify_tier=比例`；贴命令证据 → 刷图 → 全新独立审查 PASS 才算完成
 4. **禁止**「先改一点再看」式多轮简单旁路
 
 ## 持续处理 → 验证全量 + 执行升档（默认同时）
@@ -156,15 +132,14 @@ loading_tier: L1
 | 大类   | 使用类型                               | 路由                                                                                                      |
 | ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 简单   | 文档/实现/配置值/Bug(关联需改≤2可复现) | Phase0 → change-impact → **一次改齐** → verification → **刷图** → 全新只读独立审查 → 短 R20（仅 attempt=1） |
-| 非简单 | Bug（多文件/根因不明/执行升档）        | （歧义则 grill）→ triage(P0-P3，L3) → systematic-debugging → 全量验证 + 同上审查                              |
+| 非简单 | Bug（多文件/根因不明/执行升档）        | （歧义则 grill）→ systematic-debugging（含 P0-P3 分级）→ 全量验证 + 同上审查                              |
 | 非简单 | 功能/架构/配置/删除                    | **grill** → brainstorming → 五阶段全链 → 全量验证 + 修改→审查（政策 → verification skill）                    |
-| 非简单 | 调研                                   | deep-research（L3 双源）                                                                                |
+| 非简单 | 调研                                   | deep-research（L3 双源）→ 全新只读独立审查结论                                                          |
 
 ## 边界
 
 - **默认不执行 TDD/SDD（v10.15）**：仅用户显式要求（TDD/测试驱动/先写测试/子Agent派发）时才 Read `test-driven-development` / `subagent-driven-development`；非简单任务默认由主会话按五阶段骨架直接执行，不强制测试先行、不强制子Agent派发。
-- task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节与独立审查政策 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件。轮次 → `config/workflow.yaml` `review.max_rounds`。计划未批准禁止声称完成。Cursor 完成门不 followup。
+- 验证细节与独立审查政策 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件。轮次与完成定义 → `config/workflow.yaml` `review` / `completion`。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

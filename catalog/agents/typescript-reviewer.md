@@ -1,7 +1,6 @@
 ---
 name: typescript-reviewer
 description: 负责 TypeScript/JavaScript 代码审查任务。当需要审查 TypeScript/JavaScript 代码、检查类型安全、审查 React/Next.js 组件、评估异步代码正确性、检查 Node.js 安全性、评审前端性能优化、验证 ESLint/TypeScript 配置时调用此 Agent。触发词：审查 TypeScript、TS 审查、JavaScript 审查、类型安全审查、React 审查、类型检查、ts-review、typescript-review。
-model: inherit
 color: blue
 tools:
   - Read

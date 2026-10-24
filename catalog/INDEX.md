@@ -4,7 +4,7 @@
 > 本目录是**变体库**，不参与全局加载，只在 `migrate-from-legacy.py --skill|--agent|--rule`
 > 复制到项目 `.claude/` 时使用。同名项一律以顶层权威版为准。
 
-规模：skills 100 / agents 41 / rules 15
+规模：skills 99 / agents 41 / rules 15
 
 ## 同名项消歧（权威在顶层，此处为变体，勿加载）
 
@@ -14,7 +14,7 @@
 | agents | （无） |
 | rules | （无） |
 
-## Skills（100）
+## Skills（99）
 
 | 名称 | 说明 |
 | ---- | ---- |
@@ -31,7 +31,6 @@
 | `capacitor-app` | 开发混合移动应用、使用Capacitor/Ionic框架、将Web应用打包为移动应用 |
 | `changelog-generator` | 生成变更日志 |
 | `cicd-pipeline` | 配置CI/CD流水线、设置GitHub Actions/GitLab CI、实现自动化构建部署 |
-| `claude-api` | Claude API / Anthropic SDK 开发指南。触发：使用 Claude API、Anthropic SDK、构建 AI 应用、Managed Agents |
 | `claude-to-deerflow` | deer-flow 外部编排引擎桥接。触发词：deer-flow | 外部编排 | LangGraph | 长时任务 | /deer-flow |
 | `code-standards` | 制定代码规范 |
 | `command-reference` | 常用CLI命令速查表 |

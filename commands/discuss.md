@@ -22,7 +22,7 @@ description: 需求讨论与对齐（①规划阶段入口）
 <!-- spine:stage-gate -->
 ## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-- 阶段：①规划 | skill：`skills/brainstorming/SKILL.md` | 角色：session（frontier / high）
+- 阶段：①规划 | skill：`skills/brainstorming/SKILL.md` | 角色：session
 - 进入：非简单（triage 判定）
 - 退出（全部满足才进入下一阶段）：
   - grill ≤5 问收敛，验收标准可量化

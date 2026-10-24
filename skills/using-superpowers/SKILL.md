@@ -39,18 +39,18 @@ L2/L3 设 `disable-model-invocation: true` → 不会自动注入上下文；**�
 
 ## Per-harness 工具映射（superpowers v6 references）
 
-v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射各 harness（Claude Code / Codex / Copilot / Gemini / Pi / Antigravity）。本地落地：Cursor 用 Read/Glob/Grep/Task；Claude Code 用对应原生工具。**禁止凭记忆套用某 harness 的专有工具名**（如在 Cursor 误调 Claude Code 专属命令）。
+v6.0.0 起 superpowers 用 vendor-neutral 工具名 + `references/` 目录映射各 harness（各 agent harness）。本地落地：Cursor 用 Read/Glob/Grep/Task；Claude Code 用对应原生工具。**禁止凭记忆套用某 harness 的专有工具名**（如在 Cursor 误调 Claude Code 专属命令）。
 
 ## 任务分类
 
-分类树/六维/升档触发 SSOT → `skills/task-triage/SKILL.md`。入口：R18 claude-mem search（相关先查）→ Read task-triage（Phase0 盘点）→ 按分类树路由。**简单旁路**仅 attempt=1（不 Read executing-plans/subagent-driven-development），完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项）。
+分类树/五维/升档触发 SSOT → `skills/task-triage/SKILL.md`。入口：R18 claude-mem search（相关先查）→ Read task-triage（Phase0 盘点）→ 按分类树路由。**简单旁路**仅 attempt=1（不 Read executing-plans/subagent-driven-development），完成前仍须 Read verification-before-completion（核对范围=影响面全部相关项）。
 
 ## P0 路由集（6）
 
 | 等级 | Skill                          | 触发                                                                                                 |
 | ---- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | L1   | using-superpowers              | 会话开始                                                                                             |
-| L1   | task-triage                    | 会话开始分类、新任务（判定条件 SSOT；简单需同时满足 Phase0+≤2+白名单+六维全低+模型匹配低+attempt=1） |
+| L1   | task-triage                    | 会话开始分类、新任务（判定条件 SSOT；简单需同时满足 Phase0+≤2+白名单+五维全低+attempt=1；简单不豁免独立审查） |
 | L1   | change-impact-analysis         | 任何修改                                                                                             |
 | L1   | brainstorming                  | 非简单、方案、架构                                                                                   |
 | L2   | verification-before-completion | 完成、验收（R20 七维覆盖 blast-radius 全部相关项；初次编辑后为五维迷你验收）                     |
@@ -95,7 +95,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | -------- | --------------------------------------------------------------- |
 | 写计划   | writing-plans                                                   |
 | TDD      | test-driven-development (默认关闭,用户显式要求时触发)           |
-| 代码审查 | requesting-code-review → eng-reviewer                           |
+| 独立审查（每个任务必经） | verification-before-completion「独立审查」→ eng-reviewer + 路由 |
 | 架构决策 | adr-management                                                  |
 | 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
 | Git 提交 | git-workflow                                                    |

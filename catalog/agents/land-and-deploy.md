@@ -2,7 +2,6 @@
 name: land-and-deploy
 description: 一键部署 — 从 approved PR 到 verified in production。触发词：部署、上线、land、deploy、发布到生产。
 tools: Read, Write, Bash, Glob, Grep, WebFetch
-model: sonnet
 ---
 
 # Land and Deploy — 一键部署
