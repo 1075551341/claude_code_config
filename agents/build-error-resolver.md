@@ -1,6 +1,8 @@
 ---
 name: build-error-resolver
 description: 构建/编译/类型错误修复。触发词：build error、编译错误、类型错误、依赖冲突。
+model: sonnet
+effort: medium
 tools: [Read, Write, Edit, Grep, Glob, Bash]
 skills:
   - systematic-debugging

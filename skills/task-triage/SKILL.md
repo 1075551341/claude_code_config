@@ -62,13 +62,21 @@ loading_tier: L1
 
 ### ⑥ 模型档映射（防虚报）
 
-| 档         | 典型模型（据会话实际自报，禁止臆造更高档）          |
-| ---------- | --------------------------------------------------- |
-| `frontier` | Opus 级 / o3 级 / high-thinking 重推理档            |
-| `mid`      | Sonnet 级 / GPT-5 中档 / Composer 主会话默认档      |
-| `light`    | Haiku / Flash / mini / 子代理默认廉价档             |
+档位是模型无关能力档；具体模型由 `config/workflow.yaml` 当前 profile 决定（换后端不改本文件）。当前档按会话实际自报，禁止臆造更高档。
 
-- 所需档：①–⑤ 全低 → light 即可；含中 → 至少 mid；含高或黑名单 → frontier
+<!-- spine:tier-map -->
+> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。当前 profile：`anthropic`。
+
+| 档 | 当前 profile 模型（Claude Code / Cursor） |
+| --- | --- |
+| `frontier` | `claude-opus-5-5` / `claude-opus-5-5-high` |
+| `mid` | `claude-sonnet-5-5` / `claude-sonnet-5-5-medium` |
+| `light` | `claude-haiku-5-5` / `composer-2.5-fast` |
+
+- 所需档：①–⑤ 全低 → `light`；含中 → `mid`；含高或黑名单 → `frontier`
+- attempt ≥ 2 → 执行升档非简单 + verify_tier=全量
+<!-- /spine:tier-map -->
+
 - `当前档 < 所需档` → ⑥=高 → 非简单（建议换模或走非简单流程）
 - `当前档 = 所需档` 且任务在边界 → ⑥=中 → grill 兜底
 - `当前档 > 所需档` 且其余全低 → ⑥=低（允许简单）
@@ -158,5 +166,5 @@ loading_tier: L1
 - task-triage = 任务复杂度判定 + 需求级访谈（grill）；triage = Bug P0-P3 分级。互补不重叠。
 - brainstorming = 设计级访谈（HARD-GATE 批准方案）；grill 只做需求澄清，不重复设计访谈。
 - catalog/skills/grill-with-docs = 文档对齐拷问，与需求访谈语义不同。
-- 验证细节与独立审查政策 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件。轮次 → `config/quality_gates.json` `review_max_rounds`。计划未批准禁止声称完成。Cursor 完成门不 followup。
+- 验证细节与独立审查政策 SSOT → `skills/verification-before-completion/SKILL.md`；**升档触发**归本文件。轮次 → `config/workflow.yaml` `review.max_rounds`。计划未批准禁止声称完成。Cursor 完成门不 followup。
 - attempt 由会话契约自报；issue-tracker hook（v10.15）辅助识别同问题重复出现并注入提醒，但分类/升档判定仍以会话契约为 SSOT。

@@ -1,6 +1,6 @@
 # Skills 技能库
 
-> **全局 36 个**（L1×4 + L2 门控×7 + L3×25）+ **catalog/** 领域库（按需复制）｜v11 精简：45→36
+> **全局 35 个**（L1×4 + L2×5 + L3×26，同 skills-INDEX）+ **catalog/** 领域库（按需复制）｜v11 精简：45→36；v12：pr-workflow 并入 ship → 35
 
 完整索引 → [skills-INDEX.md](../skills-INDEX.md)
 
@@ -19,7 +19,7 @@ writing-plans | executing-plans | test-driven-development | subagent-driven-deve
 
 ## 调研 / Git / 记忆
 
-deep-research | git-workflow | pr-workflow | claude-mem-maintenance | memory-compression
+deep-research | git-workflow | claude-mem-maintenance | memory-compression
 
 ## Meta
 
@@ -27,7 +27,7 @@ spec-validation | karpathy-guidelines | caveman-compress | skill-creator | skill
 
 ## 扩展
 
-autoplan | design-pipeline（含原 design-engineer Phase 2）| ship（含原 release-engineer）| structured-artifacts
+autoplan | design-pipeline（含原 design-engineer Phase 2）| ship（含原 release-engineer / pr-workflow）| structured-artifacts
 
 ## 重构与前端
 

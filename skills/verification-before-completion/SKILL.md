@@ -12,7 +12,7 @@ source: obra/superpowers
 
 > **L2 门控**：仅④验证阶段 Read 全文。④不 Read spec-validation。Cursor 靠 `disable-model-invocation` + 显式 Read。
 > **verify_tier / 持续处理升档** 的触发 SSOT → `skills/task-triage/SKILL.md`。
-> **v11.5.0 审查政策 SSOT（本文件）**：有交付即只读独立审查（含文档）；每轮全新七维；审查前刷图；最多 `config/quality_gates.json` `review_max_rounds`；禁止边审边改。Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup。R20 反空模板 → `hooks/_lib/r20_replay.py`。史 → `CHANGELOG.md`。
+> **审查政策 SSOT（本文件；数字/维度/路由 → `config/workflow.yaml`）**：有交付即只读独立审查（含文档）；每轮全新七维；审查前刷图；最多 `review.max_rounds` 轮；禁止边审边改。Claude Stop `stop-verification-gate.py`（exit 2）。Cursor 完成门不 followup。R20 反空模板 → `hooks/_lib/r20_replay.py`。史 → `CHANGELOG.md`。
 
 ## @Examples
 
@@ -65,7 +65,7 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 简单路径同样：一次改齐 → 验证 → **图谱刷新** → **全新只读独立审查** → 短 R20。
 
-**一轮** = 改 → 验 → **刷图** → 并行全新审查。同轮多审查者合计 +1 轮。数字 SSOT：`config/quality_gates.json` `review_max_rounds`（Stop `max_blocks` 仍为 3，≠ 审查轮次）。
+**一轮** = 改 → 验 → **刷图** → 并行全新审查。同轮多审查者合计 +1 轮。数字 SSOT：`config/workflow.yaml` `review.max_rounds` / `review.max_blocks`（render 同步到 `config/quality_gates.json` 供 hooks 消费；`max_blocks` ≠ 审查轮次）。
 
 **全新**（每轮缺一不可）：新开 `Task`/`Agent`，禁止 `resume`；对照 **原始要求 + 当前 diff + 本轮新鲜图谱** 全量重扫（上轮清单不得限定范围）；一次找齐后再给 `PASS` / `NEEDS-CHANGES`；审查者只读；修改只走 `change-implementer`。禁止边审边改。
 
@@ -77,15 +77,17 @@ Claude: /verification-before-completion → 构建+测试+安全检查 → 确�
 
 ### 七维（独立审查与主会话 R20 同一清单）
 
-缺任一项视为本轮无效、不计 PASS。
+<!-- spine:dimensions -->
+> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。缺任一项视为本轮无效、不计 PASS。
 
 1. 满足（承认/反驳/弃权 + 证据）
-2. 遗漏
-3. 错改
-4. 漏改（含文档/注释/版本戳或「无文档影响」）
+2. 遗漏（原始要求逐条对照）
+3. 错改（改了不该改的）
+4. 漏改（含文档/注释/版本戳/派生块，或「无文档影响」）
 5. 原功能（保持 + 测试/冒烟证据）
-6. 影响范围（CRG `get_impact_radius` / IMPACT / blast）
-7. **问题是否解决**（已解决 / 未解决 / 部分解决；须观察证据，禁止「看起来好了」）
+6. 影响范围（CRG get_impact_radius / IMPACT / blast-radius）
+7. **问题是否解决**（已解决 | 未解决 | 部分解决 + 观察证据，禁止「看起来好了」）
+<!-- /spine:dimensions -->
 
 ```
 ## 独立审查 / 会话终验（R20）
@@ -288,7 +290,7 @@ Cursor **无**完成门 followup（规则驱动双审）。计划未批准 / Cre
 □ 验证（主会话贴观察输出）→ 无依赖审查者同一消息并行；必派 eng-reviewer 七维一次找齐
 □ 每轮审查必须全新 Task/Agent（禁止 resume）；上轮清单仅参考，不得限定本轮扫描范围
 □ 干净 PASS 且七维有效且与验证一致 → 立即结束，禁止再派审查
-□ NEEDS-CHANGES / 七维缺项 → 汇总完整清单后再派一次 change-implementer 集中改齐；再验证后全新开审；轮次 ≤ quality_gates.review_max_rounds；禁止只连审不改
+□ NEEDS-CHANGES / 七维缺项 → 汇总完整清单后再派一次 change-implementer 集中改齐；再验证后全新开审；轮次 ≤ workflow.yaml review.max_rounds；禁止只连审不改
 □ counted 编辑含文档即 in scope；仅计划未批准 / *.plan.md / 纯澄清问答 skip
 □ 项目已建 code-review-graph → get_minimal_context / get_impact_radius；有 diff 再 detect_changes
 ```

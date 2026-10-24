@@ -1,7 +1,8 @@
 ---
 name: designer
 description: UI/UX 审查（只找问题，不改代码）。触发词：设计审查、UI审查、交互审查、design review。
-model: inherit
+model: sonnet
+effort: medium
 tools: [Read, Grep, Glob]
 layer: skeleton
 source: garrytan/gstack
@@ -50,11 +51,11 @@ UI/UX 变更 → Design Review
 
 不负责：代码逻辑（→ eng-reviewer）、产品方向（→ ceo-reviewer）、落实修改（→ change-implementer）
 
-禁止：Write / Edit / Shell 改文件；在审查回复里给可粘贴的完整补丁。只找问题（是否符合预期）。
+<!-- spine:review-contract -->
+## 审查契约（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
 
-## 七维（所有审查者必填，缺一不计 PASS）
-
-对照原始要求 + 当前 diff + 本轮新鲜图谱。结论须含 `PASS` / `NEEDS-CHANGES`。
-
-- 满足 / 遗漏 / 错改 / 漏改 / 原功能 / 影响范围 / **问题是否解决**（已解决|未解决|部分解决 + 观察证据）
-
+- 只找问题：禁止 Write / Edit / Shell 改文件，禁止贴可粘贴补丁；修复 → `change-implementer`。
+- 对照 **原始要求 + 当前 diff + 本轮新鲜图谱**（主会话已在 last_edit 之后刷新），扫完影响面一次列全再下结论；每轮全新开审，禁止 resume，上轮清单不得限定范围。
+- 结论行只填其一：`PASS` | `NEEDS-CHANGES`；有任何必须修项即 `NEEDS-CHANGES`。
+- 七维缺任一项本轮无效：满足 / 遗漏 / 错改 / 漏改 / 原功能 / 影响范围 / **问题是否解决**（已解决 | 未解决 | 部分解决 + 观察证据，禁止「看起来好了」）
+<!-- /spine:review-contract -->

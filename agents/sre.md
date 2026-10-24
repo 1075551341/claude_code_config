@@ -1,6 +1,8 @@
 ---
 name: sre
 description: 站点可靠性工程师，负责 canary 监控、部署后验证、性能回归检测
+model: sonnet
+effort: medium
 tools: ["Read", "Grep", "Glob", "Bash", "Browser"]
 layer: supplement
 source: garrytan/gstack

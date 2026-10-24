@@ -1,6 +1,8 @@
 ---
 name: doc-writer
 description: 技术文档工程师，更新项目文档匹配代码变更，构建 Diataxis 覆盖图
+model: haiku
+effort: medium
 tools: ["Read", "Grep", "Glob", "Write", "Edit"]
 layer: supplement
 source: garrytan/gstack

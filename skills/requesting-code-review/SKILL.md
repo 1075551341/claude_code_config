@@ -93,7 +93,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 ### 步骤 5: 处理反馈
 
-主会话合并本批清单。任一 `NEEDS-CHANGES` / 七维缺项 → 整轮不通过，派**一次** `change-implementer` 集中改齐。干净 PASS 即停。轮次 → `quality_gates.review_max_rounds`。
+主会话合并本批清单。任一 `NEEDS-CHANGES` / 七维缺项 → 整轮不通过，派**一次** `change-implementer` 集中改齐。干净 PASS 即停。轮次 → `config/workflow.yaml` `review.max_rounds`。
 
 ## 红旗警告
 
