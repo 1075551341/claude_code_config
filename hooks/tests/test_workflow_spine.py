@@ -61,11 +61,13 @@ with tempfile.TemporaryDirectory() as tmp:
     (root / "agents" / "x.md").write_text("---\nname: x\nmodel: inherit\n---\n", encoding="utf-8")
     (root / "rules.md").write_text("pick a vendor-tier alias: opus\n", encoding="utf-8")
     (root / "config.json").write_text('{"effortLevel": "high"}\n', encoding="utf-8")
+    (root / "think.json").write_text('{"thinking_budget": 8000}\n', encoding="utf-8")
     (root / "CHANGELOG.md").write_text("history may mention sonnet\n", encoding="utf-8")
     hits = wf.lint(root)
     check("lint flags agent frontmatter model key", any("agents/x.md" in h and "frontmatter" in h for h in hits))
     check("lint flags vendor tier alias in prose", any(h.startswith("rules.md:1") for h in hits))
-    check("lint flags effort key in config", any(h.startswith("config.json:1") for h in hits))
+    check("lint flags effort key in config", any(h.startswith("config.json:1") and "effortLevel" in h for h in hits))
+    check("lint flags thinking_budget in config", any(h.startswith("think.json:1") and "thinking_budget" in h for h in hits))
     check("lint ignores CHANGELOG history", not any("CHANGELOG" in h for h in hits))
     for i, phrase in enumerate((
         "推荐使用 MiniMax", "GPT Image 生成", "use Gemini for this", "run Llama locally",

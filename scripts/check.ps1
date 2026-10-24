@@ -115,7 +115,7 @@ $requiredDirs = @(
     @{ P = "hooks";       D = "Hook scripts" }
     @{ P = "scripts";     D = "Tool scripts" }
     @{ P = "logs";        D = "Logs" }
-    # experiences/ 已于 v11 归档至 docs/archive/experiences/（学习产物统一 claude-mem）
+    # experiences/ 已于 v11 起不再随仓携带（学习产物统一 claude-mem）
     # plans/ 已于 v10.17 移出版本库（计划/设计为本地制品，见 .gitignore），不再作为必备目录
     @{ P = "backups";     D = "Backups" }
 )

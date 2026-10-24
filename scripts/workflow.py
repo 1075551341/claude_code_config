@@ -63,6 +63,10 @@ MODEL_PATTERNS = (
 EFFORT_PATTERNS = (
     r"\beffortLevel\b",
     r"\breasoning[_-]effort\b",
+    r"\bthinking[_-]?budget\b",
+    r"\bbudget_tokens\b",
+    r"\bmax_thinking(?:_?tokens)?\b",
+    r"\bthinkingLevel\b",
     r"\bxhigh\b",
     r"\bANTHROPIC_DEFAULT_\w+_MODEL\b",
     r"\bCLAUDE_CODE_SUBAGENT_MODEL\b",
@@ -70,10 +74,9 @@ EFFORT_PATTERNS = (
 FRONTMATTER_BANNED_KEYS = ("model", "effort")
 _LINT_RE = re.compile("|".join(MODEL_PATTERNS + EFFORT_PATTERNS), re.I)
 LINT_SUFFIXES = {".md", ".mdc", ".yaml", ".yml", ".json", ".py", ".ts", ".js", ".ps1", ".toml", ".txt"}
-# 历史记录 / 外部调研 / 第三方插件元数据 / lint 自身与其测试 不受约束
+# 历史记录 / 外部调研 / 第三方插件元数据 / lint 自身与其测试 不受约束（docs/archive 已删）
 LINT_EXCLUDES = (
     "CHANGELOG.md",
-    "docs/archive/",
     "docs/research/",
     "docs/ADR/",
     "plugins/",
@@ -330,9 +333,10 @@ def body_review_contract(spine: dict) -> str:
         "- **PASS 必须同时满足两道门**，逐道写结论 + 证据；任一道缺证据或不满足即 "
         f"`{rv['verdicts'][1]}`：",
         *[f"  {x}" for x in _bars(spine)],
-        "- 输出须含以下两行，每道门单独一行（机械门逐行解析：PASS 时该行以「通过」开头、同一行写非空证据；"
-        "「基本通过 / 部分通过 / 待定」或缺行都不算 PASS；不通过时写「不通过」并给 NEEDS-CHANGES）：",
-        *[f"  `- {b['label']}：通过（证据：<观察到的具体输出或逐条对应>）`" for b in rv["pass_requires"].values()],
+        "- 输出须含以下两行，每道门单独一行（机械门逐行解析：PASS 时该行以「通过」开头、同一行写真实观察证据；"
+        "「基本通过 / 部分通过 / 待定」或缺行都不算 PASS；尖括号模板、空证据、「证据：<…>」都不算；"
+        "不通过时写「不通过」并给 NEEDS-CHANGES）：",
+        *[f"  `- {b['label']}：通过（证据：贴本轮命令输出原文，禁止尖括号模板）`" for b in rv["pass_requires"].values()],
         "- 本契约的输出要求优先于上文个人模板：七维各一行 + 两道门两行 + 结论行，缺一本轮无效。",
         "- 审查者多为只读：「原功能保持」以主会话附带的测试 / validate / check 观察输出与相对起点的行为差异为证据，"
         "并核对它与 diff 一致；未附或对不上即 NEEDS-CHANGES。",

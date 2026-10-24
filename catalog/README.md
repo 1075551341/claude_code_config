@@ -31,4 +31,4 @@ mini-program, uniapp-development, capacitor-app, ios-simulator, android-developm
 
 ## 已删记录
 
-见 `docs/archive/experiences/rejected/deletion-candidates.md`（已归档）
+历史删除清单不随仓携带；需要时查 git 历史（v13 裁剪见仓库根 `CHANGELOG.md`）。

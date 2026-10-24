@@ -1479,6 +1479,67 @@ def test_pass_requires_both_bars():
     entry["reviews"][0]["text"] = REVIEW_PASS + "结论：PASS\n"
     r20_replay.apply_review_verdict(entry, "")
     check("bars: PASS with both bars completes task", entry.get("review_pass_ok") is True)
+    copied = base + (
+        "- 符合预期要求：通过（证据：<观察到的具体输出或逐条对应>）\n"
+        "- 原功能保持：通过（证据：<观察到的具体输出或逐条对应>）\n"
+    )
+    check("bars: copied contract angle-slot rejected", not r20_replay.review_bars_ok(copied))
+    ellipsis_slot = base + (
+        "- 符合预期要求：通过（证据：<…>）\n"
+        "- 原功能保持：通过（证据：pytest 48 passed）\n"
+    )
+    check("bars: 证据：<…> placeholder rejected", not r20_replay.review_bars_ok(ellipsis_slot))
+    empty_slot = base + (
+        "- 符合预期要求：通过（证据：<>）\n"
+        "- 原功能保持：通过（证据：check OK）\n"
+    )
+    check("bars: empty angle slot rejected", not r20_replay.review_bars_ok(empty_slot))
+    instruct = base + (
+        "- 符合预期要求：通过（证据：贴本轮命令输出原文，禁止尖括号模板）\n"
+        "- 原功能保持：通过（证据：pytest 全绿）\n"
+    )
+    check("bars: instructional template phrase rejected", not r20_replay.review_bars_ok(instruct))
+    half = base + (
+        "- 符合预期要求：通过（证据：贴本轮命令输出原文）\n"
+        "- 原功能保持：通过（证据：pytest 全绿）\n"
+    )
+    check("bars: half-copied 贴本轮命令输出原文 rejected", not r20_replay.review_bars_ok(half))
+
+
+def test_waiver_negation() -> None:
+    waived = r20_replay.user_waived_verification
+    check("waiver: bare 跳过验证", waived("这次跳过验证"))
+    check("waiver: 不用验证", waived("可以不用验证"))
+    check("waiver: skip verify", waived("please skip verify this once"))
+    check("waiver: 不要跳过验证 is not a waiver", not waived("不要跳过验证"))
+    check("waiver: 不跳过验证 is not a waiver", not waived("不跳过验证"))
+    check("waiver: 请不要跳过验证 is not a waiver", not waived("请不要跳过验证，继续跑完"))
+    check("waiver: 禁止跳过验证 is not a waiver", not waived("禁止跳过验证"))
+    check("waiver: don't skip verify is not a waiver", not waived("Don't skip verify"))
+    check("waiver: do not skip verify is not a waiver", not waived("do not skip verify yet"))
+    check("waiver: empty is not a waiver", not waived(""))
+    check("waiver: unrelated prompt is not a waiver", not waived("请继续验证并贴证据"))
+
+
+def test_count_stop_block() -> None:
+    entry: dict = {"blocks": 0}
+    check("count: first verify does not increment", r20_replay.count_stop_block(entry, "verify") is False)
+    check("count: first verify blocks stay 0", entry.get("blocks") == 0)
+    check("count: second verify increments", r20_replay.count_stop_block(entry, "verify") is True)
+    check("count: stalled verify blocks==1", entry.get("blocks") == 1)
+    check("count: graph after verify does not increment", r20_replay.count_stop_block(entry, "graph") is False)
+    check("count: first modify does not increment", r20_replay.count_stop_block(entry, "modify") is False)
+    check("count: review always increments", r20_replay.count_stop_block(entry, "review") is True)
+    check("count: review blocks==2", entry.get("blocks") == 2)
+    check("count: skip increments (R20 fuse)", r20_replay.count_stop_block(entry, "skip") is True)
+    notice = r20_replay.blocked_session_notice("BLOCKED", reason="轮次用尽。", blocks=3, max_blocks=3)
+    check("blocked notice names BLOCKED", "状态 = BLOCKED" in notice and "不得声称完成" in notice)
+    payload = r20_replay.stop_hook_visible_payload(notice)
+    check(
+        "blocked payload is model-visible",
+        payload.get("systemMessage") == notice
+        and (payload.get("hookSpecificOutput") or {}).get("additionalContext") == notice,
+    )
 
 
 def main() -> int:
@@ -1513,6 +1574,8 @@ def main() -> int:
     test_impact_diff_subset_passes()
     test_impact_diff_disabled_skip()
     test_pass_requires_both_bars()
+    test_waiver_negation()
+    test_count_stop_block()
     print(f"passed={len(PASSED)} failed={len(FAILED)}")
     return 1 if FAILED else 0
 

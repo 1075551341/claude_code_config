@@ -26,7 +26,7 @@ from graph_freshness import (  # noqa: E402
     run_sync_ps1_if_verified,
     take_ui_slot,
 )
-from r20_replay import has_unverified_edits  # noqa: E402
+from r20_replay import has_unverified_edits, user_waived_verification  # noqa: E402
 
 
 def _load_entry(session_id: str) -> dict:
@@ -76,8 +76,8 @@ def main() -> None:
                 print(f"stop-graph-freshness: ui write failed: {exc}", file=sys.stderr)
 
     has_edits = bool(edited)
-    prompt = str(data.get("prompt") or data.get("text") or "").lower()
-    user_skipped = any(k in prompt for k in ("跳过验证", "不用验证", "skip verify"))
+    prompt = str(data.get("prompt") or data.get("text") or "")
+    user_skipped = user_waived_verification(prompt)
     green = bool(
         has_edits
         and not user_skipped

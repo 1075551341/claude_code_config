@@ -1,6 +1,6 @@
 # Agents 索引
 
-> 源：`agents/` | v13.0.0（9 全量；agent 不声明 model/effort，继承调用方；catalog 变体见 `catalog/agents/`）
+> 源：`agents/` | v13.0.1（9 全量；agent 不声明 model/effort，继承调用方；catalog 变体见 `catalog/agents/`）
 
 ## 阶段角色 2
 

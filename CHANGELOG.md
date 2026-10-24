@@ -2,6 +2,17 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v13.0.1 机械门收口（2026-10-24）
+
+- **证据模板**：`review_bars_ok` 拒绝整段 `<>` 槽、`证据：<…>`、契约用语（「观察到的具体输出」「尖括号模板」）。照抄审查契约不再算 PASS。
+- **豁免匹配**：`user_waived_verification` 为 SSOT。`跳过验证` / `不用验证` / `skip verify` 仅在左侧无否定前缀时成立。「不要跳过验证」「don't skip verify」不是豁免。Stop 与 `stop-graph-freshness` 共用。
+- **阻断计数**：`count_stop_block` — `review`/`capped` 计入；`verify`/`graph`/`modify` 仅同一相位连续第二次计入；R20 等 skip 相位仍计入。一轮内推进不再烧 `max_blocks`。
+- **BLOCKED 可见**：轮次/阻断用尽不再只写 stderr。Claude Stop 放行时 stdout 带 `systemMessage` + `additionalContext`；Cursor `verification_stop` 用 `user_message`/`agent_message`。`capped` 不再误走「验证通过」成功路径。
+- **lint**：effort 模式补 `thinking_budget` / `budget_tokens` / `max_thinking` / `thinkingLevel`。
+- **文案**：审查契约示例去掉可照抄尖括号槽；eng-reviewer / verification / `/review` 去掉「通过 | 不通过」图例；`quality_gates` 差集描述不再把非 git 写成完成状态；Guard 夹具「满 5 轮」改为 3。
+- **清理**：删除 `docs/archive/`（过期经验与孤儿脚本）与误跟踪的 `.state/loop_guard_state.json`。
+- **分支吸收**：`main` / `claude-config-11-5` / `config-driven-workflow-spine` / `mcp-everything-routing` 均为本线祖先，尖的部分（everything 语义路由、工具链地板、配置主干、双角色审查）已在 v13；本版不回灌已裁的啰嗦组件。
+
 ## v13.0.0 模型无关 · 一次通过 · 独立审查门（2026-10-24）
 
 - **不绑定模型**：配置、agents、rules、skills、hooks、CLAUDE.md、Cursor 规则与 `workflow.yaml` 不再出现模型 ID、厂商档位别名或「用某模型」措辞。删除 `workflow.yaml` 的 `models` / `roles` / `constraints` / `triage` / `legacy_reviewer_names`，删除 `workflow.py show --profile` 与 `apply-settings`、`templates/claude-settings/model.snippet.json`、`catalog/skills/claude-api`；agents 与 ~40 个 catalog agents 的 frontmatter 去掉 `model:`；CURSOR-EDITOR.mdc 厂商模型表换成「完成定义」派生块；CI 模板去掉 `model:`。模型由会话 / settings / 编辑器 / Task 传参决定，agent 一律继承。

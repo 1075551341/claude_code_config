@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> **v13.0.0** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
+> **v13.0.1** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
 
 **五柱**：Superpowers v6.3.0(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用）

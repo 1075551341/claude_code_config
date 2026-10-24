@@ -81,13 +81,13 @@ source: obra/superpowers
 - 漏改：无文档影响 | 已同步 <paths>
 - 原功能：保持（证据：<命令>）
 - 影响范围：CRG / IMPACT / blast-radius
-- 问题是否解决：已解决 | 未解决 | 部分解决（证据：<观察输出>）
-- 符合预期要求：通过 | 不通过（证据：原始要求逐条 → 对应改动）
-- 原功能保持：通过 | 不通过（证据：<测试/validate/check 观察输出> + 相对起点的行为差异）
-结论：PASS / NEEDS-CHANGES   （主会话终验状态：DONE 仅当独立审查 PASS；否则 BLOCKED）
+- 问题是否解决：已解决（证据：命令输出原文）
+- 符合预期要求：通过（证据：原始要求逐条 → 对应改动）
+- 原功能保持：通过（证据：测试/validate/check 观察输出 + 相对起点的行为差异）
+结论：PASS   （主会话终验状态：DONE 仅当独立审查 PASS；否则 BLOCKED。不通过时结论写 NEEDS-CHANGES，两道门写「不通过」+ 证据。禁止照抄「通过 | 不通过」或尖括号槽。）
 ```
 
-Stop 硬门（`r20_replay.py`）要求：含 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；「满足」非空且每个需求指纹关键词须承认/反驳/弃权；「漏改」含 `文档`/`注释`/`无文档影响`/路径；「原功能」含 `证据`/`测试`/`冒烟`；「影响范围」含 `CRG`/`get_impact_radius`/`IMPACT`/`blast-radius`/`影响面`；「问题是否解决」含三态之一与观察证据。审查者 PASS 另须两道门行（`review_bars_ok`）：「符合预期要求」「原功能保持」各一行、结论不以 不通过/未满足/NEEDS-CHANGES 开头、正文含 `证据`/`观察`/`evidence`。DSH / OpenCode 用便携 `r20_check.py`。
+Stop 硬门（`r20_replay.py`）要求：含 `会话终验` 或 `R20`，且同时含 `遗漏`、`错改`、`漏改`、`原功能`、`影响范围`、`问题是否解决`；「满足」非空且每个需求指纹关键词须承认/反驳/弃权；「漏改」含 `文档`/`注释`/`无文档影响`/路径；「原功能」含 `证据`/`测试`/`冒烟`；「影响范围」含 `CRG`/`get_impact_radius`/`IMPACT`/`blast-radius`/`影响面`；「问题是否解决」含三态之一与观察证据。审查者 PASS 另须两道门行（`review_bars_ok`）：「符合预期要求」「原功能保持」各一行、以「通过」开头、同一行写非空真实证据；`证据：<…>` / 尖括号槽 / 空证据 / 「基本通过」都不算。DSH / OpenCode 用便携 `r20_check.py`。
 
 ## 质量门（`config/quality_gates.json`，Stop 门消费）
 
@@ -97,8 +97,8 @@ Schema Drift（ORM 变更缺 migration）· Security Anchor（auth 变更绑定�
 
 - 验证失败 → 不声称完成；同方案 ≤2 次（R5），再失败换方案或 NEEDS_CONTEXT。
 - 初判简单但继续处理 → `verify_tier=全量` + 执行升档非简单（task-triage）。
-- Claude Stop 达 `max_blocks` → 放行停机，但状态 = `BLOCKED`（未完成），须向用户说明未通过的项。Cursor Stop 不能阻断，同一规则由本文件约束。
-- 用户显式说出 `skip_keywords` 才可豁免审查，状态记 `DONE_WITH_CONCERNS`，不是 DONE。
+- Claude Stop 达 `max_blocks` 或审查轮次用尽 → 放行停机，状态 = `BLOCKED`（未完成）。通知写到 stdout（`systemMessage` + `additionalContext`），不只 stderr。Cursor Stop 不能阻断，同一状态经 `user_message`/`agent_message` 露出。
+- 用户显式说出 `skip_keywords` 才可豁免审查，状态记 `DONE_WITH_CONCERNS`，不是 DONE。否定句（「不要跳过验证」「don't skip verify」）不是豁免。
 
 ## 输出
 

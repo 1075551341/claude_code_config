@@ -1,6 +1,6 @@
 # Rules 索引
 
-> 源：`rules/` | v13.0.0（6 全量；只保留方向性禁令 + 开发习惯 + 流程补充；流程/审查/完成定义 SSOT → `config/workflow.yaml`）
+> 源：`rules/` | v13.0.1（6 全量；只保留方向性禁令 + 开发习惯 + 流程补充；流程/审查/完成定义 SSOT → `config/workflow.yaml`）
 
 ## alwaysApply — 骨架层
 

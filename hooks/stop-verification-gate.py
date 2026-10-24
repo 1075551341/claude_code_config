@@ -30,6 +30,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
 from r20_replay import (  # noqa: E402
     apply_review_verdict,
+    blocked_session_notice,
+    count_stop_block,
     counted_edit_items,
     dual_pass_in_scope,
     dual_pass_phase,
@@ -38,6 +40,8 @@ from r20_replay import (  # noqa: E402
     is_plan_artifact,
     replay_ok,
     review_verdict_ok,
+    stop_hook_visible_payload,
+    user_waived_verification,
 )
 from crg_track import has_crg_since  # noqa: E402
 from graph_freshness import (  # noqa: E402
@@ -513,18 +517,27 @@ def check_security_anchor(code_files: list) -> list:
     return []
 
 
-def _emit_graph_ui(session_id: str, aggregate: dict | None) -> None:
-    """Stop 把双图刷新成败写到 systemMessage（会话界面，非 stderr 日志）。"""
-    if not aggregate:
+def _emit_session_visible(session_id: str, aggregate: dict | None, notices: list | None = None) -> None:
+    """Stop 把双图刷新 + BLOCKED/豁免写到 stdout（systemMessage + additionalContext）。
+
+    轮次/阻断用尽时若只写 stderr，Claude 在 exit 0 后看不见状态，会误称为完成。
+    """
+    parts: list[str] = []
+    if aggregate:
+        banner = str(aggregate.get("ui") or "").strip()
+        if banner:
+            show_fail = bool(aggregate.get("blocked") or not aggregate.get("ok"))
+            if show_fail or take_ui_slot(session_id, "refresh"):
+                parts.append(banner)
+    for item in notices or []:
+        text = str(item or "").strip()
+        if text and text not in parts:
+            parts.append(text)
+    if not parts:
         return
-    banner = str(aggregate.get("ui") or "").strip()
-    if not banner:
-        return
-    show_fail = bool(aggregate.get("blocked") or not aggregate.get("ok"))
-    if not show_fail and not take_ui_slot(session_id, "refresh"):
-        return
+    payload = stop_hook_visible_payload("\n".join(parts))
     try:
-        sys.stdout.write(json.dumps({"systemMessage": banner}, ensure_ascii=False) + "\n")
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
         sys.stdout.flush()
     except OSError as exc:
         print(f"stop-verification-gate: ui write failed: {exc}", file=sys.stderr)
@@ -559,6 +572,7 @@ def main():
     transcript_path = str(data.get("transcript_path") or "")
     code_files = []
     graph_refresh = None
+    session_notices: list[str] = []
 
     if cfg["enabled"]:
         state = load_state()
@@ -588,8 +602,9 @@ def main():
         has_any_edit = bool(edited) or bool(untracked)
         if has_any_edit:
             blocks = int(entry.get("blocks", 0))
-            skip_msg = last_user_message(transcript_path).lower()
-            user_skipped = any(k.lower() in skip_msg for k in cfg["skip_keywords"])
+            user_skipped = user_waived_verification(
+                last_user_message(transcript_path), cfg.get("skip_keywords")
+            )
             project_cwd = entry.get("cwd") or cwd
             checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
             refresh_roots = find_project_roots(checkable, project_cwd)
@@ -606,29 +621,44 @@ def main():
                 for w in crg_warnings:
                     print(f"⚠️ {w}", file=sys.stderr)
 
+            last_msg = last_assistant_message(transcript_path)
+            if apply_review_verdict(entry, last_msg):
+                entry["ts"] = time.time()
+                state[session_id] = entry
+                save_state(state)
+
+            phase = dual_pass_phase(entry, cfg)
+            exhausted = blocks >= int(cfg["max_blocks"]) or phase == "capped"
+            max_rounds = int(cfg.get("review_max_rounds", 3))
+            rounds = int(entry.get("review_rounds") or 0)
+
             if user_skipped:
-                print(
-                    f"⚠️ 用户显式豁免验证/审查 — 本次放行，状态 = {cfg.get('user_waiver_status', 'DONE_WITH_CONCERNS')}（不是 DONE）",
-                    file=sys.stderr,
+                notice = (
+                    f"⚠️ 用户显式豁免验证/审查 — 本次放行，状态 = "
+                    f"{cfg.get('user_waiver_status', 'DONE_WITH_CONCERNS')}（不是 DONE）"
                 )
-            elif blocks >= int(cfg["max_blocks"]):
-                print(
-                    f"🚫 验证硬门已达上限（{blocks} 次）— 放行停机，状态 = {cfg.get('on_rounds_exhausted', 'BLOCKED')}："
-                    "任务未完成（未通过独立审查/验证），不得声称完成；向用户报告未通过项",
-                    file=sys.stderr,
+                print(notice, file=sys.stderr)
+                session_notices.append(notice)
+            elif exhausted:
+                if phase == "capped":
+                    reason = f"独立审查已 {rounds}/{max_rounds} 轮仍未 PASS。"
+                    shown, cap = rounds, max_rounds
+                else:
+                    reason = "验证硬门已达阻断上限。"
+                    shown, cap = blocks, int(cfg["max_blocks"])
+                notice = blocked_session_notice(
+                    str(cfg.get("on_rounds_exhausted", "BLOCKED")),
+                    reason=reason,
+                    blocks=shown,
+                    max_blocks=cap,
                 )
+                print(f"🚫 {notice}", file=sys.stderr)
+                session_notices.append(notice)
             else:
                 check_warnings = []
                 reasons = []
-                last_msg = last_assistant_message(transcript_path)
                 verdict_cfg_on = cfg.get("require_review_verdict", True)
                 verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
-                if apply_review_verdict(entry, last_msg):
-                    entry["ts"] = time.time()
-                    state[session_id] = entry
-                    save_state(state)
-                max_rounds = int(cfg.get("review_max_rounds", 3))
-                rounds = int(entry.get("review_rounds") or 0)
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
                     roots = refresh_roots
@@ -670,14 +700,7 @@ def main():
 
                 delivery_in_scope = dual_pass_in_scope(entry, cfg)
                 if delivery_in_scope or code_files or untracked:
-                    phase = dual_pass_phase(entry, cfg)
-                    if phase == "capped":
-                        print(
-                            f"🚫 修改→审查已 {rounds}/{max_rounds} 轮仍未通过独立审查 — 状态 = "
-                            f"{cfg.get('on_rounds_exhausted', 'BLOCKED')}（任务未完成，不得声称完成；向用户报告剩余问题）",
-                            file=sys.stderr,
-                        )
-                    elif phase == "modify":
+                    if phase == "modify":
                         reasons.append(
                             "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
                             f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
@@ -734,15 +757,16 @@ def main():
                         )
 
                 if reasons:
-                    entry["blocks"] = blocks + 1
+                    count_stop_block(entry, phase)
                     entry["scope_nudged"] = True
                     entry["ts"] = time.time()
                     state[session_id] = entry
                     save_state(state)
                     for w in check_warnings:
                         print(f"⚠️ {w}", file=sys.stderr)
-                    print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
-                    _emit_graph_ui(session_id, graph_refresh)
+                    shown_blocks = max(int(entry.get("blocks") or 0), 1)
+                    print(build_block_message(reasons, crg, shown_blocks, int(cfg["max_blocks"])), file=sys.stderr)
+                    _emit_session_visible(session_id, graph_refresh, session_notices)
                     sys.exit(2)
 
                 mark_issues_resolved(session_id)
@@ -767,7 +791,7 @@ def main():
     )
     for issue in issues:
         print(issue, file=sys.stderr)
-    _emit_graph_ui(session_id, graph_refresh if cfg["enabled"] else None)
+    _emit_session_visible(session_id, graph_refresh if cfg["enabled"] else None, session_notices)
     if any("🚫" in i for i in issues):
         sys.exit(1)
     sys.exit(0)

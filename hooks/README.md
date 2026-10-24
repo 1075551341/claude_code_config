@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.21
+# Hooks 钩子系统 v5.22
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.22 变更（v13.0.1）**：`review_bars_ok` 拒绝 `证据：<…>` / 契约尖括号槽；`user_waived_verification` 否定句（「不要跳过验证」）不是豁免；`count_stop_block` 只在审查相位或同相位卡住时 +1；Stop 放行时 BLOCKED 写 stdout（`systemMessage` + `additionalContext`），Cursor 经 `user_message`/`agent_message` 露出。
 > **v5.21 变更（v13.0.0）**：模型无关 — `context_thresholds` 删别名解析、登记表出厂为空；Stop 门默认 `review_max_rounds=3`，轮次/阻断用尽状态 = BLOCKED（不再 DONE_WITH_CONCERNS 放行）；`r20_replay.review_bars_ok` 要求 PASS 带两道关（符合预期要求 / 原功能保持，各附证据）；审查者名单 `cross-model-reviewer` 取代旧跨模型名。
 > **v5.20 变更（v11.6.0）**：Cursor Guard **1.2.17** — Shell 警告对齐 Claude `pre-bash-guard`（`powershell` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
 > **v5.19 变更（v11.6.0）**：Cursor Guard **1.2.16** — `sync_runner` 只 spawn pwsh。`.mcp.json` / Cursor 粘贴片段 `command: pwsh`。
@@ -180,4 +181,4 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.21（v13.0.0）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过；≤3 轮；耗尽 BLOCKED）；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_
+_版本：5.22（v13.0.1）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过且证据非模板；≤3 轮；耗尽 BLOCKED 可见）；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_

@@ -11,7 +11,7 @@
 | 审查路由、七维、轮次上限 | 子 Agent 用哪个模型（不传 = 继承会话） |
 | 就绪定义与交审自检 | 上下文窗口大小（模型名后缀 `[1M]`、`autoCompactWindow` 或本机登记表） |
 
-`python scripts/workflow.py check` 做三件事：校验配置（每条轨道都含 ④验证、完成定义覆盖全部轨道、轮次 ≤3、七维与 `hooks/_lib/r20_replay.py` 一致、无孤儿 agent）、检测派生块漂移、跑 **model-agnostic lint**（全仓命中模型 ID / 厂商档位别名 / effort 键，或 agents/commands/skills（含 catalog）frontmatter 带 `model:`/`effort:` 即失败；豁免：CHANGELOG、docs/archive|research|ADR、plugins/、hooks/tests/、scripts/workflow.py 自身）。`validate_config.py` V21 调用它。
+`python scripts/workflow.py check` 做三件事：校验配置（每条轨道都含 ④验证、完成定义覆盖全部轨道、轮次 ≤3、七维与 `hooks/_lib/r20_replay.py` 一致、无孤儿 agent）、检测派生块漂移、跑 **model-agnostic lint**（全仓命中模型 ID / 厂商档位别名 / effort 键，或 agents/commands/skills（含 catalog）frontmatter 带 `model:`/`effort:` 即失败；豁免：CHANGELOG、docs/research|ADR、plugins/、hooks/tests/、scripts/workflow.py 自身）。`validate_config.py` V21 调用它。
 
 ### 用户如何选模型
 
@@ -62,9 +62,9 @@
 2. **交审前自检**（`quality.self_check`）：修改者用与审查者 **同一份** 七维逐条自检。自检通过 ≠ 完成。
 3. **同源审查契约**：审查者契约块与 verification skill 七维都从 `review.dimensions` 渲染；hooks 机械门（`r20_replay.py`）由 V21 对齐校验。
 
-**轮次**：一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）。上限 `review.max_rounds`（默认 3，校验器不允许超过 3）。第 3 轮仍未 PASS ⇒ 状态 **BLOCKED**：任务未完成，向用户报告剩余问题；不得降级为「跳过审查」或「完成但有顾虑」。唯一放行是用户显式豁免（`skip_keywords`），状态记 `DONE_WITH_CONCERNS`，仍不是 DONE。
+**轮次**：一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）。上限 `review.max_rounds`（默认 3，校验器不允许超过 3）。第 3 轮仍未 PASS ⇒ 状态 **BLOCKED**：任务未完成，向用户报告剩余问题；不得降级为「跳过审查」或「完成但有顾虑」。唯一放行是用户显式豁免（`skip_keywords`；「不要跳过验证」等否定句不是豁免），状态记 `DONE_WITH_CONCERNS`，仍不是 DONE。
 
-**机械门 vs 规则门**：Claude Code Stop hook 在有交付编辑时强制本流程（最多阻断 `max_blocks` 次防死循环，放行时打印 BLOCKED 状态）；无编辑的任务（调研/问答交付物）与 Cursor（Stop 不能阻断）由规则强制：同样要独立审查交付物，PASS 才能声称完成。
+**机械门 vs 规则门**：Claude Code Stop hook 在有交付编辑时强制本流程。`blocks` 只在独立审查相位（或同一 verify/graph/modify 相位卡住）递增，一轮内推进不烧保险丝。达 `max_blocks` 或轮次用尽时放行停机，状态 **BLOCKED** 写到 stdout（`systemMessage` + `additionalContext`），不只 stderr。无编辑的任务（调研/问答交付物）与 Cursor（Stop 不能阻断，经 `user_message`/`agent_message` 露出同一状态）由规则强制：同样要独立审查交付物，PASS 才能声称完成。
 
 ## 4. 派生清单
 

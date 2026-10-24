@@ -1,6 +1,6 @@
 # Skills 索引
 
-> 源：`skills/` | 分级来自 MANIFEST loading_tiers | v13.0.0（26 全量 = L1×4 + L2×5 + L3×17；流程/审查 SSOT → `config/workflow.yaml`；本包不绑定模型与推理强度；catalog 变体见 `catalog/INDEX.md`）
+> 源：`skills/` | 分级来自 MANIFEST loading_tiers | v13.0.1（26 全量 = L1×4 + L2×5 + L3×17；流程/审查 SSOT → `config/workflow.yaml`；本包不绑定模型与推理强度；catalog 变体见 `catalog/INDEX.md`）
 
 ## L1 — 会话常驻 (4)
 

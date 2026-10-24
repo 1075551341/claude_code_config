@@ -21,7 +21,7 @@
         "claude-code",
         "cursor"
       ],
-      "description": "清单制品+diff差集校验（design-v2 方案A）：PostToolUse 记 git 基线并提醒落盘 IMPACT 制品；Stop 门比对 当前脏集−基线集 ⊆ 清单集，超集=followup（错改/漏改硬证据）。非git仓库静默降级 DONE_WITH_CONCERNS"
+      "description": "清单制品+diff差集校验（design-v2 方案A）：PostToolUse 记 git 基线并提醒落盘 IMPACT 制品；Stop 门比对 当前脏集−基线集 ⊆ 清单集，超集=阻断（错改/漏改硬证据）。非 git 仓库跳过差集校验，不因此改完成状态"
     }
   },
   "verification_gate": {

@@ -6,8 +6,7 @@
     python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json  # 同时写 JSON 报告
     python scripts/test-cursor-guard-hooks.py -o <路径>                            # --output 短写法
 
-被测对象默认是 ~/.cursor/hooks 已部署副本。无部署、或
-CURSOR_GUARD_USE_TEMPLATES=1 时，用仓库 templates/cursor-guard 铺到 ~/.cursor。
+被测对象是本仓 templates/cursor-guard 铺到 ~/.cursor 的副本（每次开跑覆盖，避免测到过期部署）。
 CLAUDE_HOME 指向配置仓（含 hooks/_lib）以便加载现行 r20_replay。
 改了 templates/cursor-guard/ 后也可：pwsh -File scripts/deploy-cursor-guard.ps1
 一般不直接调本脚本，用上层封装：scripts/test-cursor-guard-regression.ps1（自动清状态 + 设 UTF-8）。
@@ -90,18 +89,15 @@ def clear_transient_state() -> None:
 
 
 def sync_guard_templates_for_test() -> None:
-    """无部署或显式 CURSOR_GUARD_USE_TEMPLATES=1 时，用仓库模板铺 ~/.cursor。"""
+    """用本仓 templates/cursor-guard 铺 ~/.cursor，测现行模板而非过期部署。"""
     src = REPO_ROOT / "templates" / "cursor-guard"
-    missing = not (HOOKS / "verify_tracker.py").exists()
-    flag = os.environ.get("CURSOR_GUARD_USE_TEMPLATES", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }
-    if not (flag or missing):
-        return
     HOOKS.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(src / "hooks", HOOKS, dirs_exist_ok=True)
+    for path in (src / "hooks").rglob("*"):
+        if not path.is_file() or path.suffix == ".pyc" or path.name == "__pycache__":
+            continue
+        dest = HOOKS / path.relative_to(src / "hooks")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
     shutil.copy2(src / "hooks.json", CURSOR / "hooks.json")
     shutil.copy2(src / "guard-config.json", CURSOR / "guard-config.json")
 
@@ -1062,7 +1058,7 @@ def main() -> int:
                         "verify_commands": [{"command": "pytest", "ts": 2}],
                         "r20_replay_ok": True,
                         "non_simple": True,
-                        "review_rounds": 5,
+                        "review_rounds": 3,
                         "review_pass_ok": False,
                     }
                 }
@@ -1078,10 +1074,14 @@ def main() -> int:
                 "cwd": str(Path(tempfile.gettempdir())),
             },
         )
+        capped_out = r_capped.get("stdout") or {}
         results["tests"]["verification_stop_review_capped"] = finish_case(
             r_capped,
-            behavior="followup_message" not in (r_capped.get("stdout") or {}),
-            note="修改→审查满 5 轮仍无 PASS → 不 followup 空转",
+            behavior=(
+                "followup_message" not in capped_out
+                and "BLOCKED" in json.dumps(capped_out, ensure_ascii=False)
+            ),
+            note="修改→审查满 3 轮仍无 PASS → 不 followup；user_message/agent_message 标明 BLOCKED",
         )
         vg_path.write_text(
             json.dumps(

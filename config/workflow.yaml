@@ -12,7 +12,7 @@
 # 派生目标见 docs/DEV_FLOW.md「派生清单」。禁止手改 <!-- spine:* --> 标记块内文本。
 
 schema: 2
-pack_version: "13.0.0"
+pack_version: "13.0.1"
 
 # ── 1. 阶段（stage）与轨道（track）─────────────────────────────────
 # role = session（主会话）或 agents/<name>.md；agent 不声明 model/effort，一律继承调用方。

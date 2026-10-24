@@ -220,10 +220,37 @@ _BAR_PASS_RE = re.compile(r"^[\s`【\[(（]*(?:通过|满足|PASS\b|✅)", re.I)
 _BAR_CONTRADICT_RE = re.compile(r"不通过|未通过|不满足|未满足|NEEDS-CHANGES", re.I)
 _BAR_EVIDENCE_RE = re.compile(r"(?:证据|观察|evidence)\s*[：:]?\s*([^）)]*)", re.I)
 _BAR_EMPTY_EVIDENCE = {"", "无", "…", "...", "……", "none", "n/a", "na", "-", "—", "略", "待补"}
+# 契约/图例照抄：整段包在 <> 里，或正文仍是模板用语（不是真实命令/输出）
+_BAR_ANGLE_SLOT_RE = re.compile(r"^<[^>]*>$")
+_BAR_TEMPLATE_PHRASES = (
+    "观察到的具体输出或逐条对应",
+    "观察到的具体输出",
+    "尖括号模板",
+    "贴本轮真实观察",
+    "贴本轮命令输出原文",
+)
+DEFAULT_SKIP_KEYWORDS = ("跳过验证", "不用验证", "skip verify")
+_WAIVER_NEGATION_RE = re.compile(
+    r"(?:不要|别|勿|请勿|禁止|不能|不可|不应|不准|不|don't|dont|do\s+not|never|not)$",
+    re.I,
+)
+_REVIEW_COUNT_PHASES = frozenset({"review", "capped"})
+_PROGRESS_PHASES = frozenset({"verify", "graph", "modify"})
+
+
+def _bar_evidence_ok(raw: str) -> bool:
+    """非空、非空词、非 `证据：<…>` / 契约尖括号槽 / 模板用语。"""
+    s = (raw or "").strip(" ：:，,。.;；`\"'")
+    if not s or s.lower() in _BAR_EMPTY_EVIDENCE:
+        return False
+    if _BAR_ANGLE_SLOT_RE.fullmatch(s):
+        return False
+    compact = s.replace(" ", "")
+    return not any(phrase.replace(" ", "") in compact for phrase in _BAR_TEMPLATE_PHRASES)
 
 
 def review_bars_ok(text: str) -> bool:
-    """PASS 须逐道单独一行：「<门>：通过（证据：<非空>）」；缺行、非通过开头、同行含不通过、证据为空 → 不算干净 PASS。"""
+    """PASS 须逐道单独一行：「<门>：通过（证据：<非空真实观察>）」；缺行、非通过开头、同行含不通过、证据为空或模板 → 不算干净 PASS。"""
     plain = (text or "").replace("**", "")
     for label in PASS_BAR_LABELS:
         val = field_value(plain, label)
@@ -233,9 +260,81 @@ def review_bars_ok(text: str) -> bool:
         if not _BAR_PASS_RE.search(line) or _BAR_CONTRADICT_RE.search(line):
             return False
         ev = _BAR_EVIDENCE_RE.search(line)
-        if not ev or ev.group(1).strip(" ：:，,。.;；").lower() in _BAR_EMPTY_EVIDENCE:
+        if not ev or not _bar_evidence_ok(ev.group(1)):
             return False
     return True
+
+
+def user_waived_verification(text: str, keywords=None) -> bool:
+    """用户是否显式豁免验证。否定句（「不要跳过验证」「don't skip verify」）不是豁免。"""
+    blob = text or ""
+    if not blob.strip():
+        return False
+    keys = [str(k).strip() for k in (keywords or DEFAULT_SKIP_KEYWORDS) if str(k).strip()]
+    for key in keys:
+        flags = re.I if key.isascii() else 0
+        for match in re.finditer(re.escape(key), blob, flags):
+            prefix = blob[max(0, match.start() - 16) : match.start()]
+            prefix = re.sub(r"[\s\"'「」『』《》\-—,:，。;；:：!！?？]+$", "", prefix)
+            if _WAIVER_NEGATION_RE.search(prefix):
+                continue
+            return True
+    return False
+
+
+def count_stop_block(entry: dict, phase: str) -> bool:
+    """Stop 否认是否计入 `blocks` 保险丝。
+
+    - `review` / `capped`：计入（真正的独立审查门）。
+    - `verify` / `graph` / `modify`：同一相位连续第二次才计入（一轮内推进不烧保险丝）。
+    - 其余相位（skip/done/空）：计入（R20 / 自动检查等完成门仍需保险丝）。
+    """
+    if not isinstance(entry, dict):
+        return False
+    phase = str(phase or "")
+    last = str(entry.get("last_block_phase") or "")
+    if phase in _REVIEW_COUNT_PHASES:
+        increment = True
+    elif phase in _PROGRESS_PHASES:
+        increment = last == phase
+    else:
+        increment = True
+    entry["last_block_phase"] = phase
+    if increment:
+        entry["blocks"] = int(entry.get("blocks") or 0) + 1
+    return increment
+
+
+def blocked_session_notice(
+    status: str = "BLOCKED",
+    *,
+    reason: str = "",
+    blocks: int | None = None,
+    max_blocks: int | None = None,
+) -> str:
+    """放行停机时写给会话/模型的状态行（stdout JSON，不只 stderr）。"""
+    status = (status or "BLOCKED").strip() or "BLOCKED"
+    extra = ""
+    if blocks is not None and max_blocks is not None:
+        extra = f"（阻断 {int(blocks)}/{int(max_blocks)}）"
+    reason = (reason or "独立审查/验证未通过，轮次或阻断已用尽").strip()
+    return (
+        f"【状态 = {status}】任务未完成{extra}。{reason}"
+        "不得声称完成；向用户报告未通过项。"
+        "唯一豁免是用户本轮显式说出 skip_keywords 之一（否定句如「不要跳过验证」不是豁免）。"
+    )
+
+
+def stop_hook_visible_payload(notice: str, *, event: str = "Stop") -> dict:
+    """Claude Stop 放行时让模型看见的 JSON（systemMessage + additionalContext）。"""
+    text = (notice or "").strip()
+    return {
+        "systemMessage": text,
+        "hookSpecificOutput": {
+            "hookEventName": event,
+            "additionalContext": text,
+        },
+    }
 
 
 def _strip_verdict_markup(line: str) -> str:
