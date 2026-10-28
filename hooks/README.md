@@ -1,7 +1,8 @@
-# Hooks 钩子系统 v5.22
+# Hooks 钩子系统 v5.23
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.23 变更（v13.0.2）**：`crg_track.retry_block` 取代 `six_retry_block`；续轮文案不再叫「六维纠错」（与五维分类 / 七维 R20 撞名）。
 > **v5.22 变更（v13.0.1）**：`review_bars_ok` 拒绝 `证据：<…>` / 契约尖括号槽；`user_waived_verification` 否定句（「不要跳过验证」）不是豁免；`count_stop_block` 只在审查相位或同相位卡住时 +1；Stop 放行时 BLOCKED 写 stdout（`systemMessage` + `additionalContext`），Cursor 经 `user_message`/`agent_message` 露出。
 > **v5.21 变更（v13.0.0）**：模型无关 — `context_thresholds` 删别名解析、登记表出厂为空；Stop 门默认 `review_max_rounds=3`，轮次/阻断用尽状态 = BLOCKED（不再 DONE_WITH_CONCERNS 放行）；`r20_replay.review_bars_ok` 要求 PASS 带两道关（符合预期要求 / 原功能保持，各附证据）；审查者名单 `cross-model-reviewer` 取代旧跨模型名。
 > **v5.20 变更（v11.6.0）**：Cursor Guard **1.2.17** — Shell 警告对齐 Claude `pre-bash-guard`（`powershell` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
@@ -87,7 +88,7 @@
 
 | Hook                        | 功能                                                                                                                   | 层   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---- |
-| `stop-verification-gate.py` | **完成验证硬门** + 双图增量刷新 + **验证全绿后 sync.ps1**；轻量自动检查 + 测试证据 + R20 + 有图必调 CRG + 六维纠错续轮 | 骨架 |
+| `stop-verification-gate.py` | **完成验证硬门** + 双图增量刷新 + **验证全绿后 sync.ps1**；轻量自动检查 + 测试证据 + R20 + 有图必调 CRG + 续轮观察证据清单 | 骨架 |
 | `stop-session-summary.py`   | 会话摘要                                                                                                               | 执行 |
 | `stop-readme-updater.py`    | README 自动更新                                                                                                        | 执行 |
 
@@ -101,7 +102,7 @@
 | `_lib/gate_messages.md`      | 四门控短指针 SSOT（完整清单在 skill）                   | bootstrap / verify-gate / impact-nudge / first-edit                                                                                |
 | `_lib/gate_reader.py`        | 分段读取 gate_messages.md                               | 上列注入 hook + Cursor `gate_messages.py`                                                                                          |
 | `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
-| `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、六维续轮文案         | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
+| `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、续轮观察证据清单     | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
 | `_lib/graph_freshness.py`    | 双图 ensure / 工具分类 / 验绿后 sync.ps1                | bootstrap、pre-graph-freshness、stop-verification-gate、Cursor Guard、TRAE/Qoder                                                   |
 | `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
 | `_lib/encoding_guard.py`     | 编码守卫核心：快照签名/比对 + 绝对损坏检查              | `pre-encoding-snapshot.py`、`post-encoding-check.py`                                                                               |
@@ -181,4 +182,4 @@ Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.22（v13.0.1）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过且证据非模板；≤3 轮；耗尽 BLOCKED 可见）；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_
+_版本：5.23（v13.0.2）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过且证据非模板；≤3 轮；耗尽 BLOCKED 可见）；续轮清单去「六维」撞名；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_

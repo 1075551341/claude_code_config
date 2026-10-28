@@ -251,6 +251,8 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 | 等级  | 内容                                         | Cursor 机制                         |
 | ----- | -------------------------------------------- | ----------------------------------- |
 | L0    | CLAUDE（含路由）+ CORE + CURSOR-EDITOR       | alwaysApply（经 plugin）            |
+
+**L0 以仓为准**（`config/sync-manifest.json` `l0_source_of_truth: repo`）：根文件 6 项与 Cursor plugin `00-CLAUDE.mdc` 覆盖 home/plugin 旧副本；禁止用编辑器 home 里的旧 CLAUDE 覆盖仓内 L0。`Sync-File -RepoWins` 只在 dest 已是指向仓内源的符号链接时跳过。
 | L1    | using-superpowers, change-impact-analysis 等 | 会话常驻                            |
 | L2/L3 | 其余 skills + agents/MCP/plugins             | disable-model-invocation + 显式调用 |
 

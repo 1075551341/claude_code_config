@@ -101,7 +101,9 @@ Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），
 - 禁止同端对同一能力 **plugin + mcp.json 双挂**
 - 禁止常驻 `memory` MCP（R18；记忆仅 claude-mem 插件）
 - 禁止常驻 `aider-repo-map`、`sequential-thinking`（已删除，不要加回）
-- 禁止启用 codebase-memory（全盘索引爆内存）
+- 禁止启用 codebase-memory（全盘索引爆内存）；名单 SSOT → `MANIFEST.yaml` `do_not_absorb`
+- 禁止升级 claude-mem 到 ≥13.14（钉 13.13.1）；禁止把 caveman 升到 ≥2（本地 1.9.1 输出压缩）
+- 禁止启用 ralph-loop、竞品 code-graph plugin（sdsrss/dorkian）、claude-code-router、openai 跨模型 cc 插件、SuperClaude 全量框架
 - 禁止 npx 类服务器不钉版本（R14）
 - 禁止 everything-mcp marketplace plugin 与 `.mcp.json` 双挂；禁止安装 everything-claude-code 插件
 - 禁止用 everything 替代工作区 Glob 或 codegraph；禁止用 `everything_find_recent` 替代 CRG `detect_changes`

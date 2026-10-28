@@ -103,6 +103,12 @@ check("reviewer contract renders both bars",
       all(b["label"] in contract for b in spine["review"]["pass_requires"].values()))
 check("completion block renders both bars",
       all(b["label"] in live_targets[Path("CLAUDE.md")] for b in spine["review"]["pass_requires"].values()))
+check("standing_goal missing rejected",
+      rejected(lambda s: s["completion"].pop("standing_goal", None), "standing_goal"))
+check("standing_goal bars must match pass_requires",
+      rejected(lambda s: s["completion"]["standing_goal"].update(bars=["requirements_met"]), "standing_goal.bars"))
+check("goal.md renders both bars",
+      all(b["label"] in live_targets[Path("commands/goal.md")] for b in spine["review"]["pass_requires"].values()))
 
 # ── 结构 ──
 check("dimension drift vs r20_replay rejected",

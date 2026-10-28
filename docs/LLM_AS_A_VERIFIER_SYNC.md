@@ -35,7 +35,7 @@
 | 铁律 | R1–R20 | 任务完成=验证通过；Read→Edit→Read；Bug grep 全修；重试上限 2；交叉验证；版本克制；错误暴露；Git 禁令；会话终验五字段 |
 | 终验 | R20 反空模板 + 反合理化 | 满足/遗漏/错改/漏改/原功能五字段硬门校验；反合理化借口表（"我检查过了"→重跑验证） |
 | 彻底性 | 变更场景 A–F | 同类模式全修 / 配置引用同步 / 残留引用=0 / 非功能回归证据 / 行为变更消费者核验 / 文档一致 |
-| 护栏 | 质量门 + 上下文阈值 | Schema Drift / Security Anchor / Scope Reduction；70% 择机压缩 / 90% 强制 / 100% 禁止 |
+| 护栏 | 质量门 + 上下文阈值 | Schema Drift / Security Anchor（Stop 启发式仍接线）；Scope Reduction **已删（从未接线）**；70% 择机压缩 / 90% 强制 / 100% 禁止 |
 | 记忆 | claude-mem（R18） | 跨会话记忆 SSOT，为什么/约定/偏好优先查记忆 |
 | 探索 | MCP 分层 9 项 | 本地代码 4（codegraph 常驻 R17）+ 远端 2 + Web 3；code-review-graph 专用 test-gap |
 | 审查 | 审查路由 | eng-reviewer 必审 + ceo/designer/dx/qa/security 按类型 + cross-model-reviewer 跨模型验证 |

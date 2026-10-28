@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CRG 工具调用追踪与六维续轮文案（v11.4.5）。
+"""CRG 工具调用追踪与续轮观察证据清单（v13.0.2；原 v11.4.5 六维续轮文案已去撞名）。
 
 Claude PostToolUse 与 Cursor verify_tracker / Stop 共用。
 工具名含子串即可：detect_changes / get_impact_radius / get_minimal_context /
@@ -20,7 +20,7 @@ CRG_MARKERS = (
 # 项目图标志。空的 ~/.code-review-graph（多仓 registry）不算项目已建图。
 GRAPH_FILES = ("graph.db", "graph.sqlite", "graph.sqlite3")
 
-SIX_RETRY_LINES = (
+RETRY_LINES = (
     "影响面不够细：补 CRG get_impact_radius + codegraph blast-radius，更新 IMPACT",
     "需求未达：对照需求指纹，「满足」覆盖 strong 关键词（承认/反驳/弃权）",
     "错改：清单差集 extras → 回滚或补登记 IMPACT",
@@ -139,7 +139,7 @@ def project_has_crg_graph(cwd: str, max_up: int = 6) -> bool:
     return bool(find_crg_root(cwd, max_up))
 
 
-def six_retry_block() -> str:
-    lines = ["六维纠错（续轮须逐项补观察证据）："]
-    lines.extend(f"  • {item}" for item in SIX_RETRY_LINES)
+def retry_block() -> str:
+    lines = ["续轮须补观察证据（影响面 / 满足三态 / 错改 / 漏改 / 原功能 / 文档）："]
+    lines.extend(f"  • {item}" for item in RETRY_LINES)
     return "\n".join(lines)

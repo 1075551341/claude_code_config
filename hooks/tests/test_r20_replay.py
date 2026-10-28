@@ -1422,7 +1422,8 @@ def test_crg_track() -> None:
         check("has graph.db", crg_track.project_has_crg_graph(td) is True)
         missing = crg_track.project_has_crg_graph(td) and not crg_track.has_crg_since({}, 1.0)
         check("graph without crg_calls is missing", missing is True)
-    check("six retry has 影响面", "影响面" in crg_track.six_retry_block())
+    check("retry block has 影响面", "影响面" in crg_track.retry_block())
+    check("retry block not named 六维", "六维" not in crg_track.retry_block())
     msg = mod.build_block_message(["R20 会话终验：缺"], False, 1, 3)
     check("block message includes 短 R20", "短 R20" in msg)
 

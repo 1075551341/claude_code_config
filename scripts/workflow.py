@@ -178,6 +178,18 @@ def validate(spine: dict, root: Path) -> list[str]:
         errs.append("completion.user_waiver_status must not be DONE")
     if not comp.get("done_when"):
         errs.append("completion.done_when required")
+    sg = comp.get("standing_goal")
+    if not isinstance(sg, dict):
+        errs.append("completion.standing_goal required (/goal standing completion criteria)")
+    else:
+        if sg.get("command") != "goal":
+            errs.append("completion.standing_goal.command must be 'goal'")
+        if tuple(sg.get("bars") or ()) != PASS_BARS:
+            errs.append("completion.standing_goal.bars must equal review.pass_requires keys (not a third bar)")
+        if not sg.get("lines"):
+            errs.append("completion.standing_goal.lines required")
+        if not (root / "commands" / "goal.md").is_file():
+            errs.append("commands/goal.md missing (standing_goal command surface)")
 
     q = spine["quality"]
     for key in ("definition_of_ready", "self_check", "verify_tiers"):
@@ -314,6 +326,22 @@ def body_completion(spine: dict) -> str:
         f"- {rv['max_rounds']} 轮仍未 PASS ⇒ **{comp['on_rounds_exhausted']}**（未完成），"
         "不得声称完成，也不得改为「跳过审查」。",
         f"- 自检、实现者自签、验证命令全绿都不能替代独立审查；仅用户显式豁免时放行，状态记 `{comp['user_waiver_status']}`。",
+        f"- 站立目标 `/{comp['standing_goal']['command']}`："
+        + "；".join(comp["standing_goal"]["lines"])
+        + "（= 上述两道门，不是第三道门，也不另建 Stop hook）。",
+    ])
+
+
+def body_standing_goal(spine: dict) -> str:
+    sg = spine["completion"]["standing_goal"]
+    return "\n".join([
+        f"**站立目标**（{GENERATED_NOTE}）：`/{sg['command']}` 复述完成两道门，"
+        "不是第三道门，也不另建 Stop hook。",
+        "",
+        *[f"- {x}" for x in sg["lines"]],
+        "",
+        "PASS 定义（与 `review.pass_requires` 相同）：",
+        *[f"  {x}" for x in _bars(spine)],
     ])
 
 
@@ -414,6 +442,7 @@ def body_derived() -> str:
         ("审查者 agents `spine:review-contract`", "七维 + 结论 + 只读规则（review）"),
         ("change-implementer / planner `spine:ready-contract`", "就绪定义 + 交审自检（quality）"),
         ("commands/{discuss,plan,execute,verify,ship,compact}.md `spine:stage-gate`", "阶段门；verify 含完成定义"),
+        ("commands/goal.md `spine:standing-goal`", "站立目标 = 两道 PASS 门（completion.standing_goal）"),
         ("CLAUDE.md / docs/DEV_FLOW.md `spine:flow`", "阶段表 + 轨道 + 完成定义"),
         ("rules/AGENTS.md `spine:review-routing`", "审查路由（review.routing）"),
         ("skills/verification-before-completion `spine:dimensions` / `spine:completion`", "七维 + 完成定义"),
@@ -460,6 +489,8 @@ def build_targets(root: Path, spine: dict) -> dict[Path, str]:
         if st.get("command"):
             rel = Path("commands") / f"{st['command']}.md"
             out[rel] = replace_block(text_of(rel), "stage-gate", body_stage_gate(spine, sid), str(rel))
+    sg_rel = Path("commands") / f"{spine['completion']['standing_goal']['command']}.md"
+    out[sg_rel] = replace_block(text_of(sg_rel), "standing-goal", body_standing_goal(spine), str(sg_rel))
 
     verif = Path("skills") / "verification-before-completion" / "SKILL.md"
     blocks = [

@@ -18,7 +18,7 @@ loading_tier: L1
 | 方式          | 用法                                   | 适用                     |
 | ------------- | -------------------------------------- | ------------------------ |
 | **Read 工具** | `Read skills/<name>/SKILL.md`          | **首选**；L2/L3 必须     |
-| slash 命令    | `/discuss` `/plan` `/deep-research` 等 | 入口快捷；仍应 Read 全文 |
+| slash 命令    | `/discuss` `/plan` `/goal` `/deep-research` 等 | 入口快捷；仍应 Read 全文 |
 | 关键词        | description/triggers 匹配              | 路由信号；触发后 Read    |
 | Task 子代理   | `subagent_type` + 任务描述             | L3 agents                |
 
@@ -96,6 +96,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | 写计划   | writing-plans                                                   |
 | TDD      | test-driven-development (默认关闭,用户显式要求时触发)           |
 | 独立审查（每个任务必经） | verification-before-completion「独立审查」→ eng-reviewer + 路由 |
+| 站立完成目标 | `/goal`（`completion.standing_goal` = 两道 PASS 门，不是第三道） |
 | 架构决策 | adr-management                                                  |
 | 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
 | Git 提交 | git-workflow                                                    |

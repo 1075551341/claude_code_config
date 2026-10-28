@@ -1,15 +1,27 @@
-# 组件唯一归属源 — 防左右手互博 — v13.0.1
+# 组件唯一归属源 — 防左右手互博 — v13.0.2
 # 调度（阶段/轨道/完成定义/审查）不在本文件 → config/workflow.yaml（唯一调度面）
 # 本包不绑定任何模型与推理强度：模型由会话/settings/调用方决定（scripts/workflow.py lint 拦截）
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 调研 SSOT docs/research/merits-20261028.md
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "13.0.1"
-updated: "2026-10-24"
+version: "13.0.2"
+updated: "2026-10-28"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
+
+# 明确不吸收（validate 核 id；禁止把下列升进 live / 常驻 MCP / 全局 skill）
+do_not_absorb:
+  - { id: codebase-memory, reason: "全盘索引爆 CPU/内存；R17 由 codegraph 承接" }
+  - { id: claude-mem-ge-13.14, reason: "13.14+ CMEM Pro 漏斗；钉 13.13.1" }
+  - { id: caveman-ge-2, reason: "2.x+ 改语义为文件压缩器/代理网关；本地 1.9.1 输出压缩" }
+  - { id: ralph-loop, reason: "独立循环进程，与 Stop 门互博" }
+  - { id: dorkian-sdsrss-code-graph, reason: "竞品 code-graph plugin，与 R17 codegraph 互博" }
+  - { id: claude-code-router, reason: "常驻进程；评估=不集成" }
+  - { id: openai-cc-plugin, reason: "跨模型双倍计费；与 cross-model-reviewer 重叠" }
+  - { id: superclaude-framework, reason: "与五柱架构重叠" }
+  - { id: everything-claude-code-plugin, reason: "与 everything-mcp 双挂；无法钉 mcp<2" }
 
 superpowers:
   source: obra/superpowers
@@ -18,9 +30,10 @@ superpowers:
 
 openspec_config:
   source: Fission-AI/OpenSpec
-  version: "1.4.1"
+  version: "1.4.1" # 概念 pin；本机 CLI 以 `openspec --version` 为准。不在本包内升级到 1.15。
   profile: core # v1.4.1: sync 已并入 core；verify/bulk-archive 见 openspec init + 本地 rules
   cli_required: true
+  note: "概念 pin / 本机 CLI 以 openspec --version 为准。禁止借机 openspec update 重生成多端指令。"
 
 thresholds:
   cursor: [70, 90]
@@ -77,6 +90,7 @@ pillars:
     {
       source: Fission-AI/OpenSpec,
       version: "1.4.1",
+      note: "概念 pin；本机 CLI 以 openspec --version 为准。不追上游 1.15。",
       capabilities: [proposal-spec-tasks, spec-validation],
     }
   gstack: {
@@ -833,6 +847,7 @@ harness:
         ship,
         review,
         compact,
+        goal,
         workstream,
         adr,
         deep-research,

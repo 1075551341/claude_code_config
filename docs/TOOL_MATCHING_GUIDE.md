@@ -27,7 +27,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 
 ### Firecrawl 认证
 
-Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_KEY`。Cursor 面板无则不常驻。未配置时 L3 降级为 Exa + Context7。
+Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_KEY`。Cursor 面板无则不常驻。声明源不可用时标注缺失并 interrupt，禁止假装 V1 已过。
 
 ## 分组与四工具分工（指针）
 
@@ -63,7 +63,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 | ---- | ------------------ | -------------------------------------------------------- |
 | L1   | 单点事实、API 签名 | Context7 或 Exa 单次                                     |
 | L2   | 方案对比           | Exa + Firecrawl 单页                                     |
-| L3   | 技术选型           | deep-research + Firecrawl + Exa + Context7               |
+| L3   | 技术选型           | deep-research + Firecrawl + Exa + Context7；源不可用则 interrupt，禁止假装 V1 已过 |
 
 **前置**：claude-mem search → 项目内代码用 codegraph（R17）；**禁止** codebase-memory；禁止先用 Firecrawl 探本地代码。
 

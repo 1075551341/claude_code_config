@@ -67,11 +67,13 @@ loading_tier: L3
 | V4 | 训练记忆 vs 实时搜索明确区分 | 来源标注 [web]/[memory]/[inferred] |
 | V5 | 结论标注置信度（高/中/低） | 低于"中"触发追加轮次 |
 
-## 三源兜底
+## 源失败则中断（禁止假装已双源）
 
 ```
-Firecrawl 主 → Exa 兜底 → Context7 补文档
-任一源失败自动切换下一源，禁止静默降级为单一源。
+声明源：Firecrawl（抓取）+ Exa（语义搜索）+ Context7（库文档）
+任一声明源不可用（未授权 / 无工具 / 调用失败）→ 标注缺失 → interrupt 或把相关结论置信度降到「中」以下。
+禁止声称 V1 已过；禁止「自动切下一源」假装交叉验证已完成。
+本仓不引入 capability_resolver / harness-capabilities.yaml。
 ```
 
 ## 质量标准

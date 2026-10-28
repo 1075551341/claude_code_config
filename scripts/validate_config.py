@@ -101,11 +101,35 @@ LIVE_POLICY_PATHS = (
     "docs/DEV_FLOW.md",
     "commands/verify.md",
     "commands/review.md",
+    "commands/goal.md",
     "agents/eng-reviewer.md",
     "hooks/_lib/gate_messages.md",
+    "skills/using-superpowers/SKILL.md",
 )
-# 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成
-LIVE_POLICY_BANS = ("只读免审", "最多 5 轮", "放行并标 DONE_WITH_CONCERNS", "模型匹配低")
+# 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成、分类模型维、已裁场景路由
+LIVE_POLICY_BANS = (
+    "只读免审",
+    "最多 5 轮",
+    "放行并标 DONE_WITH_CONCERNS",
+    "模型匹配低",
+    "六维全低",
+    "scenario-router.yaml",
+)
+BANNED_CONFIG_FILES = (
+    "config/scenario-router.yaml",
+    "config/harness-capabilities.yaml",
+)
+REQUIRED_DO_NOT_ABSORB = {
+    "codebase-memory",
+    "claude-mem-ge-13.14",
+    "caveman-ge-2",
+    "ralph-loop",
+    "dorkian-sdsrss-code-graph",
+    "claude-code-router",
+    "openai-cc-plugin",
+    "superclaude-framework",
+    "everything-claude-code-plugin",
+}
 
 
 def check_json(path, label):
@@ -386,7 +410,7 @@ def main():
         required_commands = {
             "discuss", "plan", "execute", "verify", "ship", "review",
             "compact", "propose", "apply", "archive",
-            "workstream", "adr", "deep-research", "sync",
+            "workstream", "adr", "deep-research", "sync", "goal",
         }
         cmd_files = {f.replace(".md", "") for f in os.listdir(commands_dir) if f.endswith(".md")}
         missing_cmds = required_commands - cmd_files
@@ -965,7 +989,7 @@ def check_v16_codegraph_mandate():
 
 
 def check_live_policy_bans():
-    """现行政策文件禁止旧政策残留（免审旁路 / 5 轮 / 耗尽仍完成 / 模型匹配；史留 CHANGELOG）。"""
+    """现行政策文件禁止旧政策残留（免审旁路 / 5 轮 / 耗尽仍完成 / 模型匹配 / 场景路由回潮；史留 CHANGELOG）。"""
     for rel in LIVE_POLICY_PATHS:
         path = os.path.join(BASE, rel)
         if not os.path.isfile(path):
@@ -980,6 +1004,21 @@ def check_live_policy_bans():
         for ban in LIVE_POLICY_BANS:
             if ban in text:
                 ERRORS.append(f"V16: {rel} hardcodes {ban!r}")
+    for rel in BANNED_CONFIG_FILES:
+        if os.path.isfile(os.path.join(BASE, rel)):
+            ERRORS.append(f"V16: banned routing file present: {rel}")
+    if not yaml:
+        WARNINGS.append("V16: PyYAML not installed, skipping do_not_absorb check")
+    else:
+        try:
+            with open(os.path.join(BASE, "MANIFEST.yaml"), "r", encoding="utf-8") as fh:
+                manifest = yaml.safe_load(fh) or {}
+            ids = {row.get("id") for row in (manifest.get("do_not_absorb") or []) if isinstance(row, dict)}
+            missing = REQUIRED_DO_NOT_ABSORB - ids
+            if missing:
+                ERRORS.append(f"V16: MANIFEST do_not_absorb missing {sorted(missing)}")
+        except (OSError, yaml.YAMLError) as exc:
+            ERRORS.append(f"V16: cannot read MANIFEST do_not_absorb: {exc}")
 
 
 def check_v17_bare_except_extended():

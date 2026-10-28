@@ -10,11 +10,6 @@
       "check_auth_bindings": true,
       "description": "检查验证逻辑是否绑定到威胁模型（auth 相关变更 → 提醒绑定威胁模型）"
     },
-    "scope_reduction": {
-      "enabled": true,
-      "compare_plan_vs_impl": true,
-      "description": "检查planner是否静默丢弃需求（存在活跃 plan/spec 制品时强制对照 tasks 清单）"
-    },
     "impact_manifest_gate": {
       "enabled": true,
       "platforms": [

@@ -209,8 +209,10 @@ function Remove-SameBasenameVariants {
 }
 
 # 单文件同步：软链优先，Copy 兜底；无变更（同链/同 hash）跳过
+# -RepoWins：L0 根文件以仓为准——仅当 dest 已是指向仓内源的符号链接才跳过；
+#            编辑器 home 里的实体旧副本（即使 hash 碰巧相同）一律先删后写。
 function Sync-File {
-    param([string]$SrcPath, [string]$DstPath, [string]$Label, [switch]$PreferCopy)
+    param([string]$SrcPath, [string]$DstPath, [string]$Label, [switch]$PreferCopy, [switch]$RepoWins)
 
     if (-not (Test-Path $SrcPath)) {
         Write-Skip "Source missing: $Label"
@@ -218,14 +220,26 @@ function Sync-File {
         return
     }
 
+    $correctLink = $false
+    if ((Test-Path -LiteralPath $DstPath) -and (IsLink $DstPath) -and
+        (Get-Item -LiteralPath $DstPath -Force).LinkType -eq 'SymbolicLink') {
+        $linkTarget = (Get-Item -LiteralPath $DstPath -Force).Target
+        if ($linkTarget -and ([IO.Path]::GetFullPath($linkTarget) -ieq [IO.Path]::GetFullPath($SrcPath))) {
+            $correctLink = $true
+        }
+    }
+
     if (-not $Force -and (Test-Path -LiteralPath $DstPath)) {
-        if ((IsLink $DstPath) -and (Get-Item -LiteralPath $DstPath -Force).LinkType -eq 'SymbolicLink') {
-            $linkTarget = (Get-Item -LiteralPath $DstPath -Force).Target
-            if ($linkTarget -and ([IO.Path]::GetFullPath($linkTarget) -ieq [IO.Path]::GetFullPath($SrcPath))) {
-                Write-Skip "Unchanged (link): $Label"
+        if ($RepoWins) {
+            if ($correctLink) {
+                Write-Skip "Unchanged (link, repo wins): $Label"
                 $script:STATS.Skipped++
                 return
             }
+        } elseif ($correctLink) {
+            Write-Skip "Unchanged (link): $Label"
+            $script:STATS.Skipped++
+            return
         } else {
             try {
                 $srcHash = (Get-FileHash -LiteralPath $SrcPath -Algorithm SHA256).Hash
@@ -411,6 +425,8 @@ function Deploy-CursorLocalPlugin {
         $null = $expectedBases.Add($base)
         $dstPath = Join-Path $installRules $p.Dst
         $needCopy = $Force
+        # L0 CLAUDE：仓是 SSOT，禁止 plugin 旧副本 hash-skip 挡住覆盖
+        if ($base -eq "00-CLAUDE") { $needCopy = $true }
         if (-not $needCopy) {
             try {
                 if (-not (Test-Path -LiteralPath $dstPath)) { $needCopy = $true }
@@ -654,7 +670,7 @@ if (-not $SKIP_EDITOR_SYNC) {
         # ---- 1. 根文件 6 项（软链）----
         foreach ($name in $ROOT_FILES) {
             Sync-File -SrcPath (Join-Path $CLAUDE_DIR $name) `
-                -DstPath (Join-Path $CURSOR_DIR $name) -Label "$name -> cursor"
+                -DstPath (Join-Path $CURSOR_DIR $name) -Label "$name -> cursor" -RepoWins
         }
         # 根文件孤儿清除：manifest 已移除的旧根文件（如 CLAUDE-ROUTER.mdc / agent.yaml）
         $legacyRoot = @("CLAUDE-ROUTER.mdc", "agent.yaml")
@@ -693,7 +709,7 @@ if (-not $SKIP_EDITOR_SYNC) {
         if ($cfg.Special -eq "claude_md_plus_skills") {
             # workbuddy：仅 CLAUDE.md + skills/ 联接；SOUL/USER/IDENTITY/BOOTSTRAP 自有命名空间禁触
             Sync-File -SrcPath (Join-Path $CLAUDE_DIR "CLAUDE.md") `
-                -DstPath (Join-Path $cfg.Home "CLAUDE.md") -Label "CLAUDE.md -> $ed"
+                -DstPath (Join-Path $cfg.Home "CLAUDE.md") -Label "CLAUDE.md -> $ed" -RepoWins
             Sync-Directory -SrcPath (Join-Path $CLAUDE_DIR "skills") `
                 -DstPath (Join-Path $cfg.Home "skills") -Label "skills -> $ed"
         } elseif ($cfg.Special -eq "agents_md") {
@@ -704,7 +720,7 @@ if (-not $SKIP_EDITOR_SYNC) {
             if ($cfg.RootIndex) {
                 foreach ($name in $ROOT_FILES) {
                     Sync-File -SrcPath (Join-Path $CLAUDE_DIR $name) `
-                        -DstPath (Join-Path $cfg.Home $name) -Label "$name -> $ed"
+                        -DstPath (Join-Path $cfg.Home $name) -Label "$name -> $ed" -RepoWins
                 }
                 # 根文件孤儿清除（v11 已并入的旧根文件）
                 foreach ($stale in @("CLAUDE-ROUTER.mdc", "agent.yaml")) {

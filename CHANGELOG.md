@@ -2,6 +2,17 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v13.0.2 确认后优化 + 站立 `/goal`（2026-10-28）
+
+- **续轮去撞名**：`hooks/_lib/crg_track.py` `RETRY_LINES` / `retry_block`；文案改为「续轮须补观察证据（影响面 / 满足三态 / 错改 / 漏改 / 原功能 / 文档）」。不把 R20「问题是否解决」塞进这段。
+- **调研源失败中断**：`skills/deep-research/SKILL.md` 删除「自动切下一源」；声明源不可用 → 标注缺失 → interrupt，禁止假装 V1 已过。
+- **删死键**：`config/quality_gates.json` `scope_reduction`（无 Python 消费者）。schema_drift / security_anchor 保留。
+- **MANIFEST 钉扎注记**：OpenSpec 概念 pin + 本机 CLI 为准；`do_not_absorb` 九项（cbm / claude-mem≥13.14 / caveman≥2 / ralph-loop / 竞品 code-graph / CCR / openai 跨模型 cc 插件 / SuperClaude / everything-claude-code 插件）。
+- **防回归**：`LIVE_POLICY_BANS` 增「六维全低」「scenario-router.yaml」；`config/scenario-router.yaml` 与 `harness-capabilities.yaml` 出现即 V16 失败。
+- **sync L0 以仓为准**：`l0_source_of_truth: repo`；`Sync-File -RepoWins`；plugin `00-CLAUDE.mdc` 每次覆盖。
+- **站立 `/goal`**：`completion.standing_goal` SSOT，渲染 `commands/goal.md`；与 `review.pass_requires` 同一两道门，不另建 Stop hook。
+- **明确不修（计划 9）**：无编辑 Stop 硬门、first_edit 升七维、200K 封顶、回灌已裁组件、追 caveman 4.x / claude-mem 15.x / OpenSpec 1.15。
+
 ## v13.0.1 机械门收口（2026-10-24）
 
 - **调研 SSOT（2026-10-28，未实施优化）**：唯一现行制品改为 `docs/research/merits-20261028.md`；删除 44-repo / 45-upstream / COVERAGE / repos 卡片。优化计划待确认，生产 hooks/rules/spine 未改。

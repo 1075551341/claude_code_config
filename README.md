@@ -1,13 +1,13 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 阶段主干 × 三横切 | **v13.0.1** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 阶段主干 × 三横切 | **v13.0.2** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
 | `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + 工作流主干（派生）+ 完成定义 + 铁律索引 |
-| `SPEC.md`       | 配置法典（v13.0.1）                                                                 |
+| `SPEC.md`       | 配置法典（v13.0.2）                                                                 |
 | `config/workflow.yaml` | 工作流主干：阶段门、轨道、完成定义（独立审查必过）、质量标准、审查契约（≤3 轮、两道关）；不含模型/推理强度（`scripts/workflow.py` 渲染 + lint） |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
@@ -58,7 +58,8 @@ pwsh scripts/check.ps1              # 一致性体检
 
 ## 版本
 
-- 当前：**v13.0.1**（2026-10-24）— 模型无关 · 一次通过 · 独立审查门 + 机械门收口：`review_bars_ok` 拒绝尖括号/空模板证据；豁免匹配不再把「不要跳过验证」当跳过；Stop `blocks` 按审查相位计数；BLOCKED 写到 stdout 给模型看见。配置仍不绑定模型或推理强度；每条轨道完成前必须通过全新独立审查（两道关各附真实证据），≤3 轮，用尽 = BLOCKED。Guard 1.2.17。落地：`git pull` → `python scripts/workflow.py check` → `sync.ps1 -All`（见 `docs/DEV_FLOW.md`）。
+- 当前：**v13.0.2**（2026-10-28）— 确认后优化：续轮去「六维」撞名、调研源失败中断、删 `scope_reduction` 死键、`do_not_absorb` 钉扎禁令、LIVE_POLICY 防 scenario-router 回潮、sync L0 以仓为准、站立 `/goal` = 两道 PASS 门。不升 claude-mem / caveman / OpenSpec major。Guard 1.2.17。落地：`git pull` → `python3 scripts/workflow.py check` → `sync.ps1 -All`（见 `docs/DEV_FLOW.md`）。
+- 前版：v13.0.1（2026-10-24）— 模型无关 · 一次通过 · 独立审查门 + 机械门收口：`review_bars_ok` 拒绝尖括号/空模板证据；豁免匹配不再把「不要跳过验证」当跳过；Stop `blocks` 按审查相位计数；BLOCKED 写到 stdout 给模型看见。配置仍不绑定模型或推理强度；每条轨道完成前必须通过全新独立审查（两道关各附真实证据），≤3 轮，用尽 = BLOCKED。Guard 1.2.17。
 - 前版：v12.0.0（2026-10-24）— 配置驱动主干 `config/workflow.yaml`（多后端模型 profile + 角色档位，v13 已移除）；合并 code-reviewer→eng-reviewer、pr-workflow→ship，删 catalog 同名重复与 4 个未注册 hook。Guard 1.2.17。
 - 前版：v11.6.0（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.17。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
 - 前版：v11.5.0（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。

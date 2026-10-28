@@ -52,6 +52,7 @@
 - 一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）；目标第 1 轮 PASS，上限 **3** 轮。
 - 3 轮仍未 PASS ⇒ **BLOCKED**（未完成），不得声称完成，也不得改为「跳过审查」。
 - 自检、实现者自签、验证命令全绿都不能替代独立审查；仅用户显式豁免时放行，状态记 `DONE_WITH_CONCERNS`。
+- 站立目标 `/goal`：所有修改符合预期要求；且原功能保持不变（= 上述两道门，不是第三道门，也不另建 Stop hook）。
 <!-- /spine:flow -->
 
 ## 3. 一次通过，独立审查兜底
@@ -75,6 +76,7 @@
 | 审查者 agents `spine:review-contract` | 七维 + 结论 + 只读规则（review） |
 | change-implementer / planner `spine:ready-contract` | 就绪定义 + 交审自检（quality） |
 | commands/{discuss,plan,execute,verify,ship,compact}.md `spine:stage-gate` | 阶段门；verify 含完成定义 |
+| commands/goal.md `spine:standing-goal` | 站立目标 = 两道 PASS 门（completion.standing_goal） |
 | CLAUDE.md / docs/DEV_FLOW.md `spine:flow` | 阶段表 + 轨道 + 完成定义 |
 | rules/AGENTS.md `spine:review-routing` | 审查路由（review.routing） |
 | skills/verification-before-completion `spine:dimensions` / `spine:completion` | 七维 + 完成定义 |

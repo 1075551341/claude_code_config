@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> **v13.0.1** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
+> **v13.0.2** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
 
 **五柱**：Superpowers v6.3.0(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用）
@@ -64,6 +64,7 @@ layer: router
 - 一轮 = 改 → 验 → 刷图 → 并行全新审查（一次找齐）；目标第 1 轮 PASS，上限 **3** 轮。
 - 3 轮仍未 PASS ⇒ **BLOCKED**（未完成），不得声称完成，也不得改为「跳过审查」。
 - 自检、实现者自签、验证命令全绿都不能替代独立审查；仅用户显式豁免时放行，状态记 `DONE_WITH_CONCERNS`。
+- 站立目标 `/goal`：所有修改符合预期要求；且原功能保持不变（= 上述两道门，不是第三道门，也不另建 Stop hook）。
 <!-- /spine:flow -->
 
 <HARD-GATE>用户批准设计前禁止实现 → Read skills/brainstorming/SKILL.md</HARD-GATE>
@@ -88,7 +89,7 @@ R1 完成（验证证据 + 独立审查 PASS）| R3 Bug 全修 | R4 配置 Grep 
 
 ## 命令
 
-`/discuss` `/plan` `/execute` `/verify` `/ship` `/compact`（阶段）| `/review`（派发独立审查）| `/deep-research` | `/workstream` | `/adr` | OPSX：`/propose` → `/apply` → `/sync` → `/archive`。全集 → `commands/`。
+`/discuss` `/plan` `/execute` `/verify` `/ship` `/compact`（阶段）| `/goal`（站立目标=两道门）| `/review`（派发独立审查）| `/deep-research` | `/workstream` | `/adr` | OPSX：`/propose` → `/apply` → `/sync` → `/archive`。全集 → `commands/`。
 
 ## 指针
 
