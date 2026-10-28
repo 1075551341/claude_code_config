@@ -1,7 +1,7 @@
 # 组件唯一归属源 — 防左右手互博 — v13.0.1
 # 调度（阶段/轨道/完成定义/审查）不在本文件 → config/workflow.yaml（唯一调度面）
 # 本包不绑定任何模型与推理强度：模型由会话/settings/调用方决定（scripts/workflow.py lint 拦截）
-# 权威: SPEC.md | 五柱×五阶段×三横切 | 44 仓库调研（29 已集成 + 15 新卡）；分层 delta
+# 权威: SPEC.md | 五柱×五阶段×三横切 | 调研 SSOT docs/research/merits-20261028.md
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
@@ -69,7 +69,7 @@ pillars:
     {
       source: open-gsd/gsd-core,
       version: "1.11.0",
-      note: "概念集成未装 npm 包（Node≥24 约束不适用）；honest-verifier 三态处置记为后续候选；调研 docs/research/45",
+      note: "概念集成未装 npm 包（Node≥24 约束不适用）；honest-verifier 三态已吸收为 R20 满足行（承认/反驳/弃权）；调研 SSOT docs/research/merits-20261028.md",
       capabilities:
         [context-engineering, continuous-execution, read-before-edit],
     }

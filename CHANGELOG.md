@@ -4,6 +4,7 @@
 
 ## v13.0.1 机械门收口（2026-10-24）
 
+- **调研 SSOT（2026-10-28，未实施优化）**：唯一现行制品改为 `docs/research/merits-20261028.md`；删除 44-repo / 45-upstream / COVERAGE / repos 卡片。优化计划待确认，生产 hooks/rules/spine 未改。
 - **证据模板**：`review_bars_ok` 拒绝整段 `<>` 槽、`证据：<…>`、契约用语（「观察到的具体输出」「尖括号模板」）。照抄审查契约不再算 PASS。
 - **豁免匹配**：`user_waived_verification` 为 SSOT。`跳过验证` / `不用验证` / `skip verify` 仅在左侧无否定前缀时成立。「不要跳过验证」「don't skip verify」不是豁免。Stop 与 `stop-graph-freshness` 共用。
 - **阻断计数**：`count_stop_block` — `review`/`capped` 计入；`verify`/`graph`/`modify` 仅同一相位连续第二次计入；R20 等 skip 相位仍计入。一轮内推进不再烧 `max_blocks`。

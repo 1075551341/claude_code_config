@@ -1,6 +1,6 @@
 # Docs 文档索引
 
-> 最后更新: 2026-10-24 | **当前配置: v13.0.1**
+> 最后更新: 2026-10-28 | **当前配置: v13.0.1**
 
 ---
 
@@ -21,9 +21,6 @@
 
 | 文档 | 描述 |
 | ---- | ---- |
-| [44-repo-deep-research-v10.11.md](research/44-repo-deep-research-v10.11.md) | 调研 SSOT（44 仓库） |
-| [COVERAGE.md](research/COVERAGE.md) | 覆盖矩阵 |
-| [research/README.md](research/README.md) | 调研索引 |
-| [research/repos/](research/repos/) | per-repo 卡片 |
+| [merits-20261028.md](research/merits-20261028.md) | 唯一现行调研制品（优点清单 + 现行配置独立审查 + 待确认优化计划） |
 
-**SSOT 链**：`research/repos/*.md` → `44-*` → `COVERAGE.md` → `MANIFEST.yaml` → `SPEC.md`
+旧 44-repo / 45-upstream / COVERAGE / repos 卡片已删除；历史以 git 为准。
