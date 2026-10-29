@@ -10,7 +10,7 @@ V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
 V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）/
-V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移 + 无模型/推理强度绑定（scripts/workflow.py check）。
+V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移 + 无模型/推理强度绑定（scripts/workflow.py check）+ execution.concurrency 各执行面同步。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -107,6 +107,10 @@ LIVE_POLICY_PATHS = (
     "skills/using-superpowers/SKILL.md",
     "rules/MCP.md",
     "docs/TOOL_MATCHING_GUIDE.md",
+    "skills/subagent-driven-development/SKILL.md",
+    "skills/git-workflow/SKILL.md",
+    "commands/execute.md",
+    "templates/editor-graph-hooks/README.md",
 )
 # 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成、分类模型维、已裁场景路由、未获准自动跑浏览器 UI
 LIVE_POLICY_BANS = (
@@ -1389,6 +1393,52 @@ def check_v20_toolchain():
     print("  V20: toolchain floors + pwsh-only which_pwsh ✓")
 
 
+def check_execution_concurrency(mod, spine, root) -> None:
+    """V21: execution.concurrency 必须渲染进全部执行面；禁止与 /goal 两道门或 browser_ui_tests 混成新门。"""
+    conc = (spine.get("execution") or {}).get("concurrency")
+    if not isinstance(conc, dict):
+        ERRORS.append("V21: execution.concurrency required")
+        return
+    surfaces = getattr(mod, "CONCURRENCY_SURFACES", ())
+    if not surfaces:
+        ERRORS.append("V21: workflow.py CONCURRENCY_SURFACES empty")
+        return
+    lines = [x for x in (conc.get("lines") or []) if isinstance(x, str) and x.strip()]
+    if not lines:
+        ERRORS.append("V21: execution.concurrency.lines required")
+        return
+    bars = tuple((spine.get("review") or {}).get("pass_requires") or {})
+    if bars != ("requirements_met", "original_functionality_preserved"):
+        ERRORS.append("V21: concurrency must not change review.pass_requires")
+    sg_bars = tuple(((spine.get("completion") or {}).get("standing_goal") or {}).get("bars") or ())
+    if sg_bars != bars:
+        ERRORS.append("V21: concurrency must not add a standing_goal bar")
+    for rel in surfaces:
+        path = root / rel
+        if not path.is_file():
+            ERRORS.append(f"V21: concurrency surface missing {rel.as_posix()}")
+            continue
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except OSError as exc:
+            ERRORS.append(f"V21: cannot read {rel.as_posix()}: {exc}")
+            continue
+        if "<!-- spine:concurrency -->" not in text or "<!-- /spine:concurrency -->" not in text:
+            ERRORS.append(f"V21: {rel.as_posix()} missing spine:concurrency marker")
+        for line in lines:
+            if line not in text:
+                ERRORS.append(f"V21: {rel.as_posix()} missing concurrency line {line!r}")
+    mcp = root / "mcp" / "servers.json"
+    if mcp.is_file():
+        try:
+            data = json.loads(mcp.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            ERRORS.append(f"V21: cannot read mcp/servers.json: {exc}")
+        else:
+            if "browser_ui_tests" not in data:
+                ERRORS.append("V21: concurrency change must not drop mcp/servers.json browser_ui_tests")
+
+
 def check_v21_workflow_spine():
     """V21: config/workflow.yaml 是唯一调度面 — 校验 schema，并要求全部派生内容与之一致。"""
     if not yaml:
@@ -1427,6 +1477,7 @@ def check_v21_workflow_spine():
         ERRORS.append(f"V21: model/effort binding: {hit}")
     if not drift and not hits:
         print("  V21: workflow spine valid, derived targets in sync, no model/effort binding ✓")
+    check_execution_concurrency(mod, spine, root)
 
 if __name__ == "__main__":
     sys.exit(main())

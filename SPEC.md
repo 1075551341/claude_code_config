@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：13.0.3 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`（模型/推理强度无关）**：阶段 entry/exit 门 × 轨道 × 完成定义（每条轨道独立审查必过，两道关：符合预期要求 + 原功能保持）× 审查 ≤3 轮/七维/路由 → `scripts/workflow.py render` 派生 + lint 拦模型绑定，V21 防漂移；模型与推理强度由会话/settings/调用方决定 + L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
+> 版本：13.0.4 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`（模型/推理强度无关）**：阶段 entry/exit 门 × 轨道 × 完成定义（每条轨道独立审查必过，两道关：符合预期要求 + 原功能保持）× 审查 ≤3 轮/七维/路由 × 执行并发（无依赖不阻塞）→ `scripts/workflow.py render` 派生 + lint 拦模型绑定，V21 防漂移；模型与推理强度由会话/settings/调用方决定 + L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -13,7 +13,7 @@ FORMAT   = ECC模式(cherry-pick) + anthropics/skills(格式) + best-practice(�
 REVIEW   = 独立审查者 7（eng 必审 + ceo/designer/dx/qa/security/cross-model 按路由）；完成 = 审查 PASS（两道关）
 OPTIMIZE = RTK(shell token) + caveman(输出token)
 INSIGHT  = codegraph(R17 常驻) + codebase-memory(已禁用：全盘索引爆 CPU/内存，codegraph 全权替代) + Exa/Firecrawl(外部调研)  # UA removed v10.5
-SPINE    = config/workflow.yaml（stages/tracks/completion/quality/review；无模型/推理强度）→ scripts/workflow.py render → agents/commands/CLAUDE.md/quality_gates.json；lint 全仓拦模型绑定
+SPINE    = config/workflow.yaml（stages/tracks/completion/quality/review/execution；无模型/推理强度）→ scripts/workflow.py render → agents/commands/CLAUDE.md/quality_gates.json；lint 全仓拦模型绑定
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
@@ -346,4 +346,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIM
 
 ---
 
-> 版本：13.0.3 | 日期：2026-10-29 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：阶段门/轨道/完成定义/审查契约/站立 `/goal`；无模型/推理强度）×三横切 | 独立审查必过（两道关；≤3 轮；耗尽 BLOCKED）+ MCP 常驻 5 项 + 图谱三时点 + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N + 浏览器 UI 测试显式选用
+> 版本：13.0.4 | 日期：2026-10-29 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：阶段门/轨道/完成定义/审查契约/站立 `/goal`/执行并发；无模型/推理强度）×三横切 | 独立审查必过（两道关；≤3 轮；耗尽 BLOCKED）+ MCP 常驻 5 项 + 图谱三时点 + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N + 浏览器 UI 测试显式选用 + 无依赖可后台则并行

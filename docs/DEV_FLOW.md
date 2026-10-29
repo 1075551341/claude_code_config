@@ -10,6 +10,7 @@
 | 完成定义：独立审查 PASS 才算完成 | 推理强度 / effort / thinking（被调用模型自身的设置） |
 | 审查路由、七维、轮次上限 | 子 Agent 用哪个模型（不传 = 继承会话） |
 | 就绪定义与交审自检 | 上下文窗口大小（模型名后缀 `[1M]`、`autoCompactWindow` 或本机登记表） |
+| 执行并发：无依赖可后台则并行，有依赖串行（`execution.concurrency`） | 第三道 PASS 门、额外 Stop hook、`browser_ui_tests` |
 
 `python scripts/workflow.py check` 做三件事：校验配置（每条轨道都含 ④验证、完成定义覆盖全部轨道、轮次 ≤3、七维与 `hooks/_lib/r20_replay.py` 一致、无孤儿 agent）、检测派生块漂移、跑 **model-agnostic lint**（全仓命中模型 ID / 厂商档位别名 / effort 键，或 agents/commands/skills（含 catalog）frontmatter 带 `model:`/`effort:` 即失败；豁免：CHANGELOG、docs/research|ADR、plugins/、hooks/tests/、scripts/workflow.py 自身）。`validate_config.py` V21 调用它。
 
@@ -55,6 +56,16 @@
 - 站立目标 `/goal`：所有修改符合预期要求；且原功能保持不变（= 上述两道门，不是第三道门，也不另建 Stop hook）。
 <!-- /spine:flow -->
 
+### 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 ## 3. 一次通过，独立审查兜底
 
 预期路径是第 1 轮审查就 PASS。返工通常来自三处：验收标准不清、影响清单漏项（文档/INDEX/版本戳）、审查清单与自检清单不一致。v13 在开工前和交审前堵住这三处：
@@ -81,6 +92,7 @@
 | rules/AGENTS.md `spine:review-routing` | 审查路由（review.routing） |
 | skills/verification-before-completion `spine:dimensions` / `spine:completion` | 七维 + 完成定义 |
 | templates/cursor-guard/rules/CURSOR-EDITOR.mdc `spine:completion` | Cursor 完成定义 |
+| CLAUDE.md / CORE / DEV_FLOW / AGENTS / execute / using-superpowers / verification / executing-plans / SDD / git-workflow / CURSOR-EDITOR.mdc / OpenCode README `spine:concurrency` | 执行并发（execution.concurrency） |
 | config/quality_gates.json verification_gate | 轮次 / 阻断 / 最少文件 / 审查者 / 刷图 / 完成状态 |
 | templates/cursor-guard/guard-config.json verification.reviewer_agents | Cursor 审查者名单 |
 | templates/editor-graph-hooks/verify-gate.ts | `review_max_rounds=<n>` 文案 |

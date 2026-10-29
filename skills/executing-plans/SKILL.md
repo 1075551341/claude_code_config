@@ -46,8 +46,15 @@ loading_tier: L2
 ## 原则
 - 遵循 R11 安全默认；最小改动集（CORE 开发习惯）
 - 每个子任务有明确成功标准
-- 无依赖的子任务可并行
 - 执行过程中发现计划缺陷，返回 plan 阶段修正
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
 
 ## 进度追踪（task-master 风格）
 

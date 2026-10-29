@@ -12,7 +12,7 @@
 # 派生目标见 docs/DEV_FLOW.md「派生清单」。禁止手改 <!-- spine:* --> 标记块内文本。
 
 schema: 2
-pack_version: "13.0.3"
+pack_version: "13.0.4"
 
 # ── 1. 阶段（stage）与轨道（track）─────────────────────────────────
 # role = session（主会话）或 agents/<name>.md；agent 不声明 model/effort，一律继承调用方。
@@ -171,3 +171,21 @@ review:
     tests: [qa]
     security: [security-reviewer]
     cross_model: [cross-model-reviewer] # 由调用方挑一个与实现者不同的模型；本包不指定是哪个
+
+# ── 5. 执行并发（习惯，不是完成门）────────────────────────────────
+# 无依赖且可后台的命令/操作不得阻塞会话，优先并行。
+# 有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器/watcher 保持后台。
+# 不是第三道 PASS 门（不进 review.pass_requires / standing_goal.bars），不另建 Stop hook，不改 browser_ui_tests。
+execution:
+  concurrency:
+    prefer_parallel: true
+    independent_must_not_block: true
+    serial_if_dependent: true
+    serial_if_output_needed: true
+    long_running_background: true
+    extra_stop_hook: false
+    extra_pass_bar: false
+    lines:
+      - 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+      - 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+      - 长驻服务器 / watcher 保持后台

@@ -91,6 +91,14 @@ writing-plans 原子任务
 失败传播：关键任务失败 → 终止后续依赖任务
 ```
 
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 ## 失败重试限制
 
 同一方案失败 ≤2 次。第 3 次必须切换方案或上报主Agent（铁律 R5）。

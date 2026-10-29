@@ -110,6 +110,49 @@ check("standing_goal bars must match pass_requires",
 check("goal.md renders both bars",
       all(b["label"] in live_targets[Path("commands/goal.md")] for b in spine["review"]["pass_requires"].values()))
 
+# ── 执行并发：无依赖可后台则并行；不是第三道门 ──
+check("execution missing rejected",
+      rejected(lambda s: s.pop("execution", None), "execution"))
+check("concurrency missing rejected",
+      rejected(lambda s: s["execution"].pop("concurrency", None), "concurrency"))
+for flag in wf.CONCURRENCY_TRUE:
+    check(f"concurrency.{flag}=false rejected",
+          rejected(lambda s, k=flag: s["execution"]["concurrency"].update({k: False}), flag))
+for flag in wf.CONCURRENCY_FALSE:
+    check(f"concurrency.{flag}=true rejected",
+          rejected(lambda s, k=flag: s["execution"]["concurrency"].update({k: True}), flag))
+check("concurrency lines empty rejected",
+      rejected(lambda s: s["execution"]["concurrency"].update(lines=[]), "lines"))
+check("concurrency line needle missing rejected",
+      rejected(lambda s: s["execution"]["concurrency"].update(lines=["only parallel"]), "无依赖且可后台"))
+check("concurrency is not a pass bar",
+      tuple(spine["review"]["pass_requires"]) == wf.PASS_BARS)
+check("standing_goal bars unchanged by concurrency",
+      tuple(spine["completion"]["standing_goal"]["bars"]) == wf.PASS_BARS)
+expected_surfaces = {
+    "CLAUDE.md",
+    "docs/DEV_FLOW.md",
+    "rules/CORE.md",
+    "rules/AGENTS.md",
+    "skills/using-superpowers/SKILL.md",
+    "skills/verification-before-completion/SKILL.md",
+    "skills/executing-plans/SKILL.md",
+    "skills/subagent-driven-development/SKILL.md",
+    "skills/git-workflow/SKILL.md",
+    "templates/cursor-guard/rules/CURSOR-EDITOR.mdc",
+    "commands/execute.md",
+    "templates/editor-graph-hooks/README.md",
+}
+check("concurrency surfaces cover execution faces",
+      {p.as_posix() for p in wf.CONCURRENCY_SURFACES} == expected_surfaces)
+conc_lines = spine["execution"]["concurrency"]["lines"]
+for rel in wf.CONCURRENCY_SURFACES:
+    text = live_targets[rel]
+    check(f"{rel.as_posix()} renders concurrency lines",
+          all(line in text for line in conc_lines))
+    check(f"{rel.as_posix()} concurrency is not a third pass bar",
+          "不是第三道 PASS 门" in text)
+
 # ── 结构 ──
 check("dimension drift vs r20_replay rejected",
       rejected(lambda s: s["review"].update(dimensions=s["review"]["dimensions"][:-1]), "r20_replay"))

@@ -2,6 +2,12 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v13.0.4 执行并发（无依赖不阻塞）（2026-10-29）
+
+- **规则**：无依赖且可后台的命令/操作不得阻塞会话，优先并行；有依赖或下一步需要其输出的仍按序、禁止后台；长驻服务器 / watcher 保持后台。不是第三道 `/goal` 门，不另建 Stop hook，不改 `browser_ui_tests`。
+- **结构化 SSOT**：`config/workflow.yaml` `execution.concurrency`（`prefer_parallel` / `independent_must_not_block` / `serial_if_dependent` / `serial_if_output_needed` / `long_running_background` = true；`extra_stop_hook` / `extra_pass_bar` = false）。
+- **派生**：`scripts/workflow.py` 渲染 `spine:concurrency` 到 CLAUDE.md、CORE、DEV_FLOW、AGENTS、using-superpowers、verification、executing-plans、SDD、git-workflow、`/execute`、CURSOR-EDITOR.mdc、OpenCode `templates/editor-graph-hooks/README.md`。`workflow.py check` 与 validate V21 防漂移。
+
 ## v13.0.3 浏览器 UI 测试显式选用（2026-10-29）
 
 - **规则**：Playwright / chrome-devtools 浏览器 UI 测试仅当用户本轮显式要求才跑。任务强烈像需要但未要求 → interrupt，禁止静默开跑，禁止软自动兜底。用户已要求时允许安装/配置。不是第三道 `/goal` 门，不另建 Stop hook。

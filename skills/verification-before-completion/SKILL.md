@@ -48,6 +48,16 @@ source: obra/superpowers
 - 安全：无硬编码密钥；边界输入已校验
 - Playwright / chrome-devtools 浏览器 UI 测试仅当用户显式要求才跑；否则不跑。任务强烈像需要却未要求 → interrupt（SSOT → `rules/MCP.md` §2c / `mcp/servers.json` `browser_ui_tests`）。不得把未获准的浏览器 UI 测当作 `/goal` 两道门的替代证据，也不另建 Stop hook
 
+## 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 ## 独立审查
 
 **一轮** = 改 → 验 → **刷图** → 并行全新审查（一次找齐）。目标第 1 轮 PASS。

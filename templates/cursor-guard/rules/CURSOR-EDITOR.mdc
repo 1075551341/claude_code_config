@@ -70,6 +70,16 @@ Cursor Stop 不能阻断，完成门靠本规则：没有本轮全新独立审�
 - 站立目标 `/goal`：所有修改符合预期要求；且原功能保持不变（= 上述两道门，不是第三道门，也不另建 Stop hook）。
 <!-- /spine:completion -->
 
+## 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 ## 子代理模型
 
 派发 `Task` 时模型与推理强度由调用方决定（不传 = 继承会话）；本包不提供模型表。`cross-model-reviewer` 须用与实现者不同的模型运行，选不出就不派。

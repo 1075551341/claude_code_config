@@ -35,7 +35,34 @@ GENERATED_NOTE = "派生自 config/workflow.yaml，改配置后 `python scripts/
 MAX_ROUNDS_CEILING = 3
 VERDICTS = ["PASS", "NEEDS-CHANGES"]
 PASS_BARS = ("requirements_met", "original_functionality_preserved")
-TOP_KEYS = ("stages", "tracks", "completion", "quality", "review")
+TOP_KEYS = ("stages", "tracks", "completion", "quality", "review", "execution")
+CONCURRENCY_TRUE = (
+    "prefer_parallel",
+    "independent_must_not_block",
+    "serial_if_dependent",
+    "serial_if_output_needed",
+    "long_running_background",
+)
+CONCURRENCY_FALSE = ("extra_stop_hook", "extra_pass_bar")
+CONCURRENCY_LINE_NEEDLES = (
+    "无依赖且可后台",
+    "有依赖或下一步需要其输出",
+    "长驻服务器",
+)
+CONCURRENCY_SURFACES = (
+    Path("CLAUDE.md"),
+    Path("docs") / "DEV_FLOW.md",
+    Path("rules") / "CORE.md",
+    Path("rules") / "AGENTS.md",
+    Path("skills") / "using-superpowers" / "SKILL.md",
+    Path("skills") / "verification-before-completion" / "SKILL.md",
+    Path("skills") / "executing-plans" / "SKILL.md",
+    Path("skills") / "subagent-driven-development" / "SKILL.md",
+    Path("skills") / "git-workflow" / "SKILL.md",
+    Path("templates") / "cursor-guard" / "rules" / "CURSOR-EDITOR.mdc",
+    Path("commands") / "execute.md",
+    Path("templates") / "editor-graph-hooks" / "README.md",
+)
 
 # ── model-agnostic lint ───────────────────────────────────────────
 # 本包只描述角色/阶段/门控；模型与推理强度由调用方决定。下列模式命中即视为把配置绑到了具体模型或档位。
@@ -210,6 +237,33 @@ def validate(spine: dict, root: Path) -> list[str]:
         errs.append(f"agents/{a}.md is neither a stage role nor a routed reviewer (orphan agent)")
     if set(routed) & roles:
         errs.append(f"reviewers must not also be stage roles: {sorted(set(routed) & roles)}")
+    exe = spine.get("execution")
+    if not isinstance(exe, dict):
+        errs.append("execution mapping required")
+    else:
+        conc = exe.get("concurrency")
+        if not isinstance(conc, dict):
+            errs.append("execution.concurrency required")
+        else:
+            for key in CONCURRENCY_TRUE:
+                if conc.get(key) is not True:
+                    errs.append(f"execution.concurrency.{key} must be true")
+            for key in CONCURRENCY_FALSE:
+                if conc.get(key) is not False:
+                    errs.append(
+                        f"execution.concurrency.{key} must be false "
+                        "(no extra Stop hook / pass bar; do not conflict with /goal or browser_ui_tests)"
+                    )
+            lines = conc.get("lines")
+            if not isinstance(lines, list) or not lines or not all(
+                isinstance(x, str) and x.strip() for x in lines
+            ):
+                errs.append("execution.concurrency.lines required")
+            else:
+                blob = "\n".join(lines)
+                for needle in CONCURRENCY_LINE_NEEDLES:
+                    if needle not in blob:
+                        errs.append(f"execution.concurrency.lines missing {needle!r}")
     mr = review.get("max_rounds")
     if not isinstance(mr, int) or not 1 <= mr <= MAX_ROUNDS_CEILING:
         errs.append(f"review.max_rounds must be int in 1..{MAX_ROUNDS_CEILING}")
@@ -416,6 +470,17 @@ def body_flow(spine: dict) -> str:
     return "\n".join(out)
 
 
+def body_concurrency(spine: dict) -> str:
+    conc = spine["execution"]["concurrency"]
+    return "\n".join([
+        f"**执行并发**（{GENERATED_NOTE}）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。"
+        "有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。"
+        "不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。",
+        "",
+        *[f"- {x}" for x in conc["lines"]],
+    ])
+
+
 def body_dimensions(spine: dict) -> str:
     dims = spine["review"]["dimensions"]
     out = [f"> {GENERATED_NOTE}。缺任一项视为本轮无效、不计 PASS。", ""]
@@ -447,6 +512,7 @@ def body_derived() -> str:
         ("rules/AGENTS.md `spine:review-routing`", "审查路由（review.routing）"),
         ("skills/verification-before-completion `spine:dimensions` / `spine:completion`", "七维 + 完成定义"),
         ("templates/cursor-guard/rules/CURSOR-EDITOR.mdc `spine:completion`", "Cursor 完成定义"),
+        ("CLAUDE.md / CORE / DEV_FLOW / AGENTS / execute / using-superpowers / verification / executing-plans / SDD / git-workflow / CURSOR-EDITOR.mdc / OpenCode README `spine:concurrency`", "执行并发（execution.concurrency）"),
         ("config/quality_gates.json verification_gate", "轮次 / 阻断 / 最少文件 / 审查者 / 刷图 / 完成状态"),
         ("templates/cursor-guard/guard-config.json verification.reviewer_agents", "Cursor 审查者名单"),
         ("templates/editor-graph-hooks/verify-gate.ts", "`review_max_rounds=<n>` 文案"),
@@ -504,6 +570,9 @@ def build_targets(root: Path, spine: dict) -> dict[Path, str]:
     ]
     for rel, name, body in blocks:
         out[rel] = replace_block(text_of(rel), name, body, str(rel))
+    conc_body = body_concurrency(spine)
+    for rel in CONCURRENCY_SURFACES:
+        out[rel] = replace_block(text_of(rel), "concurrency", conc_body, str(rel))
 
     rv, comp = spine["review"], spine["completion"]
     names = reviewers(spine)
@@ -597,6 +666,8 @@ def cmd_show(root: Path) -> int:
     print(body_flow(spine))
     print()
     print(body_review_routing(spine))
+    print()
+    print(body_concurrency(spine))
     return 0
 
 

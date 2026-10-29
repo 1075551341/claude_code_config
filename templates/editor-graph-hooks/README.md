@@ -12,7 +12,15 @@ v11.4.9：Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断；OpenC
 | OpenCode | plugin `ensure` **每会话一次**；`GRAPH_RULE` 注入一次 | idle `refresh` **60s 冷却** | `~/.config/opencode/graph-freshness.json` |
 | DSH | agent CLI `ensure` **每会话一次**（无 hook） | 完成前 CLI `refresh` **一次** | `~/.dsh/config/graph-freshness.json` |
 
-OpenCode / DSH **不**经 `sync.ps1` 覆盖 AGENTS.md；CLI 为各自 home 副本。
+OpenCode / DSH **不**经 `sync.ps1` 覆盖 AGENTS.md；CLI 为各自 home 副本。执行并发与本包同一 SSOT（`config/workflow.yaml` `execution.concurrency`）：
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
 
 # TRAE / Qoder 图谱保鲜 hook 注册
 

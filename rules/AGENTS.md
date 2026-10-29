@@ -33,6 +33,16 @@ cross_model  → + cross-model-reviewer
 > 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。审查者模型由调用方选择；cross_model 组要求与实现者不同的模型。
 <!-- /spine:review-routing -->
 
+## 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 infra/配置变更可跳过 product 组；eng-reviewer 永不跳过。
 
 **一轮 = 改 → 验 → 审查前刷图一次 → 本批全新七维审查。** 无依赖的审查者同一条消息并行 `Task`；刷一次图再 fan-out。批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过：主会话合并完整清单，派**一次** `change-implementer` 集中改齐，再全新派审。审查 prompt 写明：原始要求、本轮已刷新、使用 CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius。
