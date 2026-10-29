@@ -11,3 +11,11 @@ description: 战略上下文压缩与模式提取（⑤学习阶段）
 触发：子目标完成时 / 上下文 ≥70% 择机、≥90% 强制 / 长任务阶段性输出后 / 工作流阶段切换时。
 
 > 平台差异：Claude Code 用 `/compact`；Cursor 用 `/summarize` 或「压缩上下文」（见 rules/CURSOR-EDITOR）。
+
+<!-- spine:stage-gate -->
+## 门控（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）
+
+- 阶段：⑤学习 | skill：`skills/memory-compression/SKILL.md` | 角色：session
+- 退出（全部满足才进入下一阶段）：
+  - claude-mem 记录模式/决策（R18）
+<!-- /spine:stage-gate -->

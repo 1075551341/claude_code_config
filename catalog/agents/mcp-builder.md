@@ -1,7 +1,6 @@
 ---
 name: mcp-builder
 description: MCP 服务器开发专家。当需要开发 MCP 服务器、构建 Claude 集成工具、创建 MCP 协议服务时调用此 Agent。提供 MCP 协议实现、工具定义、资源管理和服务器配置指导。触发词：MCP服务器、MCP开发、Model Context Protocol、Claude MCP、MCP工具、Claude集成、MCP协议。
-model: inherit
 color: purple
 tools:
   - Read

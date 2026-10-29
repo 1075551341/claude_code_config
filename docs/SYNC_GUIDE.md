@@ -4,7 +4,7 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.17 (v11.4.12) | **日期**: 2026-09-01 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v20.22 (v11.6.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
 >
 > **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
 >
@@ -71,11 +71,32 @@ description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 
 - **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`（v11.4.1：原 `~/.claude/.cursor/`、`.trae/` 误生成残留已清理）
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：根文件 + 插件规则（PS5.1 回退用 powershell）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：根文件 + 插件规则（需 pwsh 7.5+）
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
 ```
+
+---
+
+## 合并到本机 Claude 并同步（v11.6.0）
+
+在 **Windows、配置仓即 `~/.claude`** 的前提下：
+
+1. 把本分支合并进本机 `~/.claude`（或 `git pull` 已合并的主干）。
+2. 新开一个 Claude Code 会话（hooks 只对后续会话生效）。
+3. Cursor / Qoder / TRAE：
+
+```powershell
+pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\sync.ps1" -All
+pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\deploy-cursor-guard.ps1"
+pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\deploy-editor-graph-hooks.ps1" -Scope editors
+```
+
+4. **完全退出再打开 Cursor**（仅 Reload 往往不重扫 local plugin）。
+5. 校验：`pwsh -File scripts\check.ps1`；插件规则 = `rules/*.md`（6）+ `00-CLAUDE.mdc` + `CURSOR-EDITOR.mdc`，v13 删除的 6 条规则由台账孤儿清除。
+
+Claude Code **零同步**。`sync.ps1` 仍不碰 `settings.json` / `.mcp.json` / `hooks/`。`-Scope editors` 只合并 TRAE/Qoder，不复制 DSH/OpenCode 便携文件。
 
 ---
 
@@ -225,11 +246,13 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 | CLAUDE（含路由）/ CORE             | 双端 sync          | 源文件去重       |
 | plugin-\* rules                    | 仅 Cursor          | 禁插件即消失     |
 | User Rules                         | 仅 Cursor Settings | 指针 + L3 skills |
-| lazy rules (GIT/FRONTEND/OPENSPEC) | L0 路由按需 Read   | glob 触发        |
+| lazy rules (GIT/MCP/OPENSPEC)      | L0 路由按需 Read   | glob 触发        |
 
 | 等级  | 内容                                         | Cursor 机制                         |
 | ----- | -------------------------------------------- | ----------------------------------- |
 | L0    | CLAUDE（含路由）+ CORE + CURSOR-EDITOR       | alwaysApply（经 plugin）            |
+
+**L0 以仓为准**（`config/sync-manifest.json` `l0_source_of_truth: repo`）：根文件 6 项与 Cursor plugin `00-CLAUDE.mdc` 覆盖 home/plugin 旧副本；禁止用编辑器 home 里的旧 CLAUDE 覆盖仓内 L0。`Sync-File -RepoWins` 只在 dest 已是指向仓内源的符号链接时跳过。
 | L1    | using-superpowers, change-impact-analysis 等 | 会话常驻                            |
 | L2/L3 | 其余 skills + agents/MCP/plugins             | disable-model-invocation + 显式调用 |
 
@@ -239,6 +262,11 @@ Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，
 
 ## 版本史（同步链）
 
+- **v20.22 (v11.6.0)**：Guard 1.2.17 Shell 警告 `powershell`→pwsh（allow）；V20 钉 `package_manager: pnpm` 与 `command: powershell.exe`；`sync_runner.resolve_pwsh`。
+- **v20.21 (v11.6.0)**：mcp.json / Cursor 粘贴 spawn `pwsh`；Guard 1.2.16 `sync_runner` 只认 pwsh。
+- **v20.20 (v11.6.0)**：工具链 SSOT `config/toolchain.yaml`（pwsh 7.5+ / pnpm 11）；缺工具 BLOCKED；脚本 `#Requires -Version 7.5`。Guard 1.2.15。
+- **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.15；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。
+- **v20.18 (v11.4.13)**：MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；sync.ps1 仍不复制编辑器 mcp.json。
 - **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
 - **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。
 - **v20.15 (v11.4.10)**：Cursor 完成门不再 followup（规则驱动双审）。Guard 1.2.10；DSH 2.9 / OpenCode 1.9。90% 用 `additional_context`（文档与实现对齐）。

@@ -19,6 +19,7 @@ from hook_io import (
     ensure_hook_output,
     ensure_lib_path,
     extract_file_path,
+    extract_tool_input,
     extract_tool_name,
     import_claude_lib,
     read_stdin,
@@ -37,7 +38,15 @@ DEFAULT_VERIFY_PATTERNS = [
     "tsc", "mypy", "ruff", "eslint", "clippy", "cargo test", "cargo check",
     "go test", "go vet",
 ]
-DEFAULT_REVIEWER_AGENTS = ["eng-reviewer", "qa", "code-reviewer"]
+DEFAULT_REVIEWER_AGENTS = [
+    "eng-reviewer",
+    "ceo-reviewer",
+    "designer",
+    "dx-reviewer",
+    "qa",
+    "security-reviewer",
+    "cross-model-reviewer",
+]
 # tool_paths 不可用时的兜底集合（正常路径走共享库，含 MCP 写工具）
 FALLBACK_EDIT_TOOLS = {"Write", "StrReplace", "Replace", "Edit", "MultiEdit"}
 STALE_SECONDS = 7 * 24 * 3600
@@ -79,10 +88,15 @@ def is_verify_command(command: str, patterns: list) -> bool:
 
 def extract_shell_command(data: dict) -> str:
     """从 Cursor hook 输入提取 shell 命令（hook_io 未提供此函数，内联实现）。"""
-    tool_input = data.get("tool_input") or data.get("input") or {}
-    if isinstance(tool_input, dict):
+    blobs = [extract_tool_input(data)]
+    nested = blobs[0].get("arguments") if blobs[0] else None
+    if isinstance(nested, dict):
+        blobs.append(nested)
+    for blob in blobs:
+        if not isinstance(blob, dict):
+            continue
         for key in ("command", "cmd", "shell_command"):
-            val = tool_input.get(key)
+            val = blob.get(key)
             if isinstance(val, str) and val:
                 return val
     return str(data.get("command") or data.get("cmd") or "")
@@ -113,6 +127,9 @@ def main() -> None:
         })
         entry["ts"] = now
         entry.setdefault("started_ts", now)
+        entry.setdefault("edited_files", [])
+        entry.setdefault("verify_commands", [])
+        entry.setdefault("reviews", [])
         if cwd:
             entry["cwd"] = cwd
 
@@ -122,11 +139,9 @@ def main() -> None:
         except Exception as e:
             print(f"verify_tracker: tool_paths unavailable: {e}", file=sys.stderr)
 
-        tool_input = data.get("tool_input") or data.get("input") or {}
-        if not isinstance(tool_input, dict):
-            tool_input = {}
+        tool_input = extract_tool_input(data)
 
-        is_edit = tool_paths.is_edit_tool(tool_name) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
+        is_edit = tool_paths.is_edit_tool(tool_name, tool_input) if tool_paths else tool_name in FALLBACK_EDIT_TOOLS
 
         changed = False
         try:
@@ -145,45 +160,56 @@ def main() -> None:
             for path in paths:
                 entry["edited_files"].append({"path": path, "ts": now})
                 changed = True
+            try:
+                r20e = import_claude_lib(claude_home, "r20_replay")
+                if r20e.clear_review_pass_if_counted(entry, paths):
+                    changed = True
+            except Exception as e:
+                print(f"verify_tracker: clear_review_pass_if_counted failed: {e}", file=sys.stderr)
+                if any(p and not str(p).lower().endswith(".plan.md") for p in paths):
+                    if entry.get("review_pass_ok") is True:
+                        entry["review_pass_ok"] = False
+                        changed = True
         elif tool_name in ("Shell", "Bash"):
             command = extract_shell_command(data)
             if command and is_verify_command(command, patterns):
                 entry["verify_commands"].append({"command": command[:300], "ts": now})
                 changed = True
-        elif tool_name in ("Task", "Agent"):
-            sub = str(
-                data.get("subagent_type")
-                or tool_input.get("subagent_type")
-                or data.get("description")
-                or ""
-            ).lower()
-            for reviewer in reviewers:
-                if reviewer.lower() in sub:
-                    resumed = False
-                    try:
-                        r20 = import_claude_lib(claude_home, "r20_replay")
-                        resumed = bool(r20.is_resumed_subagent(tool_input))
-                    except Exception as e:
-                        print(f"verify_tracker: is_resumed_subagent unavailable: {e}", file=sys.stderr)
-                        resumed = bool(tool_input.get("resume"))
-                    if resumed:
-                        entry.setdefault("skipped_resumed_reviews", []).append(
-                            {"agent": reviewer, "ts": now}
-                        )
-                        changed = True
-                        break
-                    last_rev = 0.0
-                    for item in entry.get("reviews") or []:
-                        last_rev = max(last_rev, float(item.get("ts", 0) or 0))
-                    last_edit = 0.0
-                    for item in entry.get("edited_files") or []:
-                        last_edit = max(last_edit, float(item.get("ts", 0) or 0))
-                    if last_edit > last_rev:
-                        entry["review_rounds"] = int(entry.get("review_rounds") or 0) + 1
-                    entry["reviews"].append({"agent": reviewer, "ts": now})
-                    entry["review_pass_ok"] = False
+            try:
+                r20g = import_claude_lib(claude_home, "r20_replay")
+                if r20g.is_graph_refresh_call(tool_name, {"command": command}):
+                    r20g.record_pre_review_graph_refresh(entry, now)
                     changed = True
-                    break
+            except Exception as e:
+                print(f"verify_tracker: graph refresh stamp failed: {e}", file=sys.stderr)
+        elif tool_name in ("Task", "Agent"):
+            reviewer = None
+            resumed = bool(tool_input.get("resume")) if isinstance(tool_input, dict) else False
+            try:
+                r20 = import_claude_lib(claude_home, "r20_replay")
+                blob = r20.reviewer_dispatch_blob(tool_input, extra=data)
+                reviewer = r20.identify_reviewer(blob, reviewers)
+                resumed = bool(r20.is_resumed_subagent(tool_input))
+                if reviewer:
+                    r20.note_reviewer_dispatch(entry, reviewer, now, resumed=resumed)
+                    changed = True
+                    if not resumed:
+                        result_text = r20.tool_result_text(data)
+                        if r20.attach_review_text(entry, result_text, source=reviewer):
+                            changed = True
+                        if r20.apply_review_verdict(entry, result_text):
+                            changed = True
+            except Exception as e:
+                print(f"verify_tracker: reviewer dispatch unavailable: {e}", file=sys.stderr)
+                # 兜底不按子串识别，避免非审查者名（如 code-explorer）按子串误命中审查者
+
+        try:
+            r20g = import_claude_lib(claude_home, "r20_replay")
+            if r20g.is_graph_refresh_call(tool_name, tool_input):
+                r20g.record_pre_review_graph_refresh(entry, now)
+                changed = True
+        except Exception as e:
+            print(f"verify_tracker: graph mcp stamp failed: {e}", file=sys.stderr)
 
         try:
             crg = import_claude_lib(claude_home, "crg_track")

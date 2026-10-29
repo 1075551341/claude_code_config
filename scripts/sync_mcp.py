@@ -30,9 +30,16 @@ def main():
     mcp = load(".mcp.json")
     resident = set(mcp.get("mcpServers", {}))
 
-    settings = load("settings.json")
-    if "mcpServers" in settings:
-        problems.append("settings.json 含 mcpServers（rules/MCP.md §1 禁止），请删除该键")
+    settings_path = os.path.join(BASE, "settings.json")
+    if os.path.isfile(settings_path):
+        settings = load("settings.json")
+        if "mcpServers" in settings:
+            problems.append("settings.json 含 mcpServers（rules/MCP.md §1 禁止），请删除该键")
+        settings_note = "settings.json 无 mcpServers"
+    else:
+        # 仓库内 settings.json 被 gitignore；云端/只读校验仍应对齐 always_* 与 .mcp.json
+        print("[WARN] settings.json 缺失（通常被 gitignore）；跳过 mcpServers 键检查")
+        settings_note = "settings.json 未检出，已跳过"
 
     servers = load("mcp/servers.json")
     toolsets = servers.get("toolsets", {})
@@ -58,7 +65,7 @@ def main():
             print(f"[FAIL] {p}")
         return 1
 
-    print(f"[OK] MCP 常驻 {len(resident)} 项，servers.json / dev.json / settings.json 全部一致")
+    print(f"[OK] MCP 常驻 {len(resident)} 项，servers.json / dev.json 一致（{settings_note}）")
     return 0
 
 

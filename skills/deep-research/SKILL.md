@@ -5,7 +5,6 @@ triggers: [深度研究, 技术选型调研, 竞品分析, 学术调查, 多角�
 layer: supplement
 disable-model-invocation: true
 loading_tier: L3
-source: catalog/skills/deep-research
 ---
 
 # 深度研究方法论
@@ -17,9 +16,9 @@ source: catalog/skills/deep-research
 
 | 步骤 | 工具 |
 |------|------|
-| 广度/抓取 | Firecrawl MCP（`.mcp.json` 常驻键 `firecrawl`） |
-| 语义搜索 | Exa MCP（`.mcp.json` 常驻键 `exa`；Cursor 侧由 Exa plugin 提供） |
-| 库/API 验证 | Context7 MCP |
+| 广度/抓取 | Firecrawl **plugin**（不写 `.mcp.json`） |
+| 语义搜索 | Exa **plugin**（不写 `.mcp.json`；Cursor 侧同为 Exa plugin） |
+| 库/API 验证 | Context7 **plugin**（`resolve-library-id` → `query-docs`；不写 MCP） |
 | 项目代码 | codegraph_explore（非网页调研） |
 
 ### 升级决策（L1→L2→L3）
@@ -68,11 +67,13 @@ source: catalog/skills/deep-research
 | V4 | 训练记忆 vs 实时搜索明确区分 | 来源标注 [web]/[memory]/[inferred] |
 | V5 | 结论标注置信度（高/中/低） | 低于"中"触发追加轮次 |
 
-## 三源兜底
+## 源失败则中断（禁止假装已双源）
 
 ```
-Firecrawl 主 → Exa 兜底 → Context7 补文档
-任一源失败自动切换下一源，禁止静默降级为单一源。
+声明源：Firecrawl（抓取）+ Exa（语义搜索）+ Context7（库文档）
+任一声明源不可用（未授权 / 无工具 / 调用失败）→ 标注缺失 → interrupt 或把相关结论置信度降到「中」以下。
+禁止声称 V1 已过；禁止「自动切下一源」假装交叉验证已完成。
+本仓不引入 capability_resolver / harness-capabilities.yaml。
 ```
 
 ## 质量标准

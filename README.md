@@ -1,13 +1,14 @@
 # .claude — Claude Code 全局配置
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.12** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+> 五柱 × 阶段主干 × 三横切 | **v13.0.4** | 调度: `config/workflow.yaml`（→ [docs/DEV_FLOW.md](docs/DEV_FLOW.md)） | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
 
 ## 快速导航
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.12）                                                                 |
+| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + 工作流主干（派生）+ 完成定义 + 铁律索引 |
+| `SPEC.md`       | 配置法典（v13.0.4）                                                                 |
+| `config/workflow.yaml` | 工作流主干：阶段门、轨道、完成定义（独立审查必过）、质量标准、审查契约（≤3 轮、两道关）、执行并发；不含模型/推理强度（`scripts/workflow.py` 渲染 + lint） |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
 | `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
 | `settings.json` | 运行时配置                                                                          |
@@ -16,15 +17,15 @@
 
 | 目录         | 内容                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------ |
-| `skills/`    | 36 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
-| `agents/`    | 17 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
-| `rules/`     | 10 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
-| `hooks/`     | 生命周期钩子（19 注册激活 + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
+| `skills/`    | 26 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
+| `agents/`    | 9 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
+| `rules/`     | 6 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
+| `hooks/`     | 生命周期钩子（注册激活（`settings.json`） + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
 | `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
 | `docs/`      | SYNC_GUIDE + research/（调研 SSOT）+ ADR/（RUNTIME_PLAYBOOK 已并入 CLAUDE.md/rules） |
-| `scripts/`   | sync.ps1、validate_config.py、check.ps1                                              |
+| `scripts/`   | sync.ps1、validate_config.py、workflow.py、check.ps1                                 |
 | `templates/` | OpenSpec/GSD/DESIGN 模板                                                             |
-| `catalog/`   | 按需变体库 107+48+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
+| `catalog/`   | 按需变体库 99+41+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
 
 ## 五柱骨架
 
@@ -35,9 +36,9 @@ Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | cl
 Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
 ```
 
 - 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
@@ -49,13 +50,22 @@ hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
 ## 验证
 
 ```powershell
-python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
-powershell scripts/check.ps1        # 一致性体检
+python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描；V21 主干同步）
+python scripts/workflow.py check    # 主干校验 + 生成块漂移 + 模型无关 lint
+python hooks/tests/test_workflow_spine.py  # 主干回归（校验 / 漂移 / lint / 完成门）
+pwsh scripts/check.ps1              # 一致性体检
 ```
 
 ## 版本
 
-- 当前：**v11.4.12**（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
+- 当前：**v13.0.4**（2026-10-29）— 无依赖且可后台的命令/操作不得阻塞会话，优先并行（`config/workflow.yaml` `execution.concurrency`）。有依赖仍按序；长驻后台。不是第三道 `/goal` 门，不另建 Stop hook，不改 `browser_ui_tests`。不升 claude-mem / caveman / OpenSpec major。Guard 1.2.17。落地：`git pull` → `python3 scripts/workflow.py check` → `sync.ps1 -All`（见 `docs/DEV_FLOW.md`）。
+- 前版：v13.0.3（2026-10-29）— Playwright / chrome-devtools 浏览器 UI 测试须用户显式要求；未要求但强烈像需要 → interrupt（`mcp/servers.json` `browser_ui_tests` / `rules/MCP.md` §2c）。不另建 Stop hook，不构成第三道 `/goal` 门。
+- 前版：v13.0.1（2026-10-24）— 模型无关 · 一次通过 · 独立审查门 + 机械门收口：`review_bars_ok` 拒绝尖括号/空模板证据；豁免匹配不再把「不要跳过验证」当跳过；Stop `blocks` 按审查相位计数；BLOCKED 写到 stdout 给模型看见。配置仍不绑定模型或推理强度；每条轨道完成前必须通过全新独立审查（两道关各附真实证据），≤3 轮，用尽 = BLOCKED。Guard 1.2.17。
+- 前版：v12.0.0（2026-10-24）— 配置驱动主干 `config/workflow.yaml`（多后端模型 profile + 角色档位，v13 已移除）；合并 code-reviewer→eng-reviewer、pr-workflow→ship，删 catalog 同名重复与 4 个未注册 hook。Guard 1.2.17。
+- 前版：v11.6.0（2026-09-09）— 工具链 SSOT（pwsh 7.5+ / pnpm 11 / 语言地板）；缺工具 BLOCKED，禁止静默回退 5.1/npm/pip。Guard 1.2.17。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
+- 前版：v11.5.0（2026-09-09）— 七维独立审查（含文档）+ 审查前刷图 + 全栈 glob；Guard 1.2.15。落地：合并本机 `~/.claude` 后 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。
+- 前版：v11.4.13（2026-09-07）— MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；everything 非 Glob/非 R17。Guard 1.2.11
+- 前版：v11.4.12（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
 - 前版：v11.4.11（2026-09-01）— 独立审查只找问题；修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。Guard 1.2.10；DSH 2.10 / OpenCode 1.10
 - 前版：v11.4.10（2026-09-01）— Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留；Guard 1.2.10；DSH 2.9 / OpenCode 1.9
 - 前版：v11.4.9（2026-09-01）— 有改动即双审（PASS 即停，仅结论不一致才再开一轮、最多 3 轮）；计划未批准零注入（CallDynamicTool/CreatePlan）；Windows `/X:/` 路径规范化；会话起止双图 ensure/refresh；已有图 CLI 失败不阻断；Guard 1.2.9；DSH 2.8 / OpenCode 1.8
@@ -77,4 +87,4 @@ powershell scripts/check.ps1        # 一致性体检
 - 前版：v11.1.0（2026-08-13）— 多编辑器同步恢复 1+N（sync v20.0：Cursor + qoder-cn/trae-cn/workbuddy，清单单源 sync-manifest editors 段）+ 全局去重（计数/分级漂移、断链、四命令薄壳化）
 - 前版：v11.0.0（2026-08-12，深度重构）— 治理文档 8→6 根文件 + skills 45→36 / agents 25→16 / rules 12→10 + codegraph v1.5 自动同步接管 + 变更史外置 CHANGELOG.md
 - 变更史：`CHANGELOG.md`
-- 调研 SSOT：`docs/research/44-repo-deep-research-v10.11.md` + `COVERAGE.md`
+- 调研 SSOT：`docs/research/merits-20261028.md`（唯一现行调研制品）

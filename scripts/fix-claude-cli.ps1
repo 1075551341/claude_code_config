@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.5
 <#
 .SYNOPSIS
     修复 Windows 上 `claude` 命令反复失效，并保证 GitHub MCP 本地二进制存在。
@@ -21,8 +21,8 @@
     只诊断，不改 PATH / 不卸载 / 不下载。
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File scripts/fix-claude-cli.ps1
-    powershell -ExecutionPolicy Bypass -File scripts/fix-claude-cli.ps1 -DiagnoseOnly
+    pwsh -ExecutionPolicy Bypass -File scripts/fix-claude-cli.ps1
+    pwsh -ExecutionPolicy Bypass -File scripts/fix-claude-cli.ps1 -DiagnoseOnly
 #>
 param([switch]$DiagnoseOnly)
 

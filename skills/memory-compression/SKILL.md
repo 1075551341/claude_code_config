@@ -52,7 +52,7 @@ loading_tier: L3
 { "category": "决策|偏好|架构|错误", "key": "...", "value": "...", "confidence": 0.9 }
 ```
 
-高置信度模式/拒绝模式 → claude-mem observation（R18；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
+高置信度模式/拒绝模式 → claude-mem observation（R18；不再写本地 experiences 文件）
 
 ## 来源
 

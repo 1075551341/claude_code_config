@@ -1,8 +1,8 @@
 # 多端图谱保鲜（v11.4.10）
 
-便携 CLI SSOT：`graph_freshness_cli.py`（ensure / refresh / status）+ `r20_check.py`（R20 机械门，含影响范围）。
-部署：`pwsh -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder 合并 hook **并**复制 CLI / R20 检查器到 DSH/OpenCode；复制 `graph-freshness.ts` 与 `verify-gate.ts`）。
-v11.4.10：Cursor 完成门不再 followup。OpenCode `verify-gate` 审查 PASS 后不再催完成令。
+便携 CLI SSOT：`graph_freshness_cli.py`（ensure / refresh / status）+ `r20_check.py`（导入 `hooks/_lib/r20_replay.py`，禁止再复制字段正则）。
+部署：`pwsh -File scripts/deploy-editor-graph-hooks.ps1`（TRAE/Qoder 合并 hook **并**复制 CLI / R20 检查器 + `r20_replay.py` 到 DSH/OpenCode；复制 `graph-freshness.ts` 与 `verify-gate.ts`）。
+v11.5.0：`r20_check.py` 导入 `r20_replay`；OpenCode `verify-gate` 结论行与七维对齐 Python SSOT（整行解析、跳过教学句）。审查 PASS 后不再催完成令。
 v11.4.9：Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断；OpenCode `verify-gate` 计划文件不注入完成令；独立审查 PASS 即停。
 
 | Harness | 开始 | 结束 | 配置 |
@@ -12,7 +12,15 @@ v11.4.9：Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断；OpenC
 | OpenCode | plugin `ensure` **每会话一次**；`GRAPH_RULE` 注入一次 | idle `refresh` **60s 冷却** | `~/.config/opencode/graph-freshness.json` |
 | DSH | agent CLI `ensure` **每会话一次**（无 hook） | 完成前 CLI `refresh` **一次** | `~/.dsh/config/graph-freshness.json` |
 
-OpenCode / DSH **不**经 `sync.ps1` 覆盖 AGENTS.md；CLI 为各自 home 副本。
+OpenCode / DSH **不**经 `sync.ps1` 覆盖 AGENTS.md；CLI 为各自 home 副本。执行并发与本包同一 SSOT（`config/workflow.yaml` `execution.concurrency`）：
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
 
 # TRAE / Qoder 图谱保鲜 hook 注册
 

@@ -5,6 +5,8 @@ globs: ["*.java", "*.kt", "pom.xml", "build.gradle", "*.properties", "*.yml"]
 
 # Java/Spring 开发规则
 
+> Java 21 LTS → `config/toolchain.yaml`
+
 ## 项目结构
 
 - 分层架构：controller / service / repository / model / config

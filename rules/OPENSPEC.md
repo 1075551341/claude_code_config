@@ -49,7 +49,7 @@ description: OpenSpec delta-spec 使用规范。触发：openspec/、/opsx:、pr
 ## CLI 安装（v1.4.1 core profile，含 sync）
 
 ```bash
-npm install -g @fission-ai/openspec@latest   # 需 Node >=20.19
+pnpm add -g @fission-ai/openspec@latest   # 需 Node >=22；缺 pnpm → config/toolchain.yaml
 openspec init --tools cursor --force         # 项目内生成 .cursor/skills + openspec/
 openspec update                              # 刷新 agent skills
 ```

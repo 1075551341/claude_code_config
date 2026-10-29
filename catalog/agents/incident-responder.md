@@ -1,7 +1,6 @@
 ---
 name: incident-responder
 description: 负责生产故障响应和处理任务。当生产环境发生故障、服务宕机、性能严重下降、数据异常、安全事件需要紧急处理时调用此Agent。触发词：生产故障、服务宕机、系统崩溃、紧急故障、P0故障、线上问题、服务不可用、告警触发、故障排查、事故响应、服务降级、故障复盘、应急处理。
-model: inherit
 color: red
 tools:
   - Read

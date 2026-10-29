@@ -20,14 +20,14 @@ source: internal
 ### 阶段 1: 范围识别
 
 ```
-① 有 `.code-review-graph/`（v11.4.6 强制；无图由 hook ensure，仍无则 BLOCKED）：
-   └ get_minimal_context_tool — 任务入口精准上下文
-   └ get_impact_radius_tool — 变更影响面（函数/类/文件/执行流）
-   └ 有 git diff → detect_changes_tool（风险评分 / test-gap）
-   └ 无图 → hook 先 ensure（init/build）；仍无图 → **BLOCKED**，禁止 Grep 当探索主路径
+① 有 `.code-review-graph/`（无图由 hook **ensure**，仍无则 BLOCKED）：
+   └ get_minimal_context — 任务入口精准上下文
+   └ get_impact_radius — 变更影响面（函数/类/文件/执行流）
+   └ 有 git diff → detect_changes（风险评分 / test-gap）
+   └ 无图 → SessionStart/PreToolUse ensure（命令细节 → `rules/CORE.md` 图谱政策 + `hooks/_lib/graph_freshness.py`）；仍无图 → **BLOCKED**，禁止 Grep/Glob/everything 当探索主路径
 ② codegraph_explore(target) blast-radius（怎么运作 / 符号调用链）
    └ 先确认 codegraph 无 staleness ⚠️ banner；有则 Read 文件直接获取最新内容
-   └ 无 .codegraph/ 索引 → hook 先 `codegraph init -i`；仍无 → **BLOCKED**，禁止 Grep 全扫当主路径
+   └ 无 .codegraph/ 索引 → 同上 ensure；仍无 → **BLOCKED**
 ③ Grep 全项目(reference_pattern)
    → 搜索: 函数名/类型名/文件名/配置key/路径引用
 ④ MANIFEST.yaml concern → depends_on（配置/rule/skill/agent）
@@ -56,7 +56,7 @@ source: internal
    → 残留 > 0 → 回到阶段 2 继续修改
 
 ② 构建/类型/Lint 验证
-   → npm run build / pnpm run typecheck / pnpm run lint
+   → pnpm run build / pnpm run typecheck / pnpm run lint
 
 ③ 回归保持核验（非功能变更必须）
    → 重构/格式/配置/重命名类非功能变更：核验原功能行为不变
@@ -71,7 +71,7 @@ source: internal
 
 | 变更类型 | 检测范围 |
 |----------|----------|
-| 改函数名/签名 | CRG impact（有图）+ codegraph blast-radius + Grep 全项目函数名 |
+| 改函数名/签名 | CRG `get_impact_radius`（有图）+ codegraph blast-radius + Grep 全项目函数名 |
 | 改类型/接口 | 同上 + Grep import 引用 |
 | git diff / 风险 / 开 PR | CRG detect_changes + get_review_context（有图）+ Grep 残留 |
 | 改配置文件 | MANIFEST depends_on 遍历 |
@@ -85,7 +85,7 @@ source: internal
 | 禁止 | 正确做法 |
 |------|----------|
 | 只改指定文件 | Grep 找到所有关联文件一并修改；五维验收覆盖 blast-radius 全部相关项 |
-| "应该只有这些" | CRG impact + codegraph 验证，不靠直觉 |
+| "应该只有这些" | CRG `get_impact_radius` + codegraph 验证，不靠直觉 |
 | 手动估计范围 | CRG get_impact_radius + detect_changes + codegraph + Grep 实证 |
 | 残留引用 > 0 声称完成 | 违反 R1（验证通过才算完成） |
 | 跳过阶段 1 直接改 | 范围不明 = 盲改 = 必遗漏 |
@@ -94,4 +94,4 @@ source: internal
 
 - 阶段 1 清单为空 → **拒绝执行**（先让用户明确变更范围）
 - 阶段 3 残留 > 0 → **不可声称完成**（回到阶段 2）
-- 全部通过 → 进入 verification-before-completion（五维/R20 核对范围含本清单全部相关项，禁止只验已编辑文件）
+- 全部通过 → 进入 verification-before-completion（R20 七维核对范围含本清单全部相关项，禁止只验已编辑文件）

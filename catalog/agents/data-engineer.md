@@ -1,7 +1,6 @@
 ---
 name: data-engineer
 description: 负责数据工程相关任务。当需要构建ETL数据管道、设计数据仓库、处理数据清洗转换、实现数据同步方案、构建数据报表系统、处理大数据任务、设计数据湖方案、实现实时流数据处理时调用此Agent。触发词：ETL、数据管道、数据仓库、数据清洗、数据同步、数据分析、BI报表、大数据、Spark、数据湖、实时数据、Kafka、数据集成、数据处理。
-model: inherit
 color: yellow
 tools:
   - Read

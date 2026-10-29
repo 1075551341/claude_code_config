@@ -5,7 +5,7 @@
     python scripts/audit_hooks.py       # 唯一用法，无参数；只读，不修改任何文件
 
 输出两段：逐 hook 的 OK/UNSAFE 清单，以及潜在问题（timeout>30s、单 matcher 挂载>4 个 hook）。
-修复未经 launcher 的 hook：powershell -File scripts/fix.ps1 -Fix
+修复未经 launcher 的 hook：pwsh -File scripts/fix.ps1 -Fix
 """
 import json, os
 

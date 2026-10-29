@@ -5,6 +5,8 @@ globs: ["*.cs", "*.csx", "*.fs", "*.fsx"]
 
 # C# / .NET 开发规则
 
+> .NET SDK 8+ → `config/toolchain.yaml`
+
 ## 命名规范
 
 | 类型 | 规范 | 示例 |

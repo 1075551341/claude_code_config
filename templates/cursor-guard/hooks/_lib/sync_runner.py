@@ -4,12 +4,30 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
 from config import load_guard_config, state_path
 from impact_sync import SyncPlan, SyncScope
+
+MISSING_PWSH_MSG = (
+    "pwsh 未找到。安装 PowerShell 7.5+："
+    "winget install --id Microsoft.PowerShell。"
+    "禁止使用 Windows PowerShell 5.1。"
+)
+
+
+def resolve_pwsh() -> str | None:
+    return shutil.which("pwsh")
+
+
+def pwsh_or_blocked() -> tuple[str | None, str]:
+    pwsh = resolve_pwsh()
+    if pwsh:
+        return pwsh, ""
+    return None, MISSING_PWSH_MSG
 
 
 def _debounced(seconds: int) -> bool:
@@ -56,9 +74,13 @@ def run_sync_plan(plan: SyncPlan, force: bool = False) -> tuple[bool, str]:
     if not sync_script.exists():
         return False, f"sync.ps1 不存在: {sync_script}"
 
+    pwsh, err = pwsh_or_blocked()
+    if not pwsh:
+        return False, err
     ps_scope = scope_to_ps1_arg(plan.scope)
     args = [
-        "powershell",
+        pwsh,
+        "-NoProfile",
         "-ExecutionPolicy",
         "Bypass",
         "-File",

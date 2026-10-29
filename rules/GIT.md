@@ -110,7 +110,7 @@ git revert <commit-hash>            # 创建撤销提交
 
 ```bash
 #!/bin/sh
-npm run lint && npm run format:check
+pnpm run lint && pnpm run format:check
 if git diff --cached | grep -E "(password|secret|api_key)"; then
   echo "发现敏感信息，请移除后再提交"; exit 1
 fi

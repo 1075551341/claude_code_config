@@ -69,7 +69,7 @@ def _verified_green(r20, entry: dict, data: dict, qg: dict) -> bool:
     if not entry.get("r20_replay_ok"):
         return False
     phase = r20.dual_pass_phase(entry, qg)
-    if phase in {"review", "modify", "verify", "capped"}:
+    if phase in {"review", "modify", "verify", "graph", "capped"}:
         return False
     return True
 
@@ -140,8 +140,27 @@ def main() -> None:
         else:
             print("verification_stop: 完成门不注入 followup_message（规则驱动双审）", file=sys.stderr)
 
+        notices = []
         if show_graph_ui and graph_ui:
-            write_json({"user_message": graph_ui})
+            notices.append(graph_ui)
+        if r20 is not None and r20.dual_pass_phase(entry, qg) == "capped":
+            notices.append(
+                r20.blocked_session_notice(
+                    str(qg.get("on_rounds_exhausted") or "BLOCKED"),
+                    reason="独立审查轮次已用尽仍未 PASS。",
+                    blocks=int(entry.get("review_rounds") or 0),
+                    max_blocks=int(qg.get("review_max_rounds") or 3),
+                )
+            )
+        if notices:
+            text = "\n".join(notices)
+            write_json(
+                {
+                    "user_message": text,
+                    "agent_message": text,
+                    "additional_context": text,
+                }
+            )
     except Exception as e:
         print(f"verification_stop: {e}", file=sys.stderr)
     finally:

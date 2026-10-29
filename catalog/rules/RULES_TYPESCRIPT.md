@@ -6,6 +6,7 @@ alwaysApply: false
 # TypeScript 规则（专用）
 
 > 配合核心规则使用，仅在 TypeScript 场景加载
+> Node 22+ / pnpm 11 → `config/toolchain.yaml`。尊重 lockfile；缺声明的管理器 BLOCKED。
 
 ## 配置规范
 

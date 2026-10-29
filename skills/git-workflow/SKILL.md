@@ -29,6 +29,16 @@ source: user-rules-migration
 - 已 push 的提交：**不要** amend（除非用户明确要求且接受 force push）
 - **禁止**提交含密钥的文件（`.env`、`credentials.json` 等）；用户要求时警告
 
+## 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
 ## 提交流程
 
 1. **并行**执行：

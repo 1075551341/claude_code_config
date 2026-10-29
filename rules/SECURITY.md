@@ -52,7 +52,7 @@ description: 安全开发、安全审计、漏洞修复相关任务时启用
 6. 安全配置：禁用目录列表 / 移除默认账户 / 关闭调试 / 安全 Headers / CORS 白名单
 7. XSS：textContent 优先 / DOMPurify 清理 / CSP 配置
 8. 反序列化：JSON 优先 / pickle 用白名单 / 禁止 pickle 不可信数据
-9. 组件漏洞：定期 npm audit / pip audit / 及时更新依赖
+9. 组件漏洞：定期 pnpm audit / pip audit / 及时更新依赖
 10. 日志监控：记录登录/敏感操作/失败访问/系统异常，不含敏感数据
 ```
 
@@ -128,7 +128,7 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 ```
 
 □ settings deny + acceptEdits □ pre-bash-guard + post-secret-detector □ /sandbox
-□ strict: lasso 注入扫描（可选） □ npm audit + 技能来源审查
+□ strict: lasso 注入扫描（可选） □ pnpm audit + 技能来源审查
 
 ```
 
@@ -146,7 +146,7 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 | L2 | ARIA/URL blocklist | 已知恶意模式过滤 |
 | L3 | 结构性过滤 | DOM 树异常检测 |
 | L4 | TestSavantAI BERT-small ONNX | 22MB，本地运行，零网络调用 |
-| L4b | Claude Haiku 转录检查 | 低成本快速扫描，异常即熔断 |
+| L4b | 小模型转录检查（模型由调用方选） | 低成本快速扫描，异常即熔断 |
 | L5 | Canary token | 注入诱饵 token，触发即确定性阻断 |
 | L6 | Ensemble 裁决 | L4 AND L4b 都 >= 0.75 才 BLOCK |
 | 可选 L4c | DeBERTa-v3 | 721MB，`GSTACK_SECURITY_ENSEMBLE=deberta` 启用 |
@@ -172,11 +172,11 @@ Spoofing→auth | Tampering→git/PR | Repudiation→结构化日志 | Disclosur
 |--------------|----------|--------|
 | 注入(SQL/NoSQL/命令) | §1 参数化查询 | security-reviewer |
 | XSS | §7 输出编码+CSP | security-reviewer |
-| SSRF | §12 URL/metadata限制 | security-reviewer + cso |
+| SSRF | §12 URL/metadata限制 | security-reviewer（深度模式） |
 | 失效认证/授权 | §2+§5 JWT/RBAC | security-reviewer |
 | 敏感数据泄露 | §3 脱敏+密钥管理 | post-secret-detector hook |
 | 访问控制 | §5 资源归属检查 | eng-reviewer |
-| 安全配置错误 | §6+§14 硬化清单 | sre |
+| 安全配置错误 | §6+§14 硬化清单 | security-reviewer |
 | 供应链 | §12 技能/MCP审查 | security-guidance plugin |
 
 **security-reviewer 必检三类**：SQL注入(拼接查询) | XSS(innerHTML未清理) | SSRF(内网URL无校验)

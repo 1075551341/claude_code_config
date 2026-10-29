@@ -5,6 +5,8 @@ globs: ["*.rs", "Cargo.toml"]
 
 # Rust 开发规则
 
+> rustc stable / edition 2021 → `config/toolchain.yaml`
+
 ## 所有权与借用
 
 - 遵循所有权规则：一个所有者、借用不超生命周期

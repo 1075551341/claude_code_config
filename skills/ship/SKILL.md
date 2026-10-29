@@ -1,73 +1,64 @@
 ---
 name: ship
-description: 发布管线，整合测试→覆盖审计→推送→开PR→可选部署验证。
-triggers: [发布, ship, 推送开PR, 部署验证]
+description: 交付管线（分支完成 → 测试/覆盖 → 推送 → 开 PR → 合并策略 → 可选部署）。触发词：发布 | ship | 开 PR | pull request | 合并分支 | 分支完成
+triggers: [发布, ship, 推送开PR, 部署验证, 开 PR, pull request, 提交 PR, gh pr, 分支完成, 合并分支, 分支清理]
 layer: supplement
 source: garrytan/gstack + obra/superpowers
 disable-model-invocation: true
 loading_tier: L3
 ---
 
-# Ship
+# Ship（交付唯一正文）
 
-> v11: 原 `agents/release-engineer.md`（同步main→测试→覆盖审计→推送→开PR）已并入本技能，流程即其管线。
+> v12：原 `skills/pr-workflow`（开 PR）与 `skills/finishing-a-development-branch`（分支完成/合并策略）并入本技能；后者保留为指向本文件的薄壳。阶段门控 → `config/workflow.yaml` `stages.ship`（`/ship` 命令派生块）。
+> Git 安全（禁自动 commit/stash、禁改 git config）→ `skills/git-workflow/SKILL.md`。用户未要求时不 push、不开 PR。
 
-## 触发
-- 手动：`/ship`
+## 前置（④验证已通过）
 
-## 流程
-1. 同步 main 分支（git merge main 或 rebase）
-2. 运行完整测试套件（无框架则引导）
-3. 审计测试覆盖率
-4. 运行 /document-release 更新文档
-5. 推送变更
-6. 创建/更新 PR
-7. 可选：完整部署闭环（approved PR→verified production）用 `catalog/agents/land-and-deploy.md`（v11 降级 catalog，按需复制启用）
-8. 可选：/canary 启动监控循环
+- 任务已完成：verification-before-completion 全绿，且本轮全新独立审查批次 PASS（两道门：符合预期要求 + 原功能保持）。未 PASS 不进入交付
+- 文档/CHANGELOG/版本戳/派生块已同步（改过 `config/workflow.yaml` → `python scripts/workflow.py check` 通过）
 
-## CI 模板引用（原 release-engineer 附注）
-可引用 `templates/github-actions/` 中的 claude-code-action 模板进行 CI 配置：4 后端支持（Node/Python/Go/Rust）、结构化 JSON 输出、PR 自动创建与状态同步。
+## 管线
 
-## 与 finishing-a-development-branch 的关系
-ship 是完整发布管线；finishing-branch 提供分支完成后的选项（merge/PR/keep/discard）。ship 包含 finishing-branch 的核心功能并扩展。
+1. **同步基线**：`git fetch` 目标分支；有冲突先解决（merge 或 rebase，按仓库惯例）
+2. **全量测试 + 构建/类型/Lint**；无测试框架则说明并引导
+3. **覆盖审计**：覆盖率不低于基线；新逻辑有测试
+4. **准备 PR（并行）**：`git status`；`git diff`（staged + unstaged）；分支是否 track remote；`git log` + `git diff <base>...HEAD`（覆盖本分支**全部** commits，非仅最新一条）
+5. **推送**：需要时 `git push -u origin HEAD`
+6. **开 PR**：`gh pr create`（HEREDOC body，格式见下）；完成后返回 **PR URL**
+7. **合并策略**（用户要求合并时）：单一特性/提交杂 → squash；提交已整洁且需保留历史 → rebase/merge；合并后清理本地与远程分支
+8. **可选部署**：完整闭环（approved PR → verified production）→ `catalog/agents/land-and-deploy.md`；CI 审查模板 → `templates/github-actions/claude-review.yml`（不指定模型，用 action 默认或仓库变量）
 
-## PR 格式（v11 自 /ship 并入）
+## PR 格式
 
-```
-[type] scope: description
-
+```bash
+gh pr create --title "<type>(<scope>): <description>" --body "$(cat <<'EOF'
 ## Summary
-- 变更点 1
-- 变更点 2
+- 变更点
 
 ## Test plan
-- [x] 测试项 1
-- [x] 测试项 2
+- [x] 构建 / 测试 / lint 命令与结果
 
 ## 验证清单
-- [x] 构建通过
-- [x] 测试通过
-- [x] 安全审查通过
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+- [x] eng-reviewer PASS（+ 按路由触发的审查者）
+- [x] 文档 / CHANGELOG 已同步
+EOF
+)"
 ```
 
-## 预发布检查清单（gstack 风格，v11 自 /ship 并入）
+## 预发布检查清单
 
 ```
 □ 构建通过（无错误、无新 warning）
 □ 测试通过（单元 + 集成，覆盖率不低于基线）
-□ Eng Review 通过（eng-reviewer PASS）
-□ 安全审查通过（如触发 security review）
-□ 文档更新（README / API docs / 变更日志）
-□ 无硬编码密钥 / .env 泄露
-□ 依赖无已知漏洞（npm audit / pip audit）
-□ 无回滚风险
+□ 审查批次 PASS（eng-reviewer 必派；安全敏感 +security-reviewer）
+□ 文档更新（README / API docs / CHANGELOG）
+□ 无硬编码密钥 / .env 泄露（R11）
+□ 依赖无已知漏洞（pnpm audit / uv pip audit 等）
+□ 无回滚风险；CI 全绿
 ```
 
-## 质量门
-- 测试全部通过
-- 覆盖率未下降
-- 无安全告警
-- 文档已更新
-- CI 全部通过 + Code Review 通过 + 无回滚风险
+## 约束
+
+- 禁止修改 git config；禁止用 TodoWrite / Task 替代本流程
+- 强推 main / 删除远程分支前须用户确认（R8）

@@ -19,13 +19,20 @@ description: Cursor 编辑器全局独有配置指南（与 Claude Code 低耦�
 ## 部署
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 ```
 
 完全退出并重启 Cursor → Settings → Hooks 查看执行记录。
 
 配置：`~/.cursor/guard-config.json`（阈值、开关）。更新模板后重跑 deploy；`-Force` 覆盖 guard-config。
 
+**v1.2.17**：Shell 警告对齐 Claude `pre-bash-guard`（`powershell`/`powershell.exe` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
+**v1.2.16**：`sync_runner` 只 spawn `pwsh`（缺则 BLOCKED）。与 live `sync.ps1` `#Requires -Version 7.5` 对齐。
+**v1.2.15**：结论标题按 Unicode 字母边界（OpenCode 不用 JS `\\b` 配中文；「当前状态」不得当结论行）。
+**v1.2.14**：结论整行解析（跳过「PASS 或/or NEEDS-CHANGES」教学句，最后一条真实结论胜出）；`reviewer_source_from_payload` 不读 `prompt`/`description`。OpenCode `verify-gate.ts` 与 Python SSOT 对齐。
+**v1.2.13**：审查填槽必须绑定审查者身份（无身份的父消息不得抢槽）；结论只认标题/结论行。`r20_check.py` 导入 `r20_replay`。
+
+**v1.2.12**：七维（含问题是否解决）；审查前须在 last_edit 之后刷图，否则相位停在 `graph`；文档编辑 in scope；批次 NEEDS-CHANGES 压过 PASS。
 **v1.2.11**：`verify_tracker` 对带 `resume` 的审查 Task 不计入 `reviews`（每轮须全新开审）。
 **v1.2.10**：完成门不再 `followup_message`（会刷会话面板）。Stop 只刷图谱 / 全绿 sync；双审改规则驱动。`enforce_mode=off`。
 **v1.2.9**：有改动即双审；独立审查 PASS/符合预期即停；仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；sessionEnd 刷双图 timeout 45s。
@@ -50,22 +57,24 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
 验证（一键回归，推荐）：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
 ```
 
 部署后回归：`... -Deploy`。报告：`scripts/test-guard-result.json`。
 
 底层：`python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json`（行为断言 + JSON 合法性，需全部通过）。
 
-## MCP 推荐（P0：codegraph）
+## MCP 推荐（常驻 5；手工粘贴）
 
-1. 安装：`npx @colbymchenry/codegraph` → `codegraph init -i`
-2. Cursor Settings → MCP 启用 codegraph
-3. 索引自动保鲜：codegraph v1.5 MCP server 原生监听文件变更自动同步（300ms 静默窗 + 连接时追赶）；v11 起 Guard 不再挂 kg sync hook，也无需手动 `codegraph sync`
+Cursor User MCP **手工粘贴**（`sync.ps1` 不复制 `mcp.json`）。权威清单与 everything 片段 → [`CURSOR_MCP_PROFILE.md`](CURSOR_MCP_PROFILE.md)；推荐 JSON → [`templates/cursor-guard/mcp-recommended.json`](../templates/cursor-guard/mcp-recommended.json)。
 
-参考：[`templates/cursor-guard/mcp-recommended.json`](../templates/cursor-guard/mcp-recommended.json)
+常驻：codegraph@1.6.0、code-review-graph==2.3.8、serena `--context ide`、everything-mcp==1.0.6 + `mcp<2`、grep。Plugins：Context7 / Exa / Playwright；firecrawl 面板无 User → 勿写入 User MCP；github / chrome-devtools 默认关。
 
-其余按需：gh、Context7、Exa、Playwright — 见 [`TOOL_MATCHING_GUIDE.md`](TOOL_MATCHING_GUIDE.md)。
+1. 安装 codegraph CLI：`npx @colbymchenry/codegraph@1.6.0` → `codegraph init -i`
+2. Cursor Settings → MCP 启用上列常驻 5（everything 须按 `CURSOR_MCP_PROFILE.md` 手工粘贴）
+3. 索引自动保鲜：codegraph v1.5 MCP watcher（300ms 静默窗 + 连接时追赶）；v11 起 Guard 不再挂 kg sync hook
+
+路由/场景对照 → [`TOOL_MATCHING_GUIDE.md`](TOOL_MATCHING_GUIDE.md)。
 
 ## Skill / Agent 显式加载
 
@@ -92,7 +101,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | Cursor 原生压缩      | **`/summarize`** 或「压缩上下文」 | 降低上下文环；触发 `preCompact` hook                                                                           |
 | Compact 前快照       | `/summarize` 或自动满窗时         | `pre_compact_snapshot` + `cursor-context.json`                                                                 |
 | 新会话交接           | 新 conversation_id                | `sessionEnd`/`stop` 写 handoff → `sessionStart` 注入                                                           |
-| codegraph 优先       | soft_block（默认）                | `explore_router` + `graph_freshness`；无索引 **deny**（禁止 Grep 兜底）                                        |
+| codegraph 优先       | soft_block（默认）                | `explore_router` + `graph_freshness`；无索引 **deny**（禁止 Grep/Glob/everything 兜底）                                        |
 | Shell 危险命令       | 自动拦截                          | `shell_guard`                                                                                                  |
 | 密钥粘贴             | 自动警告                          | `prompt_secret_scan`                                                                                           |
 | 会话状态一览         | 自动                              | `session_bootstrap`（ensure 双图；用户 hook cwd 是 `~/.cursor` 时用 `workspace_roots` / `.workspace-trusted`） |
@@ -166,11 +175,11 @@ slash 命令是**路由信号**，不替代 Read 全文。
 
 默认：`sync.ps1` 维护 `~/.cursor/plugins/local/claude-config`（实体 .mdc 副本，规则唯一通道）；`~/.cursor/rules` 保持空。验证：Reload Window → Settings → Rules → User 应出现 claude-config 规则。
 
-**codegraph 优先三层**（两侧一致，v10.5）：
+**常驻 MCP 与 R17 三层**（两侧一致，v11.4.13）：
 
 1. 规则：`CORE` R17 + `CURSOR-EDITOR.mdc`（Cursor alwaysApply，plugin 通道）
-2. Hook：`explore_router` — `enforce_mode: soft_block`（Grep/Glob 无先 codegraph 则 deny；无 `.codegraph` 降级 nudge）
-3. MCP：`codegraph` 在 Cursor Settings 启用（**codebase-memory 已禁用**：全盘索引爆 CPU/内存）；项目已 `codegraph init`
+2. Hook：`explore_router` — `enforce_mode: soft_block`（Grep/Glob/everything 无先 codegraph 则 deny；无 `.codegraph` 同样 deny，不降级 nudge）
+3. MCP：按 [`CURSOR_MCP_PROFILE.md`](CURSOR_MCP_PROFILE.md) 启用常驻 5（**codebase-memory 已禁用**：全盘索引爆 CPU/内存）；项目已 `codegraph init`
 
 ## 勿做
 

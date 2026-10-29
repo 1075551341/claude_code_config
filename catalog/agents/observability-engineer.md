@@ -1,7 +1,6 @@
 ---
 name: observability-engineer
 description: 负责系统监控和可观测性相关任务。当需要配置监控告警、搭建Prometheus+Grafana监控体系、实现分布式链路追踪、配置日志采集与分析、设计SLI/SLO指标体系、排查监控盲区、优化告警噪声、实现应用性能监控(APM)时调用此Agent。触发词：监控配置、告警配置、Prometheus、Grafana、链路追踪、日志采集、ELK、SLI、SLO、可观测性、APM、Jaeger、OpenTelemetry、告警规则、监控大盘。
-model: inherit
 color: green
 tools:
   - Read

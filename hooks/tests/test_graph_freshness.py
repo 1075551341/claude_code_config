@@ -99,6 +99,14 @@ def test_tool_classify() -> None:
         gf.is_build_tool("Bash", {"command": "codegraph init -i"}) is True,
     )
     check(
+        "echo codegraph sync is not build",
+        gf.is_build_tool("Bash", {"command": "echo codegraph sync"}) is False,
+    )
+    check(
+        "echo codegraph plus npm build is not build",
+        gf.is_build_tool("Bash", {"command": "echo codegraph; npm run build"}) is False,
+    )
+    check(
         "should deny Grep when classifying",
         gf.should_deny_tool("Grep") is True,
     )
@@ -113,6 +121,116 @@ def test_tool_classify() -> None:
     check(
         "should deny shell grep",
         gf.should_deny_tool("Bash", {"command": "rg foo"}) is True,
+    )
+    check(
+        "everything_search is no-graph blocked (with Grep/Glob class)",
+        gf.is_explore_fallback("everything_search") is True,
+    )
+    check(
+        "claude everything mcp is no-graph blocked",
+        gf.is_explore_fallback("mcp__everything__everything_search") is True,
+    )
+    check(
+        "should deny everything_search",
+        gf.should_deny_tool("everything_search") is True,
+    )
+    check(
+        "should deny claude everything mcp",
+        gf.should_deny_tool("mcp__everything__everything_search") is True,
+    )
+    check(
+        "everything-claude-code is not everything-mcp",
+        gf.is_everything_tool("everything-claude-code") is False,
+    )
+    check(
+        "unwrapped replace_symbol_body is write",
+        gf.is_write_tool("replace_symbol_body") is True,
+    )
+    check(
+        "CallDynamicTool user-serena is write",
+        gf.is_write_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "should deny CallDynamicTool serena write",
+        gf.should_deny_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "CallDynamicTool everything is no-graph blocked",
+        gf.is_explore_fallback(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is True,
+    )
+    check(
+        "should deny CallDynamicTool everything",
+        gf.should_deny_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is True,
+    )
+    check(
+        "codegraph_explore is not write",
+        gf.is_write_tool(
+            "CallDynamicTool",
+            {"namespace": "user-codegraph", "toolName": "codegraph_explore"},
+        )
+        is False,
+    )
+    tp = __import__("tool_paths", fromlist=["is_edit_tool", "extract_edit_paths"])
+    check(
+        "CallDynamicTool serena is edit via tool_input",
+        tp.is_edit_tool(
+            "CallDynamicTool",
+            {"namespace": "user-serena", "toolName": "replace_symbol_body"},
+        )
+        is True,
+    )
+    check(
+        "CallDynamicTool everything is not edit",
+        tp.is_edit_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is False,
+    )
+    nested_paths = tp.extract_edit_paths(
+        {
+            "namespace": "user-serena",
+            "toolName": "replace_symbol_body",
+            "arguments": {"relative_path": "hooks/_lib/tool_paths.py"},
+        },
+        cwd="/tmp/ws",
+    )
+    check(
+        "extract_edit_paths unwraps CallDynamicTool arguments",
+        nested_paths == [__import__("os").path.normpath("/tmp/ws/hooks/_lib/tool_paths.py")],
+    )
+    nested_only = {
+        "arguments": {
+            "namespace": "user-serena",
+            "toolName": "create_text_file",
+            "relative_path": "foo.py",
+        }
+    }
+    from crg_track import collect_tool_names as _collect
+    nested_names = _collect("CallDynamicTool", nested_only)
+    check(
+        "nested-only arguments collects namespace+toolName",
+        "create_text_file" in nested_names and any("serena" in n.lower() for n in nested_names),
+    )
+    check(
+        "nested-only serena create_text_file is edit",
+        tp.is_edit_tool("CallDynamicTool", nested_only) is True,
     )
 
 
@@ -392,6 +510,14 @@ def test_dynamic_mcp_classify() -> None:
         )
         is True,
     )
+    check(
+        "query mcp dynamic everything",
+        gf.is_everything_tool(
+            "CallDynamicTool",
+            {"namespace": "user-everything", "toolName": "everything_search"},
+        )
+        is True,
+    )
 
 
 def test_empty_cwd_still_gates_git_process_cwd() -> None:
@@ -481,6 +607,69 @@ def test_merge_hooks_idempotent() -> None:
     )
 
 
+def test_explore_router_contract() -> None:
+    src = (HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks" / "explore_router.py").read_text(
+        encoding="utf-8"
+    )
+    check(
+        "explore_router does not treat everything as Grep/Glob fallback",
+        "再使用 Grep/Glob/everything 作 fallback" not in src,
+    )
+    check(
+        "explore_router everything followup forbids Glob/codegraph substitute",
+        "everything 仅全盘/跨仓按文件名定位" in src and "禁止替代 Glob 或 codegraph" in src,
+    )
+    check(
+        "explore_router EVERYTHING_MSG is not Grep/Glob fallback copy",
+        "everything 仅用于本机全盘/跨仓按文件名定位" in src,
+    )
+    hooks_json = json.loads(
+        (HOOKS_DIR.parent / "templates" / "cursor-guard" / "hooks.json").read_text(encoding="utf-8")
+    )
+    impact = ""
+    for item in (hooks_json.get("hooks") or {}).get("preToolUse") or []:
+        if "impact_nudge.py" in str(item.get("command") or ""):
+            impact = str(item.get("matcher") or "")
+            break
+    check("impact_nudge matcher includes CallDynamicTool", "CallDynamicTool" in impact)
+    check("impact_nudge command present", any(
+        "impact_nudge.py" in str(item.get("command") or "")
+        for item in (hooks_json.get("hooks") or {}).get("preToolUse") or []
+    ))
+
+
+def test_which_pwsh_pwsh_only() -> None:
+    import inspect
+    src = inspect.getsource(gf.which_pwsh)
+    check("which_pwsh uses pwsh", 'which_tool("pwsh")' in src)
+    check(
+        "which_pwsh does not fall back to powershell",
+        'which_tool("powershell")' not in src,
+    )
+    orig = gf.which_tool
+    skip = os.environ.pop("GRAPH_FRESHNESS_SKIP_SYNC", None)
+    orig_home = os.environ.get("CLAUDE_HOME")
+    os.environ["CLAUDE_HOME"] = str(HOOKS_DIR.parent)
+    try:
+        gf.which_tool = lambda name: None  # type: ignore[method-assign]
+        ok, msg = gf.run_sync_ps1(timeout_sec=1)
+        check("missing pwsh is blocked", ok is False)
+        check("missing pwsh names 7.5+", "7.5" in msg)
+        check("missing pwsh forbids 5.1", "5.1" in msg)
+        check(
+            "missing pwsh does not invoke powershell",
+            "pwsh/powershell" not in msg,
+        )
+    finally:
+        gf.which_tool = orig  # type: ignore[method-assign]
+        if skip is not None:
+            os.environ["GRAPH_FRESHNESS_SKIP_SYNC"] = skip
+        if orig_home is None:
+            os.environ.pop("CLAUDE_HOME", None)
+        else:
+            os.environ["CLAUDE_HOME"] = orig_home
+
+
 def main() -> int:
     print("test_graph_freshness")
     test_eligible_and_empty_registry()
@@ -498,6 +687,8 @@ def main() -> int:
     test_cfg_timeouts()
     test_subprojects_depth1_no_grandchild()
     test_merge_hooks_idempotent()
+    test_explore_router_contract()
+    test_which_pwsh_pwsh_only()
     print(f"\n{len(PASSED)} passed, {len(FAILED)} failed")
     if FAILED:
         print("FAILED:", ", ".join(FAILED))

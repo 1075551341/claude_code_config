@@ -1,15 +1,14 @@
 ---
-description: 按 gstack 路由规则执行多角色审查
+description: 派发一轮全新独立审查（任务完成的必经门）
 ---
 
-# /review — gstack 多角色审查
+# /review — 独立审查
 
-按变更类型自动路由审查角色。**路由规则 SSOT → `rules/AGENTS.md`（审查路由 + 何时委派），本命令不复写**（v11.1 薄壳化）。
+每个任务完成前必须有一轮全新独立审查 PASS。政策 SSOT → `skills/verification-before-completion/SKILL.md`「独立审查」节；路由 → `rules/AGENTS.md`（派生自 `config/workflow.yaml`）。本命令不复写。
 
 执行：
 
-1. `git diff --name-only HEAD~1`（或指定 base）获取变更文件清单
-2. Read `rules/AGENTS.md` → 按审查路由委派全局 agents（所有变更 eng-reviewer 必审；产品→+ceo-reviewer；UI/UX→+designer+dx-reviewer；安全→+security-reviewer；infra/cleanup 可跳 CEO）
-3. 汇总输出：各角色结论（PASS/NEEDS-CHANGES、GO/RETHINK、APPROVED/NEEDS-POLISH、SAFE/RISKS-FOUND）+ 最终建议（可合并 / 需修改）
-
-全局权威：`~/.claude/agents/`；`catalog/agents/` 仅为按需变体库。
+1. 确认验证证据已贴、审查前刷图已在 last_edit 之后完成
+2. `git diff --name-only <起点 tip>`（或指定 base）列出变更；按路由选审查者（eng-reviewer 必派），同一消息并行全新 `Task`
+3. prompt 带原始要求原文、起点 tip、变更清单、主会话已观察到的测试/validate/check 输出原文与相对起点的行为差异（审查者多为只读，凭此核对原功能保持）；要求七维 + 两道门各一行，PASS 时写 `- 符合预期要求：通过（证据：真实观察）` / `- 原功能保持：通过（证据：命令输出）`，禁止照抄「通过|不通过」或尖括号槽
+4. 汇总：全部干净 PASS → 任务完成；否则汇总完整清单 → `change-implementer` 集中改齐 → 再验证 → 下一轮全新开审（上限 `review.max_rounds`，用尽 = BLOCKED）

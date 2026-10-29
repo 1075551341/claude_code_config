@@ -1,7 +1,15 @@
-# Hooks 钩子系统 v5.15
+# Hooks 钩子系统 v5.23
 
 > Claude Code 专用，不同步编辑器。19 注册激活 hooks
 > 五阶段×三层矩阵：骨架层(always-on) + 执行层(reactive) + 横切层(cross-cutting)
+> **v5.23 变更（v13.0.2）**：`crg_track.retry_block` 取代 `six_retry_block`；续轮文案不再叫「六维纠错」（与五维分类 / 七维 R20 撞名）。
+> **v5.22 变更（v13.0.1）**：`review_bars_ok` 拒绝 `证据：<…>` / 契约尖括号槽；`user_waived_verification` 否定句（「不要跳过验证」）不是豁免；`count_stop_block` 只在审查相位或同相位卡住时 +1；Stop 放行时 BLOCKED 写 stdout（`systemMessage` + `additionalContext`），Cursor 经 `user_message`/`agent_message` 露出。
+> **v5.21 变更（v13.0.0）**：模型无关 — `context_thresholds` 删别名解析、登记表出厂为空；Stop 门默认 `review_max_rounds=3`，轮次/阻断用尽状态 = BLOCKED（不再 DONE_WITH_CONCERNS 放行）；`r20_replay.review_bars_ok` 要求 PASS 带两道关（符合预期要求 / 原功能保持，各附证据）；审查者名单 `cross-model-reviewer` 取代旧跨模型名。
+> **v5.20 变更（v11.6.0）**：Cursor Guard **1.2.17** — Shell 警告对齐 Claude `pre-bash-guard`（`powershell` → 改用 pwsh，allow 不 deny）；`sync_runner.resolve_pwsh` 可单测。
+> **v5.19 变更（v11.6.0）**：Cursor Guard **1.2.16** — `sync_runner` 只 spawn pwsh。`.mcp.json` / Cursor 粘贴片段 `command: pwsh`。
+> **v5.18 变更（v11.6.0）**：`which_pwsh` 只认 pwsh 7.5+；live 脚本 `#Requires -Version 7.5`。Cursor Guard 1.2.15。
+> **v5.17 变更（v11.5.0）**：七维（含问题是否解决）；审查前刷图相位 `graph`；`review_max_rounds=5`；批次聚合 verdict；文档 in scope；填槽绑定审查者身份；结论整行解析。Cursor Guard 1.2.15。`deploy-editor-graph-hooks.ps1 -Scope editors|all`。
+> **v5.16 变更（v11.4.13）**：图谱保鲜 deny 覆盖 Glob/everything；`CallDynamicTool` 解包 namespace+toolName；everything 无图与 Glob 同级 deny，不再当 Grep/Glob 产品 fallback。Cursor Guard 仍 1.2.11（matcher 增量）。
 > **v5.15 变更（v11.4.12）**：每轮独立审查必须全新开审；带 `resume` 的审查委派不计入 `reviews`。Cursor Guard 1.2.11。
 > **v5.14 变更（v11.4.10）**：Cursor Guard 1.2.10 — 完成门不再 `followup_message`（规则驱动双审）；`verification_gate` 关闭完成门注入。Claude Stop exit 2 不变。
 > **v5.13 变更（v11.4.9）**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入（CallDynamicTool/CreatePlan）；写 plan.md 不计完成门。Windows `/X:/` 路径规范化；已有图 CLI 失败不阻断。Cursor Guard 1.2.9（sessionEnd 刷双图 timeout 45s）。
@@ -24,7 +32,7 @@
 | 目录                 | 数量                       | 用途                                                                                                                      |
 | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `hooks/`             | 19 注册激活                | standard profile（settings.json 已注册）                                                                                  |
-| `hooks/`（未注册 5） | 5                          | pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor / stop-graph-freshness（TRAE/Qoder Stop） |
+| `hooks/`（未注册 1） | 1                          | stop-graph-freshness（TRAE/Qoder Stop）；v12 删除 pre-tmux-reminder / pre-loop-guard / pre-suggest-compact / stop-context-monitor |
 | `hooks/_lib/`        | 11 py + `gate_messages.md` | 上列 + `graph_freshness.py`（双图 ensure / deny / 验绿后 sync.ps1）                                                       |
 
 ---
@@ -50,7 +58,7 @@
 
 | Hook                        | 触发                                                     | 功能                                                                                                                                                                                                                                                              | 层   |
 | --------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| `pre-graph-freshness.py`    | codegraph/CRG MCP + Grep/Glob/Edit/Write/Bash            | **图谱保鲜硬门**：无图则 ensure，仍失败 deny；建图类放行                                                                                                                                                                                                          | 骨架 |
+| `pre-graph-freshness.py`    | codegraph/CRG/serena/everything/fs MCP + Grep/Glob/Edit/Write/Bash | **图谱保鲜硬门**：无图则 ensure，仍失败 deny（everything 与 Glob 同级拦截）；建图类放行                                                                                                                          | 骨架 |
 | `pre-edit-impact-nudge.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **变更影响门**：**每个文件首次编辑**注入 change-impact-analysis 强制指令（状态 `~/.claude/.state/impact-nudge.json` 记已注入文件集，永不 deny）                                                                                                                   | 骨架 |
 | `pre-read-before-edit.py`   | Edit/Write/MultiEdit                                     | GSD read-before-edit 强制                                                                                                                                                                                                                                         | 执行 |
 | `pre-encoding-snapshot.py`  | Edit/Write/MultiEdit + `mcp__serena__.*` / `mcp__fs__.*` | **编码快照**（v11.4.2）：编辑前记录目标文件 BOM/EOL/大小签名 → `.state/encoding-snapshots.json`，供 Post 侧比对，永不阻断                                                                                                                                         | 横切 |
@@ -80,7 +88,7 @@
 
 | Hook                        | 功能                                                                                                                   | 层   |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---- |
-| `stop-verification-gate.py` | **完成验证硬门** + 双图增量刷新 + **验证全绿后 sync.ps1**；轻量自动检查 + 测试证据 + R20 + 有图必调 CRG + 六维纠错续轮 | 骨架 |
+| `stop-verification-gate.py` | **完成验证硬门** + 双图增量刷新 + **验证全绿后 sync.ps1**；轻量自动检查 + 测试证据 + R20 + 有图必调 CRG + 续轮观察证据清单 | 骨架 |
 | `stop-session-summary.py`   | 会话摘要                                                                                                               | 执行 |
 | `stop-readme-updater.py`    | README 自动更新                                                                                                        | 执行 |
 
@@ -94,7 +102,7 @@
 | `_lib/gate_messages.md`      | 四门控短指针 SSOT（完整清单在 skill）                   | bootstrap / verify-gate / impact-nudge / first-edit                                                                                |
 | `_lib/gate_reader.py`        | 分段读取 gate_messages.md                               | 上列注入 hook + Cursor `gate_messages.py`                                                                                          |
 | `_lib/r20_replay.py`         | R20 反空模板（双端共用，禁止再复制正则）                | `stop-verification-gate.py`、Cursor `verification_stop.py` / `r20_capture.py`                                                      |
-| `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、六维续轮文案         | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
+| `_lib/crg_track.py`          | CRG 工具识别、crg_calls、有图检测、续轮观察证据清单     | `post-edit-verify-tracker.py`、`stop-verification-gate.py`、Cursor `verify_tracker.py` / `verification_stop.py`                    |
 | `_lib/graph_freshness.py`    | 双图 ensure / 工具分类 / 验绿后 sync.ps1                | bootstrap、pre-graph-freshness、stop-verification-gate、Cursor Guard、TRAE/Qoder                                                   |
 | `_lib/first_edit_verify.py`  | 每文件首次编辑后五维验收（first_edit_nudged）           | `post-edit-verify-tracker.py`、Cursor `first_edit_verify.py`                                                                       |
 | `_lib/encoding_guard.py`     | 编码守卫核心：快照签名/比对 + 绝对损坏检查              | `pre-encoding-snapshot.py`、`post-encoding-check.py`                                                                               |
@@ -142,21 +150,21 @@ LOCAL_HOOK_PROFILE=strict    # 16 核心 + 扩展安全扫描（v11 起归档库
 ## Cursor 编辑器
 
 Claude Code hooks **不在 Cursor 内执行**（`_editor_hook_launcher.py` 快速跳过）。
-Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
+Cursor Guard v1.2.17（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，23 hooks）：同步（`sync_runner` 只 spawn pwsh）、Shell 警告 `powershell`→pwsh（allow 不 deny）、70%/90% 压缩（90% 用 `additional_context` 一次、不 followup 续轮）、codegraph 路由、图谱保鲜、shell/密钥守卫、维护提示（含业务仓）、初次修改五维验收、Stop `verification_stop` **不** followup（完成门改规则驱动双审；仅图谱 refresh / 全绿 sync）；`verify_tracker` 对 resume 审查不记账。stdin 解析见 `hook_io.parse_hook_json`。详见 `docs/CURSOR_EDITOR_SETUP.md` 与 `docs/SYNC_GUIDE.md` §Cursor Guard。
 
 ## 上下文压缩（Claude Code）
 
 | 层                    | 配置                                              | 窗口           | 阈值                    |
 | --------------------- | ------------------------------------------------- | -------------- | ----------------------- |
-| **模型解析**          | `config/model-context-windows.json` + `[1M]` 后缀 | 按模型动态     | —                       |
-| **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步）          | ≤ 模型最大     | **70%** 自动 `/compact` |
+| **窗口解析**          | 模型名 `[1M]` 等后缀 → 登记表 `config/model-context-windows.json`（出厂为空）+ 本机 `model-context-windows.local.json`（gitignore）→ 显式 `autoCompactWindow` | 调用方决定 | — |
+| **原生 auto-compact** | `autoCompactWindow`（SessionStart 同步）          | ≤ 已知窗口     | **70%** 自动 `/compact` |
 | **Hook 建议**         | `hooks/_lib/context_thresholds.py`                | 同上（封顶）   | 70% 建议 / **90% 强制** |
 | **HUD 状态条**        | claude-hud plugin                                 | API 实测       | 与模型一致              |
 | **Cursor Guard**      | `guard-config.json`                               | 200K（Cursor） | 70/90                   |
 
 换模型：`python scripts/sync-compact-window.py` 或新开 Claude Code 会话。
 
-⛔ `autoCompactWindow` 不得超过 `resolve_model_context_tokens()`；勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。
+⛔ 窗口可确认时（`known_context_tokens()` 非空）`autoCompactWindow` 不得超过它；未知模型以调用方显式设置为准（不再按 200K 封顶：换到更小窗口的模型时，请给模型名加窗口后缀、本机登记，或同步改 `autoCompactWindow`）。勿写死 `CLAUDE_CODE_AUTO_COMPACT_WINDOW`。本包不登记任何厂商模型。
 
 ## 设计原则
 
@@ -174,4 +182,4 @@ Cursor Guard v1.2.11（`templates/cursor-guard/` + `deploy-cursor-guard.ps1`，2
 
 ---
 
-_版本：5.15（v11.4.12）| 19 注册激活 + 5 未注册；每轮独立审查必须全新开审；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；图谱保鲜硬门_
+_版本：5.23（v13.0.2）| 19 注册激活 + 5 未注册；七维独立审查（两道关必过且证据非模板；≤3 轮；耗尽 BLOCKED 可见）；续轮清单去「六维」撞名；模型无关；审查前刷图；图谱保鲜 deny Grep/Glob/everything；resume 审查不计入；Cursor 完成门不 followup；Claude Stop exit 2；pwsh 7.5+ / 无 5.1 回退；Guard 1.2.17_

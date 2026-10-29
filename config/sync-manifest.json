@@ -1,5 +1,6 @@
 {
   "_comment": "同步链常量单源（v11.1 多编辑器 1+N）。消费方：scripts/sync.ps1、scripts/check.ps1、templates/cursor-guard/hooks/_lib/impact_sync.py（Guard 部署副本经 deploy-cursor-guard.ps1 刷新）。改根文件集合或编辑器目标只改本文件。",
+  "l0_source_of_truth": "repo",
   "root_files": [
     "CLAUDE.md",
     "SPEC.md",

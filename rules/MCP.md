@@ -24,11 +24,12 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 ### 2. 常驻架构（内置 > plugin > MCP）
 
-选择顺序（v11.4.5）：**编辑器/工作区内置工具 > 同名同功能 plugin > MCP > 按需中断启用**。`.mcp.json` 只放**没有官方 plugin 且内置不可用**的项；`mcp/servers.json` 是派生分组视图。
+选择顺序（v11.4.13）：**编辑器/工作区内置工具 > 同名同功能 plugin > MCP > 按需中断启用**。`.mcp.json` 只放**没有官方 plugin 且内置不可用**的项；`mcp/servers.json` 是派生分组视图。规则与钩子按**语义工具名**匹配（`codegraph_explore` / `everything_search`），禁止写 `mcp0_` / `mcp1_` 前缀；Cursor 可能显示 `user-<server>`，仍按语义名路由。
 
 | 层         | 服务器 | 位置 |
 | ---------- | ------ | ---- |
 | 本地代码   | codegraph, code-review-graph, serena | `.mcp.json` |
+| 本机文件名 | everything（elis132/everything-mcp；仅 Windows） | `.mcp.json` |
 | 远端探索   | grep | `.mcp.json` |
 | Plugins    | context7、exa、playwright、firecrawl（Claude `enabledPlugins=true`）；chrome-devtools **默认 false** | 禁止再写入 `.mcp.json` |
 | 不对齐 Cursor 面板 | github（plugin=false 且不写 MCP）；firecrawl 不写 MCP（Claude 走 plugin） | 见下 |
@@ -43,6 +44,16 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 > **chrome-devtools / postgres：默认关，需要时中断**。Agent **禁止**自动 merge debug/ops 进 `.mcp.json`。需要联调或查库时停止当前步骤，请用户在 Plugin 面板手动打开 chrome-devtools，或自行设 `DATABASE_URL` 后启用 postgres；用户确认后再继续。
 
+### 2c. 浏览器 UI 测试显式选用（`browser_ui_tests`）
+
+结构化配置 → `mcp/servers.json` `browser_ui_tests`（validate 核字段）。正文在本小节。不是第三道 PASS 门，也不另建 Stop hook。`/goal` 仍是符合预期要求 + 原功能保持。
+
+- **默认禁止跑** Playwright（plugin / MCP / `npx playwright` / `@playwright/test` UI）与 chrome-devtools（plugin / MCP / Lighthouse 等）浏览器 UI 测试或驱动。
+- **仅当用户本轮显式要求**浏览器/UI 测试（含「用浏览器验」「E2E」「Playwright」「chrome-devtools」）才可调用。此时**允许**安装/配置这些工具，禁止再加一层禁装兜底。
+- **任务强烈像需要但用户未要求**：interrupt，请用户决定。禁止静默开跑；禁止用内置浏览器 / curl / 截图软自动兜底假装已做浏览器 UI 测试。
+- chrome-devtools 仍默认关、禁止自动 merge debug；启用也须用户显式要求浏览器/UI 测试或联调。
+- 未获准时验证走既有测试 / validate / check 观察输出。不得把「没跑 Playwright」写成原功能保持的替代证据，也不得偷偷跑。
+
 ### 3. 按需启用 profile（debug / fsaccess / ops）
 
 用户**手动**启用时：
@@ -54,22 +65,30 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 Agent 不得代执行上述 merge。chrome-devtools 优先开 Plugin；postgres 优先用户设 `DATABASE_URL` 后启用 ops 条目。
 
-> **playwright / context7 / exa**：Claude/Cursor 走 **Plugins**。chrome-devtools 默认关。Qoder/OpenCode/DSH 无 plugin 则钉 MCP，chrome-devtools 默认 disabled。postgres 默认禁用。
+> **playwright / context7 / exa / firecrawl**：Claude/Cursor 走 **Plugins**。chrome-devtools 默认关。Qoder/OpenCode/DSH 无 plugin 则钉 MCP，chrome-devtools 默认 disabled。postgres 默认禁用。
 
-Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python 系（serena / uv / uvx）经 `scripts/python-mcp.ps1` 启动：清 PYTHONHOME/PYTHONPATH，避免残缺前缀导致 `encodings` 崩溃。编辑器 `mcp.json` 各自手工维护，**禁止经 sync.ps1 复制**。
+Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python 系（serena / uv / uvx / everything-mcp）经 `scripts/python-mcp.ps1` 启动：清 PYTHONHOME/PYTHONPATH，避免残缺前缀导致 `encodings` 崩溃。编辑器 `mcp.json` 各自手工维护，**禁止经 sync.ps1 复制**。
 
-### 4. 本地代码三工具分工（防互博）
+### 3b. 编辑器 MCP spawn（R9 平台约束，不在铁律表展开）
 
-三者能力有重叠，按下表选择；**禁止**用 serena 替代 codegraph 做 R17 日常探索；**禁止**用 codegraph 做 test-gap。
+Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），禁止 `powershell -Command`、禁止回退 5.1、禁止 `cd + 重定向`写文件（R9）。
+
+编辑器 `mcp.json` **应** spawn `pwsh` 拉起 `scripts/*-mcp.ps1`。Qoder 等客户端若仍 fork `powershell.exe`，视为宿主配置错误：把 command 改成 `pwsh`，不要在包装脚本里保留 5.1 分支。包装脚本不是用户 Shell 默认，也不豁免 `#Requires 7.5`。
+
+### 4. 本地代码三工具 + everything 分工（防互博）
+
+能力有重叠，按下表选择。everything 是 voidtools 本机文件名索引，**不是** everything-claude-code 插件（后者禁止安装）。everything-mcp 的 Claude marketplace plugin 禁止与 `.mcp.json` 双挂（且无法钉 `mcp<2`）。
 
 | 工具              | 定位                                         | 何时用                                                                                         | 何时不用                         |
 | ----------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------- |
-| codegraph         | **R17 探索主位**（怎么运作）                 | 符号/调用链/依赖/「这段代码如何工作」；无 CRG 图时的 blast-radius                              | test-gap；git-diff 风险评分      |
+| codegraph         | **R17 探索主位**（怎么运作）                 | 符号/调用链/依赖/「这段代码如何工作」；默认 4 工具：`codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`；无 CRG 图时的 blast-radius | test-gap；git-diff 风险评分；调用未暴露的 `codegraph_impact`/`codegraph_trace`/`codegraph_context` |
 | serena            | 符号级精确编辑 + LSP 诊断                    | 跨文件重命名/插入/替换符号体、取 `get_diagnostics_for_file`                                    | 只读探索（应走 codegraph）       |
 | code-review-graph | **精准上下文 / 变更影响 / 风险 / 审查 / PR** | `get_minimal_context`、`get_impact_radius`、`get_affected_flows`、`detect_changes`、`get_review_context`、开 PR 前风险门 | 替代 R17「怎么运作」的日常探索   |
+| everything        | **本机文件名秒级搜索**（只读 5 工具）        | Windows 全盘/跨仓按文件名定位：`everything_search` / `everything_search_by_type` / `everything_find_recent` / `everything_file_details` / `everything_count_stats`。需 Everything.exe 运行中 | 工作区 Glob；R17 结构探索；替代 CRG `detect_changes`（勿用 `everything_find_recent`） |
 
-> 有 `.code-review-graph/` 时：改前强制 CRG 上下文+影响面，再叠加 codegraph blast-radius + Grep。无图 → SessionStart/PreToolUse 先 ensure；仍无图则 **deny**，禁止 Grep 当探索主路径。
+> 有 `.code-review-graph/` 时：改前强制 CRG 上下文+影响面，再叠加 codegraph blast-radius + Grep。无图 → SessionStart/PreToolUse 先 ensure；仍无图则 **deny**，禁止 Grep/Glob/everything/编辑/查询 MCP。
 > serena 写操作会被 `settings.json` 的 `mcp__serena__.*` matcher 纳入验证追踪链；勿绕过。
+> everything 无图时按 Glob 同级拦截（防绕过 R17）。工作区内找文件用内置 Glob。
 
 ### 5. 配置变更流程
 
@@ -89,11 +108,16 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 - 禁止在 `.mcp.json` 与 `mcp-configs/` 两处维护不同参数定义
 - 禁止将按需 profile（debug / fsaccess / ops）服务器默认写入常驻 `.mcp.json`
 - 禁止 Agent 自动 merge debug/ops；chrome-devtools / postgres 须中断请用户手动启用
+- 禁止在用户未显式要求浏览器/UI 测试时跑 Playwright / chrome-devtools 浏览器 UI 测试；任务强烈像需要却未要求 → interrupt，禁止静默开跑或软自动兜底（`browser_ui_tests`）。用户已要求时允许安装/配置
 - 禁止同端对同一能力 **plugin + mcp.json 双挂**
 - 禁止常驻 `memory` MCP（R18；记忆仅 claude-mem 插件）
 - 禁止常驻 `aider-repo-map`、`sequential-thinking`（已删除，不要加回）
-- 禁止启用 codebase-memory（全盘索引爆内存）
+- 禁止启用 codebase-memory（全盘索引爆内存）；名单 SSOT → `MANIFEST.yaml` `do_not_absorb`
+- 禁止升级 claude-mem 到 ≥13.14（钉 13.13.1）；禁止把 caveman 升到 ≥2（本地 1.9.1 输出压缩）
+- 禁止启用 ralph-loop、竞品 code-graph plugin（sdsrss/dorkian）、claude-code-router、openai 跨模型 cc 插件、SuperClaude 全量框架
 - 禁止 npx 类服务器不钉版本（R14）
+- 禁止 everything-mcp marketplace plugin 与 `.mcp.json` 双挂；禁止安装 everything-claude-code 插件
+- 禁止用 everything 替代工作区 Glob 或 codegraph；禁止用 `everything_find_recent` 替代 CRG `detect_changes`
 
 ### 7. 按需安装工具
 
@@ -104,29 +128,32 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 
 **codegraph** — 预索引代码知识图谱 MCP（R17 首选）
 
-**codebase-memory** — **已永久禁用（2026-07-31，v10.10）**。架构/ADR/变更影响一律用 `codegraph_explore`。
+**codebase-memory** — **已永久禁用（2026-07-31，v10.10）**。架构/ADR 用 `codegraph_explore`；变更影响有图走 CRG `get_impact_radius`，再叠加 codegraph blast-radius。
 
 **firecrawl** — Claude 走 **plugin**（不写 `.mcp.json`）。Cursor 面板无 firecrawl User → 不常驻 MCP。DSH/OpenCode/Qoder 已有则保留钉 `firecrawl-mcp@3.24.0`（各端自管）。
 
-**playwright / chrome-devtools** — 互补（测试 vs 分析联调）。playwright：Claude/Cursor 走 plugin（Cursor UI 核验优先内置浏览器）。chrome-devtools **默认关闭**；需要时**中断请用户手动开 Plugin**，禁止自动 merge debug profile。钉 `@playwright/mcp@0.0.79` / `chrome-devtools-mcp@1.8.0 --isolated`（仅无 plugin 端）。
+**playwright / chrome-devtools** — 互补（测试 vs 分析联调）。**跑浏览器 UI 测试须用户显式要求**（`browser_ui_tests`；未要求但任务强烈像需要 → interrupt）。用户已要求时允许安装/配置。chrome-devtools **默认关闭**；禁止自动 merge debug profile。钉 `@playwright/mcp@0.0.79` / `chrome-devtools-mcp@1.8.0 --isolated`（仅无 plugin 端）。
 
-**架构替代链** — 探索用 `codegraph`（R17）；影响面/风险/审查/PR 用 CRG。
+**架构替代链** — 探索用 `codegraph`（R17）；影响面/风险/审查/PR 用 CRG；本机文件名用 everything（仅 Windows）。
+
+**everything** — `uvx --with mcp<2 everything-mcp==1.0.6`（FastMCP 2.x 会启动崩溃）。非 Windows 端不配置。
 
 ## 双平台工具对照（v11 自 RUNTIME_PLAYBOOK 并入）
 
 | 能力               | Claude Code                         | Cursor                                      |
 | ------------------ | ----------------------------------- | ------------------------------------------- |
-| 代码探索（怎么运作） | codegraph MCP                     | user-codegraph                              |
+| 代码探索（怎么运作） | codegraph MCP（语义名 `codegraph_explore`） | 同左（User MCP；显示名可能带 `user-` 前缀，按语义名调用） |
 | 架构/ADR           | codegraph_explore                   | 同左（cbm 已禁用）                          |
-| 精准上下文/影响面/风险/审查/PR | code-review-graph MCP   | user-code-review-graph                      |
-| 符号级编辑         | serena MCP                          | user-serena                                 |
+| 精准上下文/影响面/风险/审查/PR | code-review-graph MCP   | 同左                                        |
+| 符号级编辑         | serena MCP                          | 同左                                        |
+| 本机文件名搜索     | everything MCP                      | 同左（`mcp.json` 手工加，不经 sync）        |
 | 网页调研           | Firecrawl **plugin**（不写 MCP）    | 面板无 firecrawl User → 不常驻              |
 | 搜索               | Exa **plugin**                      | Exa **plugin**                              |
 | 文档               | Context7 **plugin**                 | Context7 **plugin**                         |
-| 跨仓代码搜索       | grep MCP                            | user-grep                                   |
+| 跨仓代码搜索       | grep MCP                            | 同左                                        |
 | GitHub             | plugin 关且无 MCP                   | github Plugin Disabled；PR 用 `gh` CLI      |
-| 浏览器测试         | playwright **插件**                 | 内置浏览器（UI 核验）+ playwright plugin（E2E） |
-| 浏览器联调         | chrome-devtools **插件默认关；中断启用** | chrome-devtools **plugin 默认 Disabled；中断启用** |
+| 浏览器 UI 测试     | 仅用户显式要求才跑 playwright / chrome-devtools；否则 interrupt | 同左（Cursor 内置浏览器也不作未获准时的软自动兜底） |
+| 浏览器联调         | chrome-devtools **插件默认关**；须显式要求后中断启用 | 同左 |
 
 > **OpenCode / DSH**：无 marketplace plugin → context7/exa/playwright 走钉版本 MCP；chrome-devtools 条目保留但默认 disabled。OpenCode github `enabled:false`；DSH github `disabled: true`。均有 CRG、playwright；postgres 默认禁用。无 aider-repo-map / sequential-thinking。firecrawl 若已有则保留。各端 plugin/MCP **自管，禁止经本仓 sync 改开关**。
 
@@ -134,6 +161,7 @@ Cursor 侧见 `docs/CURSOR_MCP_PROFILE.md`（不同步 `.mcp.json`）。Python �
 
 ```
 □ .mcp.json 无 context7/exa/playwright/chrome-devtools/github/firecrawl/memory/aider-repo-map/sequential-thinking
+□ .mcp.json 含 everything（everything-mcp==1.0.6 + mcp<2）；无 everything-mcp marketplace plugin 双挂
 □ servers.json always_* ⊆ .mcp.json
 □ settings.json 无 mcpServers；context7/exa/playwright/firecrawl plugin=true；chrome-devtools/github plugin=false（不启用 ralph-loop）
 □ Cursor mcp.json 无 plugin 同名 User 条目；无 aider-repo-map/sequential-thinking；postgres disabled 且无明文口令

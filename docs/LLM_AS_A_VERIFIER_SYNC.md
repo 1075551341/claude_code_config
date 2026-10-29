@@ -29,16 +29,16 @@
 | 层 | 优点 | 现状要点 |
 |----|------|----------|
 | 方法论 | 五阶段流程 + HARD-GATE | ①规划 grill→HARD-GATE 用户批准 →②规格 spec-validation →③执行原子任务 →④验证 →⑤学习沉淀 |
-| 方法论 | 任务分类六维判定 SSOT | 简单/非简单客观判定（Phase0 盘点 + 关联需改≤2 + 白名单 + 六维矩阵 + attempt=1），防过度/不足处理 |
+| 方法论 | 任务分类五维判定 SSOT | 简单/非简单客观判定（Phase0 盘点 + 关联需改≤2 + 白名单 + 五维矩阵 + attempt=1；v13 去掉模型匹配维），防过度/不足处理 |
 | 方法论 | verify_tier 两档 | 比例/全量按复杂度分级；持续处理（attempt≥2）自动升档全量 + 执行升档非简单 |
 | 机械门 | hooks 16 注册激活 | 验证硬门（Stop exit 2 反空模板）、每文件首编影响门、初次修改五维迷你验收、bash-guard（stash 硬拦截）、secret-detector、问题指纹追踪（相似度匹配+回归升级）、RTK 压缩 |
 | 铁律 | R1–R20 | 任务完成=验证通过；Read→Edit→Read；Bug grep 全修；重试上限 2；交叉验证；版本克制；错误暴露；Git 禁令；会话终验五字段 |
 | 终验 | R20 反空模板 + 反合理化 | 满足/遗漏/错改/漏改/原功能五字段硬门校验；反合理化借口表（"我检查过了"→重跑验证） |
 | 彻底性 | 变更场景 A–F | 同类模式全修 / 配置引用同步 / 残留引用=0 / 非功能回归证据 / 行为变更消费者核验 / 文档一致 |
-| 护栏 | 质量门 + 上下文阈值 | Schema Drift / Security Anchor / Scope Reduction；70% 择机压缩 / 90% 强制 / 100% 禁止 |
+| 护栏 | 质量门 + 上下文阈值 | Schema Drift / Security Anchor（Stop 启发式仍接线）；Scope Reduction **已删（从未接线）**；70% 择机压缩 / 90% 强制 / 100% 禁止 |
 | 记忆 | claude-mem（R18） | 跨会话记忆 SSOT，为什么/约定/偏好优先查记忆 |
 | 探索 | MCP 分层 9 项 | 本地代码 4（codegraph 常驻 R17）+ 远端 2 + Web 3；code-review-graph 专用 test-gap |
-| 审查 | 审查路由 | eng-reviewer 必审 + ceo/designer/dx/qa/security 按类型 + codex 跨模型验证 |
+| 审查 | 审查路由 | eng-reviewer 必审 + ceo/designer/dx/qa/security 按类型 + cross-model-reviewer 跨模型验证 |
 | 同步 | 多编辑器 1+N | sync.ps1 SSOT → Cursor/qoder-cn/trae-cn/workbuddy；DSH 手工对齐协议 |
 
 ---
@@ -54,7 +54,7 @@
 | 5 成对比较消偏 | 无显式机制 | **融合**：方案选择/审查候选成对比较 + A/B 交换复评 |
 | 6 观察输出优先 | 理念已有（「无新鲜验证证据不声称完成」「贴命令证据」），无一句话显式表述 | **融合**：一句话显式化进 R20 与验证模板 |
 | 7 进度止损 | GSD 逻辑断点 70% / 持续处理升档 | **融合**：每个原子任务后自评进度分（1–20），连续 2 次 <10 上报止损 |
-| 8 Best-of-N 自验证 | 等价物：审查路由（eng-reviewer 等）+ codex 跨模型复核 | **不单独融合**（已有更强机制） |
+| 8 Best-of-N 自验证 | 等价物：审查路由（eng-reviewer 等）+ cross-model-reviewer 跨模型复核 | **不单独融合**（已有更强机制） |
 | 9 prefix-cache/记账 | 配置层不适用 | **不融合**（工程实现细节，非方法论） |
 
 ---

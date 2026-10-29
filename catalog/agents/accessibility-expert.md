@@ -1,7 +1,6 @@
 ---
 name: accessibility-expert
 description: 负责Web无障碍设计和WCAG合规。当需要实现无障碍访问、WCAG标准合规、屏幕阅读器适配、键盘导航支持、颜色对比度检查、表单可访问性、ARIA属性优化时调用此Agent。触发词：无障碍、WCAG、屏幕阅读器、键盘导航、ARIA、a11y、可访问性、残疾人访问、ADA合规。
-model: inherit
 color: cyan
 tools:
   - Read

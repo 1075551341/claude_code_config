@@ -1,6 +1,6 @@
 # MCP 配置指南
 
-> 权威：`.mcp.json`（Claude 常驻：codegraph / CRG / serena / grep）+ `mcp/servers.json`（分组视图）+ `docs/CURSOR_MCP_PROFILE.md`（Cursor）
+> 权威：`.mcp.json`（Claude 常驻 5：codegraph / CRG / serena / everything / grep）+ `mcp/servers.json`（分组视图）+ `docs/CURSOR_MCP_PROFILE.md`（Cursor）
 >
 > **优先级**：编辑器内置 > 同名 plugin > MCP > 按需中断启用。
 > **已删除**：`aider-repo-map`、`sequential-thinking`。禁止常驻 `memory` MCP；禁止 codebase-memory；禁止同端 plugin+mcp 双挂。
@@ -10,9 +10,10 @@
 | 层 | 服务器 |
 |----|--------|
 | 本地代码 | codegraph \| code-review-graph \| serena |
+| 本机文件名 | everything（仅 Windows；需 Everything 运行中） |
 | 远端探索 | grep |
 
-三工具分工 → `rules/MCP.md` §4（CRG = 精准上下文/影响面/风险/审查/PR）。
+四工具分工 → `rules/MCP.md` §4（CRG = 精准上下文/影响面/风险/审查/PR；everything ≠ 工作区 Glob）。
 
 context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plugin **默认 false**。github 不常驻。
 
@@ -20,8 +21,8 @@ context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plu
 
 | 能力 | Claude | Cursor |
 |------|--------|--------|
-| Driving (E2E) | playwright **插件** | 内置浏览器（UI）+ playwright plugin（E2E） |
-| Debugging (perf) | chrome-devtools **默认关；中断请用户开 Plugin** | 同左 |
+| Driving (E2E) | 仅用户显式要求才跑 playwright | 同左（未要求但强烈像需要 → interrupt） |
+| Debugging (perf) | chrome-devtools **默认关**；须显式要求浏览器/UI 测试或联调 | 同左 |
 
 禁止自动 merge `mcp-configs/debug.json`。仅用户确认且 Plugin 不可用时才由用户 merge（须 `--isolated`）。禁止与 plugin 双挂。
 

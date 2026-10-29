@@ -1,7 +1,6 @@
 ---
 name: ai-engineer
 description: 负责AI/LLM应用开发，含Prompt工程设计和LangSmith调试追踪。触发词：AI开发、LLM、RAG、Prompt工程、向量数据库、Claude API、OpenAI API、Langchain、Agent开发、Prompt设计、Few-shot、System Prompt、LangSmith、LangChain调试。
-model: inherit
 color: purple
 tools:
   - Read
@@ -46,7 +45,7 @@ class LLMClient {
     systemPrompt?: string
   }): Promise<string> {
     const response = await this.client.messages.create({
-      model: options?.model ?? 'claude-sonnet-4-20250514',
+      model: options?.model ?? process.env.LLM_MODEL!,
       max_tokens: options?.maxTokens ?? 1024,
       system: options?.systemPrompt,
       messages,
@@ -58,7 +57,7 @@ class LLMClient {
   async stream(messages: Array<{ role: string; content: string }>, 
     onChunk: (text: string) => void): Promise<void> {
     const stream = await this.client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: process.env.LLM_MODEL!,
       max_tokens: 1024,
       messages,
     })

@@ -1,7 +1,6 @@
 ---
 name: react-reviewer
 description: 负责 React 组件代码审查任务。当需要审查 React 组件代码、检查 Hooks 使用规范、评审 React 性能优化、检查组件设计模式、评估 React 最佳实践合规性、检查 useEffect 依赖数组、审查 React 状态管理时调用此 Agent。触发词：审查 React、React 审查、React 组件审查、Hooks 审查、React 性能、React 最佳实践、useEffect 审查、react-review。
-model: inherit
 color: blue
 tools:
   - Read

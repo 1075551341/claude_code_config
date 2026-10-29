@@ -29,8 +29,20 @@ MESSAGES = {
     "Glob": "目录结构探索请优先 codegraph_explore，Glob 仅作 fallback。",
 }
 
+EVERYTHING_MSG = (
+    "工作区找文件请用 Glob；结构探索请用 codegraph_explore。"
+    "everything 仅用于本机全盘/跨仓按文件名定位，禁止替代 Glob 或 codegraph。"
+)
+
 # soft_block 仅拦截结构探索类工具；Read 始终 nudge，避免阻断定点深读
 BLOCKABLE = {"Grep", "Glob"}
+EVERYTHING_TOOLS = {
+    "everything_search",
+    "everything_search_by_type",
+    "everything_find_recent",
+    "everything_file_details",
+    "everything_count_stats",
+}
 
 STATE_NAME = "explore_router.json"
 
@@ -91,9 +103,63 @@ def _save_state(state: dict) -> None:
         print(f"explore_router: state write failed: {e}", file=sys.stderr)
 
 
-def _mark_codegraph_if_needed(tool_name: str, state: dict) -> None:
-    lower = (tool_name or "").lower()
-    if "codegraph" in lower:
+def _norm(name: str) -> str:
+    return (name or "").lower().replace("-", "_")
+
+
+def _collect_tool_names(tool_name: str, data: dict | None = None) -> list[str]:
+    names: list[str] = []
+
+    def _add(val: object) -> None:
+        if isinstance(val, str) and val and val not in names:
+            names.append(val)
+
+    _add(tool_name)
+    blobs = []
+    payload = data or {}
+    for key in ("tool_input", "arguments", "input"):
+        blob = payload.get(key)
+        if isinstance(blob, dict):
+            blobs.append(blob)
+            nested = blob.get("arguments")
+            if isinstance(nested, dict):
+                blobs.append(nested)
+    for blob in blobs:
+        ns = blob.get("namespace")
+        tn = None
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
+            val = blob.get(key)
+            if isinstance(val, str) and val:
+                _add(val)
+                if tn is None:
+                    tn = val
+        if isinstance(ns, str) and ns:
+            _add(ns)
+            if tn:
+                _add(f"{ns}_{tn}")
+                _add(f"{ns}__{tn}")
+    return names
+
+
+def _is_everything_tool(tool_name: str, data: dict | None = None) -> bool:
+    for name in _collect_tool_names(tool_name, data):
+        n = _norm(name)
+        if "everything_claude_code" in n:
+            continue
+        if n in EVERYTHING_TOOLS:
+            return True
+        for tool in EVERYTHING_TOOLS:
+            if n.endswith(tool) or f"__{tool}" in n:
+                return True
+        if n in {"everything", "user_everything", "mcp__everything", "mcp_everything"}:
+            return True
+        if n.startswith("mcp__everything__") or n.startswith("mcp_everything_") or n.startswith("user_everything"):
+            return True
+    return False
+
+
+def _mark_codegraph_if_needed(tool_name: str, state: dict, data: dict | None = None) -> None:
+    if any("codegraph" in _norm(n) for n in _collect_tool_names(tool_name, data)):
         state["codegraph_seen"] = True
         _save_state(state)
 
@@ -108,21 +174,25 @@ def main() -> None:
 
         tool_name = extract_tool_name(data)
         state = _load_state()
-        _mark_codegraph_if_needed(tool_name, state)
+        _mark_codegraph_if_needed(tool_name, state, data)
 
+        everything = _is_everything_tool(tool_name, data)
         msg = MESSAGES.get(tool_name)
+        if not msg and everything:
+            msg = EVERYTHING_MSG
         if not msg:
             return
 
         mode = str(explore.get("enforce_mode", "soft_block")).lower()
         cwd = data.get("cwd") or data.get("working_directory")
         index_ok = _codegraph_index_available(cwd, cfg["sync"]["claude_home"])
+        blockable = tool_name in BLOCKABLE or everything
 
-        # soft_block：Grep/Glob 且本会话尚未用过 codegraph → deny
-        # 无索引 → 图谱保鲜硬门 deny（禁止 Grep 兜底）
+        # soft_block：Grep/Glob/everything 且本会话尚未用过 codegraph → deny
+        # 无索引 → 图谱保鲜硬门 deny（禁止 Grep/Glob/everything 兜底）
         if (
             mode == "soft_block"
-            and tool_name in BLOCKABLE
+            and blockable
             and not state.get("codegraph_seen")
             and index_ok
         ):
@@ -134,14 +204,18 @@ def main() -> None:
                     "user_message": "已拦截：请先使用 codegraph_explore",
                     "agent_message": (
                         f"【Cursor Guard · codegraph soft_block】\n{msg}\n"
-                        "请先 CallMcpTool codegraph_explore（或 codegraph_search），"
-                        "再使用 Grep/Glob 作 fallback。"
+                        + (
+                            "请先调用 codegraph_explore（或 codegraph_search）。"
+                            "工作区找文件用 Glob；everything 仅全盘/跨仓按文件名定位，禁止替代 Glob 或 codegraph。"
+                            if everything
+                            else "请先调用 codegraph_explore（或 codegraph_search），再使用 Grep/Glob 作 fallback。"
+                        )
                     ),
                 }
             )
             return
 
-        if mode == "soft_block" and tool_name in BLOCKABLE and not index_ok:
+        if mode == "soft_block" and blockable and not index_ok:
             # ensure 由 graph_freshness.py（90s）负责；此处只 deny，避免 5s 超时截断
             write_json(
                 {
@@ -149,7 +223,7 @@ def main() -> None:
                     "user_message": "已拦截：无 codegraph 索引",
                     "agent_message": (
                         f"【Cursor Guard · 图谱保鲜硬门】\n{msg}\n"
-                        "未检测到 .codegraph 索引，禁止 Grep/Glob。"
+                        "未检测到 .codegraph 索引，禁止 Grep/Glob/everything。"
                         "SessionStart/pre-graph-freshness 会先 init；仍无图不得探索。"
                     ),
                 }

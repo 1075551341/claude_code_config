@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Stop Hook: 完成验证硬门（v11.4.12）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
-有代码/配置改动即双审：eng-reviewer 一次找齐；修改走 change-implementer 按完整清单集中改。每轮独立审查必须全新开审（禁止 resume）。干净 PASS 即停；禁止边审边改耗轮次（最多 3 轮）。apply_review_verdict 同步 PASS（须已有 reviews；PASS 夹带须同步视为不干净）。
+Stop Hook: 完成验证硬门（v11.5.0）— 吸收 stop-quality-gate 全部职责并升级为硬阻断。
+独立审查是完成的必要条件：审查前刷图；eng-reviewer 七维一次找齐 + 两道门（符合预期要求 / 原功能保持）；修改走 change-implementer。每轮全新开审（禁止 resume）。干净 PASS 即完成。最多 review_max_rounds 轮。apply_review_verdict 同步 PASS（须已有 reviews；缺七维或 PASS 夹带须同步视为不干净）。
 计划未批准 / 仅计划制品跳过完成门。本会话有代码编辑时强制核查：①变更范围轻量自动检查 ②测试/验证命令证据 ③预期符合性（scope）
 ④有代码文件即 eng-reviewer 委派 ⑤工作树交叉核查 ⑥非功能变更回归证据 ⑦会话终验 R20（反空模板，含纯文档）。
-R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；上限 max_blocks 次后放行并标 DONE_WITH_CONCERNS。
+R20 检测 SSOT：hooks/_lib/r20_replay.py。缺任一 → exit 2 回灌；达 max_blocks 或轮次用尽后放行停机，但状态 = BLOCKED（未完成，不得声称完成）。
 另保留 R16 裸 except 扫描（exit 1）与活跃 plan 提醒（仅提示）。
 
 v10.17 新增两项拦截，均针对「改完影响其他功能」：
@@ -30,13 +30,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "_li
 from issue_state import claude_home  # noqa: E402  与追踪器共用同一 CLAUDE_HOME 解析
 from r20_replay import (  # noqa: E402
     apply_review_verdict,
+    blocked_session_notice,
+    count_stop_block,
     counted_edit_items,
+    dual_pass_in_scope,
     dual_pass_phase,
     impact_diff_check,
     is_awaiting_plan,
     is_plan_artifact,
     replay_ok,
     review_verdict_ok,
+    stop_hook_visible_payload,
+    user_waived_verification,
 )
 from crg_track import has_crg_since  # noqa: E402
 from graph_freshness import (  # noqa: E402
@@ -66,6 +71,7 @@ DEFAULT_CFG = {
     "verdict_trigger_min_blocks": 2,
     "require_crg_when_graph": True,
     "review_max_rounds": 3,
+    "require_refresh_before_review": True,
 }
 
 CODE_EXTENSIONS = {
@@ -443,8 +449,10 @@ def build_block_message(reasons: list, crg: bool, blocks: int, max_blocks: int) 
         if any("预期符合性" in r for r in reasons):
             lines.append("对照 plan/spec tasks，禁止静默缩范围。")
     if any("R20" in r or "会话终验" in r for r in reasons):
-        lines.append("输出短 R20：满足/遗漏/错改/漏改/原功能/影响范围（漏改含文档；原功能含证据）。")
-    lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行 DONE_WITH_CONCERNS；跳过请说「跳过验证」）")
+        lines.append(
+            "输出短 R20 七维：满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决（漏改含文档；原功能含证据）。"
+        )
+    lines.append(f"（第 {blocks}/{max_blocks} 次；达上限放行停机但状态=BLOCKED 未完成；用户显式豁免请说「跳过验证」）")
     return "\n".join(lines)
 
 
@@ -509,18 +517,27 @@ def check_security_anchor(code_files: list) -> list:
     return []
 
 
-def _emit_graph_ui(session_id: str, aggregate: dict | None) -> None:
-    """Stop 把双图刷新成败写到 systemMessage（会话界面，非 stderr 日志）。"""
-    if not aggregate:
+def _emit_session_visible(session_id: str, aggregate: dict | None, notices: list | None = None) -> None:
+    """Stop 把双图刷新 + BLOCKED/豁免写到 stdout（systemMessage + additionalContext）。
+
+    轮次/阻断用尽时若只写 stderr，Claude 在 exit 0 后看不见状态，会误称为完成。
+    """
+    parts: list[str] = []
+    if aggregate:
+        banner = str(aggregate.get("ui") or "").strip()
+        if banner:
+            show_fail = bool(aggregate.get("blocked") or not aggregate.get("ok"))
+            if show_fail or take_ui_slot(session_id, "refresh"):
+                parts.append(banner)
+    for item in notices or []:
+        text = str(item or "").strip()
+        if text and text not in parts:
+            parts.append(text)
+    if not parts:
         return
-    banner = str(aggregate.get("ui") or "").strip()
-    if not banner:
-        return
-    show_fail = bool(aggregate.get("blocked") or not aggregate.get("ok"))
-    if not show_fail and not take_ui_slot(session_id, "refresh"):
-        return
+    payload = stop_hook_visible_payload("\n".join(parts))
     try:
-        sys.stdout.write(json.dumps({"systemMessage": banner}, ensure_ascii=False) + "\n")
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
         sys.stdout.flush()
     except OSError as exc:
         print(f"stop-verification-gate: ui write failed: {exc}", file=sys.stderr)
@@ -555,6 +572,7 @@ def main():
     transcript_path = str(data.get("transcript_path") or "")
     code_files = []
     graph_refresh = None
+    session_notices: list[str] = []
 
     if cfg["enabled"]:
         state = load_state()
@@ -584,8 +602,9 @@ def main():
         has_any_edit = bool(edited) or bool(untracked)
         if has_any_edit:
             blocks = int(entry.get("blocks", 0))
-            skip_msg = last_user_message(transcript_path).lower()
-            user_skipped = any(k.lower() in skip_msg for k in cfg["skip_keywords"])
+            user_skipped = user_waived_verification(
+                last_user_message(transcript_path), cfg.get("skip_keywords")
+            )
             project_cwd = entry.get("cwd") or cwd
             checkable = code_files + [{"path": p, "ts": 0} for p in untracked]
             refresh_roots = find_project_roots(checkable, project_cwd)
@@ -602,17 +621,44 @@ def main():
                 for w in crg_warnings:
                     print(f"⚠️ {w}", file=sys.stderr)
 
+            last_msg = last_assistant_message(transcript_path)
+            if apply_review_verdict(entry, last_msg):
+                entry["ts"] = time.time()
+                state[session_id] = entry
+                save_state(state)
+
+            phase = dual_pass_phase(entry, cfg)
+            exhausted = blocks >= int(cfg["max_blocks"]) or phase == "capped"
+            max_rounds = int(cfg.get("review_max_rounds", 3))
+            rounds = int(entry.get("review_rounds") or 0)
+
             if user_skipped:
-                print("⚠️ 用户显式跳过验证 — 本次放行，完成声明按 DONE_WITH_CONCERNS 处理", file=sys.stderr)
-            elif blocks >= int(cfg["max_blocks"]):
-                print(
-                    f"⚠️ 验证硬门已达上限（{blocks} 次）— 放行并标 DONE_WITH_CONCERNS："
-                    "验证证据仍不完整，请用户人工复核",
-                    file=sys.stderr,
+                notice = (
+                    f"⚠️ 用户显式豁免验证/审查 — 本次放行，状态 = "
+                    f"{cfg.get('user_waiver_status', 'DONE_WITH_CONCERNS')}（不是 DONE）"
                 )
+                print(notice, file=sys.stderr)
+                session_notices.append(notice)
+            elif exhausted:
+                if phase == "capped":
+                    reason = f"独立审查已 {rounds}/{max_rounds} 轮仍未 PASS。"
+                    shown, cap = rounds, max_rounds
+                else:
+                    reason = "验证硬门已达阻断上限。"
+                    shown, cap = blocks, int(cfg["max_blocks"])
+                notice = blocked_session_notice(
+                    str(cfg.get("on_rounds_exhausted", "BLOCKED")),
+                    reason=reason,
+                    blocks=shown,
+                    max_blocks=cap,
+                )
+                print(f"🚫 {notice}", file=sys.stderr)
+                session_notices.append(notice)
             else:
                 check_warnings = []
                 reasons = []
+                verdict_cfg_on = cfg.get("require_review_verdict", True)
+                verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
                 if code_files or untracked:
                     # 未追踪变更也纳入 lint/类型检查范围，否则 MCP 写入的文件永远查不到
                     roots = refresh_roots
@@ -636,43 +682,6 @@ def main():
                             "项目已建 .code-review-graph/ 但最后一次代码编辑后未调用 CRG"
                             "（get_minimal_context / get_impact_radius / detect_changes / get_review_context）"
                         )
-                    total_changed = len({f["path"] for f in code_files} | set(untracked))
-                    verdict_cfg_on = cfg.get("require_review_verdict", True)
-                    last_msg = last_assistant_message(transcript_path)
-                    verdict_ok = review_verdict_ok(last_msg) if verdict_cfg_on else True
-                    if apply_review_verdict(entry, last_msg):
-                        entry["ts"] = time.time()
-                        state[session_id] = entry
-                        save_state(state)
-                    max_rounds = int(cfg.get("review_max_rounds", 3))
-                    rounds = int(entry.get("review_rounds") or 0)
-                    phase = dual_pass_phase(entry, cfg)
-                    if phase == "capped":
-                        print(
-                            f"⚠️ 修改→审查已 {rounds}/{max_rounds} 轮仍未符合预期 — 放行并标 DONE_WITH_CONCERNS",
-                            file=sys.stderr,
-                        )
-                    elif phase == "modify":
-                        reasons.append(
-                            "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
-                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
-                        )
-                    elif phase == "verify":
-                        pass
-                    elif phase == "review":
-                        reasons.append(
-                            "有改动双审：须委派全新 eng-reviewer 对照原始要求一次找齐全部问题（禁止 resume 上一轮审查者、禁止改文件、禁止发现一条就停审），"
-                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
-                        )
-                    elif (
-                        verdict_cfg_on
-                        and not verdict_ok
-                        and blocks >= int(cfg.get("verdict_trigger_min_blocks", 2))
-                    ):
-                        reasons.append(
-                            f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
-                            "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
-                        )
                     # 非功能变更回归保持：改了代码但没碰任何测试文件时，必须有测试运行证据
                     changed_paths = [f["path"] for f in code_files] + list(untracked)
                     if (
@@ -688,6 +697,37 @@ def main():
                         )
                     if plan_artifact_active(project_cwd) and not entry.get("scope_nudged"):
                         reasons.append("预期符合性：存在活跃 plan/spec 制品，须对照 tasks 清单确认全部修改满足预期要求")
+
+                delivery_in_scope = dual_pass_in_scope(entry, cfg)
+                if delivery_in_scope or code_files or untracked:
+                    if phase == "modify":
+                        reasons.append(
+                            "有改动双审：审查已给出完整清单后，须派 change-implementer 按清单集中改齐并跑验证，再全新开审"
+                            f"（第 {rounds + 1}/{max_rounds} 轮）。禁止 resume 上一轮审查者、禁止边审边改、禁止审查者改文件、禁止只连审不改。"
+                        )
+                    elif phase == "verify":
+                        pass
+                    elif phase == "graph":
+                        reasons.append(
+                            "审查前须增量刷新双图（codegraph sync + code-review-graph update）。"
+                            "SessionStart ensure 不能代替 last_edit 之后的刷新。刷图后再全新开审。"
+                        )
+                    elif phase == "review":
+                        reasons.append(
+                            "独立审查未通过前任务未完成：须委派全新 eng-reviewer 对照原始要求做七维审查（满足/遗漏/错改/漏改/原功能/影响范围/问题是否解决），"
+                            "并逐道给出两道门结论 + 证据（符合预期要求；原功能保持：相对起点 tip 的测试/validate 观察输出与有意行为变更），"
+                            "一次找齐全部问题（禁止 resume、禁止改文件、禁止发现一条就停审），"
+                            f"回贴完整清单与 PASS 或 NEEDS-CHANGES（第 {rounds + 1}/{max_rounds} 轮；干净 PASS 即停）"
+                        )
+                    elif (
+                        verdict_cfg_on
+                        and not verdict_ok
+                        and blocks >= int(cfg.get("verdict_trigger_min_blocks", 2))
+                    ):
+                        reasons.append(
+                            f"验证已连续阻断 {blocks} 次仍未过：须委派 eng-reviewer 只读复核本轮 diff，"
+                            "并在回复中回贴结论 PASS 或 NEEDS-CHANGES（v11.4 持续处理升档）"
+                        )
 
                 # 方案A：清单制品差集校验（v11.3.6）— 当前脏集−基线集 ⊄ 声明清单 → 错改/漏改硬证据
                 igate = load_impact_gate()
@@ -717,15 +757,16 @@ def main():
                         )
 
                 if reasons:
-                    entry["blocks"] = blocks + 1
+                    count_stop_block(entry, phase)
                     entry["scope_nudged"] = True
                     entry["ts"] = time.time()
                     state[session_id] = entry
                     save_state(state)
                     for w in check_warnings:
                         print(f"⚠️ {w}", file=sys.stderr)
-                    print(build_block_message(reasons, crg, blocks + 1, int(cfg["max_blocks"])), file=sys.stderr)
-                    _emit_graph_ui(session_id, graph_refresh)
+                    shown_blocks = max(int(entry.get("blocks") or 0), 1)
+                    print(build_block_message(reasons, crg, shown_blocks, int(cfg["max_blocks"])), file=sys.stderr)
+                    _emit_session_visible(session_id, graph_refresh, session_notices)
                     sys.exit(2)
 
                 mark_issues_resolved(session_id)
@@ -750,7 +791,7 @@ def main():
     )
     for issue in issues:
         print(issue, file=sys.stderr)
-    _emit_graph_ui(session_id, graph_refresh if cfg["enabled"] else None)
+    _emit_session_visible(session_id, graph_refresh if cfg["enabled"] else None, session_notices)
     if any("🚫" in i for i in issues):
         sys.exit(1)
     sys.exit(0)
