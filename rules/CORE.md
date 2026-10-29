@@ -38,7 +38,7 @@ description: 始终启用 — 铁律唯一正文 + 工具优先级 + 上下文�
 - 最小改动集；删除过时代码优先于加兼容层/fallback；不为假设需求设计（YAGNI）；不为消除少量重复做抽象。
 - 依赖克制：先用已有依赖与能力；新增依赖需理由。
 - 改了行为就同步文档、注释、README、CHANGELOG、版本戳。
-- 测试：新功能有覆盖；Bug 修复先写复现；不跳过/禁用测试。
+- 测试：新功能有覆盖；Bug 修复先写复现；不跳过/禁用测试。Playwright / chrome-devtools 浏览器 UI 测试仅用户显式要求才跑；未要求但任务强烈像需要 → interrupt，禁止静默开跑或软自动兜底（SSOT → `rules/MCP.md` §2c / `mcp/servers.json` `browser_ui_tests`）。不另建 Stop hook，也不构成第三道 `/goal` 门。
 - 业务逻辑禁用裸 `new Date()` / `Date.now()` / `datetime.now()`：用时区库 + Clock 注入（CLI 一次性脚本、纯展示除外）。
 - 文件编码：UTF-8 无 BOM，保留目标文件编码/BOM/EOL；文件内容一律用 Edit/Write 工具写，禁止 shell 重定向写内容；发现乱码立即回滚原片段，禁止在损坏内容上叠加修改。
 - 沟通语言：中文；代码块仅在需要时输出。Git 规范 → `rules/GIT.md`；交付 → `skills/ship`。

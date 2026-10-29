@@ -2,6 +2,13 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## v13.0.3 浏览器 UI 测试显式选用（2026-10-29）
+
+- **规则**：Playwright / chrome-devtools 浏览器 UI 测试仅当用户本轮显式要求才跑。任务强烈像需要但未要求 → interrupt，禁止静默开跑，禁止软自动兜底。用户已要求时允许安装/配置。不是第三道 `/goal` 门，不另建 Stop hook。
+- **结构化 SSOT**：`mcp/servers.json` `browser_ui_tests`（`opt_in=explicit_user_ask` / `if_indicated_without_ask=interrupt` / `soft_fallback=false` / `allow_install_when_asked=true`）。正文 `rules/MCP.md` §2c。
+- **指针**：`docs/TOOL_MATCHING_GUIDE.md`、`skills/using-superpowers`、`skills/verification-before-completion`、`rules/CORE.md`、`CLAUDE.md`、`CURSOR-EDITOR.mdc`。
+- **防回归**：validate V6 核 `browser_ui_tests` 字段；LIVE_POLICY 禁「E2E 脚本=playwright」与「内置浏览器（UI 核验）> playwright plugin（E2E）」作为现行默认。
+
 ## v13.0.2 确认后优化 + 站立 `/goal`（2026-10-28）
 
 - **续轮去撞名**：`hooks/_lib/crg_track.py` `RETRY_LINES` / `retry_block`；文案改为「续轮须补观察证据（影响面 / 满足三态 / 错改 / 漏改 / 原功能 / 文档）」。不把 R20「问题是否解决」塞进这段。

@@ -49,10 +49,10 @@ everything 与 everything-claude-code 插件不是同一物（后者禁止安装
 
 | Plugin | 用途 | 面板 |
 | --- | --- | --- |
-| chrome-devtools | 分析联调 | **默认 Disabled**；需要时中断请用户手动打开 |
+| chrome-devtools | 分析联调 | **默认 Disabled**；浏览器 UI 测试/联调仅用户显式要求后才开 |
 | context7 | 库/API 文档 | 开 |
 | Exa | 语义搜索 | 开 |
-| playwright | E2E 脚本 | 开（UI 核验优先内置浏览器） |
+| playwright | E2E 脚本 | plugin 可装；**跑浏览器 UI 测试须用户显式要求**（未要求但强烈像需要 → interrupt） |
 | firecrawl | 网页抓取（Claude 走 plugin） | **面板无 User；勿写入 User MCP** |
 | github | PR/Issue | **Disabled**（用 `gh` CLI） |
 

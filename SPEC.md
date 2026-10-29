@@ -1,7 +1,7 @@
 # SPEC.md — 配置法典索引
 
 > CLAUDE.md 为路由层（≤200行）；本文件为法典索引；变更史 → `CHANGELOG.md`。
-> 版本：13.0.2 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`（模型/推理强度无关）**：阶段 entry/exit 门 × 轨道 × 完成定义（每条轨道独立审查必过，两道关：符合预期要求 + 原功能保持）× 审查 ≤3 轮/七维/路由 → `scripts/workflow.py render` 派生 + lint 拦模型绑定，V21 防漂移；模型与推理强度由会话/settings/调用方决定 + L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
+> 版本：13.0.3 | 五柱×五阶段×三横切 | **配置驱动主干 `config/workflow.yaml`（模型/推理强度无关）**：阶段 entry/exit 门 × 轨道 × 完成定义（每条轨道独立审查必过，两道关：符合预期要求 + 原功能保持）× 审查 ≤3 轮/七维/路由 → `scripts/workflow.py render` 派生 + lint 拦模型绑定，V21 防漂移；模型与推理强度由会话/settings/调用方决定 + L0–L3 分级加载 + MCP 常驻 5 项（codegraph/CRG/serena/everything/grep）+ 图谱三时点 + 审查只找问题、修改走 change-implementer + 配置/文档/注释必须同步 + 工具链 SSOT `config/toolchain.yaml`（pwsh 7.5 / pnpm 11；缺工具 BLOCKED）+ TDD/SDD 显式触发 + 多编辑器同步 1+N | UA removed | cbm 已禁用
 
 ---
 
@@ -204,7 +204,7 @@ EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master
 
 Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIME_PLAYBOOK 已并入 CLAUDE.md / rules/CORE.md / rules/MCP.md）
 
-权威 → `.mcp.json` | 分组 → `mcp/servers.json`
+权威 → `.mcp.json` | 分组 → `mcp/servers.json` | 浏览器 UI 测试显式选用 → `mcp/servers.json` `browser_ui_tests` + [rules/MCP.md](rules/MCP.md) §2c
 
 ---
 
@@ -310,11 +310,11 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIM
 | frontend-design            | ✅   | 前端设计                  | —                                                        |
 | skill-creator              | ✅   | 技能创建                  | —                                                        |
 | claude-md-management 1.0.0 | ✅   | CLAUDE.md 维护            | 早期因「防覆盖」禁用，现已启用                           |
-| chrome-devtools-mcp 1.6.0  | ❌   | Chrome DevTools           | 默认关；需要时中断请用户开 Plugin，禁止自动 merge debug.json |
+| chrome-devtools-mcp 1.6.0  | ❌   | Chrome DevTools           | 默认关；浏览器 UI 测试/联调须用户显式要求；禁止自动 merge debug.json |
 | context7                   | ✅   | 技术文档                  | Claude **plugin**（不写 MCP）                            |
 | firecrawl 1.0.9            | ✅   | 网页抓取                  | Claude **plugin**（不写 MCP）                            |
 | github                     | ❌   | GitHub 集成               | plugin=false 且不写 MCP；用 `gh` CLI                     |
-| playwright                 | ✅   | 浏览器自动化              | Claude **plugin**；Cursor 优先内置浏览器                 |
+| playwright                 | ✅   | 浏览器自动化              | plugin 可装；**跑浏览器 UI 测试须用户显式要求**（`browser_ui_tests`） |
 | security-guidance 2.0.6    | ❌   | 安全规则                  | 由 `rules/SECURITY.md` 承担                              |
 | typescript-lsp 1.0.0       | ❌   | TS LSP                    | 由 serena LSP 能力承担                                   |
 | feature-dev                | ❌   | 功能开发                  | 与五阶段流程重叠                                         |
@@ -346,4 +346,4 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIM
 
 ---
 
-> 版本：13.0.2 | 日期：2026-10-28 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：阶段门/轨道/完成定义/审查契约/站立 `/goal`；无模型/推理强度）×三横切 | 独立审查必过（两道关；≤3 轮；耗尽 BLOCKED）+ MCP 常驻 5 项 + 图谱三时点 + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N
+> 版本：13.0.3 | 日期：2026-10-29 | 五柱×阶段主干（`config/workflow.yaml` 单一调度面：阶段门/轨道/完成定义/审查契约/站立 `/goal`；无模型/推理强度）×三横切 | 独立审查必过（两道关；≤3 轮；耗尽 BLOCKED）+ MCP 常驻 5 项 + 图谱三时点 + 工具链 SSOT（pwsh 7.5 / pnpm 11）+ Cursor 完成门不再 followup + 审查只找问题、修改走 change-implementer + L0–L3 + 同步 1+N + 浏览器 UI 测试显式选用

@@ -6,7 +6,7 @@ layer: router
 
 # Claude 全局配置
 
-> **v13.0.2** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
+> **v13.0.3** — 模型无关 · 一次通过 · 独立审查门。主干 `config/workflow.yaml` | 铁律 `rules/CORE.md` | 归属 `MANIFEST.yaml` | 法典 `SPEC.md` | 史 `CHANGELOG.md`
 
 **五柱**：Superpowers v6.3.0(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem v13.13.1(记忆，钉扎 <13.14)
 **三横切**：L1 ECC+deer-flow | L2 RTK+caveman+阈值 | L3 codegraph+Firecrawl/Exa（codebase-memory 已禁用）
@@ -81,7 +81,7 @@ R1 完成（验证证据 + 独立审查 PASS）| R3 Bug 全修 | R4 配置 Grep 
 
 ## 工具门控
 
-**禁止**：eligible git 仓无双图时 Grep/Glob/everything/编辑/查询 MCP；未 `codegraph_explore` 直接做结构探索；未 Firecrawl+Exa 做深度调研；上下文 >70% 未评估压缩（Cursor `/summarize`，Claude Code `/compact`）。
+**禁止**：eligible git 仓无双图时 Grep/Glob/everything/编辑/查询 MCP；未 `codegraph_explore` 直接做结构探索；未 Firecrawl+Exa 做深度调研；未获用户显式要求就跑 Playwright / chrome-devtools 浏览器 UI 测试（未要求但强烈像需要 → interrupt；SSOT → `rules/MCP.md` §2c）；上下文 >70% 未评估压缩（Cursor `/summarize`，Claude Code `/compact`）。
 
 ## 审查路由
 

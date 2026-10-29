@@ -105,8 +105,10 @@ LIVE_POLICY_PATHS = (
     "agents/eng-reviewer.md",
     "hooks/_lib/gate_messages.md",
     "skills/using-superpowers/SKILL.md",
+    "rules/MCP.md",
+    "docs/TOOL_MATCHING_GUIDE.md",
 )
-# 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成、分类模型维、已裁场景路由
+# 旧政策残留：只读/简单免审、5 轮、轮次耗尽仍算完成、分类模型维、已裁场景路由、未获准自动跑浏览器 UI
 LIVE_POLICY_BANS = (
     "只读免审",
     "最多 5 轮",
@@ -114,7 +116,17 @@ LIVE_POLICY_BANS = (
     "模型匹配低",
     "六维全低",
     "scenario-router.yaml",
+    "E2E 脚本=playwright",
+    "内置浏览器（UI 核验）> playwright plugin（E2E）",
 )
+BROWSER_UI_OPT_IN = {
+    "opt_in": "explicit_user_ask",
+    "if_indicated_without_ask": "interrupt",
+    "soft_fallback": False,
+    "allow_install_when_asked": True,
+}
+BROWSER_UI_TOOLS = ("playwright", "chrome-devtools")
+BROWSER_UI_SSOT = "rules/MCP.md"
 BANNED_CONFIG_FILES = (
     "config/scenario-router.yaml",
     "config/harness-capabilities.yaml",
@@ -274,6 +286,7 @@ def v5_manifest_completeness():
 
 
 def v6_mcp_security():
+    check_browser_ui_opt_in()
     mcp_path = os.path.join(BASE, ".mcp.json")
     if not os.path.exists(mcp_path):
         return
@@ -986,6 +999,44 @@ def check_v16_codegraph_mandate():
     except OSError as exc:
         WARNINGS.append(f"V16: hooks.snippet.json unreadable: {exc}")
     print("  V16: graph_freshness timeouts + snippet ✓")
+
+
+def check_browser_ui_opt_in():
+    """Playwright / chrome-devtools 浏览器 UI 测试须显式选用；结构化配置在 mcp/servers.json。"""
+    path = os.path.join(BASE, "mcp", "servers.json")
+    if not os.path.isfile(path):
+        ERRORS.append("V6: mcp/servers.json missing")
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        ERRORS.append(f"V6: cannot read mcp/servers.json: {exc}")
+        return
+    cfg = data.get("browser_ui_tests")
+    if not isinstance(cfg, dict):
+        ERRORS.append("V6: mcp/servers.json browser_ui_tests object required")
+        return
+    for key, expected in BROWSER_UI_OPT_IN.items():
+        if cfg.get(key) != expected:
+            ERRORS.append(
+                f"V6: browser_ui_tests.{key}={cfg.get(key)!r} expected {expected!r}"
+            )
+    tools = tuple(cfg.get("tools") or ())
+    if tools != BROWSER_UI_TOOLS:
+        ERRORS.append(f"V6: browser_ui_tests.tools={list(tools)!r} expected {list(BROWSER_UI_TOOLS)}")
+    if cfg.get("ssot") != BROWSER_UI_SSOT:
+        ERRORS.append(f"V6: browser_ui_tests.ssot={cfg.get('ssot')!r} expected {BROWSER_UI_SSOT!r}")
+    mcp_md = os.path.join(BASE, "rules", "MCP.md")
+    try:
+        with open(mcp_md, "r", encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError as exc:
+        ERRORS.append(f"V6: cannot read rules/MCP.md: {exc}")
+        return
+    for needle in ("browser_ui_tests", "禁止静默开跑", "允许安装/配置"):
+        if needle not in text:
+            ERRORS.append(f"V6: rules/MCP.md missing browser UI opt-in phrase {needle!r}")
 
 
 def check_live_policy_bans():

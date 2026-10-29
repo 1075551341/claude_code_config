@@ -21,8 +21,8 @@ context7 / exa / playwright / firecrawl 走 Claude Plugins。chrome-devtools plu
 
 | 能力 | Claude | Cursor |
 |------|--------|--------|
-| Driving (E2E) | playwright **插件** | 内置浏览器（UI）+ playwright plugin（E2E） |
-| Debugging (perf) | chrome-devtools **默认关；中断请用户开 Plugin** | 同左 |
+| Driving (E2E) | 仅用户显式要求才跑 playwright | 同左（未要求但强烈像需要 → interrupt） |
+| Debugging (perf) | chrome-devtools **默认关**；须显式要求浏览器/UI 测试或联调 | 同左 |
 
 禁止自动 merge `mcp-configs/debug.json`。仅用户确认且 Plugin 不可用时才由用户 merge（须 `--isolated`）。禁止与 plugin 双挂。
 

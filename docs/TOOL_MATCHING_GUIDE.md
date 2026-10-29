@@ -13,7 +13,7 @@ description: MCP 语义匹配指南 — 无硬编码 mcp0/mcp1 前缀
 2. **Tool-First** — MANIFEST → skill → agent → MCP
 3. **memory MCP ≠ claude-mem** — 勿启用 memory MCP；跨会话仅 claude-mem（R18）
 4. **本地代码三工具 + everything 不可互相替代** — 分工见 `rules/MCP.md` §4；禁止用 serena/everything 替代 codegraph 做 R17 探索；禁止用 everything 替代工作区 Glob
-5. **工具优先级** — 编辑器内置 > 同名 plugin > MCP > 按需中断启用（chrome-devtools / postgres 禁止自动 merge）
+5. **工具优先级** — 编辑器内置 > 同名 plugin > MCP > 按需中断启用（chrome-devtools / postgres 禁止自动 merge）。Playwright / chrome-devtools **浏览器 UI 测试**仅用户显式要求才跑（`mcp/servers.json` `browser_ui_tests`；SSOT `rules/MCP.md` §2c）
 
 ## 前置条件
 
@@ -32,7 +32,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 ## 分组与四工具分工（指针）
 
 - 本地代码三工具 + everything 分工（codegraph / serena / code-review-graph / everything 何时用）→ `rules/MCP.md` §4
-- 跨会话记忆仅 claude-mem plugin（R18）；浏览器 Claude=playwright 插件、Cursor=内置浏览器（UI）+ playwright plugin（E2E）；chrome-devtools / postgres 默认关，需要时**中断请用户手动启用**
+- 跨会话记忆仅 claude-mem plugin（R18）；Playwright / chrome-devtools 浏览器 UI 测试仅用户显式要求才跑；未要求但任务强烈像需要 → interrupt，禁止静默开跑或软自动兜底。chrome-devtools / postgres 默认关，禁止自动 merge
 
 ## 场景 → 工具
 
@@ -51,8 +51,8 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 | 本地 Git 历史               | `git` CLI（经 Bash）                          | git-workflow skill  |
 | 网页抓取/搜索 (L2/L3)       | firecrawl + Exa（双源交叉）                   | —                   |
 | 深度调研 (L3)               | skills/deep-research                          | /deep-research      |
-| E2E / 操作浏览器            | Cursor 内置浏览器（UI）；Claude=playwright 插件；E2E 脚本=playwright | — |
-| 性能 / Lighthouse           | chrome-devtools（默认关；**中断请用户开 Plugin**，禁止自动 merge debug） | — |
+| E2E / 操作浏览器            | 仅用户显式要求浏览器/UI 测试时才跑 Playwright / chrome-devtools；未要求但强烈像需要 → interrupt，禁止静默开跑或软自动兜底 | — |
+| 性能 / Lighthouse           | 同上显式选用；chrome-devtools 默认关，禁止自动 merge debug | — |
 | 数据库                      | postgres（默认关；**中断请用户设 DATABASE_URL 后启用**） | — |
 | 跨会话记忆 (R18)            | claude-mem plugin                             | **勿**用 memory MCP |
 | 文件读写                    | 内置 Read/Write/Grep                          | fs MCP（按需 merge）|
@@ -76,8 +76,7 @@ Claude 走 **plugin**（不写 `.mcp.json`），读 Machine env `FIRECRAWL_API_K
 ├─ 本机按文件名（跨仓/全盘，Windows） → everything_search（禁止替代工作区 Glob / codegraph）
 ├─ 跨公开仓找用法 → grep MCP
 ├─ 网页内容 → firecrawl（+ Exa 交叉验证）
-├─ 浏览器操作/E2E → Cursor 内置浏览器（UI）；Claude=playwright 插件；E2E 脚本=playwright
-├─ 性能/调试 → 中断请用户开 chrome-devtools Plugin（禁止自动 merge debug.json）
+├─ 浏览器操作/E2E / 性能 UI → 仅用户显式要求浏览器/UI 测试时才跑 Playwright / chrome-devtools；未要求但强烈像需要 → interrupt（禁止静默开跑或软自动兜底；禁止自动 merge debug.json）
 ├─ 数据库 → 中断请用户设 DATABASE_URL 后启用 postgres
 └─ 跨会话回忆 → claude-mem（非 memory MCP）
 ```

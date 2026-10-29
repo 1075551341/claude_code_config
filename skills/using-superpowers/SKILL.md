@@ -97,6 +97,7 @@ MANIFEST.yaml → P0路由集 → 全局 skill → catalog → agent → MCP
 | TDD      | test-driven-development (默认关闭,用户显式要求时触发)           |
 | 独立审查（每个任务必经） | verification-before-completion「独立审查」→ eng-reviewer + 路由 |
 | 站立完成目标 | `/goal`（`completion.standing_goal` = 两道 PASS 门，不是第三道） |
+| 浏览器 UI 测试 | 仅用户显式要求才跑 Playwright / chrome-devtools；未要求但强烈像需要 → interrupt（SSOT → `rules/MCP.md` §2c） |
 | 架构决策 | adr-management                                                  |
 | 长时自主 | catalog/skills/claude-to-deerflow（v11 降级 catalog，按需复制） |
 | Git 提交 | git-workflow                                                    |

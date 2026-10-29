@@ -39,7 +39,7 @@
     },
     {
       "name": "playwright",
-      "intent": "E2E 脚本。Cursor UI 核验优先内置浏览器"
+      "intent": "E2E 脚本。仅用户显式要求浏览器/UI 测试才跑；未要求但强烈像需要 → interrupt"
     },
     {
       "name": "firecrawl",

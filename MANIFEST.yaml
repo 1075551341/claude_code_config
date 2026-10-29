@@ -1,12 +1,12 @@
-# 组件唯一归属源 — 防左右手互博 — v13.0.2
+# 组件唯一归属源 — 防左右手互博 — v13.0.3
 # 调度（阶段/轨道/完成定义/审查）不在本文件 → config/workflow.yaml（唯一调度面）
 # 本包不绑定任何模型与推理强度：模型由会话/settings/调用方决定（scripts/workflow.py lint 拦截）
 # 权威: SPEC.md | 五柱×五阶段×三横切 | 调研 SSOT docs/research/merits-20261028.md
 
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
-version: "13.0.2"
-updated: "2026-10-28"
+version: "13.0.3"
+updated: "2026-10-29"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件

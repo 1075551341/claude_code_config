@@ -21,8 +21,7 @@ alwaysApply: true
 - 本机按文件名（跨仓/全盘）：`everything_search`；**双图就绪后**当前工作区找文件用 Glob。禁止用 everything 替代 Glob 或 codegraph
 - Grep 仅双图就绪后作残留核对（非跳级捷径）；无图 **deny**（Grep/Glob/everything/编辑/查询 MCP）
 - 禁止未探索就大范围 Read 扫目录
-- chrome-devtools / postgres 默认关；需要时**中断请用户手动启用**（不改 Plugin 面板、不自动 merge MCP）
-- 工具优先级：内置浏览器（UI 核验）> playwright plugin（E2E）> chrome-devtools（调试）
+- chrome-devtools / postgres 默认关；禁止自动 merge MCP。Playwright / chrome-devtools 浏览器 UI 测试仅用户显式要求才跑；未要求但强烈像需要 → interrupt（SSOT → `rules/MCP.md` §2c）。不改 Plugin 面板。
 - codegraph 索引由 MCP server 自动同步（v1.5 原生监听；v11 起 Guard 不再挂 kg sync hook；cbm 已关）
 
 ## 编辑与引用
@@ -80,5 +79,5 @@ Cursor Stop 不能阻断，完成门靠本规则：没有本轮全新独立审�
 - 库文档：Context7 plugin
 - GitHub：`gh` CLI（github plugin 默认关）
 - 跨会话：Guard 摘要制品 + 新对话 `@session-digest.md`
-- E2E：内置浏览器（UI）+ playwright plugin（脚本）
-- 调试/DB：中断请用户手动启用 chrome-devtools / postgres
+- 浏览器 UI 测试：仅用户显式要求才跑 Playwright / chrome-devtools；未要求但强烈像需要 → interrupt（禁止静默开跑或软自动兜底）
+- 调试/DB：postgres 默认关，中断请用户启用；chrome-devtools 同浏览器 UI 显式选用

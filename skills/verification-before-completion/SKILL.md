@@ -46,6 +46,7 @@ source: obra/superpowers
 - 非功能变更（重构/格式/配置/重命名/文档）：跑既有测试或冒烟，写入「原功能」证据
 - 配置/修改与文档、注释、INDEX、MANIFEST、版本戳同步；不一致 = 未完成（计入「漏改」）
 - 安全：无硬编码密钥；边界输入已校验
+- Playwright / chrome-devtools 浏览器 UI 测试仅当用户显式要求才跑；否则不跑。任务强烈像需要却未要求 → interrupt（SSOT → `rules/MCP.md` §2c / `mcp/servers.json` `browser_ui_tests`）。不得把未获准的浏览器 UI 测当作 `/goal` 两道门的替代证据，也不另建 Stop hook
 
 ## 独立审查
 

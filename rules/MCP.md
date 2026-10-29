@@ -44,6 +44,16 @@ description: MCP 服务器配置规范。触发：修改 MCP 配置、添加/删
 
 > **chrome-devtools / postgres：默认关，需要时中断**。Agent **禁止**自动 merge debug/ops 进 `.mcp.json`。需要联调或查库时停止当前步骤，请用户在 Plugin 面板手动打开 chrome-devtools，或自行设 `DATABASE_URL` 后启用 postgres；用户确认后再继续。
 
+### 2c. 浏览器 UI 测试显式选用（`browser_ui_tests`）
+
+结构化配置 → `mcp/servers.json` `browser_ui_tests`（validate 核字段）。正文在本小节。不是第三道 PASS 门，也不另建 Stop hook。`/goal` 仍是符合预期要求 + 原功能保持。
+
+- **默认禁止跑** Playwright（plugin / MCP / `npx playwright` / `@playwright/test` UI）与 chrome-devtools（plugin / MCP / Lighthouse 等）浏览器 UI 测试或驱动。
+- **仅当用户本轮显式要求**浏览器/UI 测试（含「用浏览器验」「E2E」「Playwright」「chrome-devtools」）才可调用。此时**允许**安装/配置这些工具，禁止再加一层禁装兜底。
+- **任务强烈像需要但用户未要求**：interrupt，请用户决定。禁止静默开跑；禁止用内置浏览器 / curl / 截图软自动兜底假装已做浏览器 UI 测试。
+- chrome-devtools 仍默认关、禁止自动 merge debug；启用也须用户显式要求浏览器/UI 测试或联调。
+- 未获准时验证走既有测试 / validate / check 观察输出。不得把「没跑 Playwright」写成原功能保持的替代证据，也不得偷偷跑。
+
 ### 3. 按需启用 profile（debug / fsaccess / ops）
 
 用户**手动**启用时：
@@ -98,6 +108,7 @@ Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），
 - 禁止在 `.mcp.json` 与 `mcp-configs/` 两处维护不同参数定义
 - 禁止将按需 profile（debug / fsaccess / ops）服务器默认写入常驻 `.mcp.json`
 - 禁止 Agent 自动 merge debug/ops；chrome-devtools / postgres 须中断请用户手动启用
+- 禁止在用户未显式要求浏览器/UI 测试时跑 Playwright / chrome-devtools 浏览器 UI 测试；任务强烈像需要却未要求 → interrupt，禁止静默开跑或软自动兜底（`browser_ui_tests`）。用户已要求时允许安装/配置
 - 禁止同端对同一能力 **plugin + mcp.json 双挂**
 - 禁止常驻 `memory` MCP（R18；记忆仅 claude-mem 插件）
 - 禁止常驻 `aider-repo-map`、`sequential-thinking`（已删除，不要加回）
@@ -121,7 +132,7 @@ Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），
 
 **firecrawl** — Claude 走 **plugin**（不写 `.mcp.json`）。Cursor 面板无 firecrawl User → 不常驻 MCP。DSH/OpenCode/Qoder 已有则保留钉 `firecrawl-mcp@3.24.0`（各端自管）。
 
-**playwright / chrome-devtools** — 互补（测试 vs 分析联调）。playwright：Claude/Cursor 走 plugin（Cursor UI 核验优先内置浏览器）。chrome-devtools **默认关闭**；需要时**中断请用户手动开 Plugin**，禁止自动 merge debug profile。钉 `@playwright/mcp@0.0.79` / `chrome-devtools-mcp@1.8.0 --isolated`（仅无 plugin 端）。
+**playwright / chrome-devtools** — 互补（测试 vs 分析联调）。**跑浏览器 UI 测试须用户显式要求**（`browser_ui_tests`；未要求但任务强烈像需要 → interrupt）。用户已要求时允许安装/配置。chrome-devtools **默认关闭**；禁止自动 merge debug profile。钉 `@playwright/mcp@0.0.79` / `chrome-devtools-mcp@1.8.0 --isolated`（仅无 plugin 端）。
 
 **架构替代链** — 探索用 `codegraph`（R17）；影响面/风险/审查/PR 用 CRG；本机文件名用 everything（仅 Windows）。
 
@@ -141,8 +152,8 @@ Windows 用户命令与脚本一律 `pwsh` 7.5+（`#Requires -Version 7.5`），
 | 文档               | Context7 **plugin**                 | Context7 **plugin**                         |
 | 跨仓代码搜索       | grep MCP                            | 同左                                        |
 | GitHub             | plugin 关且无 MCP                   | github Plugin Disabled；PR 用 `gh` CLI      |
-| 浏览器测试         | playwright **插件**                 | 内置浏览器（UI 核验）+ playwright plugin（E2E） |
-| 浏览器联调         | chrome-devtools **插件默认关；中断启用** | chrome-devtools **plugin 默认 Disabled；中断启用** |
+| 浏览器 UI 测试     | 仅用户显式要求才跑 playwright / chrome-devtools；否则 interrupt | 同左（Cursor 内置浏览器也不作未获准时的软自动兜底） |
+| 浏览器联调         | chrome-devtools **插件默认关**；须显式要求后中断启用 | 同左 |
 
 > **OpenCode / DSH**：无 marketplace plugin → context7/exa/playwright 走钉版本 MCP；chrome-devtools 条目保留但默认 disabled。OpenCode github `enabled:false`；DSH github `disabled: true`。均有 CRG、playwright；postgres 默认禁用。无 aider-repo-map / sequential-thinking。firecrawl 若已有则保留。各端 plugin/MCP **自管，禁止经本仓 sync 改开关**。
 
