@@ -1,7 +1,6 @@
 ---
 name: nodejs-reviewer
 description: 负责 Node.js 与 TypeScript 后端代码审查任务。当需要审查 Node.js 代码、审查 TypeScript 后端代码、检查 Express/Koa/Fastify/NestJS 代码质量、评审后端 API 实现、审查数据库操作代码、检查异步处理逻辑、评估后端代码安全性和性能时调用此 Agent。触发词：审查 Node、Node.js 审查、TypeScript 审查、后端代码审查、Express 审查、NestJS 审查、Koa 审查、Node 代码质量、后端代码审查。
-model: inherit
 color: yellow
 tools:
   - Read

@@ -1,6 +1,6 @@
 # Skills 技能库
 
-> **全局 36 个**（L1×4 + L2 门控×7 + L3×25）+ **catalog/** 领域库（按需复制）｜v11 精简：45→36
+> **全局 26 个**（L1×4 + L2×5 + L3×17，同 skills-INDEX）+ **catalog/** 领域库（按需复制）｜v13：35→26，只留流程补充与开发习惯
 
 完整索引 → [skills-INDEX.md](../skills-INDEX.md)
 
@@ -11,38 +11,24 @@
 L1: using-superpowers, task-triage, change-impact-analysis, brainstorming  
 L2 门控: verification-before-completion, systematic-debugging
 
-## Superpowers Workflow（12，本地深度定制版）
+## Superpowers Workflow（本地定制版 / 薄壳）
 
 writing-plans | executing-plans | test-driven-development | subagent-driven-development | using-git-worktrees | requesting-code-review | receiving-code-review | finishing-a-development-branch | brainstorming | systematic-debugging | verification-before-completion | using-superpowers
 
-> 与插件 superpowers v6.2.0 同名但**非副本**：本地版为中文重写 + 五阶段/门控/verify_tier 集成（相似度 <10%），本地为权威。
+> 与插件 superpowers 同名但**非副本**：本地版为中文重写 + 五阶段/门控/独立审查集成，本地为权威；requesting/receiving-code-review 与 finishing-a-development-branch 为薄壳。
 
 ## 调研 / Git / 记忆
 
-deep-research | git-workflow | pr-workflow | claude-mem-maintenance | memory-compression
+deep-research | git-workflow | claude-mem-maintenance | memory-compression | caveman-compress
 
-## Meta
+## Meta / 扩展
 
-spec-validation | karpathy-guidelines | caveman-compress | skill-creator | skill-reviewer
-
-## 扩展
-
-autoplan | design-pipeline（含原 design-engineer Phase 2）| ship（含原 release-engineer）| structured-artifacts
-
-## 重构与前端
-
-code-refactoring（含前端提案模式）| frontend-library-advisor | frontend-design-pattern-applier | test-edge-case-analyzer
-
-## 其他
-
-triage | improve-codebase-architecture | workstream-management | adr-management | change-impact-analysis | task-triage
+spec-validation | skill-creator | skill-reviewer | design-pipeline | ship | workstream-management | adr-management
 
 ---
 
-## v11 变更
+## v13 变更
 
-- 降级 catalog：office-hours / instinct-learning / onboarding-guide / claude-to-deerflow / browser-qa / taste-memory
-- 删除：context-engineering（正文并入 rules/CONTEXT.md）
-- 并入：frontend-refactor-proposer → code-refactoring 子文档；writing-skills → skill-creator 前言
+删除 9 个：karpathy-guidelines / triage / autoplan / structured-artifacts / improve-codebase-architecture / code-refactoring / frontend-library-advisor / frontend-design-pattern-applier / test-edge-case-analyzer（去向 → skills-INDEX.md）。
 
 Catalog 复制：`python ~/.claude/scripts/migrate-from-legacy.py --project <path> --skill <name>`

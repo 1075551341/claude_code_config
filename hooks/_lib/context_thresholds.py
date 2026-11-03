@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Claude Code 上下文窗口与压缩阈值 SSOT（模型感知，不写死窗口）。
+Claude Code 上下文窗口与压缩阈值 SSOT（模型无关：本包不登记任何厂商模型）。
 
-优先级（模型最大窗口 resolve_model_context_tokens）：
+模型最大窗口 known_context_tokens（未知返回 None）：
   1. env.CLAUDE_CODE_MAX_CONTEXT_TOKENS
-  2. claude-hud context-cache 实测 context_window_size
-  3. 模型名后缀 [1M] / [200K] / …（config/model-context-windows.json）
-  4. model_tokens 精确匹配（去后缀后的基名）
-  5. registry.default_tokens（默认 200K，保守不超限）
+  2. 模型名后缀 [1M] / [200K] / …
+  3. config/model-context-windows.json model_tokens（出厂为空）+ 本机 model-context-windows.local.json（gitignore）
+  4. 无模型名时：claude-hud context-cache 实测 context_window_size
 
-有效压缩窗口 ctx_window_tokens（永不超过模型最大窗口）：
-  1. env.CLAUDE_CODE_AUTO_COMPACT_WINDOW（封顶）
-  2. settings.json autoCompactWindow（封顶）
-  3. resolve_model_context_tokens()
+有效压缩窗口 ctx_window_tokens：
+  1. env.CLAUDE_CODE_AUTO_COMPACT_WINDOW / settings.json autoCompactWindow（已知最大窗口时封顶）
+  2. 已知最大窗口
+  3. registry.default_tokens（保守默认 200K）
 
 阈值：CLAUDE_COMPACT_WARN_PCT=70 / FORCE_PCT=90 / CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70（原生自动 /compact）
 
@@ -53,19 +52,30 @@ def _load_settings() -> dict:
     return {}
 
 
-@lru_cache(maxsize=1)
-def _load_registry() -> dict:
-    path = _registry_path()
+def _read_json(path: Path) -> dict | None:
     try:
         if path.is_file():
-            return json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else None
     except (OSError, json.JSONDecodeError):
         pass
-    return {
+    return None
+
+
+@lru_cache(maxsize=1)
+def _load_registry() -> dict:
+    registry = _read_json(_registry_path()) or {
         "suffix_tokens": {"1M": 1_000_000, "200K": 200_000, "128K": 128_000},
         "model_tokens": {},
         "default_tokens": 200_000,
     }
+    # 本机登记放 gitignore 的 .local.json，避免 git pull 冲突
+    local = _read_json(_registry_path().with_name("model-context-windows.local.json"))
+    if local:
+        merged = dict(registry.get("model_tokens") or {})
+        merged.update(local.get("model_tokens") or {})
+        registry = {**registry, "model_tokens": merged}
+    return registry
 
 
 def _parse_suffix_tokens(suffix: str, registry: dict) -> int | None:
@@ -96,18 +106,12 @@ def _strip_model_suffix(model: str) -> tuple[str, int | None]:
 
 
 def active_model_name() -> str:
-    for key in ("ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"):
-        val = os.environ.get(key)
-        if val:
-            return val.strip()
     settings = _load_settings()
     env_block = settings.get("env") or {}
-    for key in ("ANTHROPIC_MODEL",):
-        val = env_block.get(key)
-        if val:
-            return str(val).strip()
-    model = settings.get("model")
-    return str(model).strip() if model else ""
+    name = ""
+    val = os.environ.get("ANTHROPIC_MODEL") or env_block.get("ANTHROPIC_MODEL") or settings.get("model")
+    name = str(val).strip() if val else ""
+    return name
 
 
 def _hud_observed_window() -> int | None:
@@ -128,36 +132,30 @@ def _hud_observed_window() -> int | None:
     return best[1] if best else None
 
 
-def resolve_model_context_tokens(model: str | None = None) -> int:
-    """模型支持的最大上下文 token 数（保守默认 200K）。"""
+def known_context_tokens(model: str | None = None) -> int | None:
+    """可确认的模型最大上下文；无法确认（未知模型、无后缀、未登记）返回 None。"""
     override = os.environ.get("CLAUDE_CODE_MAX_CONTEXT_TOKENS")
     if override:
         try:
             return max(1, int(override))
         except ValueError:
             pass
-
-    name = (model or active_model_name()).strip()
-    registry = _load_registry()
-    default = int(registry.get("default_tokens") or 200_000)
-
+    name = model.strip() if model else active_model_name()
     if name:
         base, suffix_tokens = _strip_model_suffix(name)
         if suffix_tokens:
             return suffix_tokens
-        models = registry.get("model_tokens") or {}
-        if base in models:
-            return int(models[base])
-        if name in models:
-            return int(models[name])
-        # 未登记模型：保守默认，不用 HUD 缓存（避免换模型后沿用旧窗口）
-        return default
+        models = _load_registry().get("model_tokens") or {}
+        for key in (base, name):
+            if key in models:
+                return int(models[key])
+        # 未登记模型：不猜，也不用 HUD 缓存（避免换模型后沿用旧窗口）
+        return None
+    return _hud_observed_window()
 
-    hud = _hud_observed_window()
-    if hud:
-        return hud
 
-    return default
+def _default_tokens() -> int:
+    return int(_load_registry().get("default_tokens") or 200_000)
 
 
 def _explicit_compact_window() -> int | None:
@@ -174,28 +172,37 @@ def _explicit_compact_window() -> int | None:
     return None
 
 
+def resolve_model_context_tokens(model: str | None = None) -> int:
+    """模型最大上下文：已知值 > 用户显式窗口（未知模型时以调用方设置为准）> 保守默认。"""
+    known = known_context_tokens(model)
+    if known is not None:
+        return known
+    return _explicit_compact_window() or _default_tokens()
+
+
 def ctx_window_tokens(model: str | None = None) -> int:
-    """Hook / 估算用有效窗口：显式配置封顶到模型最大窗口。"""
-    model_max = resolve_model_context_tokens(model)
+    """Hook / 估算用有效窗口：显式配置在已知最大窗口内封顶。"""
+    known = known_context_tokens(model)
     explicit = _explicit_compact_window()
     if explicit is not None:
-        return min(explicit, model_max)
-    return model_max
+        return min(explicit, known) if known is not None else explicit
+    return known if known is not None else _default_tokens()
 
 
 def recommended_autocompact_window(model: str | None = None) -> int:
-    """settings.json autoCompactWindow 推荐值（= 模型最大窗口，不超出）。"""
+    """settings.json autoCompactWindow 推荐值（已知最大窗口；未知时保留调用方显式值）。"""
     return resolve_model_context_tokens(model)
 
 
 def sync_settings_compact_window(*, write: bool = True) -> dict:
     """
-    将 settings.json 的 autoCompactWindow 同步为当前模型窗口。
+    已知模型窗口时把 settings.json 的 autoCompactWindow 同步为该值；未知模型且已有显式值时不动。
     移除 env 中冗余的 CLAUDE_CODE_AUTO_COMPACT_WINDOW（由 resolver 动态推导）。
     """
     path = _settings_path()
     result = {
         "model": active_model_name(),
+        "known_window": known_context_tokens(),
         "resolved_window": recommended_autocompact_window(),
         "previous_window": None,
         "updated": False,

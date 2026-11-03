@@ -34,6 +34,7 @@ plan_cache.json
 .claude.json
 settings.json
 settings.local.json
+config/model-context-windows.local.json
 settings.json.bak_*
 .last-cleanup
 .last-update-result.json

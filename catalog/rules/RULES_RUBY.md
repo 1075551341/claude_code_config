@@ -5,6 +5,8 @@ globs: ["*.rb", "*.erb", "Gemfile", "Rakefile", "*.yml"]
 
 # Ruby/Rails 开发规则
 
+> Ruby 3.2+ / bundler → `config/toolchain.yaml`
+
 ## 项目结构
 
 - Rails 标准：app/{models,controllers,views,helpers} + lib/ + config/

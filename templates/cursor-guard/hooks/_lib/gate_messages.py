@@ -20,14 +20,13 @@ FALLBACKS = {
     "verify": (
         "【门控 · 完成前必做】\n"
         "有未验证编辑时才执行（仅 Claude Stop / 人工 Read；Cursor 不注入本段）。\n"
-        "贴观察输出；R20 六行（满足须承认/反驳/弃权；漏改含文档或无文档影响；"
-        "原功能含证据；影响范围含 CRG/IMPACT/blast）。\n"
-        "有代码改动：change-implementer 修改后 eng-reviewer 只找问题。"
-        "干净 PASS 即停。审查一次找齐后清单齐再集中改；每轮全新开审（禁止 resume），最多 3 轮；禁止边审边改、禁止审查者改文件。"
+        "贴观察输出；R20 七维（含问题是否解决）。审查前刷图；全新只读独立审查（两道门：符合预期要求 / 原功能保持）PASS 才算完成，最多 {{review_max_rounds}} 轮，用尽=BLOCKED。"
+        "政策 → verification-before-completion。"
     ),
     "impact": (
         "【门控 · 每个文件首次编辑前必做】\n"
-        "1. codegraph_explore 目标 blast-radius；2. Grep 全项目引用；"
+        "1. 有 CRG 图：get_minimal_context + get_impact_radius（有 git diff 再 detect_changes）；"
+        "叠加 codegraph_explore blast-radius；2. Grep 全项目引用；"
         "3. 配置类改动查 MANIFEST depends_on。范围不明不修改。"
     ),
     "first_edit": (
@@ -39,6 +38,24 @@ FALLBACKS = {
 }
 
 
+def _fill_placeholders(text: str, claude_home: Path) -> str:
+    """Local fallback when gate_reader cannot be imported. Keep {{review_max_rounds}} live."""
+    raw = text or ""
+    if "{{review_max_rounds}}" not in raw:
+        return raw
+    rounds = 3
+    try:
+        import json
+
+        qg = Path(claude_home) / "config" / "quality_gates.json"
+        data = json.loads(qg.read_text(encoding="utf-8"))
+        vg = data.get("verification_gate") or {}
+        rounds = int(vg.get("review_max_rounds") or data.get("review_max_rounds") or 3)
+    except Exception as e:
+        print(f"gate_messages: review_max_rounds fallback 3: {e}", file=sys.stderr)
+    return raw.replace("{{review_max_rounds}}", str(rounds))
+
+
 def _local_load(name: str, claude_home: Path) -> str:
     fallback = FALLBACKS[name]
     start_mark, end_mark = SECTIONS[name]
@@ -48,10 +65,11 @@ def _local_load(name: str, claude_home: Path) -> str:
         start = content.index(start_mark) + len(start_mark)
         end = content.index(end_mark) if end_mark else len(content)
         section = content[start:end].strip()
-        return section if section else fallback
+        raw = section if section else fallback
     except (OSError, ValueError) as e:
         print(f"gate_messages: read {name} failed: {e}", file=sys.stderr)
-        return fallback
+        raw = fallback
+    return _fill_placeholders(raw, claude_home)
 
 
 def load_gate(name: str, claude_home: Path) -> str:

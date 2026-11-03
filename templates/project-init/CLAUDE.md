@@ -14,11 +14,16 @@ alwaysApply: true
 - **包管理器**: {{PACKAGE_MANAGER}} <!-- pnpm / npm / yarn -->
 - **初始化日期**: {{DATE}}
 
-## 代码探索（R17 单引擎 — cbm 已禁用 v10.10+）
+## 代码探索（R17 + CRG + everything；cbm 已禁用 v10.10+）
 
-1. **codegraph（R17 常驻）**：`codegraph init` → `codegraph index` — 日常符号/调用链/架构/ADR/变更影响
+常驻 MCP 5：codegraph / code-review-graph / serena / everything / grep（按语义名调用，禁止 `mcp0_`）。
 
-> codebase-memory 已永久禁用（全盘索引爆 CPU/内存）；架构/ADR/变更影响一律用 codegraph_explore。
+1. **codegraph（R17）**：`codegraph init` → `codegraph index` — 符号/调用链/「怎么运作」；默认 `codegraph_explore` / `codegraph_node` / `codegraph_search` / `codegraph_callers`
+2. **CRG**：改前/完成前 `get_minimal_context` + `get_impact_radius`（有 git diff 再 `detect_changes`）；审查/PR 用 `get_review_context`
+3. **everything**：本机文件名搜索；禁止替代工作区 Glob / R17 / CRG `detect_changes`
+4. 无双图 → deny Grep/Glob/everything/编辑/查询 MCP
+
+> codebase-memory 已永久禁用（全盘索引爆 CPU/内存）。架构/ADR 用 codegraph_explore；变更影响有图走 CRG，再叠加 codegraph blast-radius。
 
 ## 项目约定
 
@@ -42,7 +47,7 @@ tests/          # 测试文件
 ### 依赖管理
 
 - 锁定 major 版本（R14）
-- 优先复用已有依赖，避免重复引入（R4）
+- 优先复用已有依赖，避免重复引入（R24.3/R24.4）
 - 安全补丁用同 major 最新版
 
 ## 项目特有规则
@@ -55,10 +60,10 @@ tests/          # 测试文件
 
 以下配置从 `~/.claude/` 全局继承，无需重复声明：
 - 五柱×五阶段×三横切骨架
-- 铁律 R1–R20
+- 铁律 R1–R25
 - 上下文三级阈值（70%/90%/100%）
-- 变更彻底性保障（codegraph_explore + Grep）
-- 工具路由优先级（codegraph > Grep > Read；cbm 已禁用）
+- 变更彻底性保障（有图：CRG `get_impact_radius` + `codegraph_explore` blast-radius + Grep）
+- 工具路由（codegraph → 双图就绪后 Grep；本机文件名 → everything；cbm 已禁用）
 - L0–L3 加载等级
 
 ## 覆盖声明

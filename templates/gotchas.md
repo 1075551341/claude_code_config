@@ -30,6 +30,6 @@
 
 ## 使用说明
 
-- debugger agent 和 build-error-resolver 每次修复后自动追加条目
+- systematic-debugging / change-implementer 每次修复后追加条目
 - 调试时先查 gotchas.md 检查是否为已知问题
 - claude-mem 自动同步关键 gotchas 到跨会话记忆

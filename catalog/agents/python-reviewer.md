@@ -1,7 +1,6 @@
 ---
 name: python-reviewer
 description: 负责 Python 后端代码审查任务。当需要审查 Python 代码、审查 FastAPI/Flask/Django 代码、检查 Python 代码质量、评审异步 Python 代码、审查 Pydantic 模型设计、检查 SQLAlchemy 数据库操作、评估 Python 代码安全性、检查 PEP8 规范合规性时调用此 Agent。触发词：审查 Python、Python 审查、Python 代码审查、FastAPI 审查、Flask 审查、Django 审查、Python 质量、Pydantic 审查、SQLAlchemy 审查、python-review。
-model: inherit
 color: yellow
 tools:
   - Read

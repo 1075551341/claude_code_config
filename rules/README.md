@@ -1,23 +1,21 @@
 # Rules 规则索引
 
-全局 **10 规则文件** alwaysApply/lazy/glob（v11：DESIGN 并入 FRONTEND、BESTPRACTICE 并入 GOVERNANCE）。语言/领域模板在 `catalog/rules/`，按需通过L0路由Read加载。
+全局 **6 规则文件**（v13：只保留方向性禁令、开发习惯、流程补充）。流程、审查轮次、完成定义的 SSOT 是 `config/workflow.yaml`，不在规则里复述。语言/领域模板在 `catalog/rules/`，按需 Read。
+
+> 工程原则 R21-R25（5 类 18 子条）**已并入 `CORE.md` 的 `## 铁律`**（不占独立规则文件）；`principles.py` 将同一段注入 `CLAUDE.md` / 各端 `AGENTS.md` / `CORE.md`；完整裁决 C1–C10 → `docs/ENGINEERING_PRINCIPLES.md`。
 
 ---
 
-## 全局规则（10）
+## 全局规则（6）
 
 | 文件 | 适用 | 加载 | layer |
 |------|------|------|-------|
-| `CORE.md` | 编码规范 + Karpathy 四原则 + 铁律 R12–R20（R1–R20 见 CLAUDE.md） | ✅ alwaysApply | skeleton |
-| `FRONTEND.md` | ESLint/Prettier/Stylelint + Vue/React + 设计系统 DESIGN.md 规范（glob 匹配前端文件） | glob | supplement |
-| `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
+| `CORE.md` | 铁律 + 开发习惯 + 工具路由 + 图谱三时点 + 阈值 | ✅ alwaysApply | skeleton |
+| `AGENTS.md` | 委派、独立审查路由、防互博 | lazy | supplement |
 | `GIT.md` | 分支策略（commit → `skills/git-workflow`） | lazy | supplement |
-| `WORKFLOW.md` | discuss→plan→execute→verify→ship + deer-flow 编排 | lazy | supplement |
-| `AGENTS.md` | 多 Agent 协作、互斥 | lazy | supplement |
-| `MCP.md` | .mcp.json 权威源 | lazy | supplement |
-| `GOVERNANCE.md` | 治理详情 + 最佳实践详参（提示词/API/日志/会话/编排） | lazy | supplement |
-| `CONTEXT.md` | 上下文工程 + 子agent调度 + 腐烂治理 | lazy | supplement |
+| `MCP.md` | .mcp.json 权威源 + 编辑器 spawn | lazy | supplement |
 | `OPENSPEC.md` | OpenSpec delta-spec 规范 + /opsx: 命令链 | lazy | supplement |
+| `SECURITY.md` | OWASP、密钥管理 | lazy | supplement |
 | `README.md` | 本索引 | — | — |
 
 ---
@@ -36,10 +34,12 @@
 
 ---
 
-## 同步（v11.1 多编辑器 1+N）
+## 同步（多编辑器 AGENTS.md 适配）
 
 - **Claude Code**：原生读 `~/.claude/rules/`，零同步。
-- **Cursor**：`scripts/sync.ps1` 将 `rules/*.md`（除本 README）+ `CLAUDE.md`（→`00-CLAUDE.mdc`）+ `CURSOR-EDITOR.mdc` 生成实体 `.mdc` 到 local plugin `claude-config`（唯一规则通道，`~/.cursor/rules` 不生效且同名项会被清理）。
-- **qoder-cn / trae-cn**（v11.1 恢复）：`rules/*.md` 实体复制到 `~/.qoder-cn/rules/*.mdc` 与 `~/.trae-cn/user_rules/*.md`（`.claude-managed` 台账孤儿清除，用户自有规则不受影响）；workbuddy 无规则通道。
+- **Cursor**：`scripts/sync.ps1` → `scripts/sync-editors.ps1` 将 `CLAUDE.md`（→`00-AGENTS.mdc`）+ `rules/*.md`（除本 README，→`*.mdc`）+ `CURSOR-EDITOR.mdc` 生成实体到 local plugin `claude-config`（唯一规则通道，`~/.cursor/rules` 不生效且同名项会被清理）。
+- **Qoder**：`rules/*.md` 实体复制到 `~/.qoder/rules/*.md`（入口 `AGENTS.md`，协作规则 `AGENTS-COLLAB.md`，`.claude-managed` + `.claude-hashes` 台账）。
+- **Trae / Trae CN**：实体复制到 `~/.trae/user_rules/*.md` 与 `~/.trae-cn/user_rules/*.md`（同上台账；用户自有规则不受影响）。
+- **skills / agents**：真实拷贝到各端 home（Cursor/Qoder 含 agents），不使用 junction。
 
 清单/常量单源：`config/sync-manifest.json`。源文件变更后重跑 `sync.ps1`（或由 Cursor Guard 自动同步）。

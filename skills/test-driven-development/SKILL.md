@@ -118,4 +118,3 @@ describe('Calculator', () => {
 
 - 测试规范 → `rules/CORE.md` 代码规范·测试节
 - `systematic-debugging` - 调试流程
-- `code-refactoring` - 重构技巧

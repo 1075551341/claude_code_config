@@ -5,8 +5,8 @@
     python scripts/sync-compact-window.py             # 计算并写入 settings.json
     python scripts/sync-compact-window.py --dry-run   # 只打印结果，不写盘
 
-模型上下文表在 config/model-context-windows.json；新模型未登记会走后缀兜底，
-出现 validate_config 的 V17 告警时先补该表再跑本脚本。
+窗口来源：模型名后缀 [1M]/[200K] → 本机 config/model-context-windows.json 登记 →
+未知模型时保留 settings.json 现有 autoCompactWindow（调用方决定）。
 """
 from __future__ import annotations
 
@@ -25,8 +25,7 @@ sys.path.insert(0, str(HOOKS_LIB))
 
 from context_thresholds import (  # noqa: E402
     active_model_name,
-    recommended_autocompact_window,
-    resolve_model_context_tokens,
+    known_context_tokens,
     sync_settings_compact_window,
 )
 
@@ -37,7 +36,7 @@ def main() -> int:
     print(json.dumps(result, indent=2, ensure_ascii=False))
     model = result["model"] or active_model_name()
     print(
-        f"model={model!r} max_context={resolve_model_context_tokens(model)} "
+        f"model={model!r} known_max={known_context_tokens(model)} "
         f"autoCompactWindow→{result['resolved_window']}"
     )
     if dry_run and result["updated"]:

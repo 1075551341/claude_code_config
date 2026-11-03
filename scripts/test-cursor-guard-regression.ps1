@@ -15,17 +15,17 @@
 
 .EXAMPLE
     # 全部命令（两个开关可叠加）
-    powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1                        # 直接回归
-    powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy                # 先部署再回归（改过模板时用）
-    powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -OpenReport            # 回归后打开 JSON 报告
-    powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy -OpenReport
+    pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1                        # 直接回归
+    pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy                # 先部署再回归（改过模板时用）
+    pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -OpenReport            # 回归后打开 JSON 报告
+    pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy -OpenReport
 
 .NOTES
     底层实调：python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json
     退出码 0 = 全绿；非 0 = 有用例失败，报告里能看到具体是哪条。
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param(
     [switch]$Deploy,

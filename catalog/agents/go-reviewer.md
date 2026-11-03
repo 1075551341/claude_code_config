@@ -1,7 +1,6 @@
 ---
 name: go-reviewer
 description: Go代码审查专家。专注于Go语言特性、并发安全、错误处理和性能优化。当需要审查Go代码、goroutine使用、channel操作时调用此Agent。触发词：Go审查、Go代码、goroutine、channel、并发审查。
-model: inherit
 color: cyan
 tools:
   - Read

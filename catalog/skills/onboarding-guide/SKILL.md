@@ -15,7 +15,7 @@ loading_tier: L3
 ## Phase 1 — 项目概览
 
 - 读 `README.md` + `CLAUDE.md`（若存在）
-- 架构全景与结构探索：`codegraph_explore`（cbm 已永久禁用、UA 已 removed；已建图项目可用 code-review-graph `get_architecture_overview`）
+- 架构全景与结构探索：`codegraph_explore`（含 blast-radius；cbm 已永久禁用）。有 CRG 图时再叠加 `get_minimal_context`
 - 输出：一句话项目目标 + 主要用户
 
 ## Phase 2 — 代码结构
@@ -25,7 +25,7 @@ loading_tier: L3
 
 ## Phase 3 — 关键路径
 
-- `codegraph_trace` 主入口函数
+- `codegraph_explore` 主入口函数（默认仅 `codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`；禁止调用未暴露的 `codegraph_trace`）
 - 识别 3 条核心用户路径
 - 输出：调用链摘要
 

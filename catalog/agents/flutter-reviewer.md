@@ -1,7 +1,6 @@
 ---
 name: flutter-reviewer
 description: Flutter / Dart 代码审查专家。触发：Flutter 代码审查、Dart 质量检查、Widget 性能分析
-model: inherit
 tools:
   - Read
   - Grep

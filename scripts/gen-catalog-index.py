@@ -1,16 +1,17 @@
-"""生成 catalog/INDEX.md — catalog 128 项此前无索引，导致「找不到就重造」。
+"""生成 catalog/INDEX.md — catalog 一页式清单 + 与顶层同名项消歧表（防「找不到就重造」）。
 
 命令：
-    python scripts/gen-catalog-index.py     # 唯一用法，无参数；覆盖写 catalog/INDEX.md
+    python scripts/gen-catalog-index.py     # 无参数；覆盖写 $CLAUDE_HOME（默认 ~/.claude）/catalog/INDEX.md
 
 新增/删除 catalog 下的 skill / agent / rule 后重跑本脚本。同名项（顶层权威 vs catalog 变体）
 会自动进消歧表，无需手工维护。生成后如需把某项落到项目：
     python scripts/migrate-from-legacy.py --project <路径> --skill <名字>
 """
+import json
 import os
 import re
 
-base = os.path.expanduser("~/.claude")
+base = os.environ.get("CLAUDE_HOME") or os.path.expanduser("~/.claude")
 
 
 def read_front(path):
@@ -100,7 +101,9 @@ for title, items, dups in (
 
 lines.append("---")
 lines.append("")
-lines.append("v11.0.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本")
+with open(os.path.join(base, "package.json"), encoding="utf-8") as fh:
+    pack_version = json.load(fh).get("version", "?")
+lines.append(f"v{pack_version} · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本")
 open(os.path.join(base, "catalog", "INDEX.md"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
 print("skills", len(skills), "agents", len(agents), "rules", len(rules))
 print("dups skills:", dup_s)

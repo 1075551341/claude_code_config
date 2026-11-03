@@ -1,87 +1,66 @@
 ---
 trigger: model_decision
-description: 多 Agent 协作与互斥规则。触发：并行 Agent、子代理、任务编排。
+description: 多 Agent 协作、独立审查派发与互斥规则。触发：并行 Agent、子代理、任务编排、审查派发。
 ---
 
 # Agent 协作规则
 
-> 归属矩阵 → `MANIFEST.yaml` | 核心 7 个 → `agents/README.md`
-
-## 核心 7
-
-planner | code-explorer | code-reviewer | build-error-resolver | architect | spec-reviewer | agentic-orchestrator
-
-> 跨会话记忆 → claude-mem（非 agent/context-manager，已合并）
-
-## gstack 审查 6 + 补全 3 + 跨模型 1（v11.4.12）
-
-审查（skeleton）：eng-reviewer | ceo-reviewer | designer | dx-reviewer | qa | security-reviewer
-
-补全（supplement）：sre | doc-writer | change-implementer；跨模型（cross-model）：codex-reviewer
-
-> v11 收敛：cso→security-reviewer 深度模式；release-engineer→skill/ship；design-engineer→skill/design-pipeline Phase 2；product-manager 删除（与 office-hours 重叠）；pair-agent / ios-specialist / land-and-deploy / design-shotgun / performance-engineer 降级 `catalog/agents/`（按需复制）。
-
-位置：`agents/`（全局 17）+ `catalog/agents/`（按需复制）
+> 清单 → `agents/README.md` | 阶段/完成定义/审查 → `config/workflow.yaml` | 归属 → `MANIFEST.yaml`
 
 ## 何时委派
 
 | 条件 | Agent |
 |------|-------|
-| 只读探索 | code-explorer |
 | 写计划 | planner（→ writing-plans skill） |
-| 多模块并行 | agentic-orchestrator |
-| 构建失败 | build-error-resolver |
-| spec 审查 | spec-reviewer |
-| 代码审查 | code-reviewer + eng-reviewer（只找问题，禁止改文件） |
-| 落实修改 | 审查未满足项 | change-implementer（禁止审查） |
-| 产品决策 | ceo-reviewer |
-| UI/UX 审查 | designer + dx-reviewer |
-| DX 体验审查 | dx-reviewer |
-| 测试审查 | qa |
-| 安全审计（增量/全量） | security-reviewer（深度模式=原 cso） |
-| 跨模型验证 | codex-reviewer（gstack /codex） |
-| 设计探索/部署/浏览器协作/iOS | catalog/agents/（design-shotgun、land-and-deploy、pair-agent、ios-specialist，按需复制） |
-| 外部编排 | deer-flow (flash/standard/pro/ultra) |
-| 任务追踪 | task-master MCP（按需） |
+| 落实修改 / 审查未满足项 | change-implementer（只改不审） |
+| 每个任务的独立审查 | eng-reviewer（必审）+ 下方路由 |
+| 只读探索 / 多模块并行 / 构建失败 | 主会话（编辑器内置 explore 子代理、subagent-driven-development、systematic-debugging） |
+| 领域专家 | catalog/agents/（按需复制进项目） |
 
-## 审查路由规则
+## 审查路由
 
+<!-- spine:review-routing -->
 ```
-所有变更        → eng-reviewer（只找问题；修复 → change-implementer）
-产品/新功能     → + ceo-reviewer
-UI/UX 变更      → + designer + dx-reviewer（多方案探索按需启用 catalog/design-shotgun）
-DX体验变更      → + dx-reviewer
-安全敏感变更    → + security-reviewer（全量审计走其深度模式=原cso OWASP+STRIDE）
-infra/配置      → CEO Review 可跳过
-跨模型验证      → + codex-reviewer (gstack /codex)
-部署/发布       → skill/ship（完整闭环按需启用 catalog/land-and-deploy）
-iOS 变更        → 按需启用 catalog/ios-specialist
+always       → eng-reviewer
+product      → + ceo-reviewer
+ui           → + designer, dx-reviewer
+api_dx       → + dx-reviewer
+tests        → + qa
+security     → + security-reviewer
+cross_model  → + cross-model-reviewer
 ```
+
+> 派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改。审查者模型由调用方选择；cross_model 组要求与实现者不同的模型。
+<!-- /spine:review-routing -->
+
+## 执行并发
+
+<!-- spine:concurrency -->
+**执行并发**（派生自 config/workflow.yaml，改配置后 `python scripts/workflow.py render`，勿手改）：无依赖且可后台的命令/操作不得阻塞会话，优先并行。有依赖或下一步需要其输出的仍按序、禁止后台。长驻服务器 / watcher 保持后台。不是第三道 PASS 门，不另建 Stop hook，不改 `browser_ui_tests`。
+
+- 无依赖且可后台的命令/操作不得阻塞会话，优先并行
+- 有依赖或下一步需要其输出的步骤仍按序执行，禁止后台
+- 长驻服务器 / watcher 保持后台
+<!-- /spine:concurrency -->
+
+infra/配置变更可跳过 product 组；eng-reviewer 永不跳过。
+
+**一轮 = 改 → 验 → 审查前刷图一次 → 本批全新七维审查。** 无依赖的审查者同一条消息并行 `Task`；刷一次图再 fan-out。批次内任一 `NEEDS-CHANGES` / 七维缺项 / 不干净 PASS → 整轮不通过：主会话合并完整清单，派**一次** `change-implementer` 集中改齐，再全新派审。审查 prompt 写明：原始要求、本轮已刷新、使用 CRG `get_impact_radius` / `get_review_context`（有图）+ `codegraph_explore` blast-radius。
+
+## 模型选择（不在本包）
+
+- 派发子 Agent 时由**调用方**决定模型与推理强度（编辑器 Task 参数、会话设置、harness 默认）；本包任何文件都不指定。
+- `cross_model` 组：调用方选一个与实现者不同的模型运行 cross-model-reviewer；选不出就不派。
 
 ## 禁止（防互博）
 
-- agent 间共享可变状态（包括全局变量/文件锁/环境变量隐式共享）
-- planner 与 agentic-orchestrator 同时编排同一任务
-- hook/pre-task-planner 替代 skill/writing-plans
+- agent 间共享可变状态（全局变量/文件锁/环境变量隐式共享）；同一制品路径并行写入
+- 子 agent 回写主会话上下文（仅通过制品通信）
+- 审查者与修改者同一 agent；审查者改文件或贴补丁
+- `resume` 上一轮审查者充当本轮独立审查（须全新 Task；上轮清单不得限定本轮范围）
+- 以自检 / 实现者自签 / 验证命令全绿代替独立审查 PASS
 - 勿恢复 agent/context-manager（已合并 claude-mem）
-- 同一制品路径并行写入（DAG冲突检测阻断）
-- 子agent 回写主会话上下文（仅通过三态制品通信）
-- 按 agent 名称堆叠委派（应按 MANIFEST concern→owner 路由）
-- 审查者与修改者同一 agent（禁止既审又改；审查只找问题，修改必须 change-implementer）
-- `resume` 上一轮审查者充当本轮独立审查（须全新 Task/Agent；上轮遗漏不得继承为已扫范围）
 
 ## 上下文预算
 
-主 agent <40%（编排） | subagent 30%（实现） | 传递最小必要数据
-70% 择机压缩 | 90% 强制压缩或新 subagent
-
-## 持续学习
-
-失败/成功模式 → claude-mem observation（R18 记忆柱统一承接；原 `experiences/` 文件体系已归档至 `docs/archive/experiences/`）
-
-## 委派原则（ruflo 吸收）
-
-> **source**: ruvnet/ruflo — 参考排除
-
-- 按 MANIFEST concern→owner 路由，禁止并行多 orchestrator
-- 按能力委派（探索/计划/审查/执行），非按 agent 名称堆叠
+主 agent 编排、subagent 实现；传递最小必要数据。阈值 → `rules/CORE.md`。

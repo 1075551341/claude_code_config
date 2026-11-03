@@ -35,7 +35,7 @@ triggers:
 
 ## 器（工具）
 
-Claude Code（主）| Cursor | Codex CLI | Warp | Neovim
+Claude Code | Cursor | Warp | Neovim
 → 选最顺手的，不追新。
 
 ## α/Ω 元技能

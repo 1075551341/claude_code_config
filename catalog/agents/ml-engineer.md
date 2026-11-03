@@ -1,7 +1,6 @@
 ---
 name: ml-engineer
 description: 负责机器学习模型开发与部署。触发词：ML、机器学习、深度学习、TensorFlow、PyTorch、模型训练、神经网络、推荐系统、NLP、计算机视觉。
-model: inherit
 color: purple
 tools:
   - Read

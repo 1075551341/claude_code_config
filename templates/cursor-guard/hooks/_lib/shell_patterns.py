@@ -29,6 +29,11 @@ WARN_PATTERNS: list[tuple[str, str]] = [
     (r"git\s+reset\s+--hard\b", "git reset --hard 会丢弃工作区修改"),
     (r"git\s+clean\s+.*-f", "git clean 会删除未跟踪文件"),
     (r"docker\s+(?:system|volume|image)\s+prune\b", "docker prune 请确认范围"),
+    # R9: Windows terminals must use pwsh, not powershell.exe (PS5.1). Warn, do not deny.
+    (
+        r"(?:^|[;&|(]\s*)powershell(?:\.exe)?\b",
+        "powershell.exe(PS5.1) 编码与行为不稳定 — 改用 pwsh（R9）",
+    ),
 ]
 
 # Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过，对齐 Claude pre-bash-guard）

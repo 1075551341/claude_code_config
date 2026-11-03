@@ -11,16 +11,16 @@
 
 .EXAMPLE
     # 全部命令（本脚本仅一个开关）
-    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1          # 增量合并部署
-    powershell -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1 -Force   # 整体覆盖配置
+    pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1          # 增量合并部署
+    pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1 -Force   # 整体覆盖配置
 
 .NOTES
     部署后回归（必须全绿）：
-      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
-      powershell -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy
+      pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1
+      pwsh -ExecutionPolicy Bypass -File scripts/test-cursor-guard-regression.ps1 -Deploy
 #>
 # 注意：#Requires 必须放在帮助块之后，否则 Get-Help 读不到上面的命令示例。
-#Requires -Version 5.1
+#Requires -Version 7.5
 
 param([switch]$Force)
 
@@ -135,6 +135,10 @@ if (-not (Test-Path $cfgDst) -or $Force) {
         # 导致模板升版后部署副本永远停留在旧版本（test-cursor-guard-hooks 的
         # deploy_config 用例长期不过就是这个原因）。
         $usr | Add-Member -NotePropertyName version -NotePropertyValue $tpl.version -Force
+        # v12：reviewer_agents 由 config/workflow.yaml review 段渲染，属配置所有而非用户偏好，始终跟随模板。
+        if ($tpl.verification -and $tpl.verification.reviewer_agents -and $usr.verification) {
+            $usr.verification | Add-Member -NotePropertyName reviewer_agents -NotePropertyValue $tpl.verification.reviewer_agents -Force
+        }
         # v1.2.8：完成门不用裸词「完成」（避免「所有都完成后」回灌）。旧部署保留了用户值，须跟模板对齐。
         if ($tpl.verification -and $usr.verification) {
             $oldKws = @($usr.verification.prompt_keywords)
@@ -192,5 +196,5 @@ Write-Host ""
 Write-Host "  Deployed $hookCount hooks (guard_version=$($templateHooks.guard_version))" -ForegroundColor Green
 Write-Host "  Hook commands use absolute paths under $HOOKS_DST" -ForegroundColor DarkGray
 Write-Host "  Restart Cursor -> Settings -> Hooks" -ForegroundColor DarkGray
-Write-Host "  Regression: powershell -ExecutionPolicy Bypass -File $CLAUDE_DIR\scripts\test-cursor-guard-regression.ps1" -ForegroundColor DarkGray
+Write-Host "  Regression: pwsh -ExecutionPolicy Bypass -File $CLAUDE_DIR\scripts\test-cursor-guard-regression.ps1" -ForegroundColor DarkGray
 Write-Host ""

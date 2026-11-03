@@ -1,7 +1,6 @@
 ---
 name: swift-reviewer
 description: Swift 代码审查专家。当需要审查 Swift 代码、检查 Swift 惯用法、评估 iOS/macOS 代码、审查 SwiftUI、检查并发安全时调用此 Agent。触发词：审查 Swift、Swift 审查、Swift 代码审查、iOS 审查、SwiftUI 审查、并发审查、swift-review。
-model: inherit
 color: orange
 tools:
   - Read

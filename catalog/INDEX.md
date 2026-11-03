@@ -4,21 +4,20 @@
 > 本目录是**变体库**，不参与全局加载，只在 `migrate-from-legacy.py --skill|--agent|--rule`
 > 复制到项目 `.claude/` 时使用。同名项一律以顶层权威版为准。
 
-规模：skills 107 / agents 48 / rules 15
+规模：skills 99 / agents 41 / rules 15
 
 ## 同名项消歧（权威在顶层，此处为变体，勿加载）
 
 | 类型 | 同名项 |
 | ---- | ------ |
-| skills | `deep-research`, `git-workflow` |
-| agents | `ceo-reviewer`, `designer`, `eng-reviewer`, `qa`, `security-reviewer` |
+| skills | （无） |
+| agents | （无） |
 | rules | （无） |
 
-## Skills（107）
+## Skills（99）
 
 | 名称 | 说明 |
 | ---- | ---- |
-| `accessibility-audit` | 无障碍审计，检查 WCAG 合规性并生成修复建议 |
 | `android-development` | Android原生应用开发、Kotlin/Java编程、Jetpack组件使用 |
 | `api-development` | 设计RESTful API、实现API端点、编写后端接口 |
 | `api-documentation` | API文档编写规范，编写清晰、完整的RESTful API文档 |
@@ -32,9 +31,7 @@
 | `capacitor-app` | 开发混合移动应用、使用Capacitor/Ionic框架、将Web应用打包为移动应用 |
 | `changelog-generator` | 生成变更日志 |
 | `cicd-pipeline` | 配置CI/CD流水线、设置GitHub Actions/GitLab CI、实现自动化构建部署 |
-| `claude-api` | Claude API / Anthropic SDK 开发指南。触发：使用 Claude API、Anthropic SDK、构建 AI 应用、Managed Agents |
 | `claude-to-deerflow` | deer-flow 外部编排引擎桥接。触发词：deer-flow | 外部编排 | LangGraph | 长时任务 | /deer-flow |
-| `code-refactor` | 重构代码 |
 | `code-standards` | 制定代码规范 |
 | `command-reference` | 常用CLI命令速查表 |
 | `content-research` | 提取文章内容 |
@@ -43,7 +40,6 @@
 | `data-validation` | 验证输入数据、校验请求参数、使用Zod/Joi/Pydantic进行数据校验 |
 | `database-design` | 设计数据库表结构 |
 | `db-migration` | 编写数据库迁移脚本、执行数据库结构变更、使用Prisma/TypeORM/Knex迁移 |
-| `deep-research` ⚠️变体 | 系统化深度研究方法论。触发：深度研究 |
 | `deploy-script` | 编写部署脚本、配置PM2/systemd服务、实现应用部署 |
 | `desktop-app` | 开发桌面应用程序 |
 | `diagnose` | 深度诊断循环（reproduce→minimize→hypothesize→instrument→fix→regression-test）。触发：顽固 bug、性能问题、P0  |
@@ -51,21 +47,17 @@
 | `docker-devops` | 编写Dockerfile |
 | `docx` | 创建Word文档 |
 | `env-config` | 管理环境变量 |
-| `error-recovery` | 错误恢复与故障处理策略，包括重试、降级、熔断、补偿 |
 | `exa-search` | 使用 Exa AI 进行语义搜索和智能检索 |
 | `figma-design` | Figma 设计工具集成与设计稿转代码 |
 | `file-upload` | 实现文件上传功能 |
 | `flutter-development` | 开发Flutter跨平台移动应用、编写Dart代码、实现iOS/Android双端应用 |
 | `frontend-design` | 设计前端UI界面、创建落地页仪表板、实现高质量Web界面 |
 | `fullstack-auth` | 实现用户认证授权 |
-| `git-workflow` ⚠️变体 | 管理Git分支 |
-| `git-worktrees` | 并行开发多个功能 |
 | `github` | 使用gh命令管理GitHub仓库的Issue、PR、CI/CD等 |
 | `google-workspace` | Google Workspace集成（CLI+API），统一管理Gmail |
 | `grill-with-docs` | 对照 CONTEXT.md/ADR 拷问计划，逐条消解术语与决策并 inline 更新文档。触发：计划需对齐领域语言、stress-test 设计。excludes skill |
 | `handoff` | 将当前会话压缩为 handoff 文档，供新会话或子 agent 续作。触发：/clear 前、子 agent 切换、长任务断点。excludes claude-mem SSO |
 | `i18n-support` | 实现前端国际化 |
-| `incremental-arch` | 增量架构同步，基于 AST 感知分块和 Merkle DAG 实现高效上下文更新 |
 | `instinct-learning` | 本能学习（Ω-提示词优化器）。触发词：instinct learning | 本能学习 | 提示词优化 | 自我改进 |
 | `internal-communication` | 编写内部沟通邮件 |
 | `invoice-organizer` | 整理发票 |
@@ -126,7 +118,7 @@
 | `websocket-server` | WebSocket 服务端开发与实时通信 |
 | `xlsx` | 处理Excel表格、操作xlsx文件、处理CSV数据 |
 
-## Agents（48）
+## Agents（41）
 
 | 名称 | 说明 |
 | ---- | ---- |
@@ -134,19 +126,15 @@
 | `ai-engineer` | 负责AI/LLM应用开发，含Prompt工程设计和LangSmith调试追踪。触发词：AI开发、LLM、RAG、Prompt工程、向量数据库、Claude API、OpenAI |
 | `api-versioner` | 负责API版本管理和向后兼容策略。当需要设计API版本策略、实现版本控制、处理版本迁移、管理API生命周期、实现向后兼容、处理废弃API时调用此Agent。触发词：API版本、 |
 | `backend-developer` | 负责后端API与服务开发（RESTful/GraphQL/gRPC）、数据库设计、认证授权、OpenAPI文档。触发词：后端、API、数据库、服务端、Express、FastA |
-| `ceo-reviewer` ⚠️变体 | 产品决策审查（大功能/新特性时启用）。触发词：产品审查、scope审查、用户价值、ceo review。 |
 | `changelog-generator` | 变更日志生成专家。当需要从 git 提交历史生成面向用户的变更日志、从技术提交转换为客户友好的发布说明时调用此 Agent。触发词：变更日志、changelog、发布说明、版本 |
 | `compliance-checker` | 负责法规合规检查和数据保护审计。当需要进行GDPR合规检查、HIPAA合规、数据保护评估、隐私合规、合规审计、数据治理、监管合规检查时调用此Agent。触发词：合规、GDPR、 |
-| `context-rot-monitor` | 上下文腐烂监控Agent，持续监控上下文窗口使用率并在超过阈值时触发治理措施。 |
 | `cpp-reviewer` | C++ 代码审查专家。当需要审查 C++ 代码、检查现代 C++ 特性、评估内存安全、检查并发正确性、审查 C++ 性能优化时调用此 Agent。触发词：审查 C++、C++  |
 | `csharp-reviewer` | C# / .NET 代码审查专家。触发：C# 代码审查、.NET 项目质量检查、ASP.NET Core 审查 |
 | `data-engineer` | 负责数据工程相关任务。当需要构建ETL数据管道、设计数据仓库、处理数据清洗转换、实现数据同步方案、构建数据报表系统、处理大数据任务、设计数据湖方案、实现实时流数据处理时调用此A |
 | `database-expert` | 数据库全栈专家，覆盖架构设计、审查优化、SQL编写与数据迁移。触发词：数据库设计、数据库架构、表设计、索引设计、数据建模、分库分表、数据迁移、数据库选型、PostgreSQL、 |
 | `design-shotgun` | 设计探索器，生成 4-6 个 AI mockup 变体，浏览器比较板，品味记忆学习。触发词：设计方案、多方案对比、mockup、UI探索、shotgun。 |
-| `designer` ⚠️变体 | UI/UX 审查（UI/交互变更时启用）。触发词：设计审查、UI审查、交互审查、design review。 |
 | `devops-engineer` | DevOps/运维专家，覆盖 CI/CD、容器化、Terraform/IaC、监控告警与自动化部署。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、 |
 | `docs-expert` | 文档专家，覆盖文档生成和文档查找。当需要生成API文档、编写README文件、添加代码注释、生成JSDoc/docstring、编写接口文档、创建技术说明文档、编写开发指南、生 |
-| `eng-reviewer` ⚠️变体 | 工程审查（所有变更必须通过）。触发词：eng review、代码审查、PR审查、工程评审。 |
 | `flutter-reviewer` | Flutter / Dart 代码审查专家。触发：Flutter 代码审查、Dart 质量检查、Widget 性能分析 |
 | `frontend-developer` | 负责前端开发任务。当需要实现前端页面、开发UI组件、创建Vue/React组件、实现响应式布局、处理前端状态管理、开发表单交互、实现动画效果、接入前端路由、调用后端API、处理 |
 | `git-expert` | Git版本控制和工作流专家。负责Git分支策略设计、提交规范制定、合并冲突解决、工作流管理、版本控制最佳实践、Git Worktree并行开发。触发词：Git、合并冲突、分支策 |
@@ -167,13 +155,10 @@
 | `python-pro` | Python全栈开发专家，负责Python通用开发任务。当需要编写Python脚本、实现Python算法、开发CLI工具、处理文件操作、数据处理、爬虫开发、自动化脚本、Pyth |
 | `python-reviewer` | 负责 Python 后端代码审查任务。当需要审查 Python 代码、审查 FastAPI/Flask/Django 代码、检查 Python 代码质量、评审异步 Python |
 | `qa-engineer` | 负责测试相关任务，含E2E端到端测试(Playwright/Cypress)。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、E2E端到端测试、搭建测 |
-| `qa` ⚠️变体 | 质量保障审查（测试用例、边界、回归）。触发词：QA审查、测试审查、边界测试、回归测试。 |
 | `react-reviewer` | 负责 React 组件代码审查任务。当需要审查 React 组件代码、检查 Hooks 使用规范、评审 React 性能优化、检查组件设计模式、评估 React 最佳实践合规性 |
 | `refactoring-expert` | 代码重构和清理专家，识别代码坏味道、安全重构、消除死代码和重复、代码简化与精炼。当需要重构遗留代码、消除代码坏味道、清理死代码、消除重复代码、提升代码可维护性、代码简化、KIS |
 | `ruby-reviewer` | Ruby/Rails代码审查专家。专注于Ruby惯用法、Rails约定、安全和性能优化。触发词：Ruby审查、Rails审查、Ruby代码、Rails。 |
 | `rust-reviewer` | Rust 代码审查专家。当需要审查 Rust 代码、检查所有权规则、评估借用检查、审查 Rust 最佳实践、检查并发安全时调用此 Agent。触发词：审查 Rust、Rust  |
-| `security-reviewer` ⚠️变体 | 负责安全代码审查和漏洞检测。触发词：安全审查、漏洞检测、OWASP、安全审计、代码安全。 |
-| `security` | 安全深度审计（安全敏感变更时启用）。触发词：安全审计、STRIDE、威胁建模、安全评估。 |
 | `swift-reviewer` | Swift 代码审查专家。当需要审查 Swift 代码、检查 Swift 惯用法、评估 iOS/macOS 代码、审查 SwiftUI、检查并发安全时调用此 Agent。触发词 |
 | `typescript-pro` | TypeScript专家，负责TypeScript类型系统和高级特性相关任务。当需要设计复杂TypeScript类型、实现泛型工具类型、解决类型错误、进行TypeScript项 |
 | `typescript-reviewer` | 负责 TypeScript/JavaScript 代码审查任务。当需要审查 TypeScript/JavaScript 代码、检查类型安全、审查 React/Next.js 组 |
@@ -201,4 +186,4 @@
 
 ---
 
-v11.0.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本
+v12.0.0 · 由 `scripts/gen-catalog-index.py` 生成，新增/删除 catalog 项后重跑该脚本

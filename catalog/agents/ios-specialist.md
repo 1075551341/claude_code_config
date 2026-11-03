@@ -3,7 +3,6 @@ name: ios-specialist
 description: iOS 专用审查 — QA测试/fix修复/design-review设计审查/clean清理/sync同步（gstack v0.19）
 source: garrytan/gstack
 version: "0.19"
-model: sonnet
 tools: [Read, Grep, Glob, Bash, Browser]
 ---
 

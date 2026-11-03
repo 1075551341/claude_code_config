@@ -1,14 +1,14 @@
 ---
 name: handoff
-description: 将当前会话压缩为 handoff 文档，供新会话或子 agent 续作。触发：/clear 前、子 agent 切换、长任务断点。excludes claude-mem SSOT 与 skill/structured-artifacts 制品职责。
+description: 将当前会话压缩为 handoff 文档，供新会话或子 agent 续作。触发：/clear 前、子 agent 切换、长任务断点。excludes claude-mem SSOT 与项目制品（CORE R13）职责。
 layer: catalog
 source: mattpocock/skills
-excludes: [plugin/claude-mem, skill/structured-artifacts]
+excludes: [plugin/claude-mem]
 ---
 
 # Handoff（catalog 按需）
 
-> 来源：mattpocock/skills | 跨会话 SSOT 仍由 **claude-mem**；结构化制品由 **structured-artifacts**；本 skill 生成**单次任务**交接摘要。
+> 来源：mattpocock/skills | 跨会话 SSOT 仍由 **claude-mem**；结构化制品见 `rules/CORE.md` R13；本 skill 生成**单次任务**交接摘要。
 
 ## 何时用
 
@@ -31,12 +31,12 @@ excludes: [plugin/claude-mem, skill/structured-artifacts]
 
 输出路径建议：`.planning/handoff-<date>.md` 或项目 `STATE.md` 增量更新。
 
-## 与 claude-mem / structured-artifacts 边界
+## 与 claude-mem / 项目制品边界
 
 | 层 | Owner | 内容 |
 |----|-------|------|
 | 跨会话记忆 | claude-mem plugin | 观察、模式、检索 |
-| 项目制品 | structured-artifacts | PROJECT/REQUIREMENTS/ROADMAP/STATE |
+| 项目制品 | CORE R13 制品 | PROJECT/REQUIREMENTS/ROADMAP/STATE |
 | 单次交接 | **本 skill** | 当前任务快照 |
 
 ## 复制到项目

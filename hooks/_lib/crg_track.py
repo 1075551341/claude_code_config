@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CRG 工具调用追踪与六维续轮文案（v11.4.5）。
+"""CRG 工具调用追踪与续轮观察证据清单（v13.0.2；原 v11.4.5 六维续轮文案已去撞名）。
 
 Claude PostToolUse 与 Cursor verify_tracker / Stop 共用。
 工具名含子串即可：detect_changes / get_impact_radius / get_minimal_context /
@@ -20,7 +20,7 @@ CRG_MARKERS = (
 # 项目图标志。空的 ~/.code-review-graph（多仓 registry）不算项目已建图。
 GRAPH_FILES = ("graph.db", "graph.sqlite", "graph.sqlite3")
 
-SIX_RETRY_LINES = (
+RETRY_LINES = (
     "影响面不够细：补 CRG get_impact_radius + codegraph blast-radius，更新 IMPACT",
     "需求未达：对照需求指纹，「满足」覆盖 strong 关键词（承认/反驳/弃权）",
     "错改：清单差集 extras → 回滚或补登记 IMPACT",
@@ -42,17 +42,34 @@ def is_crg_tool(name: str) -> bool:
 
 
 def collect_tool_names(tool_name: str, tool_input=None) -> list[str]:
-    names = [tool_name] if tool_name else []
+    """解包 CallDynamicTool：顶层与内层 arguments 的 namespace + toolName。"""
+    names: list[str] = []
+
+    def _add(val: object) -> None:
+        if isinstance(val, str) and val and val not in names:
+            names.append(val)
+
+    _add(tool_name)
+    blobs: list[dict] = []
     if isinstance(tool_input, dict):
-        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name", "namespace"):
-            val = tool_input.get(key)
-            if isinstance(val, str) and val:
-                names.append(val)
+        blobs.append(tool_input)
         nested = tool_input.get("arguments")
         if isinstance(nested, dict):
-            val = nested.get("name") or nested.get("toolName")
+            blobs.append(nested)
+    for blob in blobs:
+        ns = blob.get("namespace")
+        tn = None
+        for key in ("name", "toolName", "tool", "mcp_tool", "tool_name"):
+            val = blob.get(key)
             if isinstance(val, str) and val:
-                names.append(val)
+                _add(val)
+                if tn is None:
+                    tn = val
+        if isinstance(ns, str) and ns:
+            _add(ns)
+            if tn:
+                _add(f"{ns}_{tn}")
+                _add(f"{ns}__{tn}")
     return names
 
 
@@ -122,7 +139,7 @@ def project_has_crg_graph(cwd: str, max_up: int = 6) -> bool:
     return bool(find_crg_root(cwd, max_up))
 
 
-def six_retry_block() -> str:
-    lines = ["六维纠错（续轮须逐项补观察证据）："]
-    lines.extend(f"  • {item}" for item in SIX_RETRY_LINES)
+def retry_block() -> str:
+    lines = ["续轮须补观察证据（影响面 / 满足三态 / 错改 / 漏改 / 原功能 / 文档）："]
+    lines.extend(f"  • {item}" for item in RETRY_LINES)
     return "\n".join(lines)

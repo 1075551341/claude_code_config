@@ -1,7 +1,6 @@
 ---
 name: kotlin-reviewer
 description: Kotlin 代码审查专家。当需要审查 Kotlin 代码、检查 Kotlin 惯用法、评估 Android/KMP 代码、审查协程使用、检查空安全时调用此 Agent。触发词：审查 Kotlin、Kotlin 审查、Kotlin 代码审查、Android 审查、KMP 审查、协程审查、kotlin-review。
-model: inherit
 color: purple
 tools:
   - Read

@@ -6,8 +6,9 @@
     python scripts/test-cursor-guard-hooks.py --output scripts/test-guard-result.json  # 同时写 JSON 报告
     python scripts/test-cursor-guard-hooks.py -o <路径>                            # --output 短写法
 
-被测对象是 ~/.cursor/hooks 下的已部署副本，不是仓库模板；改了 templates/cursor-guard/
-必须先 deploy 再跑：powershell -File scripts/deploy-cursor-guard.ps1
+被测对象是本仓 templates/cursor-guard 铺到 ~/.cursor 的副本（每次开跑覆盖，避免测到过期部署）。
+CLAUDE_HOME 指向配置仓（含 hooks/_lib）以便加载现行 r20_replay。
+改了 templates/cursor-guard/ 后也可：pwsh -File scripts/deploy-cursor-guard.ps1
 一般不直接调本脚本，用上层封装：scripts/test-cursor-guard-regression.ps1（自动清状态 + 设 UTF-8）。
 退出码：0 = 全部通过；非 0 = 有用例失败。
 """
@@ -17,6 +18,7 @@ import argparse
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -25,11 +27,26 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-CURSOR = Path(os.environ.get("USERPROFILE", Path.home())) / ".cursor"
+_HOME = Path(os.environ.get("USERPROFILE") or Path.home())
+CURSOR = Path(os.environ.get("CURSOR_HOME") or (_HOME / ".cursor"))
 HOOKS = CURSOR / "hooks"
 STATE = CURSOR / ".state"
-CLAUDE = Path(os.environ.get("USERPROFILE", Path.home())) / ".claude"
-TEMPLATE_GUARD = CLAUDE / "templates" / "cursor-guard" / "guard-config.json"
+CLAUDE = Path(os.environ["CLAUDE_HOME"]) if os.environ.get("CLAUDE_HOME") else (_HOME / ".claude")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TEMPLATE_GUARD = REPO_ROOT / "templates" / "cursor-guard" / "guard-config.json"
+REPO_TEMPLATE_HOOKS = REPO_ROOT / "templates" / "cursor-guard" / "hooks.json"
+REVIEW_PASS = (
+    "Independent review PASS\n"
+    "- 满足：需求已落地（承认）\n"
+    "- 遗漏：无\n"
+    "- 错改：无\n"
+    "- 漏改：无文档影响\n"
+    "- 原功能：保持（证据：pytest）\n"
+    "- 影响范围：CRG get_impact_radius\n"
+    "- 问题是否解决：已解决（证据：pytest）\n"
+    "- 符合预期要求：通过（证据：需求逐条对应）\n"
+    "- 原功能保持：通过（证据：pytest 全绿）\n"
+)
 
 TRANSIENT_STATE_FILES = (
     "compress-pending.json",
@@ -69,6 +86,20 @@ def clear_transient_state() -> None:
     STATE.mkdir(parents=True, exist_ok=True)
     for name in TRANSIENT_STATE_FILES:
         (STATE / name).unlink(missing_ok=True)
+
+
+def sync_guard_templates_for_test() -> None:
+    """用本仓 templates/cursor-guard 铺 ~/.cursor，测现行模板而非过期部署。"""
+    src = REPO_ROOT / "templates" / "cursor-guard"
+    HOOKS.mkdir(parents=True, exist_ok=True)
+    for path in (src / "hooks").rglob("*"):
+        if not path.is_file() or path.suffix == ".pyc" or path.name == "__pycache__":
+            continue
+        dest = HOOKS / path.relative_to(src / "hooks")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, dest)
+    shutil.copy2(src / "hooks.json", CURSOR / "hooks.json")
+    shutil.copy2(src / "guard-config.json", CURSOR / "guard-config.json")
 
 
 def run_hook(
@@ -127,8 +158,22 @@ def stdout_text(case: dict[str, Any]) -> str:
     return json.dumps(case.get("stdout") or {}, ensure_ascii=False)
 
 
+def matcher_from_hooks(hooks_path: Path, event: str, command_substr: str) -> str:
+    if not hooks_path.exists():
+        return ""
+    try:
+        hj = json.loads(hooks_path.read_text(encoding="utf-8-sig"))
+        for item in (hj.get("hooks") or {}).get(event) or []:
+            if command_substr in str(item.get("command") or ""):
+                return str(item.get("matcher") or "")
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return ""
+    return ""
+
+
 def main() -> int:
     setup_stdout_utf8()
+    sync_guard_templates_for_test()
     parser = argparse.ArgumentParser(description="Cursor Guard hook regression")
     parser.add_argument(
         "--output",
@@ -287,6 +332,51 @@ def main() -> int:
         r_off,
         behavior=(r_off.get("stdout") or {}) == {},
         note="CURSOR_GUARD_CODEGRAPH_FIRST=0 → no nudge",
+    )
+
+    explore_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "preToolUse", "explore_router.py")
+    deployed_explore = matcher_from_hooks(hooks_json, "preToolUse", "explore_router.py")
+    explore_ok = "CallDynamicTool" in explore_matcher and "everything" in explore_matcher
+    if hooks_json.exists():
+        explore_ok = explore_ok and "CallDynamicTool" in deployed_explore and "everything" in deployed_explore
+    results["tests"]["explore_router_everything_matcher"] = finish_case(
+        {
+            "pass": explore_ok,
+            "json_ok": True,
+            "stdout": {"template": explore_matcher, "deployed": deployed_explore},
+        },
+        behavior=explore_ok,
+        note="explore_router matcher must catch everything MCP (CallDynamicTool + mcp__everything)",
+    )
+
+    first_edit_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "postToolUse", "first_edit_verify.py")
+    deployed_first_edit = matcher_from_hooks(hooks_json, "postToolUse", "first_edit_verify.py")
+    first_edit_ok = "CallDynamicTool" in first_edit_matcher
+    if hooks_json.exists():
+        first_edit_ok = first_edit_ok and "CallDynamicTool" in deployed_first_edit
+    results["tests"]["first_edit_verify_calldynamic_matcher"] = finish_case(
+        {
+            "pass": first_edit_ok,
+            "json_ok": True,
+            "stdout": {"template": first_edit_matcher, "deployed": deployed_first_edit},
+        },
+        behavior=first_edit_ok,
+        note="first_edit_verify matcher must catch CallDynamicTool so is_edit_tool unwrap runs",
+    )
+
+    impact_matcher = matcher_from_hooks(REPO_TEMPLATE_HOOKS, "preToolUse", "impact_nudge.py")
+    deployed_impact = matcher_from_hooks(hooks_json, "preToolUse", "impact_nudge.py")
+    impact_ok = "CallDynamicTool" in impact_matcher
+    if hooks_json.exists():
+        impact_ok = impact_ok and "CallDynamicTool" in deployed_impact
+    results["tests"]["impact_nudge_calldynamic_matcher"] = finish_case(
+        {
+            "pass": impact_ok,
+            "json_ok": True,
+            "stdout": {"template": impact_matcher, "deployed": deployed_impact},
+        },
+        behavior=impact_ok,
+        note="impact_nudge matcher must catch CallDynamicTool serena writes",
     )
 
     counter = STATE / "tool-counter.json"
@@ -556,6 +646,45 @@ def main() -> int:
         r_deny,
         behavior=isinstance(r_deny.get("stdout"), dict)
         and r_deny["stdout"].get("permission") == "deny",
+    )
+
+    r_ps_warn = run_hook("shell_guard.py", {"command": "powershell -File x.ps1"})
+    ps_out = r_ps_warn.get("stdout") if isinstance(r_ps_warn.get("stdout"), dict) else {}
+    ps_msg = stdout_text(r_ps_warn)
+    results["tests"]["shell_guard_powershell_warn"] = finish_case(
+        r_ps_warn,
+        behavior=(
+            ps_out.get("permission") == "allow"
+            and "agent_message" in ps_out
+            and "pwsh" in ps_msg
+            and "R9" in ps_msg
+        ),
+        note="powershell is warn+allow (not deny); nudge pwsh/R9",
+    )
+
+    for cmd, key in (
+        ("powershell.exe -File x.ps1", "shell_guard_powershell_exe_warn"),
+        ("POWERSHELL.EXE -File x.ps1", "shell_guard_powershell_exe_upper_warn"),
+    ):
+        r_exe = run_hook("shell_guard.py", {"command": cmd})
+        exe_out = r_exe.get("stdout") if isinstance(r_exe.get("stdout"), dict) else {}
+        exe_msg = stdout_text(r_exe)
+        results["tests"][key] = finish_case(
+            r_exe,
+            behavior=(
+                exe_out.get("permission") == "allow"
+                and "agent_message" in exe_out
+                and "pwsh" in exe_msg
+                and "R9" in exe_msg
+            ),
+            note=f"{cmd.split()[0]} is warn+allow (not deny); nudge pwsh/R9",
+        )
+
+    r_pwsh_ok = run_hook("shell_guard.py", {"command": "pwsh -File x.ps1"})
+    results["tests"]["shell_guard_pwsh_no_warn"] = finish_case(
+        r_pwsh_ok,
+        behavior=(r_pwsh_ok.get("stdout") or {}) == {},
+        note="pwsh must not trigger the powershell.exe warning",
     )
 
     results["tests"]["secret_scan_clean"] = run_hook(
@@ -945,10 +1074,14 @@ def main() -> int:
                 "cwd": str(Path(tempfile.gettempdir())),
             },
         )
+        capped_out = r_capped.get("stdout") or {}
         results["tests"]["verification_stop_review_capped"] = finish_case(
             r_capped,
-            behavior="followup_message" not in (r_capped.get("stdout") or {}),
-            note="修改→审查满 3 轮仍无 PASS → 不 followup 空转",
+            behavior=(
+                "followup_message" not in capped_out
+                and "BLOCKED" in json.dumps(capped_out, ensure_ascii=False)
+            ),
+            note="修改→审查满 3 轮仍无 PASS → 不 followup；user_message/agent_message 标明 BLOCKED",
         )
         vg_path.write_text(
             json.dumps(
@@ -1021,7 +1154,7 @@ def main() -> int:
                 and int(entry_inc.get("review_rounds") or 0) == 1
                 and len(entry_inc.get("reviews") or []) == 2
             ),
-            note="同轮连派 eng-reviewer 只 +1 轮次，禁止提前耗尽 3 轮",
+            note="同轮连派 eng-reviewer 只 +1 轮次，禁止提前耗尽 review_max_rounds",
         )
         sid_resume = "review-resume-skip-test"
         now_resume = time.time()
@@ -1063,6 +1196,47 @@ def main() -> int:
                 and len(entry_resume.get("skipped_resumed_reviews") or []) == 1
             ),
             note="resume 上一轮审查者不计入独立审查",
+        )
+        sid_gp = "review-generalpurpose-prompt-test"
+        now_gp = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_gp: {
+                        "ts": now_gp,
+                        "cwd": str(Path(tempfile.gettempdir())),
+                        "edited_files": [{"path": "a.py", "ts": now_gp - 10}],
+                        "verify_commands": [{"command": "pytest", "ts": now_gp - 9}],
+                        "reviews": [],
+                        "review_rounds": 0,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        gp_payload = {
+            "tool_name": "Task",
+            "tool_input": {
+                "subagent_type": "generalPurpose",
+                "description": "Independent review",
+                "prompt": "You are eng-reviewer. Read-only seven-dimension review.",
+            },
+            "conversation_id": sid_gp,
+            "cwd": str(Path(tempfile.gettempdir())),
+        }
+        r_gp = run_hook("verify_tracker.py", gp_payload)
+        st_gp = json.loads(vg_path.read_text(encoding="utf-8"))
+        entry_gp = st_gp.get(sid_gp) or {}
+        results["tests"]["verify_tracker_generalpurpose_prompt"] = finish_case(
+            r_gp,
+            behavior=(
+                (r_gp.get("exit") == 0)
+                and int(entry_gp.get("review_rounds") or 0) == 1
+                and len(entry_gp.get("reviews") or []) == 1
+                and str((entry_gp.get("reviews") or [{}])[0].get("agent") or "")
+                == "eng-reviewer"
+            ),
+            note="Cursor generalPurpose + prompt 中的 eng-reviewer 计入独立审查",
         )
         entry_inc["edited_files"] = list(entry_inc.get("edited_files") or []) + [
             {"path": "b.py", "ts": time.time()}
@@ -1110,11 +1284,31 @@ def main() -> int:
         )
         st_bare[sid_pass]["reviews"] = [{"agent": "eng-reviewer", "ts": 2}]
         vg_path.write_text(json.dumps(st_bare), encoding="utf-8")
-        r_pass_ok = run_hook(
+        r_pass_nodim = run_hook(
             "r20_capture.py",
             {
                 "conversation_id": sid_pass,
                 "text": "Independent review PASS of this change.",
+            },
+        )
+        st_nodim = json.loads(vg_path.read_text(encoding="utf-8"))
+        results["tests"]["r20_capture_pass_missing_seven_dims"] = finish_case(
+            r_pass_nodim,
+            behavior=(
+                (r_pass_nodim.get("exit") == 0)
+                and (st_nodim.get(sid_pass) or {}).get("review_pass_ok") is not True
+            ),
+            note="已有 reviews 但缺七维 → 不得 PASS",
+        )
+        st_nodim[sid_pass]["reviews"] = [{"agent": "eng-reviewer", "ts": 2}]
+        st_nodim[sid_pass]["review_pass_ok"] = False
+        vg_path.write_text(json.dumps(st_nodim), encoding="utf-8")
+        r_pass_ok = run_hook(
+            "r20_capture.py",
+            {
+                "conversation_id": sid_pass,
+                "agent": "eng-reviewer",
+                "text": REVIEW_PASS,
             },
         )
         st_ok = json.loads(vg_path.read_text(encoding="utf-8"))
@@ -1124,7 +1318,134 @@ def main() -> int:
                 (r_pass_ok.get("exit") == 0)
                 and (st_ok.get(sid_pass) or {}).get("review_pass_ok") is True
             ),
-            note="已有 reviews 且正文 PASS → review_pass_ok",
+            note="已有 reviews 且七维 PASS → review_pass_ok",
+        )
+        sid_parent = "r20-parent-spoof-test"
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_parent: {
+                        "ts": time.time(),
+                        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+                        "review_pass_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_parent = run_hook(
+            "r20_capture.py",
+            {"conversation_id": sid_parent, "text": REVIEW_PASS},
+        )
+        st_parent = json.loads(vg_path.read_text(encoding="utf-8"))
+        parent_entry = st_parent.get(sid_parent) or {}
+        parent_text = str((parent_entry.get("reviews") or [{}])[0].get("text") or "")
+        results["tests"]["r20_capture_parent_without_agent"] = finish_case(
+            r_parent,
+            behavior=(
+                (r_parent.get("exit") == 0)
+                and parent_entry.get("review_pass_ok") is not True
+                and not parent_text.strip()
+            ),
+            note="无审查者身份的父消息七维 PASS 不得填槽",
+        )
+        sid_prompt = "r20-nested-prompt-spoof-test"
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_prompt: {
+                        "ts": time.time(),
+                        "reviews": [{"agent": "eng-reviewer", "ts": 2}],
+                        "review_pass_ok": False,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_prompt = run_hook(
+            "r20_capture.py",
+            {
+                "conversation_id": sid_prompt,
+                "input": {"prompt": "You are eng-reviewer."},
+                "text": REVIEW_PASS,
+            },
+        )
+        st_prompt = json.loads(vg_path.read_text(encoding="utf-8"))
+        prompt_entry = st_prompt.get(sid_prompt) or {}
+        prompt_text = str((prompt_entry.get("reviews") or [{}])[0].get("text") or "")
+        results["tests"]["r20_capture_nested_prompt_not_source"] = finish_case(
+            r_prompt,
+            behavior=(
+                (r_prompt.get("exit") == 0)
+                and prompt_entry.get("review_pass_ok") is not True
+                and not prompt_text.strip()
+            ),
+            note="input.prompt 点名 eng-reviewer 不得当审查者身份",
+        )
+        sid_graph = "graph-refresh-stamp-test"
+        now_g = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_graph: {
+                        "ts": now_g,
+                        "edited_files": [{"path": "a.py", "ts": now_g - 10}],
+                        "verify_commands": [{"command": "pytest", "ts": now_g - 9}],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_graph = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Shell",
+                "tool_input": {"command": "codegraph sync && code-review-graph update"},
+                "conversation_id": sid_graph,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        st_g = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_g = st_g.get(sid_graph) or {}
+        results["tests"]["verify_tracker_graph_refresh_stamp"] = finish_case(
+            r_graph,
+            behavior=(
+                (r_graph.get("exit") == 0)
+                and float(entry_g.get("last_pre_review_graph_ts") or 0) > now_g - 10
+            ),
+            note="codegraph sync && code-review-graph update 记审查前刷图戳",
+        )
+        sid_false = "graph-refresh-false-positive-test"
+        now_f = time.time()
+        vg_path.write_text(
+            json.dumps(
+                {
+                    sid_false: {
+                        "ts": now_f,
+                        "edited_files": [{"path": "a.py", "ts": now_f - 10}],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        r_false = run_hook(
+            "verify_tracker.py",
+            {
+                "tool_name": "Shell",
+                "tool_input": {"command": "echo codegraph sync"},
+                "conversation_id": sid_false,
+                "cwd": str(Path(tempfile.gettempdir())),
+            },
+        )
+        st_f = json.loads(vg_path.read_text(encoding="utf-8")) if vg_path.exists() else {}
+        entry_f = st_f.get(sid_false) or {}
+        results["tests"]["verify_tracker_graph_refresh_not_false_positive"] = finish_case(
+            r_false,
+            behavior=(
+                (r_false.get("exit") == 0)
+                and float(entry_f.get("last_pre_review_graph_ts") or 0) == 0
+            ),
+            note="echo codegraph sync 不得记审查前刷图戳",
         )
 
     results["tests"]["sync_no_keyword"] = run_hook(

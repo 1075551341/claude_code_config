@@ -7,14 +7,14 @@
 
 | 目录 | 数量 | 策略 |
 |------|------|------|
-| skills/ | 101 | 全栈 + 办公 + 移动端/3D 保留 |
-| agents/ | 43 | 领域专家 + 语言 reviewer + gstack 5 角色 |
+| skills/ | 100 | 全栈 + 办公 + 移动端/3D 保留 |
+| agents/ | 41 | 领域专家 + 语言 reviewer |
 | rules/ | 15 | 语言/领域 lazy-load |
 
 ## 权威 vs 变体（v10.17）
 
 顶层 `skills/` `agents/` `rules/` 为**权威实现**，参与路由加载；本目录为**变体库**，
-同名项一律以顶层为准。7 个同名项见 [INDEX.md](INDEX.md) 消歧表。
+同名项一律以顶层为准；v12 起 catalog 与顶层同名项已清零（见 [INDEX.md](INDEX.md) 消歧表）。
 
 ## 分层
 
@@ -31,4 +31,4 @@ mini-program, uniapp-development, capacitor-app, ios-simulator, android-developm
 
 ## 已删记录
 
-见 `docs/archive/experiences/rejected/deletion-candidates.md`（已归档）
+历史删除清单不随仓携带；需要时查 git 历史（v13 裁剪见仓库根 `CHANGELOG.md`）。

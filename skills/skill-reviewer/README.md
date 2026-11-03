@@ -103,7 +103,6 @@ N/A
 ## Limitations & Known Issues
 
 - 仅支持基于华为《Agent Skill开发规范》的检查
-- 为确保本skill的使用效果，推荐使用CodeAgent+MiniMax-M2.5
 - 如果使用环境中已经存在类似功能的skill，建议显性化调度本skill
 
 ## Non-Functional Metrics

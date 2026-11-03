@@ -45,7 +45,7 @@ source: obra/superpowers
 
 | 类型 | 工具/加载 |
 |------|-----------|
-| 本地代码 | `codegraph_explore` / `codegraph_impact`（R17 优先） |
+| 本地代码 | `codegraph_explore` blast-radius（R17 优先；默认无独立 `codegraph_impact`） |
 | 外部事实 L1 | Context7 / Exa 单次 |
 | 多角度 L2 | Exa + Firecrawl 单页 |
 | 深度 L3 | Read `skills/deep-research/SKILL.md` |
