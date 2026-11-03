@@ -156,7 +156,7 @@ slash 命令是**路由信号**，不替代 Read 全文。
 | 资产                | Claude 权威源   | Cursor 目标（plugin 通道）                                         | 同步方式                               |
 | ------------------- | --------------- | ------------------------------------------------------------------ | -------------------------------------- |
 | 铁律 R17 / CORE     | `rules/CORE.md` | `~/.cursor/plugins/local/claude-config/rules/CORE.mdc`             | `sync.ps1`（实体副本）                 |
-| 路由 CLAUDE         | `CLAUDE.md`     | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE.mdc`（v11） | `sync.ps1`（实体副本）                 |
+| 路由总纲         | `CLAUDE.md`     | `~/.cursor/plugins/local/claude-config/rules/00-AGENTS.mdc`（v21 适配） | `sync.ps1`（实体副本）                 |
 | 编辑器专有规则      | Guard 模板      | `~/.cursor/plugins/local/claude-config/rules/CURSOR-EDITOR.mdc`    | `deploy-cursor-guard.ps1` + `sync.ps1` |
 | MCP 文档            | `rules/MCP.md`  | plugin 规则集内（`sync.ps1` 全量复制 rules/\*.md → .mdc）          | `sync.ps1`                             |
 | codegraph MCP 服务  | `.mcp.json`     | `~/.cursor/mcp.json`                                               | **手工对照**（仅启用项）               |

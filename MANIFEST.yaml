@@ -6,7 +6,7 @@
 # 防互博原则: 新 skill/agent 加入时必须声明 excludes 关系。无 excludes = 视为无冲突，事后发现互博 → 追溯补齐。
 
 version: "13.0.4"
-updated: "2026-10-29"
+updated: "2026-11-02"
 
 # ── v10 架构决策（访谈确认）────────────────────────────────────
 ecc_integration: cherry_pick # 吸收 ECC 2.0 模式，不安装 ECC 插件
@@ -866,28 +866,31 @@ harness:
     ops: [redis, sqlite, docker, postgres]
     profile_env: CLAUDE_MCP_PROFILE
 
-# ── v11.1 sync 声明（多编辑器 1+N）──────────────────────────
+# ── v21.0 sync 声明（多编辑器 AGENTS.md 适配）────────────────
 sync_targets:
-  # v11.1：Claude Code 原生读 ~/.claude（无需同步）；编辑器侧恢复多目标（用户 2026-08-13 决策）。
-  # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像；
-  # workbuddy 特例 = 仅 CLAUDE.md + skills 联接；sync.sh 维持已删（git 可回溯）。
-  editors: [cursor, qoder-cn, trae-cn, workbuddy, qoder, trae, codearts] # v11.4.4: opencode 解耦；v11.4.6：DSH/OpenCode 图谱+R20 走各自 home（CLI/r20_check/verify-gate），仍不投放 CLAUDE.md
-  method: symlink_first_copy_fallback
+  # Claude Code 原生读 ~/.claude/CLAUDE.md（无需同步）；编辑器侧把 CLAUDE.md 适配为 AGENTS.md，
+  # 并投放真实拷贝的 rules / skills / agents（.claude-managed + .claude-hashes 台账）。
+  # 清单 SSOT = config/sync-manifest.json editors 段（home 缺席自动跳过），本行仅声明镜像。
+  editors: [cursor, qoder, trae, trae-cn]
+  engineering_rules:
+    source: rules/CORE.md (engineering-rules block)
+    ids: R21-R25
+    script: scripts/principles.py
+    check: validate_config.py V22
+    targets: [claude, opencode, dsh, cursor, qoder, trae, trae-cn]
+    budget_bytes: 17408
+  method: real_copy_with_ledger
   script: scripts/sync.ps1
-  modes: [default, -Skills, -All, -DryRun]
-  # v11：ROUTER 并入 CLAUDE.md、agent.yaml 并入本文件 harness 节，根文件 8→6；
-  # 常量单源 = config/sync-manifest.json（sync.ps1 / check.ps1 / impact_sync.py 共同消费），
-  # 本节 root_index_files 仅为声明镜像，改集合以 sync-manifest.json 为准。
-  root_index_files:
-    [
-      CLAUDE.md,
-      SPEC.md,
-      MANIFEST.yaml,
-      skills-INDEX.md,
-      agents-INDEX.md,
-      rules-INDEX.md,
-    ]
+  engine: scripts/sync-editors.ps1
+  modes: [default, -Skills, -All, -DryRun, -CleanLegacy]
+  entry:
+    source: CLAUDE.md
+    target_name: AGENTS.md
+  root_index_files: [] # v21: 不再投放 SPEC/MANIFEST/INDEX
   rules_ext:
-    cursor: ".mdc" # 经 local plugin claude-config（唯一规则通道）
+    cursor: ".mdc" # local plugin claude-config（唯一规则通道）
+    qoder: ".md"
+    trae: ".md"
+    trae-cn: ".md"
   root_filename:
-    default: "CLAUDE.md"
+    default: "AGENTS.md"

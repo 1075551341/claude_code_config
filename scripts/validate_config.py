@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""配置一致性校验 — V1-V21 共 21 项静态检查（结构/铁律/hook/MCP/INDEX/工具链/工作流主干）。
+"""配置一致性校验 — V1-V22 共 22 项静态检查（结构/铁律/hook/MCP/INDEX/工具链/工作流主干/常驻原则）。
 
 命令：
     python scripts/validate_config.py        # 全量校验，有 ERROR 时退出码 1
@@ -10,7 +10,8 @@ V5 MANIFEST 完整 / V6 MCP 安全 / V7 分层隔离 / V8 文件引用 / V9 deny
 V10-V12+V17 裸 except 与 R16 / V13-V14 Cursor Guard / V15 skill loading_tier /
 V16 codegraph mandate / V17 autoCompactWindow / V18 codebase-memory 禁用 /
 V19 三大 INDEX 与磁盘双向一致 / V20 工具链地板（pwsh 7.5 / pnpm；无 5.1 回退）/
-V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移 + 无模型/推理强度绑定（scripts/workflow.py check）+ execution.concurrency 各执行面同步。
+V21 工作流主干 config/workflow.yaml 校验 + 派生内容无漂移 + 无模型/推理强度绑定（scripts/workflow.py check）+ execution.concurrency 各执行面同步 /
+V22 工程原则并入铁律 R21-R25（18 子条）：CORE.md 单源 + 14 目标一致 + 5 组/9 冲突 + OpenCode/DSH 17 KiB 预算（scripts/principles.py check）。
 
 退出码：0 = 无 ERROR（WARNING 不影响）；1 = 存在 ERROR。
 """
@@ -18,6 +19,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -87,7 +89,8 @@ GLOBAL_SKILLS_MAX = 26
 GLOBAL_RULES = {"CORE.md", "AGENTS.md", "GIT.md", "MCP.md", "OPENSPEC.md", "SECURITY.md"}
 GLOBAL_RULES_MAX = 6
 IRON_LAWS = ("R1", "R3", "R4", "R5", "R8", "R9", "R11", "R12", "R13", "R14",
-             "R15", "R16", "R17", "R18", "R19", "R20")
+             "R15", "R16", "R17", "R18", "R19", "R20",
+             "R21", "R22", "R23", "R24", "R25")
 LIVE_POLICY_PATHS = (
     "CLAUDE.md",
     "rules/CORE.md",
@@ -234,8 +237,10 @@ def v4_iron_laws_consistency():
     with open(claude_path, "r", encoding="utf-8") as fh:
         claude = fh.read()
     for tag in IRON_LAWS:
-        if not re.search(rf"(?<![A-Za-z0-9]){tag}(?![0-9])", claude + "\n" + core):
-            ERRORS.append(f"V4: {tag} missing from CLAUDE.md or CORE.md")
+        if not re.search(rf"(?<![A-Za-z0-9]){tag}(?![0-9])", claude):
+            ERRORS.append(f"V4: {tag} missing from CLAUDE.md")
+        if not re.search(rf"(?<![A-Za-z0-9]){tag}(?![0-9])", core):
+            ERRORS.append(f"V4: {tag} missing from CORE.md")
     for tag in ("R17", "R18", "R20"):
         if tag not in claude or tag not in core:
             ERRORS.append(f"V4: {tag} must appear in both CLAUDE.md and CORE.md")
@@ -351,7 +356,10 @@ def v8_file_references():
         content = fh.read()
     refs = re.findall(r'`([^`]+\.(md|yaml|json))`', content)
     for ref, _ in refs:
-        full = os.path.join(BASE, ref)
+        if any(ch in ref for ch in "*?[]"):
+            continue
+        rel = ref[len("~/.claude/"):] if ref.startswith("~/.claude/") else ref
+        full = os.path.join(BASE, rel)
         if not os.path.exists(full) and not ref.startswith("http"):
             WARNINGS.append(f"V8: Referenced file not found: {ref}")
 
@@ -457,6 +465,7 @@ def main():
     check_v19_index_disk_sync()
     check_v20_toolchain()
     check_v21_workflow_spine()
+    check_v22_principles()
 
     report(
         agents=len(agent_names),
@@ -467,21 +476,57 @@ def main():
     return 1 if ERRORS else 0
 
 
+def check_v22_principles():
+    """V22: 工程原则并入铁律 R21-R25（18 子条）— CORE.md 单源 + 14 目标一致 + 5 组/9 冲突 + 预算。"""
+    script = os.path.join(BASE, "scripts", "principles.py")
+    if not os.path.exists(script):
+        ERRORS.append("V22: scripts/principles.py missing")
+        return
+    try:
+        proc = subprocess.run(
+            [sys.executable, script, "check"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        ERRORS.append(f"V22: principles check failed to run: {exc}")
+        return
+    output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("WARN:"):
+            WARNINGS.append(f"V22: {line[5:].strip()}")
+        elif line.startswith("ERROR:") or proc.returncode != 0:
+            ERRORS.append(f"V22: {line}")
+        else:
+            INFO.append(line)
+    if proc.returncode != 0 and not any(e.startswith("V22:") for e in ERRORS):
+        ERRORS.append("V22: principles check failed without error output")
+
+
 def report(agents=0, skills=0, rules=0, claude_lines=0):
-    print("=== .claude v13 VALIDATION (21 checks) ===")
+    print("=== .claude v13 VALIDATION (22 checks) ===")
     print(f"Agents: {agents} | Skills: {skills} | Rules: {rules}")
     print(f"CLAUDE.md: {claude_lines} lines (max 200)")
     print()
     for check_name in [
         "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9",
         "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18",
-        "V19", "V20", "V21",
+        "V19", "V20", "V21", "V22",
     ]:
         related = [e for e in ERRORS if e.startswith(check_name + ":")]
         related_w = [w for w in WARNINGS if w.startswith(check_name + ":")]
         status = "PASS" if not related and not related_w else "WARN" if not related else "FAIL"
         print(f"  [{status}] {check_name}")
     print()
+    if INFO:
+        print("INFO:")
+        for i in INFO:
+            print(f"  i {i}")
     if WARNINGS:
         print(f"WARNINGS ({len(WARNINGS)}):")
         for w in WARNINGS:

@@ -2,6 +2,27 @@
 
 > v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
 
+## 2026-11-02 工程原则按类型并入铁律（5 类 18 子条，post-v13.0.4）
+
+- **版本**：不升 pack 版本，保持 `v13.0.4`；本次为 post-v13.0.4 配置补丁（R14 版本克制）。
+- **并入铁律**：18 条工程原则按类型合并为 `rules/CORE.md` 的 R21-R25（5 类 + 18 子条 + 9 行冲突表）；`scripts/principles.py sync` 注入 `CLAUDE.md`、OpenCode/DSH `AGENTS.md` 与 `CORE.md`；Cursor/Qoder/Trae/Trae-CN 由 `sync-editors.ps1` 从 `CLAUDE.md` / `rules/CORE.md` 生成。
+- **不新增规则文件**：不创建 `rules/PRINCIPLES.md`，不改 `GLOBAL_RULES_MAX`；18 条并入 `rules/CORE.md` 的铁律 R21-R25，并注入入口。
+- **配置驱动**：`principles.py sync|check|status`；`sync.ps1` 先生成 R21-R25 段；`validate_config.py` V22 校验 R21-R25（18 子条）、5 组、9 冲突、14 目标一致与 OpenCode/DSH 17 KiB 预算。
+- **去重**：3 个 CORE 源（`.claude`、OpenCode、DSH）删除重复的 KISS/YAGNI/DRY/SOLID/依赖克制句，改为指针；4 个编辑器 CORE 副本由 `sync.ps1` 同步；编码约束/开发习惯集中到 `CORE.md`（含「编码约束」节）。
+- **文档**：`docs/ENGINEERING_PRINCIPLES.md` 记录 R21-R25（18 子条）、C1–C10 完整表、裁决顺序、10 个场景与原图章节映射。
+- **体积**：DSH `AGENTS.md` 16,663 / 17,408 bytes（17 KiB）；OpenCode 16,372；Claude 12,262。OpenCode/DSH 的「上下文阈值/错误升级」改为 `CORE.md` 指针。
+- **V21 误报修复**：`workflow.py` lint 排除 `jobs/`、`logs/`、`spec/task-difficulty-precision/`、`backups/`、`_backup/`、`.state/`、`cache/changelog.md`、`docs/superpowers/plans/` 历史制品，避免历史模型名被判为现行绑定。
+- **备份**：`~/.claude/backups/principles-20261102-104846/`。
+
+## v21.0 多编辑器 AGENTS.md 适配（2026-10-29）
+
+- **删除**：Cursor `plugins/local/claude-config` 旧规则（含 `00-CLAUDE.mdc` 与 6 条已删规则）、`~/.cursor/skills|agents` junction、4 个 home 的根 `CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX 软链；Trae/Trae CN `user_rules` 12 个旧受管规则。Qoder 迁移前无 Claude 派生配置。
+- **适配**：CLAUDE.md → 各工具加载点 `AGENTS.md`（Cursor `00-AGENTS.mdc`、Qoder `rules/AGENTS.md`、Trae `user_rules/AGENTS.md`）；去掉 claude-mem/Task/Bash 依赖，SSOT 路径绝对化，注入工具 profile；规则按 Cursor `alwaysApply` / Qoder `trigger` / Trae 原 frontmatter 投放；`rules/AGENTS.md` 目标改名 `AGENTS-COLLAB.md`。
+- **skills/agents**：25 个 skills（排除 `claude-mem-maintenance`）、9 agents（Cursor/Qoder）真实拷贝；`.md` 做文本适配，二进制原样；`.claude-managed` + `.claude-hashes` 台账，孤儿清理只删受管项。
+- **引擎**：`sync.ps1` 改薄入口 → `sync-editors.ps1`（schema v2）；`-Scope indexes` 只更新入口；`-CleanLegacy` 一次性迁移；`-Force` 保持内容 hash 幂等。
+- **验证**：`check.ps1` S3b（入口/规则 hash/skills/agents/台账/legacy 残留）+ `test-sync-dedup.ps1`（stale 修复、shadow 清理、用户规则存活）；Guard 回归 69/69。
+- **备份**：`~/.claude/backups/editor-migration-20261029-223224/`（61 文件，含旧 plugin、user_rules、根文件、junction 目标）。
+
 ## v13.0.4 执行并发（无依赖不阻塞）（2026-10-29）
 
 - **规则**：无依赖且可后台的命令/操作不得阻塞会话，优先并行；有依赖或下一步需要其输出的仍按序、禁止后台；长驻服务器 / watcher 保持后台。不是第三道 `/goal` 门，不另建 Stop hook，不改 `browser_ui_tests`。

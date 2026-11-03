@@ -111,6 +111,14 @@ LINT_EXCLUDES = (
     "scripts/workflow.py",
     "node_modules/",
     ".git/",
+    "jobs/",
+    "logs/",
+    "spec/task-difficulty-precision/",
+    "backups/",
+    "_backup/",
+    ".state/",
+    "cache/changelog.md",
+    "docs/superpowers/plans/",
 )
 FRONTMATTER_DIRS = ("agents", "commands", "skills", "catalog/agents", "catalog/skills")
 

@@ -4,7 +4,7 @@
 
 ## alwaysApply — 骨架层
 
-- [CORE.md](rules/CORE.md) — 铁律（方向性禁令）+ 开发习惯 + 工具路由 R17/R18 + 图谱三时点 + 阈值
+- [CORE.md](rules/CORE.md) — 铁律 R1-R25（含 R21-R25 工程原则 5 类 18 子条）+ 开发习惯 + 编码约束 + 工具路由 R17/R18 + 图谱三时点 + 阈值
 
 ## trigger: model_decision — 按需补充
 

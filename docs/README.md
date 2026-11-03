@@ -1,6 +1,6 @@
 # Docs 文档索引
 
-> 最后更新: 2026-10-29 | **当前配置: v13.0.4**
+> 最后更新: 2026-11-02 | **当前配置: v13.0.4**
 
 ---
 
@@ -9,6 +9,7 @@
 | 文档 | 描述 |
 | ---- | ---- |
 | [DEV_FLOW.md](DEV_FLOW.md) | 工作流主干说明 + 派生清单 + 迁移 |
+| [ENGINEERING_PRINCIPLES.md](ENGINEERING_PRINCIPLES.md) | 铁律 R21-R25（5 类 18 子条）+ C1–C10 裁决 + 10 个场景 + 原图章节映射 |
 | [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md) | Cursor 插件/MCP 边界 |
 | [CURSOR_EDITOR_SETUP.md](CURSOR_EDITOR_SETUP.md) | Cursor 编辑器专有设置 |
 | [LLM_AS_A_VERIFIER_SYNC.md](LLM_AS_A_VERIFIER_SYNC.md) | llm-as-a-verifier 优点提取与融合决策 |

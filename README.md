@@ -6,7 +6,7 @@
 
 | 文件            | 用途                                                                                |
 | --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + 工作流主干（派生）+ 完成定义 + 铁律索引 |
+| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + 铁律 R1-R25（含工程原则 5 类 18 子条）+ 工作流主干（派生）+ 完成定义 |
 | `SPEC.md`       | 配置法典（v13.0.4）                                                                 |
 | `config/workflow.yaml` | 工作流主干：阶段门、轨道、完成定义（独立审查必过）、质量标准、审查契约（≤3 轮、两道关）、执行并发；不含模型/推理强度（`scripts/workflow.py` 渲染 + lint） |
 | `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
@@ -31,18 +31,18 @@
 
 Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
 
-## 同步（v11.1 多编辑器 1+N）
+## 同步（v21.0 多编辑器 AGENTS.md 适配）
 
-Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
+Claude Code 原生读 `~/.claude/CLAUDE.md`（零同步）；编辑器侧 = Cursor + Qoder + Trae + Trae CN，分别把 CLAUDE.md 适配为 AGENTS.md，并投放真实拷贝的 rules / skills / agents。OpenCode/OpenChamber 与 DSH 的 `AGENTS.md` / `CORE.md` 仅由 `principles.py` 注入 R21-R25 铁律段，其余自管：
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1          # AGENTS.md + 规则
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + skills/ + agents/
 ```
 
-- 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
-- **常量单源**：`config/sync-manifest.json`（root_files + editors）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
+- 入口：CLAUDE.md → 各工具加载点的 `AGENTS.md`（Cursor `00-AGENTS.mdc` / Qoder `rules/AGENTS.md` / Trae `user_rules/AGENTS.md`）；规则、skills、agents 均为真实拷贝 + `.claude-managed` 台账
+- **常量单源**：`config/sync-manifest.json`（entry/rules/skills/agents/editors）；**去重策略**：同 basename 变体先删后写 + 台账孤儿清除 + Cursor plugin 完全托管；回归 `scripts/test-sync-dedup.ps1`
 - 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md)
 
 hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）

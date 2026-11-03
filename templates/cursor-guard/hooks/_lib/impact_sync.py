@@ -7,19 +7,11 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+import hashlib
 
 # v11 常量单源：~/.claude/config/sync-manifest.json（与 sync.ps1 / check.ps1 共用）；
 # 读取失败时回退内置默认（内容须与 manifest 一致）。
-_DEFAULT_SYNC_FILES = frozenset(
-    {
-        "CLAUDE.md",
-        "SPEC.md",
-        "MANIFEST.yaml",
-        "skills-INDEX.md",
-        "agents-INDEX.md",
-        "rules-INDEX.md",
-    }
-)
+_DEFAULT_SYNC_FILES = frozenset({"CLAUDE.md"})
 
 
 def _load_sync_files() -> frozenset[str]:
@@ -35,6 +27,7 @@ def _load_sync_files() -> frozenset[str]:
 
 
 SYNC_FILES = _load_sync_files()
+SKILL_PREFIXES = ("skills/", "agents/")
 JUNCTION_PREFIXES = ("skills/", "agents/")
 NO_SYNC_PREFIXES = ("hooks/", "scripts/", "plugins/", "commands/", ".git/")
 NO_SYNC_EXACT = frozenset({"settings.json", ".mcp.json"})
@@ -92,8 +85,8 @@ def _owner_to_scope(owner: str) -> SyncScope:
         return SyncScope.NONE
     if owner.startswith("rules/"):
         return SyncScope.RULES
-    if owner.startswith(("skill/", "agent/")):
-        return SyncScope.NONE
+    if owner.startswith(("skill/", "skills/", "agent/", "agents/")):
+        return SyncScope.ALL
     if owner.startswith(("hook/", "plugin/", "mcp/")):
         return SyncScope.NONE
     return SyncScope.NONE
@@ -130,21 +123,19 @@ def resolve_sync_plan(changed_path: str | Path, claude_home: Path) -> SyncPlan:
         plan.messages.append(f"{rel}: 配置文件不同步")
         return plan
 
-    if rel.startswith(JUNCTION_PREFIXES):
-        plan.messages.append(f"{rel}: skills/agents 目录联接已实时可见，无需 sync")
+    if rel.startswith(SKILL_PREFIXES):
+        plan.merge(SyncScope.ALL)
+        plan.messages.append(f"{rel}: skills/agents 为真实拷贝，刷新全部通道")
         return plan
 
     if rel.startswith("rules/") and rel.endswith(".md") and rel != "rules/README.md":
         plan.merge(SyncScope.RULES)
-        plan.messages.append(
-            f"{rel}: 刷新 rules → Cursor plugin *.mdc（唯一生效通道）"
-            " + qoder-cn rules/*.mdc + trae-cn user_rules/*.md（v11.1 多编辑器）"
-        )
+        plan.messages.append(f"{rel}: 刷新 AGENTS.md + 各编辑器规则通道")
         return plan
 
     if rel in SYNC_FILES:
         plan.merge(SyncScope.INDEXES)
-        plan.messages.append(f"{rel}: 刷新总纲/索引软链")
+        plan.messages.append(f"{rel}: 刷新 AGENTS.md 入口")
         return plan
 
     manifest = _parse_manifest_concerns(claude_home / "MANIFEST.yaml")
@@ -189,8 +180,9 @@ def _editor_rule_channels() -> list[tuple[str, Path, str]]:
     编辑器中「已启用 + home 在装 + 有规则通道」者。读取失败回退内置默认。
     """
     defaults = [
-        ("qoder-cn", Path.home() / ".qoder-cn" / "rules", ".mdc"),
+        ("qoder", Path.home() / ".qoder" / "rules", ".md"),
         ("trae-cn", Path.home() / ".trae-cn" / "user_rules", ".md"),
+        ("trae", Path.home() / ".trae" / "user_rules", ".md"),
     ]
     manifest = Path.home() / ".claude" / "config" / "sync-manifest.json"
     try:
@@ -202,15 +194,31 @@ def _editor_rule_channels() -> list[tuple[str, Path, str]]:
         for name, cfg in editors.items():
             if name in ("_comment", "cursor") or not isinstance(cfg, dict):
                 continue
-            if cfg.get("enabled") is False or not cfg.get("rules_channel"):
+            channel = cfg.get("rules_dir") or cfg.get("rules_channel")
+            if cfg.get("enabled") is False or not channel:
                 continue
             home = Path(str(cfg.get("home", "")).replace("~", str(Path.home()), 1))
             if not home.is_dir():
                 continue
-            out.append((name, home / str(cfg["rules_channel"]), str(cfg.get("rules_ext") or ".md")))
+            out.append((name, home / str(channel), str(cfg.get("rules_ext") or ".md")))
         return out
     except (OSError, ValueError):
         return [(n, d, e) for n, d, e in defaults if d.parent.is_dir()]
+
+
+def _rules_rename_map() -> dict[str, str]:
+    """Target basename overrides from sync-manifest.json rules.renames."""
+    manifest = Path.home() / ".claude" / "config" / "sync-manifest.json"
+    try:
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        raw = (data.get("rules") or {}).get("renames") or {}
+        return {
+            str(k): str(v).rsplit(".", 1)[0]
+            for k, v in raw.items()
+            if isinstance(v, str)
+        }
+    except (OSError, ValueError, AttributeError):
+        return {"AGENTS.md": "AGENTS-COLLAB"}
 
 
 def rules_out_of_sync(claude_home: Path) -> tuple[bool, str]:
@@ -220,26 +228,58 @@ def rules_out_of_sync(claude_home: Path) -> tuple[bool, str]:
     但重装/回滚等场景 mtime 也可能倒挂，只有内容比对才能给出可信结论。
     """
     rules_src = claude_home / "rules"
-    if not rules_src.is_dir() or not CURSOR_PLUGIN_RULES.is_dir():
+    if not rules_src.is_dir():
         return False, "rules 目录缺失，跳过检测"
     src_rules = [md for md in rules_src.glob("*.md") if md.name != "README.md"]
+    renames = _rules_rename_map()
+
+    def _body(text: str) -> str:
+        m = re.match(r"(?s)^---\r?\n.*?\r?\n---\r?\n?", text)
+        return text[m.end():] if m else text
+
+    def _sha(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def _hashes(target_dir: Path) -> dict:
+        try:
+            return json.loads((target_dir / ".claude-hashes").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
 
     def _stale_in(target_dir: Path, ext: str) -> list[str]:
         found: list[str] = []
+        hashes = _hashes(target_dir)
         for md in src_rules:
-            dst = target_dir / f"{md.stem}{ext}"
+            base = renames.get(md.name, md.stem)
+            dst = target_dir / f"{base}{ext}"
+            key = f"{base}{ext}"
             try:
-                if not dst.exists() or md.read_text(encoding="utf-8") != dst.read_text(encoding="utf-8"):
-                    found.append(md.stem)
+                if not dst.exists():
+                    found.append(base)
+                    continue
+                rec = hashes.get(key) if isinstance(hashes, dict) else None
+                if isinstance(rec, dict) and rec.get("srcHash") and rec.get("dstHash"):
+                    if _sha(md) != str(rec["srcHash"]).lower() or _sha(dst) != str(rec["dstHash"]).lower():
+                        found.append(base)
+                    continue
+                head = next(
+                    (ln for ln in _body(md.read_text(encoding="utf-8")).splitlines() if ln.startswith("# ")),
+                    "",
+                )
+                if not head or head not in _body(dst.read_text(encoding="utf-8")):
+                    found.append(base)
             except OSError:
-                found.append(md.stem)
+                found.append(base)
         return found
 
     parts: list[str] = []
-    stale_cursor = _stale_in(CURSOR_PLUGIN_RULES, ".mdc")
-    if stale_cursor:
-        tail = "..." if len(stale_cursor) > 8 else ""
-        parts.append(f"cursor: {', '.join(stale_cursor[:8])}{tail}")
+    if CURSOR_PLUGIN_RULES.is_dir():
+        stale_cursor = _stale_in(CURSOR_PLUGIN_RULES, ".mdc")
+        if stale_cursor:
+            tail = "..." if len(stale_cursor) > 8 else ""
+            parts.append(f"cursor: {', '.join(stale_cursor[:8])}{tail}")
+    elif (Path.home() / ".cursor").is_dir():
+        parts.append("cursor: 通道缺失（跑 sync.ps1）")
     for ed_name, chan_dir, ext in _editor_rule_channels():
         if not chan_dir.is_dir():
             parts.append(f"{ed_name}: 通道缺失（跑 sync.ps1）")

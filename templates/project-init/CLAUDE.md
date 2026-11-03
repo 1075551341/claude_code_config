@@ -47,7 +47,7 @@ tests/          # 测试文件
 ### 依赖管理
 
 - 锁定 major 版本（R14）
-- 优先复用已有依赖，避免重复引入（R4）
+- 优先复用已有依赖，避免重复引入（R24.3/R24.4）
 - 安全补丁用同 major 最新版
 
 ## 项目特有规则
@@ -60,7 +60,7 @@ tests/          # 测试文件
 
 以下配置从 `~/.claude/` 全局继承，无需重复声明：
 - 五柱×五阶段×三横切骨架
-- 铁律 R1–R20
+- 铁律 R1–R25
 - 上下文三级阈值（70%/90%/100%）
 - 变更彻底性保障（有图：CRG `get_impact_radius` + `codegraph_explore` blast-radius + Grep）
 - 工具路由（codegraph → 双图就绪后 Grep；本机文件名 → everything；cbm 已禁用）

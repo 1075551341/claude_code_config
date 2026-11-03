@@ -24,7 +24,7 @@
 
 .NOTES
     配套命令（本脚本不代跑，按需单独执行）：
-      python scripts/validate_config.py            # 深度校验 V1-V20
+      python scripts/validate_config.py            # 深度校验 V1-V22
       pwsh -File scripts/sync.ps1                # 修同步/软链问题
       pwsh -File scripts/fix.ps1 -Fix            # 修 hook launcher 问题
 #>
@@ -39,38 +39,37 @@ $ErrorActionPreference = "SilentlyContinue"
 
 $CLAUDE_DIR = Join-Path $env:USERPROFILE ".claude"
 # 根文件集合与编辑器清单单源：config/sync-manifest.json（与 sync.ps1 / impact_sync.py 共用）；读取失败回退内置默认
-$SYNC_FILES = @("CLAUDE.md", "SPEC.md", "MANIFEST.yaml", "skills-INDEX.md", "agents-INDEX.md", "rules-INDEX.md")
-# v11.1 多编辑器（1+N）：managed 编辑器白名单（cursor 走专用校验块；下表为其余编辑器）
-$MANAGED_EDITORS = [ordered]@{
-    "qoder-cn"  = @{ Home = "$env:USERPROFILE\.qoder-cn";     Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae-cn"   = @{ Home = "$env:USERPROFILE\.trae-cn";      Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "workbuddy" = @{ Home = "$env:USERPROFILE\.workbuddy";    Enabled = $true; RulesChannel = "";           RulesExt = "";     RootIndex = $false; Special = "claude_md_plus_skills" }
-    "qoder"     = @{ Home = "$env:USERPROFILE\.qoder";        Enabled = $true; RulesChannel = "rules";      RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "trae"      = @{ Home = "$env:USERPROFILE\.trae";         Enabled = $true; RulesChannel = "user_rules"; RulesExt = ".md";  RootIndex = $true;  Special = "" }
-    "codearts"  = @{ Home = "$env:USERPROFILE\.codeartsdoer"; Enabled = $true; RulesChannel = "rule";       RulesExt = ".mdc"; RootIndex = $true;  Special = "" }
-    "opencode"  = @{ Home = "$env:USERPROFILE\.config\opencode"; Enabled = $false; RulesChannel = "";       RulesExt = "";     RootIndex = $false; Special = "agents_md" }
-}
+$SYNC_FILES = @()
+# v2 multi-editor: manifest drives channels (entry/rules/skills/agents). cursor is
+# validated in its own block below; the table keeps every other editor.
+$MANAGED_EDITORS = [ordered]@{}
 $syncManifestPath = Join-Path $CLAUDE_DIR "config\sync-manifest.json"
 if (Test-Path $syncManifestPath) {
     try {
         $syncMf = Get-Content $syncManifestPath -Raw -Encoding utf8 | ConvertFrom-Json
-        if ($syncMf.root_files) { $SYNC_FILES = @($syncMf.root_files) }
+        if ($null -ne $syncMf.root_files) { $SYNC_FILES = @($syncMf.root_files) }
         if ($syncMf.editors) {
-            $MANAGED_EDITORS = [ordered]@{}
             foreach ($e in $syncMf.editors.PSObject.Properties) {
                 if ($e.Name -eq "_comment" -or $e.Name -eq "cursor") { continue }
                 $v = $e.Value
                 $MANAGED_EDITORS[$e.Name] = @{
                     Home         = ("$($v.home)" -replace '^~', $env:USERPROFILE -replace '/', '\')
                     Enabled      = ($v.enabled -ne $false)
-                    RulesChannel = "$(if ($v.rules_channel) { $v.rules_channel } else { '' })"
+                    RulesChannel = ""
                     RulesExt     = "$(if ($v.rules_ext) { $v.rules_ext } else { '' })"
-                    RootIndex    = ($v.root_index -eq $true)
-                    Special      = "$(if ($v.special) { $v.special } else { '' })"
+                    RootIndex    = $false
+                    Special      = ""
+                    Display      = "$(if ($v.display) { $v.display } else { $e.Name })"
+                    RulesDir     = "$(if ($v.rules_dir) { $v.rules_dir } else { '' })"
+                    Entry        = "$(if ($v.entry) { $v.entry } else { '' })"
+                    SkillsDir    = "$(if ($v.skills_dir) { $v.skills_dir } else { '' })"
+                    AgentsDir    = "$(if ($v.agents_dir) { $v.agents_dir } else { '' })"
                 }
             }
         }
-    } catch { }
+    } catch {
+        Write-Host "   [!!]  sync-manifest parse failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 $STALE_LINKS = @("hooks", "scripts")
 
@@ -222,16 +221,11 @@ if (-not (Test-Path $cursorDir)) {
         }
     }
 
-    # skills/ agents/ junction（-Skills/-All 部署；存在则校验指向）
+    # skills/ agents/ are real copies in schema v2 (no junctions)
     foreach ($dir in @("skills", "agents")) {
         $lp = Join-Path $cursorDir $dir
-        $et = Join-Path $CLAUDE_DIR $dir
-        if (Test-IsReparseLink $lp) {
-            $actual = (Get-Item $lp -Force).Target
-            if ($actual -is [array]) { $actual = $actual[0] }
-            if ($actual -eq $et) { $passes++ } else { $issues += "$dir(wrong target)" }
-        } elseif (Test-Path $lp) { $issues += "$dir(not a link)" }
-        # 不存在 = 未用 -Skills/-All 部署，可接受
+        if (Test-IsReparseLink $lp) { $issues += "$dir(junction; v2 expects copy)" }
+        elseif (Test-Path $lp) { $passes++ }
     }
 
     foreach ($stale in $STALE_LINKS) {
@@ -270,67 +264,182 @@ foreach ($edName in @($MANAGED_EDITORS.Keys)) {
         continue
     }
 
-    $edIssues = @()
-    $edPasses = 0
+}
 
-    if ($ed.Special -eq "claude_md_plus_skills") {
-        # workbuddy：仅 CLAUDE.md + skills/ 联接；SOUL/USER 等自有命名空间不校验
-        $cm = Join-Path $ed.Home "CLAUDE.md"
-        $cmSrc = Join-Path $CLAUDE_DIR "CLAUDE.md"
-        if (-not (Test-Path $cm)) { $edIssues += "CLAUDE.md(missing)" }
-        elseif (Test-IsReparseLink $cm) { $edPasses++ }
-        else {
-            try {
-                if ((Get-FileHash $cm -Algorithm SHA256).Hash -eq (Get-FileHash $cmSrc -Algorithm SHA256).Hash) { $edPasses++ }
-                else { $edIssues += "CLAUDE.md(stale copy)" }
-            } catch { $edIssues += "CLAUDE.md(unreadable)" }
+# =============================================================
+# S3b: Schema v2 editor layout (AGENTS.md + adapted rules + copies)
+# =============================================================
+Write-Section "3b" "Editor Layout (schema v2)"
+
+# Bad mechanical-replacement residue (check cannot be trivially true after adaptation).
+$editorResiduePattern = 'claude-mem|thedotmack/记忆插件|记忆插件\s+插件|升级\s+记忆插件|误调\s+本工具|Cursor\s*/\s*本工具|重启\s+Claude Code'
+
+function Get-BodyText {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return "" }
+    $t = [IO.File]::ReadAllText($Path)
+    $m = [regex]::Match($t, '(?s)^---\r?\n.*?\r?\n---\r?\n?')
+    if ($m.Success) { return $t.Substring($m.Length) }
+    return $t
+}
+
+$editorsMf = $syncMf.editors
+if (-not $editorsMf) {
+    Add-Check "Editors" "sync-manifest editors" "fail" "editors section missing"
+} else {
+    foreach ($prop in $editorsMf.PSObject.Properties) {
+        if ($prop.Name -eq "_comment") { continue }
+        $edName = $prop.Name
+        $edCfg = $prop.Value
+        if ($edCfg.enabled -eq $false) { continue }
+        $edHome = ("$($edCfg.home)" -replace '^~', $env:USERPROFILE -replace '/', '\')
+        if (-not (Test-Path $edHome)) {
+            Add-Check "Editors" "$edName (not installed)" "pass" "home absent"
+            continue
         }
-        $sk = Join-Path $ed.Home "skills"
-        if (Test-IsReparseLink $sk) { $edPasses++ }
-        elseif (Test-Path $sk) { $edIssues += "skills(not a link)" }
-        else { $edIssues += "skills(missing)" }
-    } elseif ($ed.Special -eq "agents_md") {
-        # v11.4.4：enabled 应为 false；若误开，不把 AGENTS.md 与 CLAUDE.md 做 hash 对齐（OpenCode 自管）
-        Add-Check "Symlink" "$edName (decoupled)" "pass" "AGENTS.md owned by OpenCode; not compared to CLAUDE.md"
-    } else {
-        if ($ed.RootIndex) {
-            foreach ($file in $SYNC_FILES) {
-                $fp = Join-Path $ed.Home $file
-                $expected = Join-Path $CLAUDE_DIR $file
-                if (-not (Test-Path $fp)) { $edIssues += "$file(missing)" }
-                elseif (Test-IsReparseLink $fp) {
-                    $actual = (Get-Item $fp -Force).Target
-                    if ($actual -is [array]) { $actual = $actual[0] }
-                    if ($actual -eq $expected) { $edPasses++ } else { $edIssues += "$file(wrong target)" }
-                } else {
+        $edIssues = @()
+        $edOk = 0
+        $edDisplay = if ($edCfg.display) { "$($edCfg.display)" } else { $edName }
+        $hashMap = $null
+        $hashFile = if ($edCfg.rules_dir) { Join-Path (Join-Path $edHome $edCfg.rules_dir) ".claude-hashes" } else { $null }
+        if ($hashFile -and (Test-Path $hashFile)) {
+            try { $hashMap = Get-Content $hashFile -Raw -Encoding utf8 | ConvertFrom-Json }
+            catch {
+                Write-Host "   [!!]  hash ledger unreadable: $hashFile -- $($_.Exception.Message)" -ForegroundColor Yellow
+                $hashMap = $null
+            }
+        }
+
+        if ($edCfg.entry) {
+            $entry = Join-Path $edHome $edCfg.entry
+            if (-not (Test-Path $entry)) { $edIssues += "entry(missing)" }
+            else {
+                $entryName = Split-Path $edCfg.entry -Leaf
+                $txt = [IO.File]::ReadAllText($entry)
+                if ($txt -match $editorResiduePattern) { $edIssues += "entry(residue)" }
+                elseif ($hashMap -and $hashMap.PSObject.Properties.Match($entryName).Count) {
+                    $entryHash = $hashMap.$entryName
                     try {
-                        if ((Get-FileHash $fp -Algorithm SHA256).Hash -eq (Get-FileHash $expected -Algorithm SHA256).Hash) { $edPasses++ }
-                        else { $edIssues += "$file(stale copy)" }
-                    } catch { $edIssues += "$file(not a link)" }
+                        $srcHash = (Get-FileHash -LiteralPath (Join-Path $CLAUDE_DIR "$($syncMf.entry_source)") -Algorithm SHA256).Hash
+                        $dstHash = (Get-FileHash -LiteralPath $entry -Algorithm SHA256).Hash
+                        if ($srcHash -ne $entryHash.srcHash) { $edIssues += "entry(source changed)" }
+                        elseif ($dstHash -ne $entryHash.dstHash) { $edIssues += "entry(drift)" }
+                        else { $edOk++ }
+                    } catch { $edIssues += "entry(hash error)" }
+                } else {
+                    if ($txt -notmatch '# .+ 全局配置') { $edIssues += "entry(no title)" }
+                    elseif ($txt -notmatch '本文件适配') { $edIssues += "entry(no profile)" }
+                    else { $edOk++ }
                 }
             }
         }
-        if ($ed.RulesChannel) {
-            $chanDir = Join-Path $ed.Home $ed.RulesChannel
-            $srcRules = @(Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -Filter "*.md" -ErrorAction SilentlyContinue |
-                Where-Object { $_.Name -ne "README.md" })
-            $ruleOk = 0
-            foreach ($r in $srcRules) {
-                $dst = Join-Path $chanDir "$($r.BaseName)$($ed.RulesExt)"
-                if (-not (Test-Path -LiteralPath $dst)) { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(missing)"; continue }
-                try {
-                    if ((Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash -eq (Get-FileHash -LiteralPath $r.FullName -Algorithm SHA256).Hash) { $ruleOk++ }
-                    else { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(stale)" }
-                } catch { $edIssues += "$($ed.RulesChannel)/$($r.BaseName)$($ed.RulesExt)(unreadable)" }
-            }
-            $edPasses += $ruleOk
-        }
-    }
 
-    if ($edIssues.Count -eq 0) {
-        Add-Check "Symlink" $edName "pass" "$edPasses checks OK"
-    } else {
-        Add-Check "Symlink" $edName "warn" "$($edIssues -join ', ') -- run sync.ps1"
+        if ($edCfg.rules_dir) {
+            $chan = Join-Path $edHome $edCfg.rules_dir
+            $srcRules = @(Get-ChildItem (Join-Path $CLAUDE_DIR "rules") -File -Filter "*.md" |
+                Where-Object { $_.Name -ne "README.md" })
+            $hashFile = Join-Path $chan ".claude-hashes"
+            if (-not $hashMap -and (Test-Path $hashFile)) {
+                try { $hashMap = Get-Content $hashFile -Raw -Encoding utf8 | ConvertFrom-Json }
+                catch {
+                    Write-Host "   [!!]  hash ledger unreadable: $hashFile -- $($_.Exception.Message)" -ForegroundColor Yellow
+                    $hashMap = $null
+                }
+            }
+            foreach ($r in $srcRules) {
+                $base = $r.BaseName
+                $renames = $syncMf.rules.renames
+                if ($renames) {
+                    $mapped = $renames.$($r.Name)
+                    if ($mapped) { $base = [IO.Path]::GetFileNameWithoutExtension("$mapped") }
+                }
+                $dst = Join-Path $chan "$base$($edCfg.rules_ext)"
+                if (-not (Test-Path $dst)) { $edIssues += "rules/$base(missing)"; continue }
+                $entryName = "$base$($edCfg.rules_ext)"
+                $expectedHash = if ($hashMap -and $hashMap.PSObject.Properties.Match($entryName).Count) { $hashMap.$entryName } else { $null }
+                if ($expectedHash) {
+                    try {
+                        $srcHash = (Get-FileHash -LiteralPath $r.FullName -Algorithm SHA256).Hash
+                        $dstHash = (Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash
+                        if ($srcHash -ne $expectedHash.srcHash) { $edIssues += "rules/$base(source changed)" }
+                        elseif ($dstHash -ne $expectedHash.dstHash) { $edIssues += "rules/$base(drift)" }
+                        else { $edOk++ }
+                    } catch { $edIssues += "rules/$base(hash error)" }
+                } else {
+                    $srcBody = Get-BodyText $r.FullName
+                    $dstBody = Get-BodyText $dst
+                    $srcHead = (($srcBody -split "`n") | Where-Object { $_ -match '^# ' } | Select-Object -First 1)
+                    if ($srcHead -and $dstBody.Contains($srcHead.Trim())) { $edOk++ }
+                    else { $edIssues += "rules/$base(stale)" }
+                }
+            }
+            if (-not (Test-Path (Join-Path $chan ".claude-managed"))) { $edIssues += "rules(no ledger)" }
+            if (-not (Test-Path $hashFile)) { $edIssues += "rules(no hash ledger)" }
+
+            $expectedNames = [System.Collections.Generic.List[string]]::new()
+            if ($edCfg.entry) { $expectedNames.Add((Split-Path $edCfg.entry -Leaf)) | Out-Null }
+            if ($edCfg.guard_rule) { $expectedNames.Add((Split-Path $edCfg.guard_rule -Leaf)) | Out-Null }
+            $renames2 = $syncMf.rules.renames
+            foreach ($r in $srcRules) {
+                $base2 = $r.BaseName
+                if ($renames2) {
+                    $mapped2 = $renames2.$($r.Name)
+                    if ($mapped2) { $base2 = [IO.Path]::GetFileNameWithoutExtension("$mapped2") }
+                }
+                $expectedNames.Add("$base2$($edCfg.rules_ext)") | Out-Null
+            }
+            $ledgerPath = Join-Path $chan ".claude-managed"
+            if (Test-Path $ledgerPath) {
+                $ledgerNames = @(Get-Content $ledgerPath -Encoding utf8 | Where-Object { $_.Trim() })
+                if ((($ledgerNames | Sort-Object) -join '|') -ne (($expectedNames | Sort-Object) -join '|')) {
+                    $edIssues += "rules(ledger mismatch $($ledgerNames.Count)/$($expectedNames.Count))"
+                }
+                $managedBases = @($expectedNames | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) })
+                $orphans = @(Get-ChildItem $chan -File -Force -ErrorAction SilentlyContinue |
+                    Where-Object {
+                        -not $_.Name.StartsWith('.') -and
+                        $ledgerNames -notcontains $_.Name -and
+                        $managedBases -contains $_.BaseName
+                    })
+                if ($orphans.Count -gt 0) {
+                    $edIssues += "rules(orphan $((($orphans | Select-Object -First 3).Name) -join ','))"
+                }
+            }
+            foreach ($rf in @(Get-ChildItem $chan -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @(".md", ".mdc") })) {
+                try {
+                    if ([IO.File]::ReadAllText($rf.FullName) -match $editorResiduePattern) { $edIssues += "rules/$($rf.Name)(residue)" }
+                } catch { $edIssues += "rules/$($rf.Name)(unreadable)" }
+            }
+        }
+
+        if ($edCfg.skills_dir) {
+            $sk = Join-Path $edHome $edCfg.skills_dir
+            $excluded = @($syncMf.skills.exclude | Where-Object { $_ })
+            $expected = @(Get-ChildItem (Join-Path $CLAUDE_DIR "skills") -Directory |
+                Where-Object { $excluded -notcontains $_.Name })
+            $actual = @(Get-ChildItem $sk -Directory -ErrorAction SilentlyContinue)
+            if ($actual.Count -ne $expected.Count) { $edIssues += "skills($($actual.Count)/$($expected.Count))" }
+            else { $edOk++ }
+            if (Test-IsReparseLink $sk) { $edIssues += "skills(junction)" }
+        }
+
+        if ($edCfg.agents_dir) {
+            $ag = Join-Path $edHome $edCfg.agents_dir
+            $excludedA = @($syncMf.agents.exclude | Where-Object { $_ })
+            $expectedA = @(Get-ChildItem (Join-Path $CLAUDE_DIR "agents") -File -Filter "*.md" |
+                Where-Object { $excludedA -notcontains $_.Name })
+            $actualA = @(Get-ChildItem $ag -File -Filter "*.md" -ErrorAction SilentlyContinue)
+            if ($actualA.Count -ne $expectedA.Count) { $edIssues += "agents($($actualA.Count)/$($expectedA.Count))" }
+            else { $edOk++ }
+        }
+
+        foreach ($legacy in @($syncMf.legacy_root_files | Where-Object { $_ })) {
+            if (Test-Path (Join-Path $edHome $legacy)) { $edIssues += "$legacy(legacy)" }
+        }
+
+        if ($edIssues.Count -eq 0 -and $edOk -eq 0) { Add-Check "Editors" $edDisplay "warn" "no checks configured -- manifest entry/rules/skills all empty" }
+        elseif ($edIssues.Count -eq 0) { Add-Check "Editors" $edDisplay "pass" "$edOk checks OK" }
+        else { Add-Check "Editors" $edDisplay "warn" "$($edIssues -join ', ') -- run sync.ps1" }
     }
 }
 
@@ -502,27 +611,28 @@ if (Test-Path $guardEditorRule) {
 $cursorPluginRulesDir = Join-Path $env:USERPROFILE ".cursor\plugins\local\claude-config\rules"
 $cursorRulesDir = Join-Path $env:USERPROFILE ".cursor\rules"
 $cursorProjectRulesDir = Join-Path $CLAUDE_DIR ".cursor\rules"
-# v11: ROUTER 并入 CLAUDE.md，插件 L0 承载文件为 00-CLAUDE.mdc
-$l0Bases = @("00-CLAUDE", "CORE", "CURSOR-EDITOR")
-$l0SrcMap = @{
-    "00-CLAUDE"     = Join-Path $CLAUDE_DIR "CLAUDE.md"
-    "CORE"          = Join-Path $CLAUDE_DIR "rules\CORE.md"
-    "CURSOR-EDITOR" = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
-}
-# plugin 三件套：存在 + hash 与真源一致
+# v2: entry is 00-AGENTS.mdc (adapted from CLAUDE.md); CORE is adapted too,
+# so only CURSOR-EDITOR is byte-identical to its source.
+$l0Bases = @("00-AGENTS", "CORE", "CURSOR-EDITOR")
 $pluginMissing = @()
 $pluginStale = @()
 foreach ($base in $l0Bases) {
     $p = Join-Path $cursorPluginRulesDir "$base.mdc"
     if (-not (Test-Path $p)) { $pluginMissing += "$base.mdc"; continue }
     try {
-        $h1 = (Get-FileHash $p -Algorithm SHA256).Hash
-        $h2 = (Get-FileHash $l0SrcMap[$base] -Algorithm SHA256).Hash
-        if ($h1 -ne $h2) { $pluginStale += "$base(hash drift)" }
-    } catch { $pluginStale += "$base(hash check failed)" }
+        $text = [IO.File]::ReadAllText($p)
+        if ($base -eq "00-AGENTS" -and $text -notmatch '本文件适配') { $pluginStale += "$base(no profile)" }
+        if ($base -eq "CORE" -and $text -notmatch '# CORE') { $pluginStale += "$base(no heading)" }
+        if ($base -eq "CURSOR-EDITOR") {
+            $src = Join-Path $CLAUDE_DIR "templates\cursor-guard\rules\CURSOR-EDITOR.mdc"
+            if ((Get-FileHash $p -Algorithm SHA256).Hash -ne (Get-FileHash $src -Algorithm SHA256).Hash) {
+                $pluginStale += "$base(hash drift)"
+            }
+        }
+    } catch { $pluginStale += "$base(unreadable)" }
 }
 if ($pluginMissing.Count -eq 0 -and $pluginStale.Count -eq 0) {
-    Add-Check "CursorGuard" "plugin L0 rules" "pass" "3/3 in plugin claude-config (hash match)"
+    Add-Check "CursorGuard" "plugin L0 rules" "pass" "3/3 in plugin claude-config (adapted + guard match)"
 } elseif ($pluginMissing.Count -gt 0) {
     Add-Check "CursorGuard" "plugin L0 rules" "fail" "Missing: $($pluginMissing -join ', ') -- run sync.ps1"
 } else {
@@ -688,7 +798,12 @@ function Test-GithubMcpStdio([string]$mcpFile, [string]$label) {
 }
 Test-GithubMcpStdio (Join-Path $CLAUDE_DIR ".mcp.json") "Claude"
 Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".cursor\mcp.json") "Cursor"
-Test-GithubMcpStdio (Join-Path $env:USERPROFILE ".qoder-cn\mcp.json") "Qoder-cn"
+$qoderMcp = Join-Path $env:USERPROFILE ".qoder\mcp.json"
+if (Test-Path $qoderMcp) {
+    Test-GithubMcpStdio $qoderMcp "Qoder"
+} else {
+    Add-Check "MCP" "Qoder github transport" "pass" "Qoder not installed (~/.qoder/mcp.json absent)"
+}
 
 # sync.ps1 永不同步 MCP：manifest 不得列出 mcp.json；脚本不得把 mcp.json 写到编辑器 home
 $syncPs1 = Join-Path $CLAUDE_DIR "scripts\sync.ps1"

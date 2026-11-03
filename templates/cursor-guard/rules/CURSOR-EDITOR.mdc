@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Cursor 编辑器专有
 
-> 五阶段/铁律见 sync 的 CORE.md、CLAUDE.md。本文仅 Cursor Agent 行为。
+> 五阶段/铁律见 sync 的 CORE.md、00-AGENTS.mdc。本文仅 Cursor Agent 行为。
 
 ## 探索优先级（R17 Cursor 版 · 严格三级禁止跳级）
 
@@ -13,7 +13,7 @@ alwaysApply: true
 1. 结构/怎么运作 → codegraph_explore（禁止直接 Grep/Read/Glob/everything）
 2. 精准上下文/变更影响/风险/审查/PR → CRG（有 `.code-review-graph/graph.db`）；无图则 SessionStart/PreToolUse ensure，仍无则 deny（禁止 Grep/Glob/everything/编辑/查询 MCP）
 3. codebase-memory：已禁用 — 勿调用
-4. 为什么 / 约定 / 偏好 → claude-mem（勿塞入 codegraph）
+4. 为什么 / 约定 / 偏好 → 记忆插件（无则跳过并注明；勿塞入 codegraph）
 ```
 
 - 结构、调用链、「怎么运作」：必须先 MCP `codegraph_explore`（默认仅 `codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`）
@@ -21,7 +21,7 @@ alwaysApply: true
 - 本机按文件名（跨仓/全盘）：`everything_search`；**双图就绪后**当前工作区找文件用 Glob。禁止用 everything 替代 Glob 或 codegraph
 - Grep 仅双图就绪后作残留核对（非跳级捷径）；无图 **deny**（Grep/Glob/everything/编辑/查询 MCP）
 - 禁止未探索就大范围 Read 扫目录
-- chrome-devtools / postgres 默认关；禁止自动 merge MCP。Playwright / chrome-devtools 浏览器 UI 测试仅用户显式要求才跑；未要求但强烈像需要 → interrupt（SSOT → `rules/MCP.md` §2c）。不改 Plugin 面板。
+- chrome-devtools / postgres 默认关；禁止自动 merge MCP。Playwright / chrome-devtools 浏览器 UI 测试仅用户显式要求才跑；未要求但强烈像需要 → interrupt（SSOT → `~/.claude/rules/MCP.md` §2c）。不改 Plugin 面板。
 - codegraph 索引由 MCP server 自动同步（v1.5 原生监听；v11 起 Guard 不再挂 kg sync hook；cbm 已关）
 
 ## 编辑与引用
@@ -82,7 +82,7 @@ Cursor Stop 不能阻断，完成门靠本规则：没有本轮全新独立审�
 
 ## 子代理模型
 
-派发 `Task` 时模型与推理强度由调用方决定（不传 = 继承会话）；本包不提供模型表。`cross-model-reviewer` 须用与实现者不同的模型运行，选不出就不派。
+派发子 Agent 时模型与推理强度由调用方决定（不传 = 继承会话）；本包不提供模型表。`cross-model-reviewer` 须用与实现者不同的模型运行，选不出就不派。
 
 ## 工具路由
 

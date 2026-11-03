@@ -17,6 +17,10 @@ SPINE    = config/workflow.yaml（stages/tracks/completion/quality/review/execut
 EXTERNAL = deer-flow 2.0(LangGraph编排,flash/standard/pro/ultra) + task-master(任务管理,core/standard/all)
 ```
 
+## 工程原则（常驻）
+
+R21-R25 工程原则已并入 `rules/CORE.md` 的 `## 铁律`（5 类 + 18 子条 + 9 冲突）；`scripts/principles.py sync` 将同一段注入 `CLAUDE.md` / 各端 `AGENTS.md` / `CORE.md`；C1–C10 详参 `docs/ENGINEERING_PRINCIPLES.md`；`validate_config.py` V22 防漂移。不新增 `rules/PRINCIPLES.md`。
+
 ## 三层架构
 
 ```
@@ -327,15 +331,16 @@ Cursor 侧 → [docs/CURSOR_MCP_PROFILE.md](docs/CURSOR_MCP_PROFILE.md)（RUNTIM
 
 ---
 
-## 同步（v11.1 多编辑器 1+N）
+## 同步（v21.0 多编辑器 AGENTS.md 适配）
 
 | 端                               | 方式                                                                             |
 | -------------------------------- | -------------------------------------------------------------------------------- |
-| Claude Code                      | 原生读 `~/.claude`，零同步                                                       |
-| Cursor：根文件 / skills / agents | 软链接 + Junction（sync.ps1 v20，清单/常量单源 config/sync-manifest.json）       |
-| Cursor：rules                    | local plugin 实体 .mdc（唯一规则通道）                                           |
-| qoder-cn / trae-cn               | 根文件 6 软链 + `rules/*.mdc` / `user_rules/*.md`（实体+`.claude-managed` 台账） |
-| workbuddy                        | 仅 `CLAUDE.md` + `skills/` 联接（SOUL/USER 自有命名空间禁触，跳根索引）          |
+| Claude Code                      | 原生读 `~/.claude/CLAUDE.md`，零同步                                             |
+| Cursor                           | `plugins/local/claude-config/rules/00-AGENTS.mdc` + `*.mdc`；`skills/`、`agents/` 真实拷贝 |
+| Qoder                            | `~/.qoder/rules/AGENTS.md` + `*.md`（`trigger`）；`skills/`、`agents/` 真实拷贝   |
+| Trae / Trae CN                   | `user_rules/AGENTS.md` + `*.md`；`skills/` 真实拷贝                              |
+| 规则来源                         | `rules/*.md` → 目标适配；`AGENTS.md` 规则改名 `AGENTS-COLLAB.md`；`.claude-managed` + `.claude-hashes` 台账 |
+| 根文件 / 软链 / junction         | 不再投放（v21 移除 SPEC/MANIFEST/INDEX 与全部链接）                              |
 | hooks/, commands/, MCP, plugins  | 不同步（TRAE R19 守卫为独立通道：AppData hooks_env 副本）                        |
 
 ---

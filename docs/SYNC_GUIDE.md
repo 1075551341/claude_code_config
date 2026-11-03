@@ -1,292 +1,151 @@
 ---
-description: 多编辑器配置同步指南 v20.0（Claude Code 零同步 + 1+N 编辑器落点）
+description: 多编辑器配置同步指南 v21.0（Claude Code 零同步 + AGENTS.md 适配落点）
 ---
 
 # Claude 配置多编辑器同步指南
 
-> **版本**: v20.22 (v11.6.0) | **日期**: 2026-09-09 | **脚本**: `scripts/sync.ps1` | **常量单源**: `config/sync-manifest.json`
+> **版本**: v21.0 (schema v2) | **日期**: 2026-11-02 | **入口**: `scripts/sync.ps1` | **引擎**: `scripts/sync-editors.ps1` | **常量单源**: `config/sync-manifest.json`
 >
-> **v11.1「1+N」模型**：**Claude Code 原生读 `~/.claude`，零同步**；编辑器侧 = **Cursor + qoder-cn + trae-cn + workbuddy**（v11.4.4：opencode `enabled=false`，AGENTS.md 自管，禁止 CLAUDE.md 覆盖；清单单源 `sync-manifest.json` editors 段，home 缺席自动跳过；qoder/trae/codearts 定义保留待装）。`sync.sh`（Linux/macOS）维持已删（git 可回溯）。
->
-> **推荐**：日常默认模式（根文件 + 各编辑器规则）；`-Skills` / `-All` 按需。lazy rules 经 `CLAUDE.md → Read rules/<name>.md` 按需加载，不复制。
+> **v21「AGENTS.md 适配」模型**：Claude Code 原生读 `~/.claude/CLAUDE.md`，零同步；编辑器侧把 CLAUDE.md 适配为 **AGENTS.md**，并投放真实拷贝的 rules / skills / agents。不再投放 `SPEC.md` / `MANIFEST.yaml` / 三个 `*-INDEX.md`；不再创建软链或 junction；每个通道用 `.claude-managed` 台账做孤儿清理。
 
-## 边界原则（Claude Code ↔ 编辑器）
+## 边界原则
 
-| 范围                                 | 路径                                                                                  | 说明                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------- |
-| **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用             |
-| **同步源（只读）**                   | `~/.claude/` 下总纲 + `skills/` `agents/` `rules/` 源文件                             | `sync.ps1` 读取并链接/复制到编辑器    |
-| **同步目标（1+N）**                  | `~/.cursor/`、`~/.qoder-cn/`、`~/.trae-cn/`、`~/.workbuddy/`                          | 软链接、联接、实体副本均写在各自 home；opencode 自管不投放 |
+| 范围 | 路径 | 说明 |
+| --- | --- | --- |
+| **Claude Code 主环境（不同步出去）** | `~/.claude/settings.json`、`.mcp.json`、`hooks/`、`scripts/`、`commands/`、`plugins/` | 仅 CLI / Claude Code 使用 |
+| **同步源（只读）** | `~/.claude/CLAUDE.md` + `rules/` + `skills/` + `agents/` | 引擎读取、适配并复制 |
+| **同步目标** | `~/.cursor/`、`~/.qoder/`、`~/.trae/`、`~/.trae-cn/`、`~/.config/opencode/`、`~/.dsh/` | 实体副本；OpenCode/DSH 仅 principles 常驻块由 `principles.py` 注入，其余自管 |
 
-**`sync.ps1` 不修改** `~/.claude/settings.json`、`.mcp.json`、`hooks/`，也不触碰编辑器自有文件（如 workbuddy 的 SOUL/USER/IDENTITY/BOOTSTRAP）。
-**`fix.ps1 -Fix`** 单独处理 Hook launcher 与各编辑器 `settings.json` 中的 `env.CLAUDE_IN_EDITOR`（与内容同步无关）。
+`sync.ps1` 不修改 `~/.claude/settings.json`、`.mcp.json`、`hooks/`，也不触碰编辑器自有文件（Cursor `skills-cursor`、Trae `builtin_skills`、Qoder marketplace 插件/设置/MCP/memories）。
 
----
+## 工程原则（R21-R25，并入铁律）
 
-## 设计内耦合清单（v11.4.1 声明——以下跨编辑器资产属 SSOT/运行态，保留勿清）
+`rules/CORE.md` 的 `<!-- engineering-rules:start/end -->` 是唯一源；`scripts/principles.py sync` 将 R21-R25 段注入 `CLAUDE.md`、OpenCode/DSH `AGENTS.md` 与 `CORE.md`。`sync.ps1` 在生成编辑器入口前先执行 sync；Cursor/Qoder/Trae/Trae-CN 从 `CLAUDE.md` / `rules/CORE.md` 生成，自动携带该段。
 
-| 资产 | 归属 | 理由 |
-|---|---|---|
-| `templates/cursor-guard/` | Cursor Guard 部署源 | `deploy-cursor-guard.ps1` 消费 |
-| `docs/CURSOR_MCP_PROFILE.md`、`docs/CURSOR_EDITOR_SETUP.md` | 1+N 架构文档 | 多端差异 SSOT |
-| `config/sync-manifest.json` editors 段 | 多端同步常量 | sync/check/fix 三脚本 + impact_sync 共同消费 |
-| `plugins/marketplaces/*`（含 .windsurf 等子树）| claude-mem 插件运行态 | 插件源码自带，gitignored |
-| `openspec/`（config.yaml + changes/specs 骨架）| OpenSpec CLI 全局工作区 | 删除丢 profile 配置 |
-| `mcp-configs/`（debug/fsaccess）| Claude Code 按需 MCP profile | rules/MCP.md 登记 |
+- 校验：`python scripts/principles.py check`（R21-R25 / 5 组 / 18 子条 / 9 冲突 / 14 目标逐字一致 / 17 KiB）；14 目标 = 7 个 harness ×（入口 + CORE），optional 缺失仅 WARN。
+- `validate_config.py` V22 调用该检查；staging 由 `~/.config/opencode/scripts/validate_claude_sync.py` 复核 AGENTS.md 与 CORE.md 的 R21-R25 段（CRLF 归一化，source 缺失报错）。
+- 不新增 `rules/PRINCIPLES.md`；R21-R25 是 `## 铁律` 的工程决策组，不再使用独立 P 编号。
 
-> 反例（已清理）：`~/.claude/.cursor/`、`.trae/` 为编辑器在 .claude cwd 的误生成残留（v11.4.1 删除）；新增跨编辑器目录时一律落各自 home，禁止写入 .claude。
+## 目标布局
 
----
+| 工具 | 入口（AGENTS.md） | 规则 | skills / agents | 说明 |
+| --- | --- | --- | --- | --- |
+| Cursor | `~/.cursor/plugins/local/claude-config/rules/00-AGENTS.mdc` | `*.mdc`（`alwaysApply`）+ `CURSOR-EDITOR.mdc` | `~/.cursor/skills` / `~/.cursor/agents` | Cursor 无全局 AGENTS.md 加载点，规则经 local plugin |
+| Qoder | `~/.qoder/rules/AGENTS.md` | `*.md`（`trigger`：`always_on` / `model_decision`） | `~/.qoder/skills` / `~/.qoder/agents` | Qoder 用户级规则目录为 `~/.qoder/rules` |
+| Trae | `~/.trae/user_rules/AGENTS.md` | `*.md`（保留源 `trigger`） | `~/.trae/skills` | 全局规则目录 `~/.trae/user_rules` |
+| Trae CN | `~/.trae-cn/user_rules/AGENTS.md` | `*.md`（保留源 `trigger`） | `~/.trae-cn/skills` | 全局规则目录 `~/.trae-cn/user_rules` |
+| OpenCode / OpenChamber | `~/.config/opencode/AGENTS.md` | `rules/*.md`（自管） | `~/.config/opencode/skills` | 仅 principles 常驻块由 `principles.py` 注入 |
+| DSH | `~/.dsh/AGENTS.md` | `rules/*.md`（自管） | `~/.dsh/skills` | 仅 principles 常驻块由 `principles.py` 注入 |
+
+- `rules/AGENTS.md`（Agent 协作规则）在目标改名 **`AGENTS-COLLAB.md`**，避免与入口 `AGENTS.md` 重名。
+- `claude-mem-maintenance` 不投放；其余 25 个 skill 全量投放。
 
 ## 常量单源：`config/sync-manifest.json`
 
-根文件集合、插件规则特殊映射与**编辑器清单（editors 段）**只在此文件定义，三个消费方统一读取：
+| 消费方 | 读取内容 | 失败行为 |
+| --- | --- | --- |
+| `scripts/sync-editors.ps1` | `entry_source` / `entry_name` / `rules` / `skills` / `agents` / `editors` | 退出 1（manifest 必需） |
+| `scripts/check.ps1` | `editors` + `rules` / `skills` / `agents` + `legacy_root_files` | 回退内置默认 |
+| `templates/cursor-guard/hooks/_lib/impact_sync.py` | `root_files`（空则回退 `CLAUDE.md`）+ `editors`（规则漂移检测） | 回退内置默认 |
 
-| 消费方                                             | 读取内容                                         | 失败回退                       |
-| -------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
-| `scripts/sync.ps1`                                 | `root_files` + `plugin_rule_sources` + `editors` | 内置默认（须与 manifest 一致） |
-| `scripts/check.ps1`                                | `root_files` + `editors`                         | 内置默认（须与 manifest 一致） |
-| `templates/cursor-guard/hooks/_lib/impact_sync.py` | `root_files` + `editors`（规则漂移检测）         | 内置默认（须与 manifest 一致） |
+editors 段字段：`display`、`home`（缺席自动跳过）、`enabled`、`entry`、`rules_dir`、`rules_ext`、`rules_flavor`（`cursor` / `qoder` / `trae`）、`skills_dir`、`agents_dir`、`plugin_dir`（Cursor）、`guard_rule`、`subagent`（写入 AGENTS.md profile）。
 
-> 改根文件集合或编辑器目标只改 `sync-manifest.json`；`MANIFEST.yaml` 的 `sync_targets` 仅为声明镜像。Guard 部署副本经 `deploy-cursor-guard.ps1` 刷新。editors 段字段：`home`（缺席自动跳过）、`enabled`（false=显式停用并反向扫残留）、`rules_channel` / `rules_ext`（plugin=Cursor 专用；目录名=实体复制）、`root_index`、`special`。
+## 模式
 
----
+| 内容 | 默认 | `-Skills` | `-All` |
+| --- | :--: | :-------: | :----: |
+| AGENTS.md 入口（由 CLAUDE.md 适配） | ✅ | ✅ | ✅ |
+| 规则实体（入口 + 6 条） | ✅ | ✅ | ✅ |
+| `skills/`（25 个真实拷贝） | ❌ | ✅ | ✅ |
+| `agents/`（9 个；Cursor / Qoder） | ❌ | ❌ | ✅ |
+| 根文档 / 软链 / junction | ❌ | ❌ | ❌ |
 
-## 三模式概览（v20.0）
-
-| 内容                                                       | 默认 | `-Skills` | `-All` |
-| ---------------------------------------------------------- | :--: | :-------: | :----: |
-| 6 个总纲/索引根文件（软链到 cursor/qoder-cn/trae-cn）      |  ✅  |    ✅     |   ✅   |
-| Cursor local plugin 规则（实体 .mdc，每次刷新）            |  ✅  |    ✅     |   ✅   |
-| qoder-cn `rules/*.mdc` + trae-cn `user_rules/*.md`（实体） |  ✅  |    ✅     |   ✅   |
-| workbuddy `CLAUDE.md` + `skills/` 联接（特例，跳根索引）   |  ✅  |    ✅     |   ✅   |
-| opencode `AGENTS.md`（v11.4.4 解耦，不再投放）             |  ❌  |    ❌     |   ❌   |
-| `skills/`（Junction → cursor）                             |  ❌  |    ✅     |   ✅   |
-| `agents/`（Junction → cursor）                             |  ❌  |    ❌     |   ✅   |
-
-- **根文件（6 项，v11）**：`CLAUDE.md` + `SPEC.md` + `MANIFEST.yaml` + 三个 `*-INDEX.md`（ROUTER 并入 CLAUDE.md、agent.yaml 并入 MANIFEST harness 节）
-- **`-DryRun`**：仅预览，不写盘；**`-Force`**：跳过 hash 比对强制刷新
-- **`-ProjectRules`**：另将 rules 复制到**当前目录** `.cursor/rules`（显式 opt-in；CWD 为 `~/.claude` 时跳过）
-- **`-Lint` / `-InitProject`**：仅向当前项目目录部署模板，不同步编辑器
-- **永不同步**：`hooks/`、`commands/`、`scripts/`、`plugins/`、`.mcp.json`、`settings.json`（v11.4.1：原 `~/.claude/.cursor/`、`.trae/` 误生成残留已清理）
+- **`-Scope rules`**（默认）：入口 + 规则
+- **`-Scope indexes`**：仅入口（Guard 在 CLAUDE.md 变更时调用；不会删除规则）
+- **`-Scope all` / `-All`**：入口 + 规则 + skills + agents
+- **`-DryRun`**：仅预览
+- **`-Force`**：向后兼容参数；引擎始终按 hash 判断，稳定状态无写入（无防抖/快速路径）
+- **`-CleanLegacy`**：迁移专用——删除 v1 根文件软链、旧 Cursor plugin、Trae 旧规则、skills/agents junction，然后重建
+- **`-ProjectRules` / `-ProjectRulesPath`**：向项目 `.cursor/rules` 投放 `00-AGENTS.mdc` + 规则
+- **`-Lint` / `-InitProject`**：仅向当前项目目录部署模板
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1            # 默认：根文件 + 插件规则（需 pwsh 7.5+）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1                 # 入口 + 规则
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All
 pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -DryRun
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All -CleanLegacy  # 一次性迁移
 ```
 
----
+## 内容适配
 
-## 合并到本机 Claude 并同步（v11.6.0）
+**AGENTS.md**（由 `CLAUDE.md` 生成）：
+- 标题与 description 改为 `<工具> 全局配置`
+- 把 `claude-mem`、`Task`、`Bash`、`Claude Code` 等专有依赖映射为本工具能力（记忆无插件则跳过并注明；工具名按同名能力执行）
+- 源相对路径（`config/`、`rules/`、`skills/`、`scripts/` 等）改写为绝对 `~/.claude/...`
+- 注入 profile：skills / rules 路径、记忆能力、子 Agent 名称、压缩命令、工具名映射
 
-在 **Windows、配置仓即 `~/.claude`** 的前提下：
+**规则**：
+- Cursor：`description` + `alwaysApply`（`CORE`/入口 `true`，其余 `false`）
+- Qoder：`trigger` + `description`（`always_on` / `model_decision`）
+- Trae / Trae CN：保留源 frontmatter
+- 规则正文同步做 `CLAUDE.md → AGENTS.md` 与 SSOT 路径改写；项目路径（`openspec/`、`specs/`、`archive/`、`.planning/`、`_sandbox/`）保持不变
 
-1. 把本分支合并进本机 `~/.claude`（或 `git pull` 已合并的主干）。
-2. 新开一个 Claude Code 会话（hooks 只对后续会话生效）。
-3. Cursor / Qoder / TRAE：
+**Skills**：
+- 复制时对 `.md` 做同样的文本适配（`claude-mem` → 记忆插件、`Claude Code` → 本工具）；**不做 SSOT 路径绝对化**，技能自身的 `scripts/`、`references/`、`assets/`、`CHANGELOG.md` 等相对路径原样保留；`.py` / `.json` 等原样复制
+- 适配后在内存中计算目标 hash，与目标树比较；稳定后第二次运行 0 变更
 
-```powershell
-pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\sync.ps1" -All
-pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\deploy-cursor-guard.ps1"
-pwsh -ExecutionPolicy Bypass -File "$env:USERPROFILE\.claude\scripts\deploy-editor-graph-hooks.ps1" -Scope editors
-```
+## 部署机制
 
-4. **完全退出再打开 Cursor**（仅 Reload 往往不重扫 local plugin）。
-5. 校验：`pwsh -File scripts\check.ps1`；插件规则 = `rules/*.md`（6）+ `00-CLAUDE.mdc` + `CURSOR-EDITOR.mdc`，v13 删除的 6 条规则由台账孤儿清除。
+1. **真实拷贝**：不创建软链/junction
+2. **台账**：每个规则/skills/agents 通道写 `.claude-managed`；规则通道另写 `.claude-hashes`（源 hash + 目标 hash）。孤儿清理只删台账内条目，用户自有文件不动；`check.ps1`/`impact_sync.py` 用 hash 判定漂移（源变或目标被改都会报 stale）
+3. **Cursor plugin 完全托管**：plugin rules 目录内非期望 `.mdc` 删除（旧 `00-CLAUDE.mdc`、注入变体）
+4. **反向去重**：删除 `~/.cursor/rules` 中与 plugin 同名的规则，避免双份 Always-Apply
+5. **同 basename 变体**：删除受管 basename 的异扩展文件（`CORE.md` vs `CORE.mdc`）
+6. **幂等**：`-All` 连续运行第二次 `Changed: 0`
 
-Claude Code **零同步**。`sync.ps1` 仍不碰 `settings.json` / `.mcp.json` / `hooks/`。`-Scope editors` 只合并 TRAE/Qoder，不复制 DSH/OpenCode 便携文件。
-
----
-
-## 编辑器落点矩阵（v11.1）
-
-| 编辑器    | home              | 根索引 6 项 | 规则通道                         | 特殊                                            |
-| --------- | ----------------- | :---------: | -------------------------------- | ----------------------------------------------- |
-| cursor    | `~/.cursor`       |     ✅      | local plugin `*.mdc`（唯一生效） | skills/agents 联接（-Skills/-All）              |
-| qoder-cn  | `~/.qoder-cn`     |     ✅      | `rules/*.mdc`（实体+台账）       | —                                               |
-| trae-cn   | `~/.trae-cn`      |     ✅      | `user_rules/*.md`（实体+台账）   | R19 守卫另经 TRAE AppData hook（独立于同步链）  |
-| workbuddy | `~/.workbuddy`    |     ❌      | 无                               | 仅 `CLAUDE.md` + `skills/` 联接；SOUL/USER 禁触 |
-| qoder     | `~/.qoder`        |     ✅      | `rules/*.mdc`                    | 未安装，缺席自动跳过                            |
-| trae      | `~/.trae`         |     ✅      | `user_rules/*.md`                | 未安装，缺席自动跳过                            |
-| codearts  | `~/.codeartsdoer` |     ✅      | `rule/*.mdc`                     | 未安装，缺席自动跳过                            |
-
-> 实体复制通道带 `.claude-managed` 台账：孤儿清除只删台账内条目，编辑器目录中**用户自有规则不受影响**。
-
-## Cursor 落点布局
-
-> **Cursor 规则通道 = local plugin（永久方案）**：`~/.cursor/rules` 实测不生效（UI 不枚举、Agent 不加载），不做其他通道尝试；全局规则仅经 `~/.cursor/plugins/local/claude-config/rules/` 实体 .mdc 由 Cursor 加载（`sync.ps1` 每次从 SSOT 重生成 + 去重 + 孤儿清除；v11 起无 `templates/` 镜像层）。
-
-```
-~/.cursor/  （个人级）
-├── CLAUDE.md, SPEC.md, MANIFEST.yaml                  (软链接)
-├── skills-INDEX.md, agents-INDEX.md, rules-INDEX.md   (软链接)
-├── skills/  → ~/.claude/skills/        (目录联接，-Skills/-All)
-├── agents/  → ~/.claude/agents/        (目录联接，-All)
-├── rules/   （保持空 — plugin 永久通道，不写实体；同名项会被清理）
-└── plugins/local/claude-config/        (实体 .mdc 副本，规则唯一通道)
-    ├── .cursor-plugin/plugin.json      (sync.ps1 生成，version 取自 MANIFEST)
-    ├── .sync-stamp
-    └── rules/
-        ├── 00-CLAUDE.mdc               (= CLAUDE.md，v11 并入 ROUTER)
-        ├── CORE.mdc … (rules/*.md 全量转换，README 除外)
-        └── CURSOR-EDITOR.mdc           (源: templates/cursor-guard/rules/)
-```
-
-> **Cursor Settings 显示说明**
->
-> | 视图                     | 读取路径                                            | 说明                                                        |
-> | ------------------------ | --------------------------------------------------- | ----------------------------------------------------------- |
-> | Settings → Project Rules | `<当前工作区>/.cursor/rules/*.mdc`                  | 打开业务项目时，只有这里有文件才会显示                      |
-> | Agent 全局 alwaysApply   | `~/.cursor/plugins/local/claude-config/rules/*.mdc` | **唯一通道**：plugin 实体副本；`~/.cursor/rules` 实测不生效 |
->
-> **正确做法**：全局规则只维护 plugin（sync.ps1 自动刷新）；`~/.cursor/rules` 保持空。需要某项目 Settings 可见时，在该项目根执行 `sync.ps1 -ProjectRules`。改规则后跑 `sync.ps1`，若插件列表有变需**完全退出并重开 Cursor**（仅 Reload 有时不重扫 local plugins）。
-
-**总纲执行链：**
-
-```
-CLAUDE.md(必加载，含路由) → MANIFEST.yaml → *-INDEX.md → SPEC.md
-→ 按需 Read skills/<name>/SKILL.md | agents/<name>.md | rules/<name>.md
-```
-
----
-
-## 真源→适配→链接映射表
-
-> 真源唯一：`~/.claude/`。不在 Cursor 目录直接改内容；格式适配由 sync.ps1 统一完成。
-
-| 真源文件                                         | Cursor 落点                                                     | 机制                              | 原因                                            |
-| ------------------------------------------------ | --------------------------------------------------------------- | --------------------------------- | ----------------------------------------------- |
-| `CLAUDE.md`                                      | `~/.cursor/CLAUDE.md`                                           | symlink                           | 纯文本，编辑器可读链接                          |
-| `CLAUDE.md`（v11 并入 ROUTER）                   | `~/.cursor/plugins/local/claude-config/rules/00-CLAUDE.mdc`     | **copy**（实体 .mdc）             | plugin 唯一通道（`~/.cursor/rules` 实测不生效） |
-| `rules/*.md`（除 README）                        | `~/.cursor/plugins/local/claude-config/rules/<名>.mdc`          | **copy**（改名 .mdc）             | 同上                                            |
-| `templates/cursor-guard/rules/CURSOR-EDITOR.mdc` | `~/.cursor/plugins/local/claude-config/rules/CURSOR-EDITOR.mdc` | **copy**                          | Cursor 专有规则，仅 plugin                      |
-| `MANIFEST.yaml` / `SPEC.md` / `*-INDEX.md`       | `~/.cursor/` 同名                                               | symlink                           | 路由引用用                                      |
-| `skills/`                                        | `~/.cursor/skills/`                                             | junction（`mklink /J`，免管理员） | 目录级                                          |
-| `agents/`                                        | `~/.cursor/agents/`                                             | junction                          | 目录级                                          |
-| 根文件 6 项                                      | `~/.qoder-cn/`、`~/.trae-cn/` 同名                              | symlink                           | v11.1 多编辑器根索引                            |
-| `rules/*.md`（除 README）                        | `~/.qoder-cn/rules/<名>.mdc`                                    | **copy**（改名 .mdc）+ 台账       | Qoder 规则通道                                  |
-| `rules/*.md`（除 README）                        | `~/.trae-cn/user_rules/<名>.md`                                 | **copy** + 台账                   | TRAE 规则通道                                   |
-| `CLAUDE.md` + `skills/`                          | `~/.workbuddy/CLAUDE.md` + `~/.workbuddy/skills/`               | symlink + junction                | workbuddy 特例（无规则通道，跳根索引）          |
-
-> 写前去重：同 basename 全变体删除后重建（`Remove-SameBasenameVariants`）；SSOT 已删的规则从 plugin/编辑器台账孤儿清除。
-
----
-
-## 去重策略
-
-每次 `sync.ps1` 写入前：
-
-1. **同类型同名**：`Remove-SameBasenameVariants` 删除目标目录内同 basename 的全部变体（任意扩展名 / 大小写，如 `CORE.md` + `core.mdc`）
-2. **精确路径**：再删除目标路径（文件或目录联接）后写入；文件优先 symlink，失败则 `Copy-Item`
-3. **插件孤儿清除**：plugin rules 目录内不在投放集合的 `.mdc` 一并删除
-4. **`~/.cursor/rules` 防遮蔽**：与 plugin 同 basename 的项清理（防双份 Always-Apply）
-5. **编辑器通道台账清除**（v11.1）：qoder-cn/trae-cn 等实体通道按 `.claude-managed` 台账做孤儿清除——只删自己管理过的条目，**用户自有规则不动**
-
-回归：`pwsh -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1`（含 qoder-cn/trae-cn 去重 + 用户自有规则存活断言）
-
----
+7. **Cursor Guard**：1.2.17（规则 + hooks 由 `deploy-cursor-guard.ps1` 部署）
 
 ## 验证
 
 ```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick
+# 只改常驻原则/规则：plain sync 即可（会自动调用 principles.py sync）
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -DryRun        # 预览
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1                # 部署
+# 需要同时更新 skills/agents 时才加 -All
+pwsh -ExecutionPolicy Bypass -File scripts/sync.ps1 -All           # + skills/ + agents/
+pwsh -ExecutionPolicy Bypass -File scripts/test-sync-dedup.ps1     # 去重/适配/用户规则存活
+pwsh -ExecutionPolicy Bypass -File scripts/check.ps1 -Quick        # S3b 编辑器布局
+python scripts/validate_config.py                                  # 深度校验
 ```
 
-`check.ps1` S3（v11.1 白名单校验）：Cursor 侧根文件/Junction/插件规则 + qoder-cn/trae-cn 根链与规则通道 hash + workbuddy CLAUDE.md/skills——managed 编辑器**缺失落点才告警**（跑 sync.ps1 修复）；`enabled=false` 的编辑器反向扫残留链。S4 确认 hooks 仅在 `~/.claude`；**S4b** 检查 Cursor Guard 部署。
+`check.ps1`：
+- **S3**：Cursor 根/链接/守卫
+- **S3b**：各工具入口、规则正文、skills/agents 数量、台账、根文件残留
+- **S4b**：Cursor Guard 模板与 `00-AGENTS.mdc` / `CURSOR-EDITOR.mdc`
 
----
+## 触发规则
 
-## Cursor Guard（编辑器独立守护层）
+| 改动 | 必跑 |
+| --- | --- |
+| `CLAUDE.md`（仅入口） | `sync.ps1 -Scope indexes` |
+| `rules/*.md` | `sync.ps1`（入口 + 规则） |
+| `skills/` / `agents/` | `sync.ps1 -All` |
+| `templates/cursor-guard/**` | `deploy-cursor-guard.ps1` + 重启 Cursor |
+| TRAE/Qoder 图谱 hook | `deploy-editor-graph-hooks.ps1` |
 
-> Claude Code 的 `settings.json` hooks 在 Cursor 内由 `_editor_hook_launcher` 跳过。Cursor 侧能力由 **Cursor Guard** 单独提供。
+> Cursor Guard hooks（`~/.cursor/hooks.json`）在 prompt / 编辑 / stop 时自动运行 `sync.ps1 -Scope ... -Force`；因为 `-Force` 仍按 hash 判断，稳定状态下无写入。
 
-| 层             | 路径                                        | 职责                                 |
-| -------------- | ------------------------------------------- | ------------------------------------ |
-| 模板（版本化） | `~/.claude/templates/cursor-guard/`         | hooks 源码 SSOT                      |
-| 运行时         | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | Cursor 原生 hook                     |
-| 状态           | `~/.cursor/.state/`                         | 计数/压缩快照（与 `~/.claude` 隔离） |
-| 配置           | `~/.cursor/guard-config.json`               | 70%/90% 阈值、同步开关、`verification.enforce_mode=off` |
-| 项目 hooks stub | 本仓 `.cursor/hooks.json`（空 `hooks`）      | Cursor 3.18 把缺失项目 hooks 标成 parse ERROR；空文件即可静音 |
+## 迁移记录（v21.0）
 
-**部署**：
+- 删除 v1 遗留：根 `CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX 软链；Cursor `00-CLAUDE.mdc` 与 6 条已删规则；Trae/Trae CN 12 个旧受管规则；`skills`/`agents` junction
+- 删除前的完整备份：`~/.claude/backups/editor-migration-<时间戳>/`（含 Cursor plugin、Trae user_rules、根文件副本、junction 目标记录）
+- **Qoder**：迁移前实测 `~/.qoder/{rules,skills,agents,AGENTS.md}` 均不存在，无 Claude 派生配置可删，也无需备份；本次仅新建适配产物
+- 回滚：将备份目录下 `cursor/plugin/claude-config`、`trae*/user_rules` 复制回对应 home，并按 `links.json` 重建链接
 
-```powershell
-pwsh -ExecutionPolicy Bypass -File scripts/deploy-cursor-guard.ps1
-```
+## 版本史
 
-**显式同步**：聊天输入 `/sync`、`同步配置`、`刷新规则` → 执行 `sync.ps1 -All`。
-**自动同步**：Guard `impact_sync` 检测 `~/.claude` 下可同步路径（root_files / rules / skills / agents）变更后触发对应模式。
-**上下文**：70% `agent_message` 提醒；90% `stop` 注入一次 `additional_context`（不用 followup_message）。
-
-**与 Claude Code 对照**：
-
-| 能力         | Claude Code                   | Cursor Guard                            |
-| ------------ | ----------------------------- | --------------------------------------- |
-| Hook 注册    | `~/.claude/settings.json`     | `~/.cursor/hooks.json`                  |
-| 编辑器内执行 | 跳过（launcher）              | 全量执行                                |
-| 压缩命令     | `/compact`                    | Cursor 原生 compact + `preCompact` 快照 |
-| 计数文件     | `tool-call-counter.json`      | `.cursor/.state/tool-counter.json`      |
-| codegraph    | MCP 自动同步（v1.5 原生监听） | 同左（双端零 hook，v11 退役 sync hook） |
-| 完成验证     | Stop `exit 2` + R20 反空模板  | 规则驱动双审（无 followup）；Stop 仅图谱 refresh / 全绿 sync |
-| 初次修改验收 | PostToolUse 并入 tracker      | `first_edit_verify`（每文件一次）                      |
-| 文档 companion | stop-readme / 维护提醒        | `maintenance_hints`（含业务仓）                        |
-
-Guard 1.2.3：`hook_io.read_stdin` 解析 BOM / pretty-print / Content-Length，避免 Hooks 面板被 `stdin JSON incomplete` 刷红。
-
-完整编辑器独有配置见 [`CURSOR_EDITOR_SETUP.md`](CURSOR_EDITOR_SETUP.md)。
-
----
-
-## Rules 来源与加载策略
-
-| 来源                               | 平台               | 控制方式         |
-| ---------------------------------- | ------------------ | ---------------- |
-| CLAUDE（含路由）/ CORE             | 双端 sync          | 源文件去重       |
-| plugin-\* rules                    | 仅 Cursor          | 禁插件即消失     |
-| User Rules                         | 仅 Cursor Settings | 指针 + L3 skills |
-| lazy rules (GIT/MCP/OPENSPEC)      | L0 路由按需 Read   | glob 触发        |
-
-| 等级  | 内容                                         | Cursor 机制                         |
-| ----- | -------------------------------------------- | ----------------------------------- |
-| L0    | CLAUDE（含路由）+ CORE + CURSOR-EDITOR       | alwaysApply（经 plugin）            |
-
-**L0 以仓为准**（`config/sync-manifest.json` `l0_source_of_truth: repo`）：根文件 6 项与 Cursor plugin `00-CLAUDE.mdc` 覆盖 home/plugin 旧副本；禁止用编辑器 home 里的旧 CLAUDE 覆盖仓内 L0。`Sync-File -RepoWins` 只在 dest 已是指向仓内源的符号链接时跳过。
-| L1    | using-superpowers, change-impact-analysis 等 | 会话常驻                            |
-| L2/L3 | 其余 skills + agents/MCP/plugins             | disable-model-invocation + 显式调用 |
-
-- **插件/MCP**：[CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md)（Claude 侧 SSOT = `rules/MCP.md`）
-
----
-
-## 版本史（同步链）
-
-- **v20.22 (v11.6.0)**：Guard 1.2.17 Shell 警告 `powershell`→pwsh（allow）；V20 钉 `package_manager: pnpm` 与 `command: powershell.exe`；`sync_runner.resolve_pwsh`。
-- **v20.21 (v11.6.0)**：mcp.json / Cursor 粘贴 spawn `pwsh`；Guard 1.2.16 `sync_runner` 只认 pwsh。
-- **v20.20 (v11.6.0)**：工具链 SSOT `config/toolchain.yaml`（pwsh 7.5+ / pnpm 11）；缺工具 BLOCKED；脚本 `#Requires -Version 7.5`。Guard 1.2.15。
-- **v20.19 (v11.5.0)**：七维独立审查 + 审查前刷图 + 全栈 glob；Guard 1.2.15；落地 `sync.ps1 -All` + `deploy-cursor-guard.ps1` + `deploy-editor-graph-hooks.ps1 -Scope editors`。Claude Code 零同步。
-- **v20.18 (v11.4.13)**：MCP 常驻 5（codegraph/CRG/serena/everything/grep）；语义名路由；sync.ps1 仍不复制编辑器 mcp.json。
-- **v20.17 (v11.4.12)**：一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12。
-- **v20.16 (v11.4.11)**：审查只找问题、修改走 change-implementer；配置/文档/注释必须同步。DSH 2.10 / OpenCode 1.10。
-- **v20.15 (v11.4.10)**：Cursor 完成门不再 followup（规则驱动双审）。Guard 1.2.10；DSH 2.9 / OpenCode 1.9。90% 用 `additional_context`（文档与实现对齐）。
-- **v20.14 (v11.4.9)**：有改动即双审；独立审查 PASS 即停，仅结论不一致才再开一轮（最多 3 轮）。计划未批准零注入；Windows `/X:/` 路径；sessionEnd 刷双图。Guard 1.2.9；DSH 2.8 / OpenCode 1.8。
-- **v20.13 (v11.4.8)**：非简单双审=修改→验证→审查循环最多 3 轮；禁止只连审不改。Guard 1.2.8；DSH 2.7 / OpenCode 1.7。
-- **v20.12 (v11.4.7)**：Cursor Guard 1.2.7 — 计划未批准 / CreatePlan / 零编辑禁止 followup；短 R20；非简单双审最多 3 次。DSH 2.6 / OpenCode 1.6 手工对齐（`sync.ps1` 仍不覆盖 AGENTS.md；禁止把 followup_message 搬到 DSH/OpenCode）。
-- **v20.11 (v11.4.6)**：图谱保鲜配置提取到 DSH / OpenCode（便携 CLI + 本端 json；OpenCode plugin；DSH 总纲强制）。`sync.ps1` 仍不覆盖 AGENTS.md。DSH 2.5 / OpenCode 1.5：ensure/规则注入每会话一次，idle refresh 冷却，禁止压缩提示续轮；R20 影响范围经 `r20_check.py`（DSH `tools/`、OpenCode `scripts/`）与 OpenCode `verify-gate.ts` 机械门对齐。
-- **v20.10 (v11.4.6)**：图谱保鲜硬门——会话先 ensure 双图、无图 deny；`sync.ps1` 仅验证全绿后跑（不因 SessionStart / rules 过期）。TRAE/Qoder hook 注册走 `deploy-editor-graph-hooks.ps1`，不进 sync.ps1
-- **v20.9 (v11.4.5)**：MCP 分工（内置>plugin>MCP；CRG=上下文/影响面/风险/审查/PR；DevTools/Postgres 中断启用）+ Stop 六维纠错续轮。DSH `AGENTS.md` 2.2 / OpenCode `AGENTS.md` 1.2 手工对齐（**不改**各端 plugin/MCP 开关）。sync.ps1 只刷新 Cursor/qoder/trae 规则通道
-- **v20.8 (v11.4.4)**：opencode 出站切断 — `enabled=false`，不再投放 `CLAUDE.md → AGENTS.md`；DSH/OpenCode 各自独立总纲与验证门，禁止运行时依赖 `~/.claude`
-- **v20.7 (v11.4.1)**：DSH 手工对齐补 **v1.3.4↔v11.4.1**——移植需求指纹实质比对（R20/终验模板/verification skill 小节）、审查结论机械检测、IMPACT 文本化；DSH 本地演进：启动链零更新化（更新移交计划任务「DSH Update Check」，仅本体损坏才自愈）、MCP 本地化直启（`~/.dsh/tools/mcp` 三件套 + repomap 直连 .venv，pin 对齐 .mcp.json）、桌面端窗口就绪即分级热加载第二批 MCP（dsh-deferred-mcp.ps1）、双端插件 web-ui-all 0.3.3/modlens 3.24.2/dshmarket 1.29.2（web 移除独立 sidebar 防 126）、desktop openBrowser:false
-- **v20.5 (v11.3.5)**：验证准则分解评分（llm-as-a-verifier：观察输出优先/准则三问/1-20 评分/重复评估/成对比较消偏/进度止损）；DSH 映射补 v1.3.3↔v11.3.5（合并源指针顺带修复 v11.3.3/11.3.4 滞后）
-- **v20.4 (v11.3.4)**：门控短指针 + 初次修改五维验收 + R20 反空模板；Cursor stop followup 等效硬门
-- **v20.3 (v11.3.3)**：R20 文档/备注与文件/配置一致；加载口径统一 L0–L3（本表去掉 L4 行）
-- **v20.2 (v11.3.2)**：R20 逐条回放强化（改前成熟/全局 + 漏改/原功能）；DSH 映射补 v1.2.x↔v11.3.2
-- **v20.1 (v11.3.1)**：新增「DSH 适配层」小节（DSH 消费方登记 + 手工对齐协议）；编辑器口径统一 7 编辑器（qoder/trae/codearts 保留待装、home 缺席自动跳过）
-- **v20.0 (v11.1.0)**：**多编辑器恢复（1+N）** — 按用户决策在 v19 架构上恢复 qoder-cn/trae-cn/workbuddy 落点（未回滚 v18.4 旧脚本）；编辑器清单入 `sync-manifest.json` editors 段（home 缺席自动跳过）；新增 `Deploy-EditorRules`（实体复制 + `.claude-managed` 台账孤儿清除，用户自有规则免疫）；check.ps1 S3 反转为 managed 白名单校验；impact_sync 规则漂移检测覆盖多编辑器
-- v19.0 (v11.0.0)：**双端重构** — 目标收敛为仅 Cursor（Claude Code 零同步）；删除 qoder/trae(-cn)/codearts/workbuddy 分支、`sync.sh`、`templates/cursor-claude-config-plugin/` 镜像层；常量单源 `config/sync-manifest.json`；插件规则直接从 SSOT 生成（含孤儿清除）；根文件 8→6（ROUTER 并入 CLAUDE.md、agent.yaml 并入 MANIFEST）
-- v18.4：根文件 8 项部署到除 workbuddy 外所有编辑器；四处集合统一
-- v18.3：移除 devin；v17.0：+qoder-cn/trae-cn；v16.0：模式参数化 + symlink 优先
-- v14.5：仅 L0 入口同步、个人级单落点；v14：skills/agents 联接
-
-> **新增编辑器**：在 `config/sync-manifest.json` editors 段加一条定义（home/rules_channel/rules_ext/root_index）即可，`sync.ps1`/`check.ps1`/`impact_sync.py` 三方自动生效；`sync.sh`（Linux/macOS）维持已删，需要时从 git 历史（tag `v10.17.0` 前后）恢复。
+- **v21.0 (2026-10-29)**：AGENTS.md 适配 + 真实拷贝 + schema v2（Cursor/Qoder/Trae/Trae CN）；Cursor Guard 1.2.17
+- v20.21：Guard 1.2.16 安全加固（历史）
+- v20.0 (v11.1.0)：多编辑器 1+N 恢复（历史）
+- v19.0 (v11.0.0)：双端重构、常量单源（历史）
