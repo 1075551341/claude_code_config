@@ -1,28 +1,30 @@
 {
   "toolset": "ops",
-  "description": "缓存/DB/容器 — 按需。默认不加载。Agent 禁止自动 merge。postgres 需要时中断请用户设 DATABASE_URL 后自行启用。",
-  "servers": ["redis", "sqlite", "docker", "postgres"],
-  "enable": "用户确认后将下方 mcpServers 合并到 ~/.claude/.mcp.json 后重启 Claude Code。Agent 不得代 merge。",
+  "description": "缓存/DB — 按需。默认不加载。Agent 禁止自动 merge。postgres 需用户设 DATABASE_URL 后自行启用。",
+  "servers": [
+    "redis",
+    "postgres"
+  ],
+  "enable": "用户确认后将 mcpServers 合并到 .mcp.json 后重启；Agent 不得代 merge。",
+  "note": "sqlite/docker 无官方 npm 包；需要时由用户选用并钉版本，不要写入未验证的包名。",
   "mcpServers": {
     "redis": {
-      "_description": "Redis 缓存/队列/键值存储",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-redis", "redis://localhost:6379"]
-    },
-    "sqlite": {
-      "_description": "SQLite 轻量数据库",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "D:\\apdms\\database.db"]
-    },
-    "docker": {
-      "_description": "Docker 容器管理",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-docker"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-redis@2025.4.25",
+        "redis://localhost:6379"
+      ],
+      "type": "stdio"
     },
     "postgres": {
-      "_description": "PostgreSQL。默认不 merge。启用前设置 DATABASE_URL。钉 @modelcontextprotocol/server-postgres@0.6.2。",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres@0.6.2", "${DATABASE_URL}"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres@0.6.2",
+        "${DATABASE_URL}"
+      ],
+      "type": "stdio"
     }
   }
 }

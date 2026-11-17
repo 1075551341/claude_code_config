@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 PreToolUse Hook: 安全拦截器
-在 Bash 命令执行前拦截危险操作
+在 Bash / PowerShell / shell 命令执行前拦截明显危险操作（尽力而为，不替代原生权限）
 
 exit 0 = 允许执行
 exit 2 = 阻止执行（stderr 内容会发送给 Claude）
@@ -43,16 +43,14 @@ DANGER_PATTERNS = [
     (r"rm\s+.*-[rRfF]{1,4}\s+/boot\b",             "禁止删除 /boot 目录"),
     (r"rm\s+.*-[rRfF]{1,4}\s+/var\b",              "禁止删除 /var 目录"),
     (r"rm\s+.*-[rRfF]{1,4}\s+/home\b",             "禁止删除 /home 目录"),
+    # PowerShell removal of a filesystem root or the entire user home.
+    (r"\b(?:Remove-Item|ri|del|erase)\b[^;\n]*-(?:Recurse|r)\b[^;\n]*(?:[A-Za-z]:[\\/][\"']?\s*$|\$HOME\b|\$env:USERPROFILE\b)", "禁止递归删除磁盘根或用户目录"),
     # 磁盘格式化
     (r"^format\s+[A-Za-z]:",                         "禁止格式化磁盘"),
     (r"^mkfs\b",                                      "禁止格式化分区"),
     (r"dd\s+if=.+of=/dev/[sh]d[a-z]",              "禁止 dd 写入块设备"),
     (r"dd\s+if=/dev/zero\s+of=",                    "禁止 dd 零写覆盖"),
     (r"shred\s+.*-[zun].*\s+/dev/",                "禁止 shred 覆盖设备"),
-    # Git — Agent 禁止自动 commit/push/stash（R19；仅用户手动终端可执行）
-    (r"\bgit\s+" + _GIT_OPTS + r"commit\b",                        "禁止 Agent 自动 git commit（R19）；仅用户本条消息显式要求时由用户手动执行"),
-    (r"\bgit\s+" + _GIT_OPTS + r"push\b(?!.*--dry-run)",           "禁止 Agent 自动 git push（R19）— 自动提交远端的主因；需推送请用户手动执行"),
-    (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
     # Git 强制推送保护（兜底，含 --dry-run 之外的所有 force 形式）
     (r"\bgit\s+" + _GIT_OPTS + r"push\s+(?!.*--dry-run).*--force(?:-with-lease)?\b",  "禁止 git push 强制推送"),
     # Git 历史重写
@@ -78,8 +76,6 @@ DANGER_PATTERNS = [
     # eval 执行下载内容
     (r"eval\s+[\"'`]\$\(curl",                      "禁止 eval 执行 curl 下载内容"),
     (r"eval\s+[\"'`]\$\(wget",                      "禁止 eval 执行 wget 下载内容"),
-    # Git — Agent 禁止 stash；commit 仅用户显式要求（见 rules/GIT.md）
-    (r"\bgit\s+" + _GIT_OPTS + r"stash\b",                          "禁止 Agent 执行 git stash（请本地手动处理）"),
 ]
 
 # ── 警告模式（不阻断，注入上下文提示）──────────────────────────────────────────
@@ -124,34 +120,222 @@ ENCODING_MISUSE_PATTERNS = [
      "tee 写文件易致编码异常 — 改用 Edit/Write 工具写入内容"),
     (r"<<\s*['\"]?\w+['\"]?\s*>?>",
      "heredoc 重定向写文件易致转义/编码异常 — 改用 Edit/Write 工具写入内容"),
-    # R9: Windows terminals must use pwsh, not powershell.exe (PS5.1)
+    # Legacy PowerShell default encodings require explicit care.
     (r"(?:^|[;&|(]\s*)powershell(?:\.exe)?\b",
-     "powershell.exe(PS5.1) 编码与行为不稳定 — 改用 pwsh（R9）"),
+     "powershell.exe(PS5.1) 默认编码可能不同 — 使用项目支持的 shell 并明确 UTF-8"),
     # sed -i may break CRLF/BOM
     (r"\bsed\s[^|;&]*\s-i(?:\.|\b)",
      "sed -i 可能破坏 CRLF/BOM — 文件内容修改改用 Edit 工具"),
 ]
 
 
-def _block(msg: str, is_trae: bool = False) -> None:
-    """拦截输出：TRAE 用 hookSpecificOutput.permissionDecision=deny（stdout + exit 0），Claude Code 用 stderr + exit 2。"""
-    if is_trae:
-        # TRAE PreToolUse 协议：permissionDecision=deny 拒绝本次工具调用，原因附加给模型
-        result = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": msg,
-                "additionalContext": msg,
-            }
-        }
-        sys.stdout.write(json.dumps(result, ensure_ascii=False) + "\n")
-        sys.stdout.flush()
-        sys.exit(0)
+def _block(msg: str) -> None:
+    """拦截：stderr + exit 2（PreToolUse 标准拒绝语义）。"""
     sys.stderr.write(msg + "\n")
     sys.stderr.flush()
     sys.exit(2)
 
+
+_GIT_VALUE_OPTS = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env", "--exec-path"}
+_WRAPPERS = {
+    "sudo", "doas", "env", "command", "time", "nohup", "exec",
+    "bash", "sh", "zsh", "pwsh", "powershell", "cmd",
+    "timeout", "nice", "xargs", "busybox", "setsid", "stdbuf",
+    "then", "do", "else", "elif", "{",
+}
+
+
+def _norm_token(token: str) -> str:
+    base = token.replace("\"", "").replace("'", "").replace("\\", "/").lower()
+    base = base.rsplit("/", 1)[-1]
+    for suffix in (".exe", ".cmd", ".bat"):
+        if base.endswith(suffix):
+            base = base[: -len(suffix)]
+            break
+    return base
+
+
+def _expand_substitutions(command: str, tool_name: str = "Bash") -> str:
+    """Inspect executable substitution bodies, preserving quoted literal text.
+
+    PowerShell uses backticks as escapes, whereas Bash uses them for command
+    substitution. This bounded inspection does not execute or fully parse a shell.
+    """
+    pending = command
+    bodies: list[str] = []
+    powershell = tool_name.lower() == "powershell"
+    escape = "`" if powershell else "\\"
+    pattern = r"\$\(([^()]*)\)" if powershell else r"\$\(([^()]*)\)|`([^`]*)`"
+    for _ in range(3):
+        visible: list[str] = []
+        quote: str | None = None
+        index = 0
+        while index < len(pending):
+            char = pending[index]
+            if quote == "'":
+                visible.append(" ")
+                if char == "'":
+                    quote = None
+            elif char == escape and index + 1 < len(pending):
+                visible.extend((" ", " "))
+                index += 1
+            elif char == "'" and quote is None:
+                quote = "'"
+                visible.append(" ")
+            else:
+                visible.append(char)
+                if char == '"':
+                    quote = None if quote == '"' else '"'
+            index += 1
+        matches = list(re.finditer(pattern, "".join(visible)))
+        if not matches:
+            break
+        found = []
+        for match in matches:
+            start, end = match.span()
+            offset = 2 if pending[start:start + 2] == "$(" else 1
+            found.append(pending[start + offset:end - 1])
+        bodies.extend(found)
+        pending = "\n".join(found)
+    # Separate complete bodies from their outer quoted arguments. Inline
+    # replacement would hide a real substitution inside echo's quoted text.
+    return command + ("\n" + "\n".join(bodies) if bodies else "")
+
+
+def _split_shell_segments(command: str) -> list[str]:
+    segments: list[str] = []
+    buf: list[str] = []
+    quote: str | None = None
+    for char in command:
+        if quote:
+            buf.append(char)
+            if char == quote:
+                quote = None
+            continue
+        if char in "\"'`":
+            quote = char
+            buf.append(char)
+            continue
+        if char in ";&|\n":
+            segments.append("".join(buf))
+            buf = []
+            continue
+        buf.append(char)
+    segments.append("".join(buf))
+    return segments
+
+
+def _git_segments(command: str, tool_name: str = "Bash"):
+    expanded = _expand_substitutions(command, tool_name)
+    for segment in _split_shell_segments(expanded):
+        original = segment.replace("(", " ").replace(")", " ")
+        if original.strip():
+            yield original  # preserve quoted option values, e.g. git -C "path with spaces"
+        normalized = re.sub(r"[\"'`]", "", original)
+        if normalized != original and normalized.strip():
+            yield normalized  # also inspect nested wrapper command strings
+
+
+def _git_invocation(segment: str) -> tuple[str | None, list[str], dict[str, str]]:
+    # Shell words can contain quotes after an equals sign, or in the middle
+    # of a word. Keep quoted spaces together without treating Windows path
+    # backslashes as POSIX escape characters. This is inspection, not execution.
+    tokens: list[str] = []
+    word: list[str] = []
+    quote: str | None = None
+    started = False
+    for char in segment:
+        if quote:
+            if char == quote:
+                quote = None
+            else:
+                word.append(char)
+            started = True
+        elif char in "\"'":
+            quote = char
+            started = True
+        elif char.isspace():
+            if started:
+                tokens.append("".join(word))
+                word = []
+                started = False
+        else:
+            word.append(char)
+            started = True
+    if started:
+        tokens.append("".join(word))
+    if not tokens:
+        return None, [], {}
+
+    start = None
+    for index, token in enumerate(tokens):
+        base = _norm_token(token)
+        if base == "git":
+            if index == 0:
+                start = index
+                break
+            first = _norm_token(tokens[0])
+            if first in _WRAPPERS or "=" in first:
+                start = index
+                break
+            return None, [], {}
+    if start is None:
+        return None, [], {}
+
+    rest = tokens[start + 1 :]
+    cursor = 0
+    aliases: dict[str, str] = {}
+    while cursor < len(rest):
+        token = rest[cursor].replace("\"", "").replace("'", "")
+        if token.startswith("-"):
+            config = None
+            if token == "-c" and cursor + 1 < len(rest):
+                config = rest[cursor + 1]
+            elif token.startswith("-c") and len(token) > 2:
+                config = rest[cursor][2:].lstrip("=")
+            if config and "=" in config:
+                key, value = config.split("=", 1)
+                if key.lower().startswith("alias."):
+                    aliases[key[6:].lower()] = value
+            if token in _GIT_VALUE_OPTS and "=" not in token:
+                cursor += 2
+            else:
+                cursor += 1
+            continue
+        return token.lower(), rest[cursor + 1 :], aliases
+    return None, [], {}
+
+
+def _alias_forbidden(value: str, tool_name: str, depth: int) -> bool:
+    # Git expands ordinary aliases as subcommands and ! aliases as shell programs.
+    value = value.strip()
+    body = value[1:] if value.startswith("!") else "git " + value
+    return bool(_git_forbidden(body, tool_name, depth + 1))
+
+
+def _git_forbidden(command: str, tool_name: str = "Bash", _depth: int = 0) -> str | None:
+    """Inspect actual Git calls and their alias definitions; never execute input."""
+    if _depth > 4:
+        return "Git alias 展开超过检查上限；请用户检查后在自己的终端执行"
+    for segment in _git_segments(command, tool_name):
+        subcommand, args, aliases = _git_invocation(segment)
+        if subcommand is None:
+            continue
+        if subcommand in ("commit", "stash"):
+            return f"禁止 Agent 执行 git {subcommand}；请用户在自己的终端执行"
+        if subcommand == "push" and not any(arg in ("--dry-run", "-n") for arg in args):
+            return "禁止 Agent 执行 git push；请用户在自己的终端执行"
+        for value in aliases.values():
+            if _alias_forbidden(value, tool_name, _depth):
+                return "禁止定义或执行含 commit/push/stash 的 git alias；请用户在自己的终端执行"
+        if subcommand == "config":
+            queries = {"--get", "--get-all", "--get-regexp", "--get-urlmatch", "--list", "-l", "--unset", "--unset-all", "--remove-section", "--rename-section"}
+            if any(arg in queries for arg in args) or (args and args[0] in {"get", "list", "unset", "remove-section", "rename-section"}):
+                continue
+            for index, arg in enumerate(args[:-1]):
+                if arg.lower().startswith("alias.") and _alias_forbidden(args[index + 1], tool_name, _depth):
+                    return "禁止定义含 commit/push/stash 的 git alias；请用户在自己的终端执行"
+    return None
 
 def main():
     try:
@@ -159,14 +343,14 @@ def main():
         try:
             raw = sys.stdin.read()
             data = json.loads(raw) if raw.strip() else {}
-        except Exception:
-            sys.exit(0)
+        except (ValueError, OSError) as exc:
+            print(f"pre-bash-guard: invalid input ({type(exc).__name__})", file=sys.stderr)
+            sys.exit(1)
 
         tool_name  = data.get("tool_name", "")
         tool_input = data.get("tool_input", {})
 
-        # 兼容 Claude Code（Bash）与 TraeCode（RunCommand）工具名
-        if tool_name not in ("Bash", "RunCommand"):
+        if tool_name not in {"Bash", "PowerShell", "Shell", "shell_command", "exec_command"}:
             sys.exit(0)
 
         command = tool_input.get("command", "").strip()
@@ -175,12 +359,24 @@ def main():
         if not command:
             sys.exit(0)
 
+        # ── Git 禁令：按命令分段解析，覆盖全局选项与管道/串联绕过 ──
+        git_reason = _git_forbidden(command, tool_name)
+        if git_reason:
+            _block(f"[安全拦截] {git_reason}")
+
+        # PowerShell accepts named parameters in any order. Guard the full roots,
+        # while leaving ordinary workspace cleanup to the native approval layer.
+        if (re.search(r"\b(?:Remove-Item|ri|rd|del|erase)\b", command, re.I)
+                and re.search(r"-(?:Recurse|r)\b", command, re.I)
+                and re.search(r"(?:\$HOME\b|\$env:USERPROFILE\b|[A-Za-z]:[\\/](?=[\"'\s]|$))", command, re.I)):
+            _block("[安全拦截] 禁止递归删除磁盘根或用户目录")
+
         # ── 危险命令检测 ──────────────────────────────────────────────────
         for pattern, reason in DANGER_PATTERNS:
             try:
                 if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
-                    msg = f"[安全拦截] {reason}\n命令: {command[:300]}"
-                    _block(msg, is_trae=(tool_name == "RunCommand"))
+                    msg = f"[安全拦截] {reason}"
+                    _block(msg)
             except re.error:
                 continue
 
@@ -189,8 +385,8 @@ def main():
             for pat in SENSITIVE_WRITE_PATTERNS:
                 try:
                     if re.search(pat, command, re.IGNORECASE):
-                        msg = f"[安全拦截] 禁止覆写敏感文件\n命令: {command[:300]}"
-                        _block(msg, is_trae=(tool_name == "RunCommand"))
+                        msg = "[安全拦截] 禁止覆写敏感文件"
+                        _block(msg)
                 except re.error:
                     continue
 
@@ -223,8 +419,9 @@ def main():
 
     except SystemExit:
         raise
-    except Exception as e:
-        print(f"⚠️ {e}", file=sys.stderr)
+    except Exception as exc:
+        print(f"pre-bash-guard: unable to inspect input ({type(exc).__name__})", file=sys.stderr)
+        sys.exit(1)
 
     sys.exit(0)
 

@@ -53,6 +53,6 @@ tools: Read, Write, Bash, Glob, Grep, WebFetch
 - `memory/taste-profile.md` — 品味记忆档案
 
 ## 关键约束
-- 不做代码实现（代码实现走 `skills/design-pipeline` Phase 2，原 design-engineer 已并入该技能）
+- 不做代码实现（代码实现走 `executing-plans` 与项目约定）
 - 每次只讨论一个设计维度
 - 变体之间差异必须显著（非颜色微调）

@@ -1,6 +1,5 @@
 ---
 description: 前端代码开发时启用
-alwaysApply: false
 paths:
   - "**/*.vue"
   - "**/*.jsx"
@@ -14,7 +13,7 @@ paths:
 
 # 前端规则（专用）
 
-> 配合核心规则使用，仅在前端场景加载。复制到项目 `.claude/rules/frontend.md` 或 `.cursor/rules/frontend.mdc` 后由 `paths` 自动匹配。
+> 配合核心规则使用，仅在前端场景加载。复制到项目规则目录（按当前工具约定）后由 `paths` 自动匹配。
 
 ## 技术选型
 

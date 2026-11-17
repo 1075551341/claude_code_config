@@ -1,6 +1,5 @@
 ---
 description: 测试编写、测试策略、测试框架相关任务时启用
-alwaysApply: false
 ---
 
 # 测试规则（专用）

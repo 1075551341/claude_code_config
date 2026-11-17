@@ -5,7 +5,7 @@ globs: ["*.dart", "pubspec.yaml"]
 
 # Dart / Flutter 开发规则
 
-> Dart 3+ → `config/toolchain.yaml`
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
 
 ## 空安全
 

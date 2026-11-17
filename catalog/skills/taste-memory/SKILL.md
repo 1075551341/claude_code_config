@@ -26,8 +26,8 @@ loading_tier: L3
 
 ```
 1. 用户表达偏好 → 写入 observation（标签: taste-preference）
-2. 新 UI 任务前 → claude-mem search "taste-preference"
-3. designer / design-shotgun 审查时引用已存偏好
+2. 新 UI 任务前 → 用可用记忆工具 search "taste-preference"
+3. eng-reviewer（UI/UX 视角）/ design-shotgun 审查时引用已存偏好
 4. 冲突时询问用户，更新 observation
 ```
 

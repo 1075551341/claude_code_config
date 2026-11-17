@@ -1,6 +1,70 @@
 # CHANGELOG — 配置变更史
 
-> v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
+## v15.0.0 风险分级与独立副本（2026-11-15）
+
+- 开发方法合并为 8 个技能、4 个按需角色和 8 个手动命令；取消小任务强制委派、全量审查模板及重复阶段机。
+- AGENTS 是本端方法入口，CLAUDE 保留本端导入；不再向其他工具提供指针、链接、启动器或适配自检。
+- 工程和安全细节移至按需参考；取消全局工具链版本硬门，尊重项目清单及锁文件。
+- 默认关闭启动图谱、Stop 审查门和自动格式化；增强 MCP 与插件按需，实际状态以原生加载证据为准。
+- 领域资料保留 98 技能、41 专家及 15 规则；失效编排移普通历史资料，修复自动提交、旧引用和远程脚本直接执行示例。
+- 本次以用户已有未提交状态为起点做私有备份；各工具配置分别独立迁移与验收，未取得运行证据的项目保持待验。
+- 采用理由、上游来源及能力去向见 docs/research/config-merits-20261115.md；本版本说明不替代最终独立审查。
+
+> v11 起变更摘要自 `SPEC.md` 外置到本文件；新版本在顶部追加。
+
+## v14.1.2 Cursor 全局规则改为本地插件（2026-11-11）
+
+- **原因**：Customize → Rules 的 User 列表只展示插件规则，不列出 `~/.cursor/rules/*.mdc`。
+- **落地**：本地插件 `~/.cursor/plugins/local/harness-adapter/`（`.cursor-plugin/plugin.json` + `rules/00-agents.mdc`）；删除会双载的家目录 `~/.cursor/rules/00-agents.mdc`。
+- **自检**：`check-adapters.py` 改为校验插件规则路径。
+- **使用**：Developer: Reload Window 或重启 Cursor 后，Rules 的 User 列表应出现规则文件 `00-agents`（描述：全局工作流入口）。
+
+## v14.1.1 per-skill 接线与自检收口（2026-11-11）
+
+- **接线**：Qoder / DSH / OpenCode 从整目录 junction 改为 `skills/<name>` 逐项接线；根目录保持真实目录，避免 `UserSkillStatus.txt` 等编辑器元数据写回真源。
+- **自检**：`check-adapters.py` 增加 `~/.cursor/AGENTS.md` 与 `~/.config/opencode/rules/AGENTS.md`；禁词含内核 v2 / 已裁技能名 / 同步脚本名 / 模型 ID；禁止整目录 junction 与真源 `UserSkillStatus.txt`；Trae/Trae CN 技能名索引须与 live 14 个技能集合相等。
+- **Trae**：用户规则补 14 个技能名索引（仍不复制正文）。
+- **决策**：`docs/ADR/2026-11-11-harness-native-adapters.md` 决策 3 改为逐项接线。
+
+## v14.1.0 跨工具薄原生入口（2026-11-11）
+
+- **真源不变**：工作流/完成门/铁律/技能/子代理仍只在本仓；不恢复编辑器同步引擎。
+- **薄入口**：Cursor `~/.cursor/rules/00-agents.mdc`（alwaysApply）；Qoder `rules/AGENTS.md` + 根 `AGENTS.md`；Trae / Trae CN 用户规则；DSH `~/.dsh/AGENTS.md`；OpenChamber / OpenCode `AGENTS.md`。入口禁止复制铁律表。
+- **技能发现**：Qoder / DSH / OpenCode 的 `skills` 目录接线到本仓 `skills/`；Cursor 官方已发现本仓技能，禁止再接到 `~/.cursor/skills`；Trae 用 Read 指针。
+- **互博**：Qoder 关闭 ECC / better-harness / caveman 及同类工作流插件；Cursor 个人 store 中同名或已裁技能隔离到 `_archive/v14-cull/`。
+- **自检**：新增 `scripts/check-adapters.py`（只校验外部入口与接线）；`templates/harness-adapter.md` 为入口骨架。
+- **决策**：`docs/ADR/2026-11-11-harness-native-adapters.md`。
+
+## v14.0.0 精简重构：单一调度面 + 去同步 + 审查门简化（2026-11-11）
+
+- **单一调度面**：新增中性 `AGENTS.md`（工作流/完成门/审查路由/工具能力路由）；`CLAUDE.md` 改为薄入口（`@AGENTS.md` + Claude 差异）；删除 `config/workflow.yaml`、`scripts/workflow.py` 与所有 `<!-- spine:* -->` 派生块。
+- **审查门**：保留「观察证据 + 本轮全新独立审查 PASS（符合预期要求 + 原功能保持）」；删除 `stop-verification-gate.py`（37KB）、`r20_replay.py`（40KB）、`graph_freshness.py`（49KB）与机械轮次计数；审查不设轮数上限（每轮必须有实质修复，无进展时报告用户）；新增 `stop-review-reminder.py`（有编辑且未见审查派发 → 每会话提醒一次）与 `session-start-graph-ensure.py`（图谱 ensure/sync，失败不阻断）。
+- **组件收敛**：skills 25→14（`using-superpowers`→`skill-router`；`skill-creator` 迁入 `catalog/skills/`；删除 10 个）、agents 9→5（ceo/designer/dx/qa 视角并入 eng-reviewer）、rules 7→4（CORE/DELEGATION/MCP/SECURITY；GIT 并入 git-workflow；OPENSPEC/README 删除）、commands 15→10（删除 OpenSpec 与 workstream）、hooks 19→6 个关注点。
+- **删除文档/索引**：`SPEC.md`、`MANIFEST.yaml`、`agents-INDEX.md`、`rules-INDEX.md`、`skills-INDEX.md`、`RTK.md`、`config/{workflow,quality_gates,sync-manifest,model-context-windows}`、`mcp/`、`openspec/`、`spec/task-difficulty-precision/`。
+- **删除编辑器同步/适配**：`scripts/sync.ps1`、`sync-editors.ps1`、`principles.py`、`validate_config.py`、`check.ps1`、`deploy-*.ps1`、`_merge_editor_graph_hooks.py`、`templates/cursor-guard/`、`templates/editor-graph-hooks/`、`templates/claude-settings/`、`.cursor/`、`docs/SYNC_GUIDE.md`、`docs/CURSOR_*.md` 等；不再向任何工具目录同步，其他工具直接读 `AGENTS.md`。
+- **新增自检**：`scripts/check-config.py`（JSON/frontmatter/hook 路径/MCP/行数预算/死引用/同步资产断言）；`hooks/tests/test_hooks.py`（5 项 smoke/回归）。
+- **插件**：18 个插件当前均为 disabled（`claude plugin list` 核对）；`ralph-loop`、`feature-dev`、`code-review`、`commit-commands`、`claude-md-management`、`github`、`skill-creator`、`superpowers` 保持禁用。
+- **hooks 加固**：`pre-bash-guard` 覆盖 git 全局选项、`git.exe`、`$(...)`/反引号、引号/括号包裹与 alias 绕过，并只在命令位识别 git（`echo`/`grep` 里的文本不再误伤）；`post-secret-detector` 输出脱敏（含同行多密钥），并纳入 serena 写工具；`session-start-graph-ensure` 只 sync 已有图、不向仓库写入新目录；`post-edit-format` 无本地/全局 prettier 时跳过，不再联网。
+- **铁律编号重排**：活跃铁律改为连续 R1-R21（旧 R3→R2、R4→R3、R5→R4、R8→R5、R9→R6、R11→R7、R12→R8、R13→R9、R14→R10、R15→R11、R16→R12、R17→R13、R18→R14、R19→R15、R20→R16；工程原则 R21-R25→R17-R21）；历史 CHANGELOG/ADR/research 保留当时编号。
+- **冲突裁决恢复 + 防回归**：CORE 恢复 R17-R21 子条与 9 行冲突裁决表；`check-config.py` 增加 R1-R21 连续性断言与 live 文件旧编号/旧语义扫描。
+- **外部受管副本清理**：删除 `.trae-cn`/`.trae`/`.qoder`/`.cursor`/`.dsh`/`.config/opencode` 中旧同步生成的 rules/skills/agents/commands/hooks/scripts/plugins 与 Cursor plugin；清理 Qoder `settings.json` 的旧 hooks、Cursor `guard-config.json` 与 OpenCode `permission.skill` 白名单；规则入口仅保留指向 `~/.claude/AGENTS.md` 的指针。备份 `backups/editor-managed-20261111-133055/` 与 `backups/dsh-opencode-20261111-134451/`。
+- **执行并发保留**：`AGENTS.md` §2 保留「无依赖不阻塞、优先并行；有依赖按序；长驻服务器/watcher 后台」。
+- **settings 示例**：新增 `settings.example.json`；`check-config.py` 对 `settings.json` 缺失给出 WARN，并强制校验示例的 hook 事件/脚本齐全，避免 hooks 静默丢失。
+- **验证**：`python scripts/check-config.py` → PASS（skills=14 agents=5 rules=4 commands=10；AGENTS.md=144 行、CLAUDE.md=20 行、CORE.md=113 行）；`python hooks/tests/test_hooks.py` → 5/5 passed。
+- **备份**：`~/.claude/backups/refactor-20261111-114808/`（350 文件，2.9 MB）。
+- **决策记录**：`docs/ADR/2026-11-11-config-v14-refactor.md`。
+
+## v13.1.0 harness 中立与精简（2026-11-11）
+
+- **铁律**：R21.1 第一性原理写入用户原文（`rules/CORE.md` + `docs/ENGINEERING_PRINCIPLES.md`，经 `principles.py sync` 注入 14 个目标）；不新增规则编号。
+- **去绑定**：R17/R18 与工具表改为“有则优先、无则回退”；无 codegraph/CRG 时用内置搜索 + 影响面清单，无记忆工具时查项目文档并注明；浏览器 UI 测试统一表述为“Playwright / chrome-devtools 等，若有”。
+- **入口分工**：Claude Code 读 `CLAUDE.md`；其他 harness 读同步生成的 `AGENTS.md`（同源中性文案）。仓内不新增 per-tool 适配文件，Cursor/Qoder/Trae/OpenCode/OpenChamber/DSH 由同步边界各自消费。
+- **skills 26→25**：`claude-mem-maintenance` 并入 `memory-compression`「记忆维护（Claude-mem 可选）」；同步更新 `skills-INDEX`、`MANIFEST`、`SPEC`、`README`、`sync-manifest`、`SYNC_GUIDE`、`validate_config` 上限。
+- **rules**：重写 `rules/MCP.md`（约 14KB→12.8KB），保留单一权威源/常驻架构/profile/浏览器显式选用/禁止项/验证清单，新增 §0 harness 能力映射与 §8 跨端能力对照。
+- **模型无关**：仍无模型 ID / 档位 / effort；`workflow.py check` lint 保持。
+- **测试**：`test_workflow_spine.py` 的未知模型 200K 陈旧断言改为隔离 CLAUDE_HOME 后断言出厂默认 200K（v13 已移除 200K 封顶）；新增 `hooks/tests/conftest.py` 排除 9 个脚本式套件，`test_script_suites.py` 以 subprocess 逐个运行并断言退出码 0（不再把 `check()` 包装当 pytest 用例）；`test_principles.py` 正常收集。
+- **预算**：`principles.py` 的 AGENTS 预算 17,408→18,432 bytes（+1 KiB），为 R21.1 用户原文留余量；仍远低于平台 65,536 bytes。`MANIFEST.yaml` / `SYNC_GUIDE.md` 同步。
+- **验证**：`validate_config.py` 22/22、`workflow.py check`、`principles.py check` 14/14、`test_principles` 33/33、`test_workflow_spine` 100/100、`test_r20_replay` 245/245、`pytest hooks/tests` 41 passed（含 9 个脚本套件真实退出码）。
 
 ## 2026-11-02 工程原则按类型并入铁律（5 类 18 子条，post-v13.0.4）
 

@@ -1,6 +1,0 @@
-{
-  "toolset": "search",
-  "description": "网页/文档搜索分组视图。exa / context7 / firecrawl 走 Plugins，不在 .mcp.json。本文件仅为分组指针，非 merge 目标。",
-  "servers": [],
-  "note": "调研三档 L1/L2/L3 的工具链见 docs/TOOL_MATCHING_GUIDE.md。本地/本机搜索走 codegraph + everything（.mcp.json 常驻）。"
-}

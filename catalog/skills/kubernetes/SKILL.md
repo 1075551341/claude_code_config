@@ -204,7 +204,8 @@ data:
 
 ```bash
 # 安装Helm
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# 按项目版本阅读官方安装指导：https://helm.sh/docs/intro/install/
+# 使用可信包管理器或验证过的发布二进制；不直接执行远程脚本。
 
 # 添加仓库
 helm repo add bitnami https://charts.bitnami.com/bitnami

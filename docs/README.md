@@ -1,27 +1,9 @@
-# Docs 文档索引
+# 配置资料
 
-> 最后更新: 2026-11-02 | **当前配置: v13.0.4**
+现行方法在 `../AGENTS.md` 与对应技能中；本目录内容按需读取，不自动加载。
 
----
-
-## 配置与决策
-
-| 文档 | 描述 |
-| ---- | ---- |
-| [DEV_FLOW.md](DEV_FLOW.md) | 工作流主干说明 + 派生清单 + 迁移 |
-| [ENGINEERING_PRINCIPLES.md](ENGINEERING_PRINCIPLES.md) | 铁律 R21-R25（5 类 18 子条）+ C1–C10 裁决 + 10 个场景 + 原图章节映射 |
-| [CURSOR_MCP_PROFILE.md](CURSOR_MCP_PROFILE.md) | Cursor 插件/MCP 边界 |
-| [CURSOR_EDITOR_SETUP.md](CURSOR_EDITOR_SETUP.md) | Cursor 编辑器专有设置 |
-| [LLM_AS_A_VERIFIER_SYNC.md](LLM_AS_A_VERIFIER_SYNC.md) | llm-as-a-verifier 优点提取与融合决策 |
-| [ADR/](ADR/) | 架构决策记录 |
-| [SYNC_GUIDE.md](SYNC_GUIDE.md) | 多编辑器同步 1+N |
-| [TOOL_MATCHING_GUIDE.md](TOOL_MATCHING_GUIDE.md) | MCP / R17/R18 路由 |
-| [DESIGN.md](DESIGN.md) | 设计备忘 |
-
-## 深度调研 (research/)
-
-| 文档 | 描述 |
-| ---- | ---- |
-| [merits-20261028.md](research/merits-20261028.md) | 唯一现行调研制品（优点清单 + 现行配置独立审查 + 待确认优化计划） |
-
-旧 44-repo / 45-upstream / COVERAGE / repos 卡片已删除；历史以 git 为准。
+- `runtime.md`：Claude 本端作用域、可选增强与核验方式。
+- `ADR/`：决策及替代关系；2026-11-15 的风险分级和独立副本决策替代旧共享设计。
+- `research/config-merits-20261115.md`：本轮来源、优点、边界和能力去向。
+- `archive/`：不作为技能执行的历史/未核实编排。
+- 其他历史研究和旧规则编号保留当时语义，不是当前政策。

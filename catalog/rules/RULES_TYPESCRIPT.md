@@ -1,12 +1,11 @@
 ---
 description: TypeScript 代码开发时启用
-alwaysApply: false
 ---
 
 # TypeScript 规则（专用）
 
 > 配合核心规则使用，仅在 TypeScript 场景加载
-> Node 22+ / pnpm 11 → `config/toolchain.yaml`。尊重 lockfile；缺声明的管理器 BLOCKED。
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
 
 ## 配置规范
 
@@ -95,61 +94,24 @@ function useDebounce<T>(value: T, delay: number): T { /* ... */ }
 
 ## 时间处理
 
-### 禁止 `new Date()` / `Date.now()`，使用 dayjs / date-fns
-
-`new Date()` 不可变性问题、API 反人类、时区处理困难。必须使用时间库。
+优先复用项目现有依赖；时间戳、ISO 输出和基本展示可使用 `Date` / `Intl`。明确日期、时间点和时区的不同语义；复杂日历计算或时区需求超出标准能力时，再评估已有 dayjs / date-fns 等库，不为此规则新增或替换依赖。
 
 ```typescript
-// ❌ 禁止
-const now = new Date();
-const ts = new Date().toISOString();
-const formatted = new Date().toLocaleDateString();
-const stamp = Date.now();
+type Clock = () => Date;
+const systemClock: Clock = () => new Date();
 
-// ✅ dayjs（首选，2KB、不可变、链式）
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-dayjs.extend(utc); dayjs.extend(timezone);
-
-const now = dayjs();
-const ts = dayjs().toISOString();
-const formatted = dayjs().format('YYYY-MM-DD HH:mm:ss');
-const inShanghai = dayjs().tz('Asia/Shanghai');
-
-// ✅ date-fns（函数式风格项目）
-import { format, addDays, isAfter } from 'date-fns';
-const formatted = format(new Date(), 'yyyy-MM-dd');
-const tomorrow = addDays(new Date(), 1);
-
-// ❌ 避免 moment（已弃用、体积 67KB、可变对象）
-// import moment from 'moment';  // 除非维护旧项目
-```
-
-### 时间库选型
-
-| 场景 | 推荐 | 理由 |
-|------|------|------|
-| 通用项目 | dayjs | 轻量 2KB、moment 兼容 API、不可变 |
-| 函数式项目 | date-fns | tree-shakeable、纯函数 |
-| 维护旧项目 | moment | 仅限已有依赖，不新引入 |
-
-### 依赖注入（业务逻辑）
-
-```typescript
-import dayjs from 'dayjs';
-type Clock = () => dayjs.Dayjs;
-const defaultClock: Clock = () => dayjs();
-
-function createService(clock: Clock = defaultClock) {
-  const now = clock();
+function createService(clock: Clock = systemClock) {
+  return clock().toISOString();
 }
 
-// ✅ 测试中注入固定时间
-const service = createService(() => dayjs('2025-01-01T00:00:00Z'));
+const fixed = new Date('2025-01-01T00:00:00Z');
+const service = createService(() => fixed);
+const display = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+}).format(fixed);
 ```
 
-例外：纯 UI 展示当前时间（如时钟组件）
+时间影响业务判断时注入时钟便于测试；一次性脚本和简单显示无需为了该模式增加抽象。维护旧项目时尊重现有时间库，迁移需有实际需求和验证。
 
 ## 模块规范
 

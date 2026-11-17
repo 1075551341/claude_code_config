@@ -5,7 +5,7 @@ globs: ["*.cs", "*.csx", "*.fs", "*.fsx"]
 
 # C# / .NET 开发规则
 
-> .NET SDK 8+ → `config/toolchain.yaml`
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
 
 ## 命名规范
 
@@ -55,41 +55,19 @@ globs: ["*.cs", "*.csx", "*.fs", "*.fsx"]
 
 ## 时间处理
 
-### 禁止 `DateTime.Now` / `DateTime.UtcNow`，使用 NodaTime + IClock 注入
-
-`DateTime` 时区处理缺陷、`Kind` 语义混乱。NodaTime 提供类型安全的时间模型，`IClock` 接口天然支持测试。
+优先使用项目现有时间模型与依赖。一般时间点可使用标准库 `DateTimeOffset`，时区转换使用 `TimeZoneInfo`；按语义明确 UTC、偏移与本地时间。时间影响业务判断时，可用项目已有时钟接口、运行时支持的 `TimeProvider` 或简单委托注入，不强制升级运行时或新增库。
 
 ```csharp
-// ❌ 禁止
-var now = DateTime.Now;
-var utc = DateTime.UtcNow;
-
-// ✅ NodaTime（首选，时区处理远优于 DateTime）
-using NodaTime;
-using NodaTime.Testing;  // FakeClock 用于测试
-
 public class MyService {
-    private readonly IClock _clock;
-    public MyService(IClock clock) { _clock = clock; }
-    public void DoWork() {
-        var now = _clock.GetCurrentInstant();
-        var inShanghai = now.InZone(DateTimeZoneProviders.Tzdb["Asia/Shanghai"]);
-    }
+    private readonly Func<DateTimeOffset> _now;
+    public MyService(Func<DateTimeOffset> now) { _now = now; }
+    public DateTimeOffset CurrentTime() { return _now(); }
 }
 
-// ✅ 注册到 DI
-services.AddSingleton<IClock>(SystemClock.Instance);
-
-// ✅ 测试中注入固定时间
-var fixedInstant = Instant.FromUtc(2025, 1, 1, 0, 0);
-var service = new MyService(new FakeClock(fixedInstant));
+var service = new MyService(() => DateTimeOffset.UtcNow);
+var fixedTime = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+var testService = new MyService(() => fixedTime);
 ```
 
-### 时间库选型
+已有 NodaTime 的项目可继续使用 `IClock` / `Instant`；复杂日历及时区需求再评估该库的收益、数据部署和迁移成本。标准库能满足时不新增依赖，不强制替换现有实现。
 
-| 场景 | 推荐 | 理由 |
-|------|------|------|
-| 正式项目 | NodaTime | 类型安全时区、Instant/Duration/ZonedDateTime |
-| 简单项目 | IDateTimeProvider + DateTime | 最小依赖，接口注入即可 |
-
-例外：CLI 一次性脚本、纯 UI 展示

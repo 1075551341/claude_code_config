@@ -5,7 +5,7 @@ globs: ["*.rb", "*.erb", "Gemfile", "Rakefile", "*.yml"]
 
 # Ruby/Rails 开发规则
 
-> Ruby 3.2+ / bundler → `config/toolchain.yaml`
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
 
 ## 项目结构
 
@@ -38,11 +38,11 @@ globs: ["*.rb", "*.erb", "Gemfile", "Rakefile", "*.yml"]
 
 ## 测试
 
-- RSpec：单元测试 + 系统测试（Capybara）
-- Factory：用 FactoryBot，禁止 fixtures
-- 测试覆盖：SimpleCov，目标 ≥ 80%
+- 测试框架与脚本遵循项目现有约定；RSpec / Capybara 仅为可选方案，系统测试仍需显式授权
+- 测试数据复用项目既有 fixtures / FactoryBot 等；仅为实际维护需求调整，不强制新增库
+- 覆盖率使用项目已有工具和目标；SimpleCov 是可选方案，不因示例新增依赖
 
 ## 时间处理
 
-- 禁止 Time.now / DateTime，用 Time.current / Time.zone.now
-- 时区：config.time_zone 设置，存储 UTC，展示本地
+- 普通 Ruby 可用标准库 `Time.now.utc`；Rails 项目遵循已配置时区，使用 `Time.current` / `Time.zone.now`
+- 明确存储和显示时区；时间影响业务判断时注入时钟便于测试，不强制新增或替换时间库

@@ -1,6 +1,5 @@
 ---
 description: AI/LLM 应用开发相关任务时启用
-alwaysApply: false
 ---
 
 # AI 开发规则（专用）

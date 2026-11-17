@@ -1,6 +1,5 @@
 ---
 description: 后端相关功能开发时启用
-alwaysApply: false
 ---
 
 # 后端规则（专用）

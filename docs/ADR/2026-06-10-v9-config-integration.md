@@ -3,6 +3,8 @@
 状态: 已采纳
 日期: 2026-06-10
 
+> 历史编号：本文 R17/R18 为当时编号；v14 现行为 R13（代码探索）/ R14（记忆优先），见 `rules/CORE.md`。
+
 ## 背景
 
 对 28 个仓库全量分析（见 `docs/REPO_ANALYSIS.md`），识别五柱骨架完整但存在 workstreams、ADR、DX review、GateGuard、codegraph 优先路由等缺口。

@@ -16,12 +16,12 @@ triggers: [管理环境变量, 配置多环境部署, 处理.env文件, 管理�
 ## 文件命名规范
 
 ```
-.env                # 默认配置（提交到 Git，不含密钥）
+.env                # 默认配置（不提交；仅本地）
 .env.local          # 本地覆盖（不提交，gitignore）
-.env.development    # 开发环境
-.env.staging        # 预发布环境
-.env.production     # 生产环境（不提交到 Git）
-.env.test           # 测试环境
+.env.development    # 开发环境（不提交）
+.env.staging        # 预发布环境（不提交）
+.env.production     # 生产环境（不提交）
+.env.test           # 测试环境（不提交）
 .env.example        # 配置模板（提交到 Git，不含真实值）
 ```
 
@@ -67,10 +67,9 @@ settings = Settings()
 ## .gitignore 配置
 
 ```gitignore
-.env.local
-.env.*.local
-.env.production
-.env.staging
+.env
+.env.*
+!.env.example
 *.pem
 *.key
 ```

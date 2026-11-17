@@ -1,6 +1,5 @@
 ---
 description: DevOps、CI/CD、容器化、部署相关任务时启用
-alwaysApply: false
 ---
 
 # DevOps 规则

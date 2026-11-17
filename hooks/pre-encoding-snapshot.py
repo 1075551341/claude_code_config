@@ -3,7 +3,7 @@
 PreToolUse Hook: 编辑前编码快照（v11.4.2）。
 
 encoding_guard 双阶段之一：在 Edit/Write/MultiEdit 及 MCP 写工具执行前，
-把目标文件的 BOM/EOL/大小签名写入 `~/.claude/.state/encoding-snapshots.json`。
+把目标文件的 BOM/EOL/大小签名写入 本端 `.state/encoding/` 的会话与调用独立快照。
 Post 侧（post-encoding-check.py）比对差异检出乱码/EOL 翻转。
 永不阻断，静默快照；核心逻辑 → `_lib/encoding_guard.py`。
 """
@@ -39,7 +39,7 @@ def main():
         sys.exit(0)
 
     try:
-        take_snapshot(tool_name, tool_input, cwd)
+        take_snapshot(tool_name, tool_input, cwd, str(data.get("session_id") or ""), str(data.get("tool_use_id") or ""))
     except Exception as e:  # noqa: BLE001 - 快照失败不阻断编辑
         print(f"pre-encoding-snapshot: snapshot failed: {e}", file=sys.stderr)
 

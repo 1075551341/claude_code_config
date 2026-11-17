@@ -21,16 +21,18 @@ import json
 import os
 import sys
 import time
+import hashlib
+import tempfile
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
 
 from tool_paths import extract_edit_paths  # noqa: E402
-from issue_state import claude_home  # noqa: E402
 
-STATE_DIR = os.path.join(str(claude_home()), ".state")
-STATE_FILE = os.path.join(STATE_DIR, "encoding-snapshots.json")
+# Every pre/post invocation owns a separate file; no shared read-modify-write map.
+STATE_DIR = Path(os.environ.get("CLAUDE_HOOK_STATE_DIR", str(Path(__file__).resolve().parents[2] / ".state" / "encoding")))
 STALE_SECONDS = 24 * 3600
-MAX_ENTRIES = 500
+MAX_ENTRIES = 1000
 
 # GBK 双重编码 / 损坏特征串
 MOJIBAKE_SIGNATURES = ("锟斤拷", "烫烫烫", "屯屯屯")
@@ -83,44 +85,83 @@ def snapshot_signature(path: str) -> dict | None:
         return None
 
 
-def load_state() -> dict:
+def state_path(path: str, session_id: str = "", tool_use_id: str = "") -> Path:
+    identity = "\0".join((session_id, tool_use_id, os.path.normcase(os.path.abspath(path))))
+    return STATE_DIR / (hashlib.sha256(identity.encode("utf-8")).hexdigest() + ".json")
+
+
+def prune_state() -> None:
+    """Bound cache retention; abandoned snapshots must not live indefinitely."""
+    if not STATE_DIR.exists():
+        return
+    entries = []
+    for entry in STATE_DIR.glob("*.json"):
+        try:
+            entries.append((entry.stat().st_mtime, entry))
+        except FileNotFoundError:
+            continue  # another post hook consumed its own snapshot
+    # A killed writer may leave a temporary file. Never remove a live writer's file.
+    for temporary in STATE_DIR.glob(".snapshot-*"):
+        try:
+            if time.time() - temporary.stat().st_mtime > STALE_SECONDS:
+                temporary.unlink(missing_ok=True)
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            print(f"encoding_guard: temporary cleanup failed: {type(exc).__name__}", file=sys.stderr)
+    entries.sort(reverse=True)
+    now = time.time()
+    for index, (mtime, entry) in enumerate(entries):
+        if now - mtime > STALE_SECONDS or index >= MAX_ENTRIES:
+            try:
+                entry.unlink(missing_ok=True)
+            except OSError as exc:
+                print(f"encoding_guard: cache cleanup failed: {type(exc).__name__}", file=sys.stderr)
+
+
+def write_snapshot(target: Path, signature: dict) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    temporary = None
     try:
-        if os.path.exists(STATE_FILE):
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except (OSError, json.JSONDecodeError) as e:
-        print(f"encoding_guard: state read failed: {e}", file=sys.stderr)
-    return {}
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=STATE_DIR, prefix=".snapshot-", delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(signature, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
-def save_state(state: dict) -> None:
-    try:
-        os.makedirs(STATE_DIR, exist_ok=True)
-        now = time.time()
-        state = {k: v for k, v in state.items() if now - v.get("ts", 0) < STALE_SECONDS}
-        if len(state) > MAX_ENTRIES:
-            ordered = sorted(state.items(), key=lambda kv: kv[1].get("ts", 0))
-            state = dict(ordered[-MAX_ENTRIES:])
-        with open(STATE_FILE, "w", encoding="utf-8") as f:
-            json.dump(state, f, ensure_ascii=False, indent=1)
-    except OSError as e:
-        print(f"encoding_guard: state write failed: {e}", file=sys.stderr)
-
-
-def take_snapshot(tool_name: str, tool_input: dict, cwd: str) -> list[str]:
-    """Pre 阶段：记录本次写操作目标文件的签名，返回目标路径列表。"""
+def take_snapshot(tool_name: str, tool_input: dict, cwd: str, session_id: str = "", tool_use_id: str = "") -> list[str]:
+    """Store this session/invocation's BOM and EOL signature atomically."""
     paths = extract_edit_paths(tool_input, cwd)
     if not paths:
         return []
-    state = load_state()
-    for p in paths:
-        sig = snapshot_signature(p)
-        if sig is not None:
-            state[p] = sig
+    prune_state()
+    for path in paths:
+        target = state_path(path, session_id, tool_use_id)
+        signature = snapshot_signature(path)
+        if signature is not None:
+            write_snapshot(target, signature)
         else:
-            state.pop(p, None)  # 新建文件：清掉可能的陈旧快照
-    save_state(state)
+            target.unlink(missing_ok=True)
     return paths
+
+
+def consume_snapshot(path: str, session_id: str, tool_use_id: str) -> dict | None:
+    target = state_path(path, session_id, tool_use_id)
+    try:
+        data = json.loads(target.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) and time.time() - data.get("ts", 0) < STALE_SECONDS else None
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError, TypeError) as exc:
+        print(f"encoding_guard: snapshot read failed: {type(exc).__name__}", file=sys.stderr)
+        return None
+    finally:
+        target.unlink(missing_ok=True)
 
 
 def analyze_file(path: str) -> tuple[list[str], bytes]:
@@ -185,25 +226,17 @@ def diff_issues(before: dict | None, path: str) -> list[str]:
     return issues
 
 
-def check_after_edit(tool_name: str, tool_input: dict, cwd: str) -> dict[str, list[str]]:
-    """Post 阶段：对每个写入目标做绝对检查 + 快照比对。
-
-    返回 {路径: [问题描述]}；只包含存在问题的文件。检查过的快照随即清除。
-    """
+def check_after_edit(tool_name: str, tool_input: dict, cwd: str, session_id: str = "", tool_use_id: str = "") -> dict[str, list[str]]:
+    """Run absolute checks and consume only the matching pre-hook snapshot."""
     results: dict[str, list[str]] = {}
-    state = load_state()
-    dirty = False
-    for p in extract_edit_paths(tool_input, cwd):
-        if not os.path.isfile(p):
+    for path in extract_edit_paths(tool_input, cwd):
+        before = consume_snapshot(path, session_id, tool_use_id)
+        if not os.path.isfile(path):
             continue
-        before = state.pop(p, None)
-        dirty = dirty or before is not None
-        issues, _data = analyze_file(p)
-        issues.extend(diff_issues(before, p))
+        issues, _data = analyze_file(path)
+        issues.extend(diff_issues(before, path))
         if issues:
-            results[p] = issues
-    if dirty:
-        save_state(state)
+            results[path] = issues
     return results
 
 
