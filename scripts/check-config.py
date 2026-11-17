@@ -13,6 +13,7 @@ CROSS_TOOL = re.compile(r"(?:[A-Za-z]:[/\\]Users[/\\][^/\\\s]+|~)[/\\](?:\.codex
 MODEL = re.compile(r"\b(?:claude-(?:opus|sonnet|haiku)-[\w.-]+|gpt-[0-9][\w.-]*|deepseek-chat|kimi-k2)\b", re.I)
 SECRET = re.compile(r"(?:sk-ant-[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{25,}|\bsk-[A-Za-z0-9_-]{32,})")
 RETIRED = ("skills/task-triage/", "skills/brainstorming/", "skills/writing-plans/", "skills/executing-plans/", "skills/change-impact-analysis/", "skills/skill-router/", "skills/ship/", "rules/CORE.md", "rules/DELEGATION.md", "rules/MCP.md", "rules/SECURITY.md", "check-adapters.py", "templates/harness-adapter.md")
+INDEX_HEADING = re.compile(r"^## (技能|角色|规则)（(\d+)）\s*$")
 
 
 def frontmatter(path: Path) -> dict[str,str]:
@@ -118,7 +119,7 @@ def check(root: Path) -> tuple[list[str],list[str]]:
                 require(bool(row) and row[0]==event and row[2]==timeout,f"wrong hook event/timeout: {filename}:{name}")
                 require((root/"hooks"/name).is_file(),f"missing hook implementation: {name}")
                 if row:
-                    probes=("Bash","PowerShell") if name=="pre-bash-guard.py" else EDIT_PROBE
+                    probes=("Bash","PowerShell","Shell") if name=="pre-bash-guard.py" else EDIT_PROBE
                     for tool in probes:require(bool(re.fullmatch(row[1],tool)),f"hook misses {tool}: {filename}:{name}")
             for event,matcher,script,timeout in rows:
                 if filename=="settings.json":require(Path(script).is_file(),f"local hook path missing: {Path(script).name}")
@@ -143,7 +144,39 @@ def check(root: Path) -> tuple[list[str],list[str]]:
                 require('${workspaceFolder}' not in json.dumps(server),f"unsupported workspace placeholder: {path.name}:{name}")
                 if server.get('url'):require(server.get('type') in {'http','sse'},f"remote MCP needs explicit transport: {path.name}:{name}")
         except (OSError,ValueError,TypeError,AttributeError) as exc:errors.append(f"invalid MCP config {path.name}: {type(exc).__name__}")
+    check_catalog_index(root, require)
     return errors,warnings
+
+
+def check_catalog_index(root: Path, require) -> None:
+    catalog = root/"catalog"
+    if not catalog.is_dir():
+        return
+    index = catalog/"INDEX.md"
+    require(index.is_file(), "missing catalog/INDEX.md")
+    if not index.is_file():
+        return
+    text = index.read_text(encoding="utf-8")
+    claimed = {match.group(1): int(match.group(2)) for match in (INDEX_HEADING.match(line) for line in text.splitlines()) if match}
+    require(set(claimed)=={"技能","角色","规则"}, "catalog INDEX missing count headings")
+    skills_disk = {path.parent.name for path in (root/"catalog"/"skills").glob("*/SKILL.md")}
+    agents_disk = {path.stem for path in (root/"catalog"/"agents").glob("*.md") if path.name.lower()!="readme.md"}
+    rules_disk = {path.stem for path in (root/"catalog"/"rules").glob("*.md") if path.name.lower()!="readme.md"}
+    skills_idx, agents_idx, rules_idx = set(), set(), set()
+    for target in re.findall(r"\]\(([^)]+)\)", text):
+        target = target.split("#", 1)[0]
+        if target.startswith("skills/") and target.endswith("/SKILL.md"):
+            skills_idx.add(Path(target).parts[1])
+        elif target.startswith("agents/") and target.endswith(".md") and Path(target).stem.lower()!="readme":
+            agents_idx.add(Path(target).stem)
+        elif target.startswith("rules/") and target.endswith(".md") and Path(target).stem.lower()!="readme":
+            rules_idx.add(Path(target).stem)
+    require(claimed.get("技能")==len(skills_disk), f"catalog skill heading {claimed.get('技能')} != disk {len(skills_disk)}")
+    require(claimed.get("角色")==len(agents_disk), f"catalog agent heading {claimed.get('角色')} != disk {len(agents_disk)}")
+    require(claimed.get("规则")==len(rules_disk), f"catalog rule heading {claimed.get('规则')} != disk {len(rules_disk)}")
+    require(skills_idx==skills_disk, "catalog INDEX skill set differs from disk")
+    require(agents_idx==agents_disk, "catalog INDEX agent set differs from disk")
+    require(rules_idx==rules_disk, "catalog INDEX rule set differs from disk")
 
 
 def main() -> int:
@@ -151,7 +184,7 @@ def main() -> int:
     for warning in warnings:print("WARN: "+warning)
     for error in errors:print("FAIL: "+error)
     if errors:return 1
-    print("PASS: local references, metadata, hook coverage/timeouts and opt-in MCP contracts")
+    print("PASS: local references, metadata, hook coverage/timeouts, catalog index and opt-in MCP contracts")
     print("skills=%d agents=%d commands=%d"%(len(list((ROOT/'skills').glob('*/SKILL.md'))),len(list((ROOT/'agents').glob('*.md'))),len(list((ROOT/'commands').glob('*.md')))))
     print("Runtime activation must be checked separately in a fresh native session.")
     return 0

@@ -25,7 +25,7 @@ Claude 从 `CLAUDE.md` 导入本端 `AGENTS.md`。按任务读取技能，不叠
 
 默认保留危险命令防护、密钥脱敏提醒和编码检查；关闭启动图谱刷新、Stop 审查门与自动格式化。
 增强 MCP 默认不常驻；可选定义在 `mcp-configs/`，私人服务定义不入库。
-插件保留登记并默认停用，实际可用性需原生列表和调用验证；不自动安装或升级。
+插件安装清单现有 18 项；`settings.json` 的 `enabledPlugins` 仅 6 键且均为 false。登记不保证安装文件存在，多数当前 `installPath` 缺失；实际状态以原生列表和调用为准，不自动安装或升级。
 
 ## 验证
 
@@ -35,8 +35,7 @@ python hooks/tests/test_hooks.py
 claude mcp list
 ```
 
-自检验证结构与契约，原生列表验证配置作用域；实际行为和加载仍需新会话取证。
-本轮迁移、跨工具加载及独立审查的最终证据由本次任务记录，不以本说明宣称全部完成。
+自检验证结构、引用、hook 契约与 catalog 计数。本次 CLI 观察：`claude mcp list` 无服务器，`claude plugin list` 18 项均为 disabled。规则/技能/hooks 的 IDE 新会话加载来源仍待取证，不以本说明宣称已生效。
 
 ## 版本与恢复
 
