@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EDIT_PROBE = ("Edit", "Write", "MultiEdit", "NotebookEdit", "mcp__serena__replace_symbol_body", "mcp__filesystem__write_file")
 HOOKS = {"pre-bash-guard.py": ("PreToolUse",5), "pre-encoding-snapshot.py": ("PreToolUse",5), "post-encoding-check.py": ("PostToolUse",10), "post-secret-detector.py": ("PostToolUse",10)}
 CROSS_TOOL = re.compile(r"(?:[A-Za-z]:[/\\]Users[/\\][^/\\\s]+|~)[/\\](?:\.codex|\.agents|\.cursor|\.qoder(?:-cn)?|\.trae(?:-cn)?|\.dsh|\.openchamber|\.config[/\\]opencode)(?:[/\\]|\b)", re.I)
-MODEL = re.compile(r"\b(?:claude-(?:opus|sonnet|haiku)-[\w.-]+|gpt-[0-9][\w.-]*|deepseek-chat|kimi-k2)\b", re.I)
+MODEL = re.compile(r"\b(?:claude-(?:opus|sonnet|haiku)-[\w.-]+|gpt-[0-9][\w.-]*|gemini-\d[\w.-]*|deepseek-chat|kimi-k2)\b", re.I)
 SECRET = re.compile(r"(?:sk-ant-[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{25,}|\bsk-[A-Za-z0-9_-]{32,})")
 RETIRED = ("skills/task-triage/", "skills/brainstorming/", "skills/writing-plans/", "skills/executing-plans/", "skills/change-impact-analysis/", "skills/skill-router/", "skills/ship/", "rules/CORE.md", "rules/DELEGATION.md", "rules/MCP.md", "rules/SECURITY.md", "check-adapters.py", "templates/harness-adapter.md")
 INDEX_HEADING = re.compile(r"^## (技能|角色|规则)（(\d+)）\s*$")
@@ -49,7 +49,7 @@ def hook_records(settings: dict) -> list[tuple[str,str,str,int]]:
 
 
 def active_texts(root: Path) -> list[Path]:
-    paths=[root/n for n in ("AGENTS.md","CLAUDE.md","README.md")]
+    paths=[root/n for n in ("CLAUDE.md","README.md")]
     for folder in ("skills","agents","commands","rules","templates","snippets"):
         paths.extend((root/folder).rglob("*.md"))
     paths.extend(root/p for p in ("hooks/README.md","scripts/README.md"))
@@ -81,10 +81,10 @@ def check(root: Path) -> tuple[list[str],list[str]]:
             except (OSError,ValueError): errors.append(f"invalid metadata: {path.relative_to(root)}");continue
             require(bool(meta.get("description")),f"missing description: {path.relative_to(root)}")
             if folder=="agents":require(meta.get("name")==path.stem,f"agent name mismatch: {path.name}")
-    for filename in ("AGENTS.md","CLAUDE.md"):
-        require((root/filename).is_file(),f"missing entry: {filename}")
+    require((root/"CLAUDE.md").is_file(), "missing entry: CLAUDE.md")
+    require(not (root/"AGENTS.md").exists(), "remove global AGENTS.md; Claude uses CLAUDE.md")
     if (root/"CLAUDE.md").exists():
-        require("@AGENTS.md" in (root/"CLAUDE.md").read_text(encoding="utf-8"),"Claude entry must import the local core")
+        require("@AGENTS.md" not in (root/"CLAUDE.md").read_text(encoding="utf-8"), "Claude entry must be self-contained without @AGENTS.md")
     for path in active_texts(root):
         text=path.read_text(encoding="utf-8");rel=path.relative_to(root)
         require(not CROSS_TOOL.search(text),f"cross-tool runtime dependency: {rel}")
@@ -92,7 +92,7 @@ def check(root: Path) -> tuple[list[str],list[str]]:
         require(not SECRET.search(text),f"credential-like literal in active instructions: {rel}")
         for old in RETIRED: require(old not in text,f"retired reference in {rel}: {old}")
         # Check only concrete local paths; examples with placeholders are not references.
-        for value in re.findall(r'`((?:skills|agents|commands|rules|hooks|scripts)/[^`\s]+\.(?:md|py|ps1))`',text):
+        for value in re.findall(r'`((?:skills|agents|commands|rules|hooks|scripts|tools)/[^`\s]+\.(?:md|py|ps1|json))`',text):
             if any(token in value for token in ("<",">","*","{","...")):continue
             require((root/value).is_file(),f"broken local reference in {rel}: {value}")
         for target in re.findall(r'\]\(([^)]+)\)',text):

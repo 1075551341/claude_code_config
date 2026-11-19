@@ -364,18 +364,32 @@ def test_checker_rejects_broken_contracts() -> None:
     import shutil
     with tempfile.TemporaryDirectory() as tmp:
         fixture = Path(tmp)
-        for folder in ("skills","agents","commands","rules","templates","snippets","hooks","mcp-configs"):
+        for folder in ("skills","agents","commands","rules","templates","snippets","hooks","mcp-configs","tools"):
             source = HOOKS.parent / folder
             if source.exists():shutil.copytree(source, fixture / folder, ignore=shutil.ignore_patterns("*.private.json", "__pycache__"))
-        for filename in ("AGENTS.md","CLAUDE.md","README.md","settings.example.json",".mcp.json"):
+        for filename in ("CLAUDE.md","README.md","settings.example.json",".mcp.json"):
             shutil.copy2(HOOKS.parent / filename, fixture / filename)
         # Paths in the example are deliberately placeholders, so only the example is checked.
         before, _ = checker.check(fixture)
         expect(not before, f"valid fixture failed contract checks: {before}")
         sample = next((fixture / "skills").glob("*/SKILL.md"))
+        original_sample = sample.read_text(encoding="utf-8")
         with sample.open("a", encoding="utf-8") as stream:stream.write("\nRead `skills/missing-skill/SKILL.md` before use.\n")
         errors, _ = checker.check(fixture)
         expect(any("broken local reference" in e for e in errors), "checker must reject a broken internal reference")
+        sample.write_text(original_sample + "\nRun `tools/missing-tool.py` before use.\n", encoding="utf-8")
+        errors, _ = checker.check(fixture)
+        expect(any("broken local reference" in e and "tools/missing-tool.py" in e for e in errors), "checker must reject a broken tools reference")
+        sample.write_text(original_sample, encoding="utf-8")
+        (fixture / "AGENTS.md").write_text("# Duplicate entry\n", encoding="utf-8")
+        errors, _ = checker.check(fixture)
+        expect(any("AGENTS.md" in e for e in errors), "checker must reject a global AGENTS.md entry")
+        (fixture / "AGENTS.md").unlink()
+        original_claude = (fixture / "CLAUDE.md").read_text(encoding="utf-8")
+        (fixture / "CLAUDE.md").write_text("@AGENTS.md\n" + original_claude, encoding="utf-8")
+        errors, _ = checker.check(fixture)
+        expect(any("@AGENTS.md" in e for e in errors), "checker must reject @AGENTS.md import in CLAUDE.md")
+        (fixture / "CLAUDE.md").write_text(original_claude, encoding="utf-8")
         data = json.loads((fixture / "settings.example.json").read_text(encoding="utf-8"))
         data["hooks"]["PreToolUse"][0]["hooks"][0]["timeout"] = 5000
         (fixture / "settings.example.json").write_text(json.dumps(data), encoding="utf-8")

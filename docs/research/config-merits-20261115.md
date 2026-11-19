@@ -76,3 +76,16 @@
 - Cursor 回归默认不写已有 native-schema-evidence.json；显式设置 NATIVE_HOOK_EVIDENCE_PATH 时才向指定临时文件留证，完整原生响应校验未削弱。
 
 本轮修复前副本及实际输出保存在任务私有制品的 review-fix-20261116/index.json 与 review-fix-evidence.json；原始 core 263 / runtime 24 基线保留，仅更新最终状态记录。上述是实现者的回归结果；新鲜工程/安全复审、IDE/模型会话中的实际 hook 触发仍待主会话核验，不能用 fixture 或源码推断代替。
+
+
+## 2026-11-18 v15.1 入口解耦与实操优点补齐
+
+- **入口解耦**：Claude 本端收口为单一自包含 `CLAUDE.md`（删除全局 `AGENTS.md` 与 `@AGENTS.md` 导入），其余工具各自独立维护自己的 `AGENTS.md`，彻底消除“主仓兼作共享真源”的错觉；同步清理遗留的 `.trae/` 与 `skills/_bm_skillid_migration.json`。
+- **融入新全局原则**：明确动机/目标不清即停下讨论、目标清晰但路径绕远时主动建议更短方案；局部问题优先最小改动，共性问题优先全局/公共层统一修正；不做不必要兜底（禁静默回退、假兼容层或宽泛默认值）。
+- **补齐 v15.0 过度精简项**：
+  - `AGENTS` / `CLAUDE.md` 与 `development-workflow`：增加动态升档触发与连续失败 ≤2 次止损换向、明确「非目标」、消费者逐一走查与旧引用清零、Caveman 清晰底线（不省略否定词/命令/警告/取舍理由）、高频 `catalog` 能力轻量指引。
+  - `systematic-debugging`：恢复 P0 紧急止血与 P1–P3 分诊、≤2 次假设失败止损、共性缺陷公共层修复与严禁调用点吞错兜底。
+  - `verification-before-completion` 与审查角色：恢复正向 + 边界/预期失败双验、`[已实测验证]`/`[代码推断]`/`[未验证]` 三态证据、含用户原始需求原文的独立审查移交包。
+  - `memory-compression` 与 `templates/artifacts/STATE.md`：恢复「已排除方案与失败尝试」及「验证证据」，对齐模板字段。
+  - `deep-research`：恢复 L1/L2/L3 比例深度分档与三态证据区分。
+  - `check-config.py` 与 `test_hooks.py`：强制检验无全局 `AGENTS.md` / `@AGENTS.md`、补充 `tools/` 引用校验及扩展模型绑定检测。
