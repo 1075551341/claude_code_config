@@ -277,7 +277,7 @@ ComponentName/
 
 ## 安全
 
-> 详见 `RULES_SECURITY.md`（XSS防护、CSP配置、敏感信息处理等完整覆盖）
+> 遵循本端通用安全红线与方法库安全参考（XSS 防护、CSP 配置、敏感信息处理等；可按需参考 `security-best-practices`）
 
 ## 何时必须写 README
 

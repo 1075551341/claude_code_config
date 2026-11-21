@@ -30,6 +30,6 @@
 
 ## 使用说明
 
-- systematic-debugging / change-implementer 遇到有复用价值的教训时追加条目
+- 调试或实现过程中遇到有复用价值的教训时追加条目
 - 调试时先查 gotchas.md 检查是否为已知问题
 - 如有可用记忆工具，则同步关键 gotchas 到跨会话记忆

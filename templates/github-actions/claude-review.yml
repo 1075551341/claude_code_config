@@ -1,3 +1,4 @@
+# 作用域说明：本模板仅用于 Claude Action（anthropics/claude-code-action）CI 审查，不作通用审查工作流模板。
 name: Claude Code Review
 
 on:

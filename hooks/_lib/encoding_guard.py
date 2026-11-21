@@ -51,7 +51,7 @@ def _wrap_stdout() -> None:
                 sys.stdout.buffer, encoding="utf-8", errors="replace"
             )
     except Exception as e:  # noqa: BLE001 - 守卫永不因自身异常阻断主流程
-        print(f"encoding_guard: stdout wrap failed: {e}", file=sys.stderr)
+        print(f"encoding_guard: stdout wrap failed: {type(e).__name__}", file=sys.stderr)
 
 
 def detect_eol(data: bytes) -> str:
@@ -81,7 +81,7 @@ def snapshot_signature(path: str) -> dict | None:
             "ts": time.time(),
         }
     except OSError as e:
-        print(f"encoding_guard: snapshot {path} failed: {e}", file=sys.stderr)
+        print(f"encoding_guard: snapshot failed: {type(e).__name__}", file=sys.stderr)
         return None
 
 
@@ -171,7 +171,7 @@ def analyze_file(path: str) -> tuple[list[str], bytes]:
         with open(path, "rb") as f:
             data = f.read(8 * 1024 * 1024)
     except OSError as e:
-        print(f"encoding_guard: read {path} failed: {e}", file=sys.stderr)
+        print(f"encoding_guard: read failed: {type(e).__name__}", file=sys.stderr)
         return issues, b""
 
     try:

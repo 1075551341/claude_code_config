@@ -10,7 +10,7 @@ triggers: [常用CLI命令速查表]
 
 以下为语法资料，不是操作授权。Agent 不执行 git stash、git commit、git push。
 reset --hard、clean、rm、数据库清空、部署、发布和全局配置变更等有副作用的示例，仅在确认目标、备份与具体授权后按需处理；不可整段运行。
-包管理器及工具版本遵循当前项目，不因本表出现 npm、pip 或其他示例而切换。
+包管理器及工具版本遵循当前项目锁文件与既有包管理器；以下 `pip install`、`npm install -g` 等命令仅作示例，不擅自全局安装或升级。
 
 ## Git 命令
 
@@ -114,6 +114,8 @@ docker-compose build         # 构建服务
 
 ### 包管理
 
+> 以下全局/局部安装命令仅作示例，实际遵守项目锁文件与既有包管理器，不擅自全局安装或升级。
+
 ```bash
 # 安装
 npm install [package] [--save-dev]
@@ -158,6 +160,8 @@ npm publish [--access public]
 ## Python 命令
 
 ### pip 管理
+
+> 以下安装命令仅作示例，实际遵守项目锁文件（`pyproject.toml`/`requirements*.txt`/虚拟环境）与既有包管理器，不擅自全局安装或升级。
 
 ```bash
 pip install <package>        # 安装

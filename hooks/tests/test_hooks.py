@@ -364,10 +364,10 @@ def test_checker_rejects_broken_contracts() -> None:
     import shutil
     with tempfile.TemporaryDirectory() as tmp:
         fixture = Path(tmp)
-        for folder in ("skills","agents","commands","rules","templates","snippets","hooks","mcp-configs","tools"):
+        for folder in ("skills","agents","commands","templates","snippets","hooks","mcp-configs","tools"):
             source = HOOKS.parent / folder
             if source.exists():shutil.copytree(source, fixture / folder, ignore=shutil.ignore_patterns("*.private.json", "__pycache__"))
-        for filename in ("CLAUDE.md","README.md","settings.example.json",".mcp.json"):
+        for filename in ("CLAUDE.md","README.md","package.json","settings.example.json",".mcp.json"):
             shutil.copy2(HOOKS.parent / filename, fixture / filename)
         # Paths in the example are deliberately placeholders, so only the example is checked.
         before, _ = checker.check(fixture)
@@ -380,6 +380,9 @@ def test_checker_rejects_broken_contracts() -> None:
         sample.write_text(original_sample + "\nRun `tools/missing-tool.py` before use.\n", encoding="utf-8")
         errors, _ = checker.check(fixture)
         expect(any("broken local reference" in e and "tools/missing-tool.py" in e for e in errors), "checker must reject a broken tools reference")
+        sample.write_text(original_sample + "\n内部核对七维。\n", encoding="utf-8")
+        errors, _ = checker.check(fixture)
+        expect(any("retired reference" in e and "七维" in e for e in errors), "checker must reject retired dual-track wording")
         sample.write_text(original_sample, encoding="utf-8")
         (fixture / "AGENTS.md").write_text("# Duplicate entry\n", encoding="utf-8")
         errors, _ = checker.check(fixture)
@@ -390,6 +393,23 @@ def test_checker_rejects_broken_contracts() -> None:
         errors, _ = checker.check(fixture)
         expect(any("@AGENTS.md" in e for e in errors), "checker must reject @AGENTS.md import in CLAUDE.md")
         (fixture / "CLAUDE.md").write_text(original_claude, encoding="utf-8")
+        original_pkg = (fixture / "package.json").read_text(encoding="utf-8")
+        (fixture / "package.json").write_text(json.dumps({"name":"claude-config","version":"0.0.1"}), encoding="utf-8")
+        errors, _ = checker.check(fixture)
+        expect(any("version mismatch" in e for e in errors), "checker must reject version mismatch between package.json and README.md")
+        (fixture / "package.json").write_text(original_pkg, encoding="utf-8")
+        cat_sample = fixture / "catalog" / "skills" / "sample" / "SKILL.md"
+        cat_sample.parent.mkdir(parents=True, exist_ok=True)
+        cat_sample.write_text("# Sample\n参见 `RULES_SECURITY.md`，via claude-mem，路径 `~/.codex/skills`。\n", encoding="utf-8")
+        (fixture / "catalog" / "INDEX.md").write_text("# 索引\n## 技能（1）\n- [sample](skills/sample/SKILL.md)：一键部署，发布到生产\n## 角色（0）\n## 规则（0）\n", encoding="utf-8")
+        (fixture / "catalog" / "agents").mkdir(parents=True, exist_ok=True)
+        (fixture / "catalog" / "rules").mkdir(parents=True, exist_ok=True)
+        errors, _ = checker.check(fixture)
+        expect(any("retired reference" in e and "RULES_SECURITY.md" in e for e in errors), "checker must reject retired refs in catalog")
+        expect(any("retired reference" in e and ("一键部署" in e or "发布到生产" in e) for e in errors), "checker must reject stale index phrases in catalog/INDEX.md")
+        expect(any("executor/tool binding" in e and "claude-mem" in e for e in errors), "checker must reject executor tool bindings in catalog")
+        expect(any("cross-tool runtime dependency" in e for e in errors), "checker must reject cross-tool paths in catalog")
+        shutil.rmtree(fixture / "catalog")
         data = json.loads((fixture / "settings.example.json").read_text(encoding="utf-8"))
         data["hooks"]["PreToolUse"][0]["hooks"][0]["timeout"] = 5000
         (fixture / "settings.example.json").write_text(json.dumps(data), encoding="utf-8")
@@ -400,6 +420,39 @@ def test_checker_rejects_broken_contracts() -> None:
         errors, _ = checker.check(fixture)
         expect(any("credential environment value" in e for e in errors), "checker must reject literal credentials in public optional definitions")
         expect(not any("literal-credential-that-must-stay-private" in e for e in errors), "checker errors must not leak rejected values")
+
+
+def test_error_redaction() -> None:
+    guard = load_module("encoding_guard", HOOKS / "_lib/encoding_guard.py")
+    import io
+    from contextlib import redirect_stderr
+    with tempfile.TemporaryDirectory() as tmp:
+        unreadable = Path(tmp) / "private-secret-path-sentinel.py"
+        unreadable.mkdir()
+        err = io.StringIO()
+        with redirect_stderr(err):
+            snap = guard.snapshot_signature(str(unreadable))
+            issues, data = guard.analyze_file(str(unreadable))
+        expect(snap is None and issues == [] and data == b"", "unreadable file must fail safely")
+        err_text = err.getvalue()
+        expect("encoding_guard:" in err_text, "encoding_guard errors must remain visible on stderr")
+        expect("private-secret-path-sentinel" not in err_text and str(tmp) not in err_text, "encoding_guard stderr must redact file paths")
+
+        for hook_name in ("pre-encoding-snapshot.py", "post-encoding-check.py"):
+            res = subprocess.run(
+                [sys.executable, str(HOOKS / hook_name)],
+                input="{malformed-private-payload-sentinel",
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+            )
+            expect(res.returncode == 0 and bool(res.stderr.strip()), f"{hook_name} must warn non-blockingly on malformed input")
+            expect("malformed-private-payload-sentinel" not in res.stdout + res.stderr, f"{hook_name} must not echo malformed payload")
+            dir_res = run_hook(hook_name, {"tool_name": "Edit", "tool_input": {"file_path": str(unreadable)}})
+            expect(dir_res.returncode == 0, f"{hook_name} must not block on unreadable target")
+            expect("private-secret-path-sentinel" not in dir_res.stdout + dir_res.stderr, f"{hook_name} must not leak unreadable path")
 
 
 def main() -> int:
@@ -413,6 +466,7 @@ def main() -> int:
         test_encoding_same_file_isolation,
         test_formatter_project_opt_in_and_failure,
         test_checker_rejects_broken_contracts,
+        test_error_redaction,
     ]
     # Keep every hook cache isolated from the user runtime.
     test_state = tempfile.TemporaryDirectory()

@@ -64,11 +64,11 @@ def function_name(param_a: str, param_b: int = 0) -> dict:
 
 ## 安全基线
 
-> 详见 `RULES_SECURITY.md`（SQL 注入、认证、权限、敏感泄露、Rate Limit 等完整覆盖）
+> 遵循本端通用安全红线与方法库安全参考（SQL 注入、认证、权限、敏感泄露、Rate Limit 等；可按需参考 `security-best-practices`）
 
 ## 错误处理原则
 
-> 通用错误处理详见 `RULES_CORE.md`，以下为后端特有补充
+> 通用工程与错误处理边界以本端入口及工程规范为准，以下为后端特有补充
 
 ```
 外部依赖  → timeout + fallback，避免雪崩

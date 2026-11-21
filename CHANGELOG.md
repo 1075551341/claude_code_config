@@ -1,5 +1,19 @@
 # CHANGELOG — 配置变更史
 
+## v16.0.0 L0–L3 单责精炼 · 去双轨 · 全域净化（2026-11-21）
+
+- **L0–L3 单责精炼**：重写 `CLAUDE.md`（≤65 行）及其余工具独立使用的通用 `AGENTS.md`（≤60 行）与 8 技能/4 角色/8 命令，消除入口、技能与角色间的 9 类 3–4 层重复。
+- **消除七维/两道关双轨**：`verification-before-completion` 与 `eng-reviewer` 彻底废除“七维”旧术语，统一收口为“两道关”（符合预期要求 + 原功能保持）；显式强化缺陷修复、高风险改动、工程与安全审核须覆盖**正向功能 + 反向/预期失败 + 边界条件**三类实测。
+- **跨项目定位与上游补强**：清晰区分方法目录（`skills/`/`agents/`/`catalog/`/`templates/`）与目标项目路径（`spec/<project>/`/`docs/ADR/`）；核心技能零硬引用 `tools/`；补入**同行/同类横向清扫**、**外部库/接口禁脑补**、**审查移交包有意行为变更对照**与**用户既有改动/基线状态边界**。
+- **Catalog 与 Templates 全域净化**：清零 8 份文件中 `RULES_SECURITY`/`RULES_CORE`/`executing-plans`/`writing-plans`/`brainstorming`/`instinct-learning`/`/design-html` 等退役引用，消除 `webapp-testing`/`qa-engineer`/`land-and-deploy`/`performance-engineer`/`skill-creator` 规则互博，中性化执行者模型/工具绑定。
+- **Hooks 与自检升级**：`encoding_guard.py` 与 `pre-bash-guard.py` 异常 stderr 脱敏为异常类型名并新增边界单测；`check-config.py` 新增 `catalog/` 与 `templates/` 扫描、禁词追加旧双轨术语、移除空 `rules/` 并校验 `package.json` 与 `README.md` 版本一致。
+- **版本同步与残留清理**：`package.json` 升至 `16.0.0`；清理 `temp/`、嵌套 `.claude/`、空 `rules/`、`plugins/claude-hud/` 及 `plugins/installed_plugins.json` 中 15 条磁盘已失效插件登记（保留磁盘存在的 3 项；未修改 `settings.json`）。
+
+## v15.1.0 入口彻底解耦与实操优点补齐（2026-11-18）
+
+- **单一自包含入口**：移除全局 `AGENTS.md` 与 `@AGENTS.md` 导入，Claude 本端仅保留 `CLAUDE.md`；清理遗留 `.trae/` 与 `skills/_bm_skillid_migration.json`。
+- **原则融入与止损补齐**：融入审慎澄清与最短路径建议、局部最小 vs 共性全局改法、反静默兜底、动态升档与 ≤2 次止损、消费者清零、三态证据、P0–P3 调试分诊与 L1–L3 调研分档；决策见 `docs/ADR/2026-11-18-v15-1-entry-decoupling-and-merits-restoration.md`。
+
 ## v15.0.0 风险分级与独立副本（2026-11-15）
 
 - 开发方法合并为 8 个技能、4 个按需角色和 8 个手动命令；取消小任务强制委派、全量审查模板及重复阶段机。

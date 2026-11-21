@@ -1,6 +1,6 @@
 # 本端脚本与可选工具
 
-- `check-config.py`：只读检查技能元数据、内部引用、入口、hook 工具覆盖/超时/示例一致性、`catalog/INDEX.md` 与磁盘差集，以及可选 MCP 定义。数量只报告，不代表实际可用。
+- `check-config.py`：只读检查技能元数据、内部引用、入口、`package.json` 与 `README.md` 版本号一致性、`catalog/` 与 `templates/` 的退役引用/执行者绑定/跨端路径、旧双轨审查术语、hook 工具覆盖/超时/示例一致性、`catalog/INDEX.md` 与磁盘差集，以及可选 MCP 定义。数量只报告，不代表实际可用。
 - `python-mcp.ps1`：本端 Python MCP 启动器，仅在选择相应可选定义时使用。
 
 运行 `python scripts/check-config.py` 与 `python hooks/tests/test_hooks.py`。
@@ -9,6 +9,6 @@
 
 原有用户级 MCP 定义完整保存在 `mcp-configs/user-servers.private.json`（被 Git 忽略），其中包含旧记录及可能的认证环境变量；这是恢复资料，不能未经检查整份启用。缺 launcher 等异常条目先修正或选择单个服务。不要输出私有文件内容。项目级 scopes 与账号状态没有改动。`settings.local.json` 可叠加权限与 MCP 允许项，自检不读取该文件。
 
-插件以 `claude plugin list` 的实际状态为准。安装清单 `plugins/installed_plugins.json` 现有 18 项，多数 `installPath` 当前缺失；`settings.json` 的 `enabledPlugins` 仅 6 键且均为 false。本次 CLI 观察列出 18 项且均为 disabled。保留登记供按需修复，不修改安装清单冒充安装成功。重叠流程插件在本端设置显式禁用，领域与工具插件需要时再核验可用性。
+插件以 `claude plugin list` 的实际状态为准。`plugins/installed_plugins.json` 已于 v16.0.0 清理 15 项失效 `installPath` 登记，保留磁盘实际存在的 3 项（均在 `settings.json` `enabledPlugins` 中显式禁用）。不手动虚构安装登记；领域与工具插件需要时再核验可用性。
 
 自检不访问其他工具的目录，不是运行验收。实际使用需在新原生会话中确认规则、技能、hooks 和所选工具的加载来源。

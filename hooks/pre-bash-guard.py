@@ -25,7 +25,7 @@ try:
     if hasattr(sys.stdout, "buffer"):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except Exception as e:
-    print(f"⚠️ {e}", file=sys.stderr)
+    print(f"pre-bash-guard: stdout wrap failed ({type(e).__name__})", file=sys.stderr)
 
 # ── Git 命令选项前缀（防 -C/--git-dir/--work-tree/-c 变体绕过；支持空格/等号分隔）─
 _GIT_OPTS = r"(?:(?:-C|-c|--git-dir|--work-tree)(?:\s+|=)\S+(?:\s+|))*"

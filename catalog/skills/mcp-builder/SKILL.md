@@ -1,7 +1,7 @@
 ---
 name: mcp-builder
 description: 开发MCP服务器
-triggers: [开发MCP服务器, 构建Claude集成工具, 创建MCP协议服务]
+triggers: [开发MCP服务器, 构建MCP Host/Client集成工具, 创建MCP协议服务]
 ---
 
 # MCP 服务器开发

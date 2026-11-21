@@ -68,7 +68,7 @@
 - [nodejs-backend](skills/nodejs-backend/SKILL.md)：开发Node.js后端应用、使用Express/Koa/NestJS框架、编写后端API服务
 - [notion-integration](skills/notion-integration/SKILL.md)：使用Notion API
 - [office-docs](skills/office-docs/SKILL.md)：办公文档处理。触发：写报告
-- [office-hours](skills/office-hours/SKILL.md)：六问产品框架。触发词：office hours  /  六问框架  /  产品分析  /  需求深挖
+- [office-hours](skills/office-hours/SKILL.md)：六问产品框架。触发词：office hours | 六问框架 | 产品分析 | 需求深挖
 - [onboarding-guide](skills/onboarding-guide/SKILL.md)：在需要熟悉项目时定位目标、模块、关键路径与可运行验证方式。
 - [pdf](skills/pdf/SKILL.md)：处理PDF文件、提取PDF文本、合并拆分PDF、填写PDF表单
 - [performance-optimization](skills/performance-optimization/SKILL.md)：优化系统性能
@@ -91,7 +91,7 @@
 - [sql-database](skills/sql-database/SKILL.md)：编写SQL查询、优化数据库性能、设计SQL索引、使用MySQL/PostgreSQL
 - [state-management](skills/state-management/SKILL.md)：管理前端状态、使用Redux/Pinia/Zustand、设计全局状态存储
 - [supabase-backend](skills/supabase-backend/SKILL.md)：使用 Supabase 构建 BaaS 后端服务
-- [taste-memory](skills/taste-memory/SKILL.md)：品味记忆学习（UI 偏好跨会话）。触发词：taste memory  /  品味记忆  /  UI偏好  /  设计偏好学习
+- [taste-memory](skills/taste-memory/SKILL.md)：品味记忆学习（UI 偏好跨会话）。触发词：taste memory | 品味记忆 | UI偏好 | 设计偏好学习
 - [theme-config](skills/theme-config/SKILL.md)：配置主题样式、设计暗色模式、配置Ant Design/Element Plus主题
 - [typescript](skills/typescript/SKILL.md)：编写TypeScript类型、解决类型错误、使用泛型/高级类型、实现类型安全
 - [ui-ux-pro-max](skills/ui-ux-pro-max/SKILL.md)：UI/UX设计知识库，67风格+161色板+99UX指南，CSV数据驱动设计决策。触发词：UI设计、UX、设计系统、landing、dashboard。
@@ -100,7 +100,7 @@
 - [vibe-coding-cn](skills/vibe-coding-cn/SKILL.md)：在需要改善中文人机开发协作时明确目标、模块职责、输入上下文和反馈。
 - [vue-development](skills/vue-development/SKILL.md)：开发Vue组件
 - [web-scraping](skills/web-scraping/SKILL.md)：爬取网页数据
-- [webapp-testing](skills/webapp-testing/SKILL.md)：用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。测试 Web 应用
+- [webapp-testing](skills/webapp-testing/SKILL.md)：仅在用户本轮显式要求浏览器 UI 或 E2E 测试时使用 Playwright 进行端到端测试。触发词：编写 E2E 测试、浏览器 UI 测试、Playwright E2E。
 - [websocket-server](skills/websocket-server/SKILL.md)：WebSocket 服务端开发与实时通信
 - [xlsx](skills/xlsx/SKILL.md)：处理Excel表格、操作xlsx文件、处理CSV数据
 
@@ -127,8 +127,8 @@
 - [ios-specialist](agents/ios-specialist.md)：iOS 专用审查 — QA测试/fix修复/design-review设计审查/clean清理/sync同步（gstack v0.19）
 - [java-reviewer](agents/java-reviewer.md)：Java/Spring代码审查专家。专注于Java语言特性、Spring Boot约定、并发安全和性能优化。触发词：Java审查、Spring审查、Java代码、Spring Boot。
 - [kotlin-reviewer](agents/kotlin-reviewer.md)：Kotlin 代码审查专家。当需要审查 Kotlin 代码、检查 Kotlin 惯用法、评估 Android/KMP 代码、审查协程使用、检查空安全时调用此 Agent。触发词：审查 Kotlin、Kotlin 审查、Kotlin 代码审查、Android 审查、KMP 审查、协程审查、kotlin-review。
-- [land-and-deploy](agents/land-and-deploy.md)：一键部署 — 从 approved PR 到 verified in production。触发词：部署、上线、land、deploy、发布到生产。
-- [mcp-builder](agents/mcp-builder.md)：MCP 服务器开发专家。当需要开发 MCP 服务器、构建 Claude 集成工具、创建 MCP 协议服务时调用此 Agent。提供 MCP 协议实现、工具定义、资源管理和服务器配置指导。触发词：MCP服务器、MCP开发、Model Context Protocol、Claude MCP、MCP工具、Claude集成、MCP协议。
+- [land-and-deploy](agents/land-and-deploy.md)：发布就绪核验与命令准备 — 核验 PR 到生产发布前检查项并生成待用户确认命令，不直接执行合并或发布。触发词：部署核验、上线检查、land、deploy、发布准备。
+- [mcp-builder](agents/mcp-builder.md)：MCP 服务器开发专家。当需要开发 MCP 服务器、构建 MCP Host/Client 集成工具、创建 MCP 协议服务时调用此 Agent。提供 MCP 协议实现、工具定义、资源管理和服务器配置指导。触发词：MCP服务器、MCP开发、Model Context Protocol、MCP Host、MCP工具、MCP Client集成、MCP协议。
 - [ml-engineer](agents/ml-engineer.md)：负责机器学习模型开发与部署。触发词：ML、机器学习、深度学习、TensorFlow、PyTorch、模型训练、神经网络、推荐系统、NLP、计算机视觉。
 - [mobile-developer](agents/mobile-developer.md)：负责移动端开发任务。当需要开发React Native应用、Flutter应用、UniApp跨平台应用、微信小程序、H5移动页面、处理移动端适配问题、实现原生功能调用、处理移动端性能优化、实现推送通知时调用此Agent。触发词：移动端、React Native、Flutter、UniApp、小程序、微信小程序、H5、App开发、跨平台、iOS、Android、移动适配、原生功能、推送通知、移动开发。
 - [nodejs-reviewer](agents/nodejs-reviewer.md)：负责 Node.js 与 TypeScript 后端代码审查任务。当需要审查 Node.js 代码、审查 TypeScript 后端代码、检查 Express/Koa/Fastify/NestJS 代码质量、评审后端 API 实现、审查数据库操作代码、检查异步处理逻辑、评估后端代码安全性和性能时调用此 Agent。触发词：审查 Node、Node.js 审查、TypeScript 审查、后端代码审查、Express 审查、NestJS 审查、Koa 审查、Node 代码质量、后端代码审查。
@@ -138,7 +138,7 @@
 - [performance-engineer](agents/performance-engineer.md)：性能工程师，基准页面加载、Core Web Vitals、资源大小，PR前后对比
 - [python-pro](agents/python-pro.md)：Python全栈开发专家，负责Python通用开发任务。当需要编写Python脚本、实现Python算法、开发CLI工具、处理文件操作、数据处理、爬虫开发、自动化脚本、Python包开发、异步编程、并发处理时调用此Agent。触发词：Python脚本、Python开发、Python实现、写Python、Python工具、Python自动化、Python爬虫、Python算法、Python并发、asyncio、Python包、pip、venv。
 - [python-reviewer](agents/python-reviewer.md)：负责 Python 后端代码审查任务。当需要审查 Python 代码、审查 FastAPI/Flask/Django 代码、检查 Python 代码质量、评审异步 Python 代码、审查 Pydantic 模型设计、检查 SQLAlchemy 数据库操作、评估 Python 代码安全性、检查 PEP8 规范合规性时调用此 Agent。触发词：审查 Python、Python 审查、Python 代码审查、FastAPI 审查、Flask 审查、Django 审查、Python 质量、Pydantic 审查、SQLAlchemy 审查、python-review。
-- [qa-engineer](agents/qa-engineer.md)：负责测试相关任务，含E2E端到端测试(Playwright/Cypress)。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、E2E端到端测试、搭建测试框架、设计测试数据、进行接口测试、评估测试覆盖率、编写测试报告、实施质量保障体系时调用此Agent。触发词：测试、单元测试、集成测试、E2E、测试用例、测试策略、自动化测试、Jest、Vitest、Playwright、Cypress、测试覆盖率、质量保障、测试计划、Mock、测试报告、浏览器测试、UI测试。
+- [qa-engineer](agents/qa-engineer.md)：负责测试相关任务（单元测试、集成测试、API 测试；浏览器 UI/E2E 测试仅在用户明确要求时启用）。当需要编写测试用例、制定测试策略、开发自动化测试、编写单元测试、集成测试、搭建测试框架、设计测试数据、进行接口测试、评估测试覆盖率、编写测试报告、实施质量保障体系，或用户显式要求 E2E/浏览器 UI 测试时调用此Agent。触发词：测试、单元测试、集成测试、测试用例、测试策略、自动化测试、Jest、Vitest、测试覆盖率、质量保障、测试计划、Mock、测试报告；显式要求时：E2E、Playwright、Cypress、浏览器测试、UI测试。
 - [react-reviewer](agents/react-reviewer.md)：负责 React 组件代码审查任务。当需要审查 React 组件代码、检查 Hooks 使用规范、评审 React 性能优化、检查组件设计模式、评估 React 最佳实践合规性、检查 useEffect 依赖数组、审查 React 状态管理时调用此 Agent。触发词：审查 React、React 审查、React 组件审查、Hooks 审查、React 性能、React 最佳实践、useEffect 审查、react-review。
 - [refactoring-expert](agents/refactoring-expert.md)：代码重构和清理专家，识别代码坏味道、安全重构、消除死代码和重复、代码简化与精炼。当需要重构遗留代码、消除代码坏味道、清理死代码、消除重复代码、提升代码可维护性、代码简化、KISS原则应用、代码瘦身时调用此Agent。触发词：重构、代码重构、技术债、坏味道、遗留代码、代码清理、消除重复、死代码、refactor-clean、代码简化、消除冗余、KISS原则、代码瘦身。
 - [ruby-reviewer](agents/ruby-reviewer.md)：Ruby/Rails代码审查专家。专注于Ruby惯用法、Rails约定、安全和性能优化。触发词：Ruby审查、Rails审查、Ruby代码、Rails。

@@ -10,7 +10,7 @@
 - `.mcp.json` 是所在项目的配置，不是用户级 MCP。用户级与项目私有登记实际在用户原生配置中，不能只查本目录推断全局状态。
 - 本轮已将用户级 17 项旧增强定义转为私有可选资料；默认 `.mcp.json` 无服务器。本次 CLI 观察 `claude mcp list` 为无服务器；IDE 新会话的合并结果仍需单独取证。
 - 五项开发增强定义保留在 `mcp-configs/development.json`；`debug.json` / `ops.json` / `fsaccess.json` 为其他可选 profile；`collab.json` 仅为 `reference_only`，没有可合并服务。私人服务定义不入库，不在文档中复制。
-- `plugins/installed_plugins.json` 现有 18 项安装登记；多数 `installPath` 当前不存在。`settings.json` 的 `enabledPlugins` 仅 6 键且均为 false。本次 CLI 观察 `claude plugin list` 列出同一批 18 项且均为 disabled；不能把 `enabledPlugins` 映射本身写成覆盖全部 18 项。登记不保证安装文件存在，不以“已安装”描述未经加载核实的插件。
+- `plugins/installed_plugins.json` 经 v16.0.0 清理 15 项失效 `installPath` 登记后，保留磁盘实际存在的 3 项（`claude-md-management`、`ralph-loop`、`superpowers`），均在 `settings.json` `enabledPlugins` 中显式设为 false（`settings.json` 另有 3 项禁用键保留防御）。登记不保证启用，实际状态以原生 `claude plugin list` 为准，不以“已安装”描述未经加载核实的插件。
 - `settings.json` 的 `permissions.deny` 另禁止 `mcp__code-review-graph__apply_refactor_tool` 与 `mcp__code-review-graph__generate_wiki_tool`；增强 MCP 默认仍不常驻。
 
 ## 按需使用

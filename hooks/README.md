@@ -4,7 +4,7 @@
 
 - PreToolUse shell：`pre-bash-guard.py`，5 秒，拦截明显危险命令和禁止 Agent 执行的 Git 写操作。matcher 为 `Bash|PowerShell|Shell`；尽力而为，不代替工具原生权限与用户确认。 Git 全局选项支持等号、分隔和带空格引号路径；扫描真实命令替换，同时区分单引号字面文本及 Bash / PowerShell 的转义符。该检查不执行输入，也不声称完整解析动态 shell。
 - PreToolUse 编辑：`pre-encoding-snapshot.py`，5 秒，保存当前会话、调用与文件的 BOM/EOL 快照。
-- PostToolUse 编辑：`post-encoding-check.py`、`post-secret-detector.py`，各 10 秒，编码及密钥风险仅提醒；风险输出仅含编辑文件序号、行号和固定风险类型，不回显路径、源行或部分值。输入无效或适用文件不可读时给脱敏“检查未完成”提示，仍检查其余文件并保持非阻断。
+- PostToolUse 编辑：`post-encoding-check.py`、`post-secret-detector.py`，各 10 秒，编码及密钥风险仅提醒；风险输出仅含编辑文件序号、行号和固定风险类型，不回显路径、源行或部分值。输入无效或适用文件不可读时，`encoding_guard.py` 与 `pre-bash-guard.py` 异常 stderr 均脱敏为异常类型名（`{type(e).__name__}`），不回显原始路径或堆栈明文，仍检查其余文件并保持非阻断。
 - 编辑匹配覆盖原生工具和名称含写动词的 MCP 工具；读取工具不启动这些 hook。包装调用或未知工具不能据此声称受保护。
 
 编码状态保存在本端 `.state/encoding/`；每项使用独立哈希文件原子替换，不再共享读改写 JSON。快照最多保留 24 小时、1000 项。原生 `session_id` 与 `tool_use_id` 用于前后配对；缺少调用标识时只能按会话和路径尽力配对。测试可用 `CLAUDE_HOOK_STATE_DIR` 指向临时目录。

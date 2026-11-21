@@ -17,6 +17,8 @@ triggers: [使用Notion API, 集成Notion工作区, 操作Notion数据库]
 
 ### 安装SDK
 
+> 以下安装命令仅作示例，实际遵守项目锁文件与既有包管理器，不擅自全局安装或升级。
+
 ```bash
 # Python
 pip install notion-client

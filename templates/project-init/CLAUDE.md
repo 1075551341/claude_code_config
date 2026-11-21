@@ -1,5 +1,7 @@
 # {{PROJECT_NAME}} — Claude 入口
 
+> **作用域说明**：本模板仅用于 Claude Code 项目入口，不作通用模板。
+
 @AGENTS.md
 
 <!-- 若本业务项目内仅单端使用，可直接把约定写在本文件；多工具共用同仓时，@AGENTS.md 仅导入当前项目自身的根 AGENTS.md。 -->

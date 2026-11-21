@@ -4,7 +4,7 @@
 
 ## Overview
 
-The Skill Creator is a meta-skill designed to create effective skills with Huawei practices.
+The Skill Creator is a meta-skill designed to create effective, portable skills.
 
 ## Features
 
@@ -19,8 +19,8 @@ The Skill Creator is a meta-skill designed to create effective skills with Huawe
 Before this skill can be tested or deployed, ensure the following requirements are met:
 
 * **Python Environment:** Requires a standard Python 3.10+ to execute `scripts/init_skill.py`
-* **Dependencies:** Requires PyYAML package, install with command: `pip install pyyaml`
-* **Target Skill:** Requires the target skill to only be updated. Default is installed at the project level directory of agent, or specified by the user
+* **Dependencies:** Requires PyYAML package, example install command: `pip install pyyaml` (example only; follow the project's lockfile and existing package manager, and do not install or upgrade packages globally without authorization)
+* **Target Skill:** Requires the target skill to only be updated. Default is the skill directory supported by the current host (e.g., project `.agents/skills` or the host's native skill path), or specified by the user
 
 ## Local Testing & Usage
 
@@ -57,7 +57,7 @@ python scripts/quick_validate.py <skill-directory>
 
 ## Trigger Prompts & User Scenarios
 
-Examples of human prompts that should trigger the agent to invoke this skill. (**Note: all below scenarios are executing on OpenCode*)
+Examples of human prompts that should trigger the agent to invoke this skill. (**Note: paths below use a host-supported skill directory such as `.agents/skills` or the host's native skill path.*)
 
 - **Scenario 1: Create a simple new skill**
   - *User Prompt:* `Create a skill to greeting message as simple as possible`
@@ -67,8 +67,8 @@ Script Output by  `init_skill.py` (As intermediate process output for LLM reason
 
 ```bash
 Initializing skill: simple-greeting
-   Location: .opencode/skills
-Created skill directory: .opencode\skills\simple-greeting
+   Location: .agents/skills
+Created skill directory: .agents\skills\simple-greeting
 Created SKILL.md
 Created scripts/example.py
 Created references/api_reference.md
@@ -79,7 +79,7 @@ Copied template/README.md
 Copied template/CHANGELOG.md
 Copied template/LICENSE.md
 Copied template/LICENSE.txt
-Skill 'simple-greeting' initialized successfully at .opencode\skills\simple-greeting
+Skill 'simple-greeting' initialized successfully at .agents\skills\simple-greeting
 Next steps:
 1. Edit SKILL.md to complete the TODO items and update the description
 2. Customize or delete the example files in scripts/, references/, and assets/
@@ -97,13 +97,13 @@ Skill is valid!
 Skill Output (As final output for end user):
 
 ```markdown
-Created simple-greeting skill successfully at .opencode/skills/simple-greeting.
+Created simple-greeting skill successfully at .agents/skills/simple-greeting.
 ```
 
 The folder structure of created skill as below:
 
 ```bash
-.opencode/skills/simple-greeting
+.agents/skills/simple-greeting
 |   CHANGELOG.md
 |   LICENSE.md
 |   README.md
@@ -127,8 +127,8 @@ The folder structure of created skill as below:
 
   ```bash
   Initializing skill: python-greeting
-     Location: .opencode/skills
-  Created skill directory: .opencode\skills\python-greeting
+     Location: .agents/skills
+  Created skill directory: .agents\skills\python-greeting
   Created SKILL.md
   Created scripts/example.py
   Created references/api_reference.md
@@ -139,7 +139,7 @@ The folder structure of created skill as below:
   Copied template/CHANGELOG.md
   Copied template/LICENSE.md
   Copied template/LICENSE.txt
-  Skill 'python-greeting' initialized successfully at .opencode\skills\python-greeting
+  Skill 'python-greeting' initialized successfully at .agents\skills\python-greeting
   Next steps:
   1. Edit SKILL.md to complete the TODO items and update the description
   2. Customize or delete the example files in scripts/, references/, and assets/
@@ -157,13 +157,13 @@ The folder structure of created skill as below:
   Skill Output (As final output for end user):
 
   ```markdown
-  Created python-greeting skill successfully at .opencode/skills/python-greeting.
+  Created python-greeting skill successfully at .agents/skills/python-greeting.
   ```
 
   The folder structure of created skill as below:
 
   ```bash
-  .opencode/skills/python-greeting
+  .agents/skills/python-greeting
   |   CHANGELOG.md
   |   LICENSE.md
   |   README.md
@@ -179,7 +179,6 @@ The folder structure of created skill as below:
   +---scripts
   \---tests
           conftest.py
-          test_e2e.py
           test_greeting.py
   ```
 

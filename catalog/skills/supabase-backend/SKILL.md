@@ -18,6 +18,8 @@ triggers: [使用 Supabase 构建 BaaS 后端服务]
 
 ## 项目初始化
 
+> 以下安装命令仅作示例，实际遵守项目锁文件与既有包管理器（优先使用项目本地依赖或 `npx`），不擅自全局安装或升级。
+
 ```bash
 # 安装 CLI
 npm install -g supabase

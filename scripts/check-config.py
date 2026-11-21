@@ -12,7 +12,22 @@ HOOKS = {"pre-bash-guard.py": ("PreToolUse",5), "pre-encoding-snapshot.py": ("Pr
 CROSS_TOOL = re.compile(r"(?:[A-Za-z]:[/\\]Users[/\\][^/\\\s]+|~)[/\\](?:\.codex|\.agents|\.cursor|\.qoder(?:-cn)?|\.trae(?:-cn)?|\.dsh|\.openchamber|\.config[/\\]opencode)(?:[/\\]|\b)", re.I)
 MODEL = re.compile(r"\b(?:claude-(?:opus|sonnet|haiku)-[\w.-]+|gpt-[0-9][\w.-]*|gemini-\d[\w.-]*|deepseek-chat|kimi-k2)\b", re.I)
 SECRET = re.compile(r"(?:sk-ant-[A-Za-z0-9_-]{20,}|\bgh[pousr]_[A-Za-z0-9]{25,}|\bsk-[A-Za-z0-9_-]{32,})")
-RETIRED = ("skills/task-triage/", "skills/brainstorming/", "skills/writing-plans/", "skills/executing-plans/", "skills/change-impact-analysis/", "skills/skill-router/", "skills/ship/", "rules/CORE.md", "rules/DELEGATION.md", "rules/MCP.md", "rules/SECURITY.md", "check-adapters.py", "templates/harness-adapter.md")
+RETIRED = (
+    "skills/task-triage/", "skills/brainstorming/", "skills/writing-plans/",
+    "skills/executing-plans/", "skills/change-impact-analysis/", "skills/skill-router/",
+    "skills/ship/", "rules/CORE.md", "rules/DELEGATION.md", "rules/MCP.md",
+    "rules/SECURITY.md", "check-adapters.py", "templates/harness-adapter.md",
+    "内部核对七维", "七维模板", "七维",
+)
+CATALOG_TEMPLATE_RETIRED = re.compile(
+    r"(?:RULES_SECURITY\.md|RULES_CORE\.md|\bexecuting-plans\b|\bwriting-plans\b|"
+    r"\bdesign-brainstorming\b|\bimplementation-planning\b|\binstinct-learning\b|"
+    r"/design-html\b|\bcontext-rot-guard\b|\bquality-gate\b|七维|一键部署|发布到生产)"
+)
+CATALOG_TEMPLATE_BINDING = re.compile(
+    r"(?:via\s+claude-mem|claude-mem\s*(?:插件|边缘)|Claude\s*能够|\.opencode/skills|"
+    r"with\s+Huawei\s+practices|Claude\s+Code\s*原生)"
+)
 INDEX_HEADING = re.compile(r"^## (技能|角色|规则)（(\d+)）\s*$")
 
 
@@ -50,10 +65,20 @@ def hook_records(settings: dict) -> list[tuple[str,str,str,int]]:
 
 def active_texts(root: Path) -> list[Path]:
     paths=[root/n for n in ("CLAUDE.md","README.md")]
-    for folder in ("skills","agents","commands","rules","templates","snippets"):
+    for folder in ("skills","agents","commands","templates","snippets"):
         paths.extend((root/folder).rglob("*.md"))
     paths.extend(root/p for p in ("hooks/README.md","scripts/README.md"))
     return sorted({p for p in paths if p.is_file()})
+
+
+def catalog_and_template_texts(root: Path) -> list[Path]:
+    paths: list[Path] = []
+    exts = {".md", ".json", ".yml", ".yaml"}
+    for folder in ("catalog", "templates"):
+        base = root / folder
+        if base.is_dir():
+            paths.extend(p for p in base.rglob("*") if p.is_file() and p.suffix.lower() in exts)
+    return sorted(set(paths))
 
 
 def check(root: Path) -> tuple[list[str],list[str]]:
@@ -85,6 +110,14 @@ def check(root: Path) -> tuple[list[str],list[str]]:
     require(not (root/"AGENTS.md").exists(), "remove global AGENTS.md; Claude uses CLAUDE.md")
     if (root/"CLAUDE.md").exists():
         require("@AGENTS.md" not in (root/"CLAUDE.md").read_text(encoding="utf-8"), "Claude entry must be self-contained without @AGENTS.md")
+    if (root/"package.json").is_file() and (root/"README.md").is_file():
+        try:
+            pkg_ver = str(json.loads((root/"package.json").read_text(encoding="utf-8")).get("version","")).strip()
+            readme_first = (root/"README.md").read_text(encoding="utf-8").splitlines()[0]
+            m_ver = re.search(r"\bv(\d+\.\d+\.\d+)\b", readme_first)
+            require(bool(pkg_ver) and bool(m_ver) and pkg_ver == m_ver.group(1), f"version mismatch between package.json ({pkg_ver}) and README.md")
+        except (OSError, ValueError, IndexError) as exc:
+            errors.append(f"invalid version metadata: {type(exc).__name__}")
     for path in active_texts(root):
         text=path.read_text(encoding="utf-8");rel=path.relative_to(root)
         require(not CROSS_TOOL.search(text),f"cross-tool runtime dependency: {rel}")
@@ -100,6 +133,15 @@ def check(root: Path) -> tuple[list[str],list[str]]:
             target=target.split("#",1)[0]
             if target and not target.startswith("../"):
                 require((path.parent/target).exists(),f"broken markdown link in {rel}")
+    for path in catalog_and_template_texts(root):
+        text=path.read_text(encoding="utf-8");rel=path.relative_to(root)
+        require(not CROSS_TOOL.search(text),f"cross-tool runtime dependency in {rel}")
+        require(not MODEL.search(text),f"model binding in {rel}")
+        require(not SECRET.search(text),f"credential-like literal in {rel}")
+        m_ret=CATALOG_TEMPLATE_RETIRED.search(text)
+        require(not m_ret,f"retired reference in {rel}: {m_ret.group(0) if m_ret else ''}")
+        m_bind=CATALOG_TEMPLATE_BINDING.search(text)
+        require(not m_bind,f"executor/tool binding in {rel}: {m_bind.group(0) if m_bind else ''}")
     records={}
     for filename in ("settings.example.json","settings.json"):
         path=root/filename

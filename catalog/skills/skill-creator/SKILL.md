@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 # Skill Creator
 
-This skill provides guidance for creating effective skills with Huawei practices.
+This skill provides guidance for creating effective, portable skills.
 
 ## 前言：技能编写元理念（v11 并入原 writing-skills，source: obra/superpowers）
 
@@ -20,8 +20,8 @@ This skill provides guidance for creating effective skills with Huawei practices
 
 | 类型 | 说明 | 示例 |
 |------|------|------|
-| Technique | 可重复的操作步骤 | brainstorming, systematic-debugging |
-| Pattern | 可识别的问题-解决方案对 | context-rot-guard, quality-gate |
+| Technique | 可重复的操作步骤 | development-workflow, systematic-debugging |
+| Pattern | 可识别的问题-解决方案对 | memory-compression, verification-before-completion |
 | Reference | 查阅型知识 | api-documentation, code-standards |
 
 ### 编写流程（TDD 循环）
@@ -206,7 +206,7 @@ If you had already asked for the user confirmation, and user typed their propose
 Prepare the following variables for the following steps:
 
 * `<skill-name>`: The exact, valid skill name confirmed in Step 1
-* `<output-directory>`: The default path is project level directory of Agent (E.g. If you're OpenCode, the default path should be `.opencode/skills`) Use the user's provided path if they give one.
+* `<output-directory>`: The default path is the skill directory supported by the current host (e.g., project `.agents/skills` or the host's native skill path). Use the user's provided path if they give one.
 
 You must trigger an interactive terminal menu that allows the user to select an option using their arrow keys and the Enter key. **DO NOT just print plain text or Markdown checkboxes.**
 
@@ -378,10 +378,10 @@ Review the capabilities and requirements defined in `SKILL.md` and `README.md`. 
 First, check the `scripts/` folder for the target skill. 
 
 * **If NO scripts exist in the `scripts/` folder:** Do not generate any tests, and proceed to the next step.
-* **If scripts DO exist in the `scripts/` folder:** Generate comprehensive Unit and End-to-End (E2E) tests in the `tests/` folder adhering strictly to the following requirements:
+* **If scripts DO exist in the `scripts/` folder:** Write targeted unit tests in the `tests/` folder scaled to the script's complexity, covering positive cases, negative/expected-failure cases, and boundary conditions (only add E2E tests when explicitly requested by the user or required by multi-step external integration):
   * **Import Pattern (Zero Collisions):** Reuse the previously generated `tests/conftest.py` to handle imports. Import your script modules cleanly (e.g., `from scripts.module_name import function_name`).
-  * **Naming Conventions:** Unit test files MUST be prefixed with `test_` (e.g., `test_data_fetcher.py`).The E2E test file MUST be exactly named `test_e2e.py`.
-  * **Pytest Markers:** You MUST add the appropriate decorators to your test classes or methods: Use `@pytest.mark.unit` for all unit tests. Use `@pytest.mark.e2e` for all E2E tests.
+  * **Naming Conventions:** Unit test files MUST be prefixed with `test_` (e.g., `test_data_fetcher.py`). If an E2E test file is needed per explicit request, name it `test_e2e.py`.
+  * **Pytest Markers:** Add `@pytest.mark.unit` for unit tests (and `@pytest.mark.e2e` only when explicit E2E tests are present).
 
 ### Step 7: Validating a Skill
 

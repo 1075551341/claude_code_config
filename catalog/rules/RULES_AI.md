@@ -129,7 +129,7 @@ const AnalysisSchema = z.object({
 
 ## 安全考量
 
-> 详细安全规范见 `RULES_SECURITY.md`
+> 遵循本端通用安全红线与方法库安全参考（可按需参考 `security-best-practices`）。
 
 ```
 敏感信息：不在 prompt 中含敏感数据 / 日志脱敏 / 环境变量存密钥

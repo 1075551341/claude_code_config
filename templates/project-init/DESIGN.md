@@ -51,7 +51,7 @@ design_system:
 
 1. **Token 优先**：组件引用 token（`var(--color-primary)`），不硬编码色值。
 2. **单一来源**：项目根 `DESIGN.md` 是设计系统 SSOT。
-3. **按需引用**：复杂 UI 可读 `catalog/skills/ui-ux-pro-max`；不要把它复制进项目。
+3. **项目内自足**：仅在当前项目内维护实际使用的设计 Token，不在项目文档中跨端或跨全局目录硬引用外部技能路径。
 4. **可读性**：`DESIGN.md` 是给人和 AI 共用的「设计系统说明书」，只写实际使用的 token。
 
 ## 与工作流的关系

@@ -89,3 +89,12 @@
   - `memory-compression` 与 `templates/artifacts/STATE.md`：恢复「已排除方案与失败尝试」及「验证证据」，对齐模板字段。
   - `deep-research`：恢复 L1/L2/L3 比例深度分档与三态证据区分。
   - `check-config.py` 与 `test_hooks.py`：强制检验无全局 `AGENTS.md` / `@AGENTS.md`、补充 `tools/` 引用校验及扩展模型绑定检测。
+
+
+## 2026-11-21 v16.0 单责精炼、全域净化与审核三类验证
+
+- **L0–L3 单一职责去重**：精炼 `CLAUDE.md`（52 行）与通用 `AGENTS.md`（46 行）及 8 技能、4 角色、8 命令，消除入口/技能/角色间 9 类重复，并明确方法目录路径与目标项目路径边界，修复 32 处跨项目引用歧义。
+- **审查收口与三类验证门槛**：彻底废除旧双轨审查术语并收口为“符合预期要求”与“原功能保持”两道关；规范正文与审查角色明确要求缺陷修复、高风险改动及审核验证须覆盖**正向功能 + 反向/预期失败 + 边界条件**三类实测；审查移交包增加“有意行为变更与保持契约对照”。
+- **低负担上游补强**：`development-workflow` 与 `change-implementer` 补强同行/同类横向清扫（Sibling Pattern Sweep）；调试与开发补强外部库/API 禁脑补（以项目锁文件源码或官方文档实查为准）；`memory-compression` 与 `templates/artifacts/STATE.md` 显式区分用户既有未提交改动与基线测试状态。
+- **`catalog/` 与 `templates/` 全域净化**：清零退役死链与 154 条索引/源文件不一致项，补全 `webapp-testing`/`qa-engineer`/`performance-engineer` 浏览器显式授权，移除 `land-and-deploy` 越权自动提交/发布指令，并中性化全部执行者模型/工具硬绑定。
+- **守卫脱敏与 8 端独立落地清理**：5 端 hook 异常 stderr 统一脱敏为 `{type(e).__name__}`；`check-config.py`（Claude 与 Antigravity）扩展扫描 `catalog/` 与 `templates/` 及版本一致性；非 Claude 7 端移除冗余 `tools/` 与 `graph-refresh.md`（仅留 Claude 本端按需使用），清理 Claude、Codex、Cursor 残留及 `.openchamber` 冗余配置项（完整保留用户 `.openchamber/screenshots/` 6 张截图）。

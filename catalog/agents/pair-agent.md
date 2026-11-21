@@ -35,9 +35,7 @@ tools: Read, Write, Bash, Glob, Grep, WebFetch
 - 活动日志：完整记录每个 Agent 的操作序列
 
 ## 支持的 Agent
-- Claude Code（本地/远程）
-- Cursor
-- OpenClaw
+- 各类本地/远程 AI 编码 Agent
 - 任何支持 curl 的 Agent
 
 ## 输出
