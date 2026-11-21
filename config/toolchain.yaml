@@ -1,0 +1,22 @@
+# 项目工具链选择原则（v15）
+# 本文件不要求所有项目安装同一套运行时或包管理器。
+policy:
+  precedence:
+    - project instructions and manifest
+    - lockfile and CI
+    - installed compatible tools
+  missing_required_tool: report the actual task dependency and an installation option
+  missing_optional_tool: use equivalent built-in capabilities and disclose the limit
+  automatic_upgrade: false
+  switch_package_manager: require a task-specific reason and preserve the lockfile
+
+platform:
+  shell: use the host-supported shell with safe quoting and explicit working directory
+  file_io: preserve the target encoding, BOM and line endings
+  destructive_operations: validate resolved targets and confirm authorization
+
+runtime:
+  version: follow the project manifest, runtime pin or CI
+  dependencies: reuse existing environment and declared package manager
+  new_project: choose a compatible maintained toolchain only when needed and record the choice
+  tool_servers: keep any necessary runtime pins in this tool's own optional server definition

@@ -8,9 +8,9 @@ disable-model-invocation: true
 loading_tier: L3
 ---
 
-# 品味记忆（via claude-mem）
+# 跨会话品味记忆
 
-不修改 claude-mem 插件，通过 observation 存储设计偏好。
+若宿主具备记忆工具则按需写入，否则记录于项目设计文档（如 `DESIGN.md`）；敏感偏好不写入记忆。
 
 ## 记录什么
 
@@ -25,24 +25,23 @@ loading_tier: L3
 ## 工作流
 
 ```
-1. 用户表达偏好 → 写入 observation（标签: taste-preference）
-2. 新 UI 任务前 → claude-mem search "taste-preference"
-3. designer / design-shotgun 审查时引用已存偏好
-4. 冲突时询问用户，更新 observation
+1. 用户表达偏好 → 写入宿主可用记忆（标签: taste-preference）或项目设计文档
+2. 新 UI 任务前 → 用可用记忆工具检索 "taste-preference" 或查阅项目设计文档
+3. UI/UX 审查或 design-shotgun 探索时引用已存偏好
+4. 冲突时询问用户，更新已存偏好记录
 ```
 
-## 存储格式（observation 摘要）
+## 存储格式（摘要）
 
 ```
 [taste] density=minimal | theme=dark | reject=gradient-slop | prefer=system-fonts
 ```
 
-## 与 instinct-learning 边界
+## 职责边界
 
-- **instinct-learning**：编码/工作流模式（置信度评分）
-- **taste-memory**：设计/UI 偏好（主观、长期）
-- 不互博：各管各的 concern
+- **通用编码/工作流交接**：记录仓库约束、技术决策与任务状态（由标准工作流/交接记录承载）
+- **taste-memory**：专注设计/UI 偏好（主观、跨会话风格偏好），与通用编码/工作流交接分开记录
 
 ## 私密
 
-敏感偏好用 `<private>...</private>` 阻止存储（claude-mem 边缘剥离）
+敏感偏好（含账号、密钥或隐私信息）严禁写入跨会话记忆或外部存储。

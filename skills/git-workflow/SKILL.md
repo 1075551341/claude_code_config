@@ -1,62 +1,15 @@
 ---
 name: git-workflow
-description: Git 工作流。触发词：git commit | git分支 | 提交代码 | 创建分支 | merge | rebase | 版本管理
-triggers: [commit, 提交, git commit, 创建提交, 保存更改]
-layer: supplement
-disable-model-invocation: true
-loading_tier: L3
-source: user-rules-migration
+description: 检查 Git 差异、处理分支协作并准备提交、PR 或发布材料；不自动提交或推送，也不用于常规代码调试或需求设计。
 ---
 
-# Git 提交流程
+# Git 与交付准备
 
-> **L3**：用户显式要求 commit 或「提交」时 Read 全文。
+尊重仓库已有分支与提交约定，不为小项目强加多层分支模型。先执行只读检查（`git status --short`、`git diff`、`git diff --cached`），区分**用户既有改动与本任务改动**。
 
-## 安全协议
-
-- **禁止** Agent **自动** `git commit` / `git stash`（Cursor Guard `ask`/`deny` + Claude `pre-bash-guard`）
-- **禁止** `git stash`（任何形式）；换用 `git worktree` 或用户本地处理
-- **仅当**用户本条消息**显式**要求「提交/commit」时才可 `git commit`（Cursor 会弹窗确认）
-- **禁止**修改 git config
-- **禁止**破坏性命令（`push --force`、`hard reset` 等），除非用户明确要求
-- **禁止**跳过 hooks（`--no-verify`、`--no-gpg-sign` 等），除非用户明确要求
-- **禁止**对 main/master force push；用户要求时须警告
-- **避免** `git commit --amend`，仅当以下**全部**满足：
-  1. 用户明确要求 amend，或 pre-commit hook 自动改文件需纳入
-  2. HEAD 由本会话创建（`git log -1 --format='%an %ae'`）
-  3. 提交**未** push 到 remote
-- hook **失败**时：修复后**新建** commit，**不要** amend
-- 已 push 的提交：**不要** amend（除非用户明确要求且接受 force push）
-- **禁止**提交含密钥的文件（`.env`、`credentials.json` 等）；用户要求时警告
-
-## 提交流程
-
-1. **并行**执行：
-   - `git status`（含 untracked）
-   - `git diff`（staged + unstaged）
-   - `git log`（近期 message 风格）
-2. 分析变更，起草 1–2 句 commit message（强调 why）
-3. **顺序**执行：
-   - `git add` 相关文件
-   - `git commit`（HEREDOC 传 message）
-   - `git status` 验证成功
-4. hook 失败 → 修复 → **新** commit
-
-## Commit message 格式
-
-```bash
-git commit -m "$(cat <<'EOF'
-<type>: <why-focused summary>
-
-EOF
-)"
-```
-
-遵循仓库既有风格；无约定时用 conventional commits。
-
-## 禁止
-
-- 无变更时 empty commit
-- 用户未要求时不主动 commit
-- **禁止** Agent 执行 `git stash`（任何子命令）
-- `git` 带 `-i` 交互标志
+- 严格遵守入口 Git 写禁令（不执行 `git stash`/`git commit`/`git push`），需要时为用户准备精确命令与摘要。
+- 不丢弃用户改动，不静默强推或重写历史；冲突先理解两边意图、确认保全方式，再在授权范围内解决。
+- 提交准备只包含与当前交付直接相关的最小改动集，排除凭据、环境秘密、大二进制与无关运行产物。
+- 有需要时建议 `<type>(<scope>): <subject>`，正文解释原因，一次提交聚焦一个可审查问题。
+- PR 说明先说具体问题与结果，再列三态验证证据、兼容影响与回滚方式；仅用户明确要求时进入 PR/发布操作，先完成适用验证与审查，用户手动推送后再执行依赖远端分支的步骤。
+- 发布前核对版本、配置示例、迁移说明与恢复路径；未验证生产行为不得写成发布成功。

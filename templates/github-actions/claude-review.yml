@@ -1,3 +1,4 @@
+# 作用域说明：本模板仅用于 Claude Action（anthropics/claude-code-action）CI 审查，不作通用审查工作流模板。
 name: Claude Code Review
 
 on:
@@ -5,8 +6,6 @@ on:
     types: [opened, synchronize]
   issue_comment:
     types: [created]
-    # 触发: 评论包含 @claude
-    if: contains(github.event.comment.body, '@claude')
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
@@ -14,9 +13,10 @@ concurrency:
 
 jobs:
   review:
+    if: github.event_name == 'pull_request' || contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       issues: write
 
@@ -39,9 +39,13 @@ jobs:
             4. **Breaking changes**: Public API, schema, config changes
             5. **Code quality**: Dead code, error handling, naming
 
+            PASS requires BOTH bars, each with evidence:
+            - Requirements met: every change maps to the PR's stated goals; nothing missing or out of scope.
+            - Original functionality preserved: no silent regressions vs the base branch (cite tests/checks);
+              list every intentional behavior change.
+
             Provide checkbox progress tracking during long reviews.
-            End with a summary: ✅ / ⚠️ / ❌ status per category.
+            End with a summary: ✅ / ⚠️ / ❌ status per category, then a verdict line: PASS or NEEDS-CHANGES.
 
             If called via @claude comment, respond to the specific question.
-          model: claude-sonnet-4-20250514
           timeout_minutes: 10

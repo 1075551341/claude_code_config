@@ -1,135 +1,92 @@
 #!/usr/bin/env python3
-"""
-PostToolUse Hook: 自动代码格式化
-文件编辑/写入后自动运行格式化工具
-支持：TS/JS (Prettier)、Python (Ruff/Black)、Go (gofmt)、Rust (rustfmt)
-
-修复记录：
-- FIX: json.loads 替代 json.load(sys.stdin) 避免 stdin 流问题
-- FIX: BaseException/SystemExit 分离捕获
-- FIX: subprocess 统一超时 + TimeoutExpired 捕获
-- FIX: find_prettier 使用 shutil.which 跨平台查找
-"""
-# source: shanraisshan/claude-code-best-practice
+"""Optional project formatter. Not registered globally; never downloads tools."""
+from __future__ import annotations
 import json
-import sys
-import io
-import subprocess
 import os
 import shutil
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
 
-try:
-    if hasattr(sys.stdout, "buffer"):
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-except Exception as e:
-    print(f"⚠️ {e}", file=sys.stderr)
+sys.path.insert(0, str(Path(__file__).resolve().parent / "_lib"))
+from tool_paths import extract_edit_paths, is_edit_tool
 
 
-def run(cmd: list | str, cwd=None) -> bool:
+def run(command: list[str], cwd: Path) -> bool:
     try:
-        if isinstance(cmd, str):
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=cwd)
-        else:
-            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=cwd)
-        return result.returncode == 0
-    except subprocess.TimeoutExpired:
+        result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"formatter failed: {type(exc).__name__}", file=sys.stderr)
         return False
-    except FileNotFoundError:
+    if result.returncode:
+        print(f"formatter failed: exit={result.returncode}; run the project's formatter directly for diagnostics", file=sys.stderr)
         return False
-    except Exception:
-        return False
+    return True
 
 
-def find_prettier(project_root: str) -> str | None:
-    if not project_root:
-        return None
-    for name in ("prettier", "prettier.cmd"):
-        candidate = os.path.join(project_root, "node_modules", ".bin", name)
-        if os.path.exists(candidate):
-            return candidate
+def find_project(path: Path) -> Path | None:
+    for directory in (path.parent, *path.parent.parents):
+        if any((directory / name).exists() for name in ("package.json", "pyproject.toml", "go.mod", "Cargo.toml", ".git")):
+            return directory
     return None
 
 
-def find_project_root(file_path: str) -> tuple[str | None, str | None]:
+def formatter(path: Path, project: Path) -> list[str] | None:
+    """Require a project formatter config even when a global binary exists."""
+    ext = path.suffix.lower()
+    if ext in {".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".json", ".md", ".html", ".yaml", ".yml"}:
+        configured = any(project.glob(".prettierrc*")) or any(project.glob("prettier.config.*"))
+        package = project / "package.json"
+        if package.exists():
+            configured = configured or "prettier" in json.loads(package.read_text(encoding="utf-8"))
+        if not configured:
+            return None
+        candidates = (project / "node_modules/.bin/prettier.cmd", project / "node_modules/.bin/prettier")
+        executable = next((str(p) for p in candidates if p.is_file()), None) or shutil.which("prettier")
+        return [executable, "--write", "--end-of-line", "auto", str(path)] if executable else None
+    if ext == ".py":
+        tools = {}
+        config = project / "pyproject.toml"
+        if config.exists():
+            tools = tomllib.loads(config.read_text(encoding="utf-8")).get("tool", {})
+        for tool in ("ruff", "black"):
+            configured = tool in tools or (tool == "ruff" and any((project / name).exists() for name in ("ruff.toml", ".ruff.toml")))
+            if not configured:
+                continue
+            local = project / ".venv" / ("Scripts" if os.name == "nt" else "bin") / (tool + (".exe" if os.name == "nt" else ""))
+            executable = str(local) if local.is_file() else shutil.which(tool)
+            if executable:
+                return [executable, "format", str(path)] if tool == "ruff" else [executable, str(path)]
+    if ext == ".rs" and any((project / name).is_file() for name in ("rustfmt.toml", ".rustfmt.toml")):
+        executable = shutil.which("rustfmt")
+        return [executable, str(path)] if executable else None
+    opt_in = project / ".claude/format.json"
+    if ext == ".go" and opt_in.exists() and json.loads(opt_in.read_text(encoding="utf-8")).get("gofmt") is True:
+        executable = shutil.which("gofmt")
+        return [executable, "-w", str(path)] if executable else None
+    return None
+
+
+def main() -> int:
     try:
-        directory = os.path.dirname(os.path.abspath(file_path))
-        markers = {
-            "package.json": "node",
-            "pyproject.toml": "python",
-            "setup.py": "python",
-            "go.mod": "go",
-            "Cargo.toml": "rust",
-        }
-        for _ in range(10):
-            for marker, proj_type in markers.items():
-                if os.path.exists(os.path.join(directory, marker)):
-                    return directory, proj_type
-            parent = os.path.dirname(directory)
-            if parent == directory:
-                break
-            directory = parent
-    except Exception as e:
-        print(f"⚠️ {e}", file=sys.stderr)
-    return None, None
-
-
-def main():
-    try:
-        try:
-            raw = sys.stdin.read()
-            data = json.loads(raw) if raw.strip() else {}
-        except Exception:
-            sys.exit(0)
-
-        tool_name  = data.get("tool_name", "")
-        tool_input = data.get("tool_input", {})
-
-        if tool_name not in ("Edit", "Write", "MultiEdit"):
-            sys.exit(0)
-
-        file_path = tool_input.get("file_path", "")
-        if not file_path or not os.path.exists(file_path):
-            sys.exit(0)
-
-        ext = os.path.splitext(file_path)[1].lower()
-        project_root, _ = find_project_root(file_path)
-
-        # TypeScript / JavaScript / CSS / JSON / Markdown / HTML
-        # --end-of-line auto：保留文件既有行尾（v11.4.2 防止 prettier 默认 LF 静默改写 CRLF 配置文件）
-        if ext in (".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".json", ".md", ".html", ".yaml", ".yml"):
-            local_prettier = find_prettier(project_root)
-            if local_prettier:
-                run([local_prettier, "--write", "--end-of-line", "auto", file_path])
-            elif shutil.which("prettier"):
-                run(["prettier", "--write", "--end-of-line", "auto", file_path])
-            else:
-                run(f'npx --yes prettier --write --end-of-line auto "{file_path}"')
-
-        elif ext == ".py":
-            if shutil.which("ruff"):
-                run(["ruff", "format", file_path])
-            elif shutil.which("black"):
-                run(["black", file_path])
-
-        elif ext == ".go":
-            if shutil.which("gofmt"):
-                run(["gofmt", "-w", file_path])
-
-        elif ext == ".rs":
-            if shutil.which("rustfmt"):
-                run(["rustfmt", file_path])
-
-        elif ext in (".java",):
-            if shutil.which("google-java-format"):
-                run(["google-java-format", "--replace", file_path])
-
-    except SystemExit:
-        raise
-    except Exception as e:
-        print(f"⚠️ {e}", file=sys.stderr)
-
-    sys.exit(0)
+        data = json.loads(sys.stdin.read() or "{}")
+        if not is_edit_tool(str(data.get("tool_name", "")), data.get("tool_input", {})):
+            return 0
+        failed = False
+        for value in extract_edit_paths(data.get("tool_input", {}), str(data.get("cwd", ""))):
+            path = Path(value)
+            if not path.is_file():
+                continue
+            project = find_project(path)
+            command = formatter(path, project) if project else None
+            if command and not run(command, project):
+                failed = True
+        return 1 if failed else 0
+    except (OSError, ValueError, TypeError) as exc:
+        print(f"formatter configuration failed: {type(exc).__name__}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -1,7 +1,6 @@
 ---
 name: backend-developer
 description: 负责后端API与服务开发（RESTful/GraphQL/gRPC）、数据库设计、认证授权、OpenAPI文档。触发词：后端、API、数据库、服务端、Express、FastAPI、Django、GraphQL、gRPC、Swagger、OpenAPI。
-model: inherit
 color: green
 tools:
   - Read

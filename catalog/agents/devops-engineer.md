@@ -1,7 +1,6 @@
 ---
 name: devops-engineer
 description: DevOps/运维专家，覆盖 CI/CD、容器化、Terraform/IaC、监控告警与自动化部署。触发词：CI/CD、Docker、Kubernetes、K8s、部署、容器、流水线、GitHub Actions、GitLab CI、Jenkins、Nginx、Helm、监控配置、运维、基础设施、自动化部署、Terraform、IaC、云资源、VPC、ECS、RDS、多环境管理。
-model: inherit
 color: purple
 tools:
   - Read

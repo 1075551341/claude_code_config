@@ -1,0 +1,76 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@colbymchenry/codegraph@1.6.0",
+        "serve",
+        "--mcp"
+      ],
+      "type": "stdio"
+    },
+    "code-review-graph": {
+      "type": "stdio",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\uvx.exe",
+        "--python",
+        "C:\\Python312\\python.exe",
+        "--with",
+        "code-review-graph==2.3.8",
+        "code-review-graph",
+        "serve"
+      ]
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\serena.exe",
+        "start-mcp-server",
+        "--context",
+        "ide",
+        "--open-web-dashboard",
+        "false"
+      ],
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=1536"
+      }
+    },
+    "everything": {
+      "type": "stdio",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\DELL\\.claude\\scripts\\python-mcp.ps1",
+        "C:\\Users\\DELL\\.local\\bin\\uvx.exe",
+        "--python",
+        "C:\\Python312\\python.exe",
+        "--with",
+        "mcp<2",
+        "everything-mcp==1.0.6"
+      ]
+    },
+    "grep": {
+      "url": "https://mcp.grep.app",
+      "type": "http"
+    }
+  },
+  "description": ""
+}

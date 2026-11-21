@@ -1,7 +1,6 @@
 ---
 name: performance-analyzer
 description: 负责代码性能分析和优化任务。当需要分析性能瓶颈、排查内存泄漏、优化数据库查询、解决页面卡顿、优化接口响应时间、分析CPU占用过高、优化前端渲染性能、解决N+1查询问题、优化缓存策略、分析Bundle大小时调用此Agent。触发词：性能分析、性能优化、性能瓶颈、内存泄漏、慢查询、页面卡顿、接口慢、N+1查询、缓存优化、Bundle优化、渲染优化、CPU过高、性能检查。
-model: inherit
 color: orange
 tools:
   - Read

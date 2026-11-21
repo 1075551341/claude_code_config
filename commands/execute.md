@@ -1,9 +1,7 @@
 ---
-description: 按已批准计划执行实现（③执行阶段）
+description: 执行已批准范围
 ---
 
-# /execute — 按计划执行
+# 执行
 
-③执行阶段入口。**正文 SSOT → Read `skills/executing-plans/SKILL.md`**（依赖序执行、失败隔离、状态摘要；R5 同方案≤2 次、R10 简洁、R11 安全），本命令不复写流程（v11.1 薄壳化）。
-
-门控：所有子任务完成 ✓ + 构建/类型/Lint 通过 ✓ + 交叉验证清单通过 ✓（→ ④ `/verify`）。
+按需读方法库 `skills/development-workflow/SKILL.md` 的“按批准范围执行”。按依赖实现、横向清扫同类点并清零消费者旧引用，收集三类实测验证结果。

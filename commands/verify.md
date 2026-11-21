@@ -1,13 +1,7 @@
 ---
-description: 交叉验证与质量门检查（④验证阶段）
+description: 核验当前改动与既有行为
 ---
 
-# /verify — 交叉验证与质量门检查
+# 验证
 
-对已完成工作执行完整验证。Claim → Evidence，每项验证必须附证据。
-
-**正文 SSOT**：Read `skills/verification-before-completion/SKILL.md`（verify_tier 两档 + 全部验证清单 + 质量门 + 审查委派 + 反合理化检查）。
-
-流程：确认 verify_tier → 按清单逐项验证并贴命令证据 → 输出会话终验（R20）逐条回放（满足/遗漏/错改/漏改/原功能；核对范围=blast-radius 全部相关项，非仅已编辑文件；漏改须含文档或无文档影响；原功能须含证据/测试/冒烟；模板见 verification skill）→ 输出验证报告（通过）或失败项+修复方案（不声称完成）。
-
-> 硬门兜底：Claude Stop `stop-verification-gate.py` 未通过 exit 2。Cursor 完成门不 followup（规则驱动：change-implementer 修改→验证→eng-reviewer 一次找齐、每轮全新开审）。验证全绿后才执行 `sync.ps1`。
+按需读方法库 `skills/verification-before-completion/SKILL.md`，按风险执行正向、反向/预期失败与边界检查，严格区分 `[已实测验证]`、`[代码推断]` 与 `[未验证]`。

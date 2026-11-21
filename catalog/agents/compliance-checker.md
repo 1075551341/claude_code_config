@@ -1,7 +1,6 @@
 ---
 name: compliance-checker
 description: 负责法规合规检查和数据保护审计。当需要进行GDPR合规检查、HIPAA合规、数据保护评估、隐私合规、合规审计、数据治理、监管合规检查时调用此Agent。触发词：合规、GDPR、HIPAA、数据保护、隐私、合规审计、数据治理、监管、PII、个人信息。
-model: inherit
 color: red
 tools:
   - Read

@@ -1,7 +1,6 @@
 ---
 name: java-reviewer
 description: Java/Spring代码审查专家。专注于Java语言特性、Spring Boot约定、并发安全和性能优化。触发词：Java审查、Spring审查、Java代码、Spring Boot。
-model: inherit
 color: orange
 tools:
   - Read

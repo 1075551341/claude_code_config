@@ -5,6 +5,8 @@ globs: ["*.rs", "Cargo.toml"]
 
 # Rust 开发规则
 
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
+
 ## 所有权与借用
 
 - 遵循所有权规则：一个所有者、借用不超生命周期
@@ -15,8 +17,8 @@ globs: ["*.rs", "Cargo.toml"]
 ## 错误处理
 
 - 使用 Result<T, E>，不使用 panic!（除不可恢复错误）
-- 库代码定义自定义 Error 枚举 + thiserror
-- 应用代码用 anyhow 或 eyre
+- 库代码按项目约定定义错误类型；已有 thiserror 时可复用，标准库能满足时无需引入
+- 应用代码复用项目既有错误处理；anyhow / eyre 是可选方案，不强制新增
 - ? 操作符传播错误，不手动 match
 - 避免 unwrap() / expect() 在生产代码中
 
@@ -31,7 +33,7 @@ globs: ["*.rs", "Cargo.toml"]
 
 - Send + Sync 标记线程安全
 - 优先用 std::sync 通道 / crossbeam 而非共享状态
-- async/await 用 tokio 运行时
+- async/await 遵循项目现有运行时；tokio 仅为可选方案，不强制替换
 - 避免在异步代码中调用阻塞操作（用 spawn_blocking）
 
 ## 性能
@@ -43,40 +45,21 @@ globs: ["*.rs", "Cargo.toml"]
 
 ## 时间处理
 
-### 禁止直接 `Utc::now()` / `SystemTime::now()`，通过 Clock trait 注入
-
-使用 chrono / time crate 作为时间库，并通过 trait 注入实现可测试性。
+优先复用项目依赖。简单时间点使用标准库 `SystemTime`，耗时测量使用单调的 `Instant`；需要日历、解析或时区能力时，再评估项目已有 chrono / time crate，不强制新增库。时间影响业务判断时注入取时能力，避免测试依赖真实时钟。
 
 ```rust
-// ❌ 禁止在业务逻辑中直接调用
-let now = Utc::now();
-let now = SystemTime::now();
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-// ✅ chrono（功能全面）+ Clock trait 注入
-use chrono::{DateTime, Utc};
+trait Clock { fn now(&self) -> SystemTime; }
+struct SystemClock;
+impl Clock for SystemClock { fn now(&self) -> SystemTime { SystemTime::now() } }
+struct FixedClock(SystemTime);
+impl Clock for FixedClock { fn now(&self) -> SystemTime { self.0 } }
 
-trait Clock { fn now(&self) -> DateTime<Utc>; }
-struct SystemClock; impl Clock for SystemClock { fn now(&self) -> DateTime<Utc> { Utc::now() } }
-struct FixedClock(DateTime<Utc>); impl Clock for FixedClock { fn now(&self) -> DateTime<Utc> { self.0 } }
-
-fn create_service(clock: &dyn Clock) { let now = clock.now(); }
-
-// ✅ 测试中注入固定时间
-let svc = create_service(&FixedClock(Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap()));
-
-// ✅ time crate（更轻量、更安全）
-// use time::OffsetDateTime;
-// trait Clock { fn now(&self) -> OffsetDateTime; }
+fn create_service(clock: &dyn Clock) -> SystemTime { clock.now() }
+let fixed = FixedClock(UNIX_EPOCH + Duration::from_secs(1_735_689_600));
+let result = create_service(&fixed);
 ```
-
-### 时间库选型
-
-| 场景 | 推荐 | 理由 |
-|------|------|------|
-| 功能全面 | chrono | 日期时间解析、格式化、时区 |
-| 轻量安全 | time | 无 panic、更小体积 |
-
-例外：CLI 一次性脚本、纯 UI 展示
 
 ## Clippy
 

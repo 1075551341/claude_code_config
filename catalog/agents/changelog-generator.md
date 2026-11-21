@@ -1,7 +1,6 @@
 ---
 name: changelog-generator
 description: 变更日志生成专家。当需要从 git 提交历史生成面向用户的变更日志、从技术提交转换为客户友好的发布说明时调用此 Agent。触发词：变更日志、changelog、发布说明、版本更新、release notes。
-model: inherit
 color: green
 tools:
   - Read

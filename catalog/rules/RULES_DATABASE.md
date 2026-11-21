@@ -1,6 +1,5 @@
 ---
 description: 数据库设计、查询、迁移相关任务时启用
-alwaysApply: false
 ---
 
 # 数据库规则（专用）

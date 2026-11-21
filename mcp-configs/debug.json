@@ -1,13 +1,19 @@
 {
   "toolset": "debug",
-  "description": "chrome-devtools 回退配方。默认不要 merge；Agent 禁止自动 merge。Claude/Cursor plugin 默认关，需要时中断请用户开 Plugin。钉 1.8.0 + --isolated。",
-  "servers": ["chrome-devtools"],
-  "enable": "仅当用户已确认且 Plugin 不可用时才由用户 merge 到 .mcp.json；用完删除以免与 plugin 双挂",
+  "description": "chrome-devtools 回退配方。默认不要 merge；Agent 禁止自动 merge。宿主插件默认关，需要时中断请用户开插件。钉 1.8.0 + --isolated。",
+  "servers": [
+    "chrome-devtools"
+  ],
+  "enable": "仅当用户已确认且插件不可用时才由用户 merge 到 .mcp.json；用完删除以免与插件双挂",
   "mcpServers": {
     "chrome-devtools": {
-      "_description": "Debugging：性能/Lighthouse/网络。钉 1.8.0；必须 --isolated。",
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@1.8.0", "--isolated"]
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@1.8.0",
+        "--isolated"
+      ],
+      "type": "stdio"
     }
   }
 }

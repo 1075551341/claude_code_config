@@ -1,80 +1,48 @@
-# .claude — Claude Code 全局配置
+# 本端开发配置 · v16.0.0
 
-> 五柱 × 五阶段 × 三横切 | **v11.4.12** | 归属: `MANIFEST.yaml` | 法典: `SPEC.md`（变更史: `CHANGELOG.md`）
+以目标澄清、最小/全局协同改法、反兜底、风险分级和真实验证支持高效开发。方法不指定模型或通用工具链；本目录只维护 Claude 本端运行配置，不充当其他工具的配置中心。
 
-## 快速导航
+## 使用
 
-| 文件            | 用途                                                                                |
-| --------------- | ----------------------------------------------------------------------------------- |
-| `CLAUDE.md`     | 唯一 L0 入口 — 路由链 + P0 路由集 + L0–L3 + 五阶段 + 铁律 R1-R20（v11 并入 ROUTER） |
-| `SPEC.md`       | 配置法典（v11.4.12）                                                                 |
-| `MANIFEST.yaml` | 组件唯一归属 + 防互博                                                               |
-| `.mcp.json`     | MCP 常驻配置；ops/optional 见 `mcp-configs/`                                        |
-| `settings.json` | 运行时配置                                                                          |
+Claude 仅通过单一原生入口 `CLAUDE.md` 加载本端约定（不保留或导入全局 `AGENTS.md`）。按任务读取技能，不叠加另一套插件流程。
+动机/目标不清时先停下讨论，路径非最短时建议更短方案；局部问题做最小改动、共性缺口优先在全局/公共层修正，不做不必要兜底；低风险小改且目标路径清晰时直接执行并针对性验证，普通多文件任务用短计划，高风险设计确认后执行并在完成前独立审查。
 
-## 目录
+其他工具持有自己的完整 `AGENTS.md` 入口、方法和原生配置，手动独立维护；不引用本目录、不使用跨工具链接或同步器。
+可移植的是通用方法正文；角色权限、hook 事件、MCP 作用域必须按宿主能力配置，不能把文件复制成功当生效证据。
 
-| 目录         | 内容                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------ |
-| `skills/`    | 36 技能（→ [skills-INDEX.md](skills-INDEX.md)）                                      |
-| `agents/`    | 17 智能体（→ [agents-INDEX.md](agents-INDEX.md)）                                    |
-| `rules/`     | 10 规则（→ [rules-INDEX.md](rules-INDEX.md)）                                        |
-| `hooks/`     | 生命周期钩子（19 注册激活 + `_lib/` 共享库；归档/弃用目录已于 v11 删除）             |
-| `commands/`  | 斜杠命令入口（五阶段 + OpenSpec）                                                    |
-| `docs/`      | SYNC_GUIDE + research/（调研 SSOT）+ ADR/（RUNTIME_PLAYBOOK 已并入 CLAUDE.md/rules） |
-| `scripts/`   | sync.ps1、validate_config.py、check.ps1                                              |
-| `templates/` | OpenSpec/GSD/DESIGN 模板                                                             |
-| `catalog/`   | 按需变体库 107+48+15（→ [catalog/INDEX.md](catalog/INDEX.md)，含同名项消歧）         |
+## 内容
 
-## 五柱骨架
+- `CLAUDE.md`：Claude 本端唯一方法与运行入口（其余工具各自独立使用 `AGENTS.md`）。
+- `skills/`：8 个按需技能，含开发、调试、调研、验证、交接、Git、ADR 和显式 TDD。
+- `agents/`：4 个按需角色；`commands/`：8 个手动薄入口。
+- `catalog/`：98 个领域技能、41 个专家角色、15 份领域规则，仅选择所需内容。
+- `templates/`、`snippets/`：可选项目材料，不依赖用户全局目录。
+- `config/toolchain.yaml`：项目工具链选择原则，不是全局版本地板。
+- `hooks/`、`scripts/`：本端安全保护与自检；运行说明见 `docs/runtime.md`。
+- `docs/research/`：来源与能力去向；`docs/ADR/`：决策；`docs/archive/`：不执行的历史资料。
 
-Superpowers(方法论) | GSD(上下文) | OpenSpec(规格) | gstack(审查) | claude-mem(记忆)
+## 当前运行默认
 
-## 同步（v11.1 多编辑器 1+N）
-
-Claude Code 原生读 `~/.claude`（零同步）；编辑器侧 = Cursor + qoder-cn + trae-cn + workbuddy（qoder/trae/codearts 定义保留待装，home 缺席自动跳过）：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1          # 根文件 + 各编辑器规则（推荐）
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -Skills  # + skills/
-powershell -ExecutionPolicy Bypass -File scripts/sync.ps1 -All     # + agents/
-```
-
-- 根文件 6 项软链到 cursor/qoder-cn/trae-cn；规则：Cursor=local plugin `.mdc`（唯一通道），qoder-cn=`rules/*.mdc`，trae-cn=`user_rules/*.md`（实体+台账）；workbuddy 仅 `CLAUDE.md`+`skills/` 联接
-- **常量单源**：`config/sync-manifest.json`（root_files + editors）；**去重策略**：同类型同名先删后写 + 台账孤儿清除；回归 `scripts/test-sync-dedup.ps1`
-- 详见 [`docs/SYNC_GUIDE.md`](docs/SYNC_GUIDE.md)
-
-hooks/commands/MCP/plugins/settings.json **不同步**（Claude Code 专用）
+默认保留危险命令防护、密钥脱敏提醒和编码检查；关闭启动图谱刷新、Stop 审查门与自动格式化。
+增强 MCP 默认不常驻；可选定义在 `mcp-configs/`，私人服务定义不入库。
+插件安装清单经清理后保留 3 项磁盘实际存在登记（均在 `settings.json` `enabledPlugins` 中显式设为 false，其余 15 项失效历史登记已于 v16.0.0 移除）；实际状态以原生列表和调用为准，不自动安装或升级。
 
 ## 验证
 
-```powershell
-python scripts/validate_config.py   # 配置校验（含 R16 裸 except 扫描）
-powershell scripts/check.ps1        # 一致性体检
+```text
+python scripts/check-config.py
+python hooks/tests/test_hooks.py
+claude mcp list
 ```
 
-## 版本
+自检验证结构、引用、hook 契约与 catalog 计数。本轮清理前 CLI 观察 `claude mcp list` 无服务器、`claude plugin list` 均为 disabled；清理 `installed_plugins.json` 失效登记后待在新会话/CLI 复核。规则/技能/hooks 的 IDE 新会话加载来源仍待取证，不以本说明宣称已生效。
 
-- 当前：**v11.4.12**（2026-09-01）— 审查一次找齐再集中改；每轮独立审查必须全新开审（禁止 resume 上轮审查者）。Guard 1.2.11；DSH 2.12 / OpenCode 1.12
-- 前版：v11.4.11（2026-09-01）— 独立审查只找问题；修改走 `change-implementer`；配置/文档/注释必须同步；验证与审查不一致立即派修改者。Guard 1.2.10；DSH 2.10 / OpenCode 1.10
-- 前版：v11.4.10（2026-09-01）— Cursor 完成门不再 followup（规则驱动双审）；Claude Stop exit 2 保留；Guard 1.2.10；DSH 2.9 / OpenCode 1.9
-- 前版：v11.4.9（2026-09-01）— 有改动即双审（PASS 即停，仅结论不一致才再开一轮、最多 3 轮）；计划未批准零注入（CallDynamicTool/CreatePlan）；Windows `/X:/` 路径规范化；会话起止双图 ensure/refresh；已有图 CLI 失败不阻断；Guard 1.2.9；DSH 2.8 / OpenCode 1.8
-- 前版：v11.4.8（2026-08-31）— 非简单双审=修改→验证→审查循环最多 3 轮（禁止只连审不改）；Guard 1.2.8；DSH 2.7 / OpenCode 1.7
-- 前版：v11.4.7（2026-08-31）— 计划未批准 / CreatePlan / 零编辑禁止 followup；短 R20；非简单双审最多 3 次；Cursor Guard 1.2.7；DSH 2.6 / OpenCode 1.6 手工对齐（sync.ps1 不覆盖 AGENTS.md）
-- 前版：v11.4.6（2026-08-29）— 图谱保鲜硬门（会话 ensure 双图、无图 deny、验绿后 sync.ps1）；Guard 1.2.6；DSH 2.5 / OpenCode 1.5
-- 前版：v11.4.5（2026-08-29）— MCP 分工（内置>plugin>MCP；CRG=上下文/影响面/风险/审查/PR）+ Stop 六维纠错续轮 + R20 满足行三态；DevTools/Postgres 中断启用；DSH/OpenCode 手工对齐且不改其 plugin/MCP 开关
-- 前版：v11.4.3（2026-08-26）— 配置一致性修复：版本/计数漂移清零 + 触发词去重（V1 归零，`重构` 唯一归属 code-refactoring）+ 权限对齐（删 powershell allow；opencode chrome-devtools 转按需）+ 插件显式登记（claude-hud=true/exa=false 禁双挂）+ opencode 诊断探针残留清理
-- 前版：v11.4.2（2026-08-26）— 防乱码编码守卫双阶段（快照+校验）+ prettier 保行尾 + 命令误用警告组
-- 前版：v11.4.1（2026-08-25）— opencode 验证门修复与可观测性
-- 前版：v11.4.0（2026-08-25）— IMPACT 自动登记 + 需求指纹 R20 实质比对 + 审查结论机械检测 + opencode 接入（AGENTS.md+验证门插件）+ 上游矩阵 docs/research/45 + DSH 同步 v1.3.4
-- 前版：v11.3.5（2026-08-20）— 验证准则分解评分（llm-as-a-verifier：观察输出优先/准则三问/1-20 评分/重复评估/成对比较消偏/进度止损）+ DSH 同步 v1.3.3
-- 前版：v11.3.4（2026-08-19）— 门控短指针 + 初次修改五维验收 + R20 反空模板 + Cursor stop followup
-- 前版：v11.3.2（2026-08-15）— R20 逐条回放强化（改前成熟/全局 + 满足/遗漏/错改/漏改/原功能；非功能变更必须保持原功能）
-- 前版：v11.3.1（2026-08-14）— 多端一致性修复（版本串/计数/残留引用对齐 SSOT + 四编辑器重同步 + DSH 消费方登记 + 遗留清理）
-- 前版：v11.3.0（2026-08-14）— 铁律 R20 会话终验 + Python 系 MCP 修复（uv CPython 3.13 encodings；mcp.json 手工维护、sync 永不复制）
-- 前版：v11.2.0（2026-08-14）— AGENTS.md 工程原则整合（CORE 工程原则节 + GOVERNANCE 工程决策详参）+ Windows 终端优先 pwsh 7+（R9 升级，Qoder MCP 脚本例外）
-- 前版：v11.1.1（2026-08-13）— 问题指纹判定重构（相似匹配 + 中文 bigram + 泛化追问续接 + resolved 回归升级，单测 21 用例）
-- 前版：v11.1.0（2026-08-13）— 多编辑器同步恢复 1+N（sync v20.0：Cursor + qoder-cn/trae-cn/workbuddy，清单单源 sync-manifest editors 段）+ 全局去重（计数/分级漂移、断链、四命令薄壳化）
-- 前版：v11.0.0（2026-08-12，深度重构）— 治理文档 8→6 根文件 + skills 45→36 / agents 25→16 / rules 12→10 + codegraph v1.5 自动同步接管 + 变更史外置 CHANGELOG.md
-- 变更史：`CHANGELOG.md`
-- 调研 SSOT：`docs/research/44-repo-deep-research-v10.11.md` + `COVERAGE.md`
+## 版本与恢复
+
+本轮从当前磁盘状态备份后重构，不回退已有未提交改动。
+方法变更与采用理由见 `docs/ADR/2026-11-15-risk-based-independent-config.md` 与 `docs/ADR/2026-11-18-v15-1-entry-decoupling-and-merits-restoration.md`，来源和能力去向见 `docs/research/config-merits-20261115.md`。
+历史规则编号与旧适配设计仅供考古，已被本轮决策替代。恢复时仅还原本轮相应备份，不覆盖用户后续修改。
+
+## 按需图谱
+
+手动运行本端 `tools/graph_freshness_cli.py` 的 `status`、`ensure` 或 `refresh`，传 `--cwd <精确Git仓根>`；项目要求双图时加 `--require-both --no-subprojects`。工具以当前源码哈希、真实 SQLite 文件清单/节点核验新鲜度，增量补齐未跟踪文件，不注册自动 hook。用法与边界见 `skills/development-workflow/references/graph-refresh.md`。

@@ -1,7 +1,7 @@
 # 轻量规格模板
 
-> 规格三轨之轻量轨道：简单(task-triage判定=关联需改≤2)小功能
-> 路径：`spec/<project>/`
+> 唯一规格轨：非简单任务；路径 `spec/<project>/`。
+> 可选文件：`design.md` / `plan.md` / `tasks.md`。
 
 ---
 

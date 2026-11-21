@@ -244,6 +244,5 @@ R - Relevant 相关：聚焦目标
 
 ## 相关技能
 
-- `claude-api-integration` - Claude API集成
 - `mcp-builder` - MCP服务器构建
 - `ai-engineer` agent - AI功能开发

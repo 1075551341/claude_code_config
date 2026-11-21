@@ -132,7 +132,9 @@ qpdf input.pdf --pages . 1-5 -- pages1-5.pdf
 
 ## 依赖项
 
-所需依赖项（如不可用则安装）：
+> 以下安装命令仅作示例，实际遵守项目锁文件与既有包管理器，不擅自全局安装或升级。
+
+所需依赖项（如不可用则按项目约定安装）：
 
 - **pandoc**: `sudo apt-get install pandoc`（用于文本提取）
 - **LibreOffice**: `sudo apt-get install libreoffice`（用于 PDF 转换）

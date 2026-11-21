@@ -1,5 +1,6 @@
 {
   "toolset": "collab",
-  "description": "设计/项目/知识/消息",
-  "servers": ["figma", "linear", "notion", "slack"]
+  "status": "reference_only",
+  "description": "协作类 MCP 仅作参考；本仓不提供可合并服务。需要时由用户自行配置并钉版本。",
+  "servers": []
 }

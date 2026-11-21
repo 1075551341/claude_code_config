@@ -1,6 +1,6 @@
 ---
 name: office-hours
-description: 六问产品框架。触发词：office hours | 六问框架 | 产品分析 | 需求深挖 | /office-hours
+description: 六问产品框架。触发词：office hours | 六问框架 | 产品分析 | 需求深挖
 layer: supplement
 source: garrytan/gstack
 disable-model-invocation: true
@@ -10,7 +10,7 @@ loading_tier: L3
 # Office Hours
 
 ## 触发
-- 手动：`/office-hours`
+- 手动：Read `catalog/skills/office-hours/SKILL.md`
 - 自动：检测到产品需求讨论时建议
 
 ## 流程
@@ -47,9 +47,8 @@ Q6: 成功是什么样子？怎么衡量？
 - 输出 design doc → 喂入下游 skill
 
 ### 输出路径
-- `specs/<name>/design.md`（OpenSpec）
-- `.planning/design.md`（GSD）
-- 直接传递给 `/plan-ceo-review`
+- `spec/<project>/design.md`（轻量规格）
+- 直接传递给开发计划阶段（如 `spec/<project>/plan.md` 与标准开发流程）
 
-### 互斥
-不替代 brainstorming。office-hours 做产品问题定义；brainstorming 做技术方案发散。
+### 职责边界
+不替代技术方案讨论与设计阶段。office-hours 专注产品问题定义与需求深挖；技术方案发散与架构取舍在标准开发流程的设计阶段展开。

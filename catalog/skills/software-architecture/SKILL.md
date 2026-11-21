@@ -232,6 +232,5 @@ D - 依赖倒置：依赖抽象不依赖具体
 
 ## 相关技能
 
-- `design-brainstorming` - 设计讨论
-- `implementation-planning` - 实施计划
+- `development-workflow` - 标准开发流程（设计讨论与实施计划）
 - `database-design` - 数据库设计

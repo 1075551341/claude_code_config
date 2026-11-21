@@ -1,0 +1,71 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Shell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/<you>/.claude/hooks/pre-bash-guard.py\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|StrReplace|EditNotebook|mcp__.*(?:write|edit|replace|insert|rename|delete|move|create|apply_refactor).*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/<you>/.claude/hooks/pre-encoding-snapshot.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|StrReplace|EditNotebook|mcp__.*(?:write|edit|replace|insert|rename|delete|move|create|apply_refactor).*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"C:/Users/<you>/.claude/hooks/post-encoding-check.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"C:/Users/<you>/.claude/hooks/post-secret-detector.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "70"
+  },
+  "permissions": {
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)",
+      "Edit(~/.aws/**)",
+      "Write(~/.aws/**)",
+      "Edit(~/.config/gcloud/**)",
+      "Write(~/.config/gcloud/**)",
+      "Read(~/.claude/settings.local.json)",
+      "Read(~/.claude/.credentials.json)",
+      "mcp__code-review-graph__apply_refactor_tool",
+      "mcp__code-review-graph__generate_wiki_tool"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": false,
+    "code-review@claude-plugins-official": false,
+    "commit-commands@claude-plugins-official": false,
+    "claude-md-management@claude-plugins-official": false
+  }
+}

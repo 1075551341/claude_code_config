@@ -1,6 +1,5 @@
 ---
 description: AI/LLM 应用开发相关任务时启用
-alwaysApply: false
 ---
 
 # AI 开发规则（专用）
@@ -9,15 +8,7 @@ alwaysApply: false
 
 ## 模型选型
 
-```
-场景               →  推荐模型
-───────────────────────────────────
-复杂推理           →  Claude Opus / GPT-4
-通用对话           →  Claude Sonnet / GPT-4o
-快速响应/高并发    →  Claude Haiku / GPT-4o-mini
-代码生成           →  Claude Sonnet / GPT-4
-嵌入向量           →  text-embedding-3-large / voyage-3
-```
+模型名/档位不写进规则：从配置或环境变量读取（如 `LLM_MODEL`），按场景（复杂推理 / 通用对话 / 高并发 / 代码生成 / 嵌入）由项目自行映射，换供应商不改代码。
 
 ## Prompt 工程原则
 
@@ -62,7 +53,7 @@ async function callLLM(prompt: string): Promise<LLMResponse> {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+        model: process.env.LLM_MODEL!,
         max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       });
@@ -82,7 +73,7 @@ async function callLLM(prompt: string): Promise<LLMResponse> {
 ```typescript
 async function* streamLLM(prompt: string): AsyncGenerator<string> {
   const stream = await anthropic.messages.stream({
-    model: "claude-sonnet-4-6",
+    model: process.env.LLM_MODEL!,
     max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
   });
@@ -138,7 +129,7 @@ const AnalysisSchema = z.object({
 
 ## 安全考量
 
-> 详细安全规范见 `RULES_SECURITY.md`
+> 遵循本端通用安全红线与方法库安全参考（可按需参考 `security-best-practices`）。
 
 ```
 敏感信息：不在 prompt 中含敏感数据 / 日志脱敏 / 环境变量存密钥

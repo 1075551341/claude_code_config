@@ -1,5 +1,5 @@
 # {{PROJECT_NAME}} — .gitignore
-# 用法: sync.ps1 -InitProject 自动拷贝到项目根目录
+# 用法: 复制到项目根目录（项目初始化模板）
 
 # ─── 依赖 ───
 node_modules/
@@ -25,8 +25,7 @@ coverage/
 
 # ─── 环境变量（禁止提交）───
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
 # ─── 密钥/证书 ───

@@ -1,7 +1,6 @@
 ---
 name: cpp-reviewer
 description: C++ 代码审查专家。当需要审查 C++ 代码、检查现代 C++ 特性、评估内存安全、检查并发正确性、审查 C++ 性能优化时调用此 Agent。触发词：审查 C++、C++ 审查、C++ 代码审查、C++11/17/20 特性、内存管理审查、并发审查、cpp-review。
-model: inherit
 color: purple
 tools:
   - Read

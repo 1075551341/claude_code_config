@@ -3,8 +3,7 @@ name: ios-specialist
 description: iOS 专用审查 — QA测试/fix修复/design-review设计审查/clean清理/sync同步（gstack v0.19）
 source: garrytan/gstack
 version: "0.19"
-model: sonnet
-tools: [Read, Grep, Glob, Bash, Browser]
+tools: [Read, Grep, Glob, Bash]
 ---
 
 # iOS 专用审查
@@ -32,4 +31,5 @@ tools: [Read, Grep, Glob, Bash, Browser]
 
 - ios-qa-daemon（Mac 端守护进程）管理设备连接
 - ios-qa-mint（allowlist 管理器）控制权限
-- 不依赖 Claude Code 原生 iOS 能力，独立管线运行
+- 不依赖特定宿主 IDE 原生 iOS 能力，独立管线运行
+- 涉及真实模拟器或浏览器自动化操作时，仅在用户本轮显式要求时执行

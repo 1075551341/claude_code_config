@@ -1,6 +1,5 @@
 ---
 description: 移动端开发规则（Flutter/RN/UniApp/原生）
-alwaysApply: false
 globs: ["*.dart", "pubspec.yaml", "*.rn.*", "uniapp.json", "*.swift", "*.kt", "*.xcodeproj", "AndroidManifest.xml"]
 ---
 

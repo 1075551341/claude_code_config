@@ -1,6 +1,5 @@
 ---
 description: 前端代码开发时启用
-alwaysApply: false
 paths:
   - "**/*.vue"
   - "**/*.jsx"
@@ -14,7 +13,7 @@ paths:
 
 # 前端规则（专用）
 
-> 配合核心规则使用，仅在前端场景加载。复制到项目 `.claude/rules/frontend.md` 或 `.cursor/rules/frontend.mdc` 后由 `paths` 自动匹配。
+> 配合核心规则使用，仅在前端场景加载。复制到项目规则目录（按当前工具约定）后由 `paths` 自动匹配。
 
 ## 技术选型
 
@@ -278,7 +277,7 @@ ComponentName/
 
 ## 安全
 
-> 详见 `RULES_SECURITY.md`（XSS防护、CSP配置、敏感信息处理等完整覆盖）
+> 遵循本端通用安全红线与方法库安全参考（XSS 防护、CSP 配置、敏感信息处理等；可按需参考 `security-best-practices`）
 
 ## 何时必须写 README
 

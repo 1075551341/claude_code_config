@@ -5,6 +5,8 @@ globs: ["*.java", "*.kt", "pom.xml", "build.gradle", "*.properties", "*.yml"]
 
 # Java/Spring 开发规则
 
+> 运行时、版本和包管理器遵循项目清单、锁文件及 CI；本资料不设置全局地板。
+
 ## 项目结构
 
 - 分层架构：controller / service / repository / model / config

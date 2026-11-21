@@ -1,23 +1,13 @@
 ---
-description: TypeScript 开发时按需加载
-alwaysApply: false
+description: 项目 TypeScript 规则示例，复制后按项目配置调整
 paths:
   - "**/*.ts"
   - "**/*.tsx"
 ---
 
-# TypeScript 规则（lazy-load 示例）
+# TypeScript 规则示例
 
-> 完整规则见 `~/.claude/catalog/rules/RULES_TYPESCRIPT.md`，复制到项目后按需编辑。
-
-## 要点
-
-- `strict: true`
-- 优先 interface + 泛型约束
-- 禁止 `any`（边界除外并注释）
-- 异步必须显式错误处理
-
-## 启用方式
-
-1. 复制 `catalog/rules/RULES_TYPESCRIPT.md` → 项目 `.claude/rules/typescript.md`
-2. 保留 `paths:` frontmatter 匹配 `*.ts` / `*.tsx`
+- 尊重项目 tsconfig、公共接口和已有类型模式。
+- 在系统边界收窄未知输入；尽量避免 any，必要例外说明原因。
+- 异步错误明确传播或处理；使用项目现有类型检查与测试命令。
+- 路径匹配 frontmatter 属于宿主能力，复制后验证实际触发。

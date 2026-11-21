@@ -1,6 +1,6 @@
 # Gotchas 记录模板
 
-错误教训外化。每次调试后将教训写入项目的 `gotchas.md`（或 `docs/gotchas.md`）。
+重要且可复用的错误教训按需外化，优先复用项目已有文档，不要求每次小修都新建记录。
 
 ## 条目格式
 
@@ -30,6 +30,6 @@
 
 ## 使用说明
 
-- debugger agent 和 build-error-resolver 每次修复后自动追加条目
+- 调试或实现过程中遇到有复用价值的教训时追加条目
 - 调试时先查 gotchas.md 检查是否为已知问题
-- claude-mem 自动同步关键 gotchas 到跨会话记忆
+- 如有可用记忆工具，则同步关键 gotchas 到跨会话记忆

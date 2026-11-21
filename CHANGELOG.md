@@ -1,6 +1,218 @@
 # CHANGELOG — 配置变更史
 
-> v11 起变更摘要自 `SPEC.md` 外置到本文件；SPEC 只保留现行法典。新版本在顶部追加。
+## v16.0.0 L0–L3 单责精炼 · 去双轨 · 全域净化（2026-11-21）
+
+- **L0–L3 单责精炼**：重写 `CLAUDE.md`（≤65 行）及其余工具独立使用的通用 `AGENTS.md`（≤60 行）与 8 技能/4 角色/8 命令，消除入口、技能与角色间的 9 类 3–4 层重复。
+- **消除七维/两道关双轨**：`verification-before-completion` 与 `eng-reviewer` 彻底废除“七维”旧术语，统一收口为“两道关”（符合预期要求 + 原功能保持）；显式强化缺陷修复、高风险改动、工程与安全审核须覆盖**正向功能 + 反向/预期失败 + 边界条件**三类实测。
+- **跨项目定位与上游补强**：清晰区分方法目录（`skills/`/`agents/`/`catalog/`/`templates/`）与目标项目路径（`spec/<project>/`/`docs/ADR/`）；核心技能零硬引用 `tools/`；补入**同行/同类横向清扫**、**外部库/接口禁脑补**、**审查移交包有意行为变更对照**与**用户既有改动/基线状态边界**。
+- **Catalog 与 Templates 全域净化**：清零 8 份文件中 `RULES_SECURITY`/`RULES_CORE`/`executing-plans`/`writing-plans`/`brainstorming`/`instinct-learning`/`/design-html` 等退役引用，消除 `webapp-testing`/`qa-engineer`/`land-and-deploy`/`performance-engineer`/`skill-creator` 规则互博，中性化执行者模型/工具绑定。
+- **Hooks 与自检升级**：`encoding_guard.py` 与 `pre-bash-guard.py` 异常 stderr 脱敏为异常类型名并新增边界单测；`check-config.py` 新增 `catalog/` 与 `templates/` 扫描、禁词追加旧双轨术语、移除空 `rules/` 并校验 `package.json` 与 `README.md` 版本一致。
+- **版本同步与残留清理**：`package.json` 升至 `16.0.0`；清理 `temp/`、嵌套 `.claude/`、空 `rules/`、`plugins/claude-hud/` 及 `plugins/installed_plugins.json` 中 15 条磁盘已失效插件登记（保留磁盘存在的 3 项；未修改 `settings.json`）。
+
+## v15.1.0 入口彻底解耦与实操优点补齐（2026-11-18）
+
+- **单一自包含入口**：移除全局 `AGENTS.md` 与 `@AGENTS.md` 导入，Claude 本端仅保留 `CLAUDE.md`；清理遗留 `.trae/` 与 `skills/_bm_skillid_migration.json`。
+- **原则融入与止损补齐**：融入审慎澄清与最短路径建议、局部最小 vs 共性全局改法、反静默兜底、动态升档与 ≤2 次止损、消费者清零、三态证据、P0–P3 调试分诊与 L1–L3 调研分档；决策见 `docs/ADR/2026-11-18-v15-1-entry-decoupling-and-merits-restoration.md`。
+
+## v15.0.0 风险分级与独立副本（2026-11-15）
+
+- 开发方法合并为 8 个技能、4 个按需角色和 8 个手动命令；取消小任务强制委派、全量审查模板及重复阶段机。
+- AGENTS 是本端方法入口，CLAUDE 保留本端导入；不再向其他工具提供指针、链接、启动器或适配自检。
+- 工程和安全细节移至按需参考；取消全局工具链版本硬门，尊重项目清单及锁文件。
+- 默认关闭启动图谱、Stop 审查门和自动格式化；增强 MCP 与插件按需，实际状态以原生加载证据为准。
+- 领域资料保留 98 技能、41 专家及 15 规则；失效编排移普通历史资料，修复自动提交、旧引用和远程脚本直接执行示例。
+- 本次以用户已有未提交状态为起点做私有备份；各工具配置分别独立迁移与验收，未取得运行证据的项目保持待验。
+- 采用理由、上游来源及能力去向见 docs/research/config-merits-20261115.md；本版本说明不替代最终独立审查。
+
+> v11 起变更摘要自 `SPEC.md` 外置到本文件；新版本在顶部追加。
+
+## v14.1.2 Cursor 全局规则改为本地插件（2026-11-11）
+
+- **原因**：Customize → Rules 的 User 列表只展示插件规则，不列出 `~/.cursor/rules/*.mdc`。
+- **落地**：本地插件 `~/.cursor/plugins/local/harness-adapter/`（`.cursor-plugin/plugin.json` + `rules/00-agents.mdc`）；删除会双载的家目录 `~/.cursor/rules/00-agents.mdc`。
+- **自检**：`check-adapters.py` 改为校验插件规则路径。
+- **使用**：Developer: Reload Window 或重启 Cursor 后，Rules 的 User 列表应出现规则文件 `00-agents`（描述：全局工作流入口）。
+
+## v14.1.1 per-skill 接线与自检收口（2026-11-11）
+
+- **接线**：Qoder / DSH / OpenCode 从整目录 junction 改为 `skills/<name>` 逐项接线；根目录保持真实目录，避免 `UserSkillStatus.txt` 等编辑器元数据写回真源。
+- **自检**：`check-adapters.py` 增加 `~/.cursor/AGENTS.md` 与 `~/.config/opencode/rules/AGENTS.md`；禁词含内核 v2 / 已裁技能名 / 同步脚本名 / 模型 ID；禁止整目录 junction 与真源 `UserSkillStatus.txt`；Trae/Trae CN 技能名索引须与 live 14 个技能集合相等。
+- **Trae**：用户规则补 14 个技能名索引（仍不复制正文）。
+- **决策**：`docs/ADR/2026-11-11-harness-native-adapters.md` 决策 3 改为逐项接线。
+
+## v14.1.0 跨工具薄原生入口（2026-11-11）
+
+- **真源不变**：工作流/完成门/铁律/技能/子代理仍只在本仓；不恢复编辑器同步引擎。
+- **薄入口**：Cursor `~/.cursor/rules/00-agents.mdc`（alwaysApply）；Qoder `rules/AGENTS.md` + 根 `AGENTS.md`；Trae / Trae CN 用户规则；DSH `~/.dsh/AGENTS.md`；OpenChamber / OpenCode `AGENTS.md`。入口禁止复制铁律表。
+- **技能发现**：Qoder / DSH / OpenCode 的 `skills` 目录接线到本仓 `skills/`；Cursor 官方已发现本仓技能，禁止再接到 `~/.cursor/skills`；Trae 用 Read 指针。
+- **互博**：Qoder 关闭 ECC / better-harness / caveman 及同类工作流插件；Cursor 个人 store 中同名或已裁技能隔离到 `_archive/v14-cull/`。
+- **自检**：新增 `scripts/check-adapters.py`（只校验外部入口与接线）；`templates/harness-adapter.md` 为入口骨架。
+- **决策**：`docs/ADR/2026-11-11-harness-native-adapters.md`。
+
+## v14.0.0 精简重构：单一调度面 + 去同步 + 审查门简化（2026-11-11）
+
+- **单一调度面**：新增中性 `AGENTS.md`（工作流/完成门/审查路由/工具能力路由）；`CLAUDE.md` 改为薄入口（`@AGENTS.md` + Claude 差异）；删除 `config/workflow.yaml`、`scripts/workflow.py` 与所有 `<!-- spine:* -->` 派生块。
+- **审查门**：保留「观察证据 + 本轮全新独立审查 PASS（符合预期要求 + 原功能保持）」；删除 `stop-verification-gate.py`（37KB）、`r20_replay.py`（40KB）、`graph_freshness.py`（49KB）与机械轮次计数；审查不设轮数上限（每轮必须有实质修复，无进展时报告用户）；新增 `stop-review-reminder.py`（有编辑且未见审查派发 → 每会话提醒一次）与 `session-start-graph-ensure.py`（图谱 ensure/sync，失败不阻断）。
+- **组件收敛**：skills 25→14（`using-superpowers`→`skill-router`；`skill-creator` 迁入 `catalog/skills/`；删除 10 个）、agents 9→5（ceo/designer/dx/qa 视角并入 eng-reviewer）、rules 7→4（CORE/DELEGATION/MCP/SECURITY；GIT 并入 git-workflow；OPENSPEC/README 删除）、commands 15→10（删除 OpenSpec 与 workstream）、hooks 19→6 个关注点。
+- **删除文档/索引**：`SPEC.md`、`MANIFEST.yaml`、`agents-INDEX.md`、`rules-INDEX.md`、`skills-INDEX.md`、`RTK.md`、`config/{workflow,quality_gates,sync-manifest,model-context-windows}`、`mcp/`、`openspec/`、`spec/task-difficulty-precision/`。
+- **删除编辑器同步/适配**：`scripts/sync.ps1`、`sync-editors.ps1`、`principles.py`、`validate_config.py`、`check.ps1`、`deploy-*.ps1`、`_merge_editor_graph_hooks.py`、`templates/cursor-guard/`、`templates/editor-graph-hooks/`、`templates/claude-settings/`、`.cursor/`、`docs/SYNC_GUIDE.md`、`docs/CURSOR_*.md` 等；不再向任何工具目录同步，其他工具直接读 `AGENTS.md`。
+- **新增自检**：`scripts/check-config.py`（JSON/frontmatter/hook 路径/MCP/行数预算/死引用/同步资产断言）；`hooks/tests/test_hooks.py`（5 项 smoke/回归）。
+- **插件**：18 个插件当前均为 disabled（`claude plugin list` 核对）；`ralph-loop`、`feature-dev`、`code-review`、`commit-commands`、`claude-md-management`、`github`、`skill-creator`、`superpowers` 保持禁用。
+- **hooks 加固**：`pre-bash-guard` 覆盖 git 全局选项、`git.exe`、`$(...)`/反引号、引号/括号包裹与 alias 绕过，并只在命令位识别 git（`echo`/`grep` 里的文本不再误伤）；`post-secret-detector` 输出脱敏（含同行多密钥），并纳入 serena 写工具；`session-start-graph-ensure` 只 sync 已有图、不向仓库写入新目录；`post-edit-format` 无本地/全局 prettier 时跳过，不再联网。
+- **铁律编号重排**：活跃铁律改为连续 R1-R21（旧 R3→R2、R4→R3、R5→R4、R8→R5、R9→R6、R11→R7、R12→R8、R13→R9、R14→R10、R15→R11、R16→R12、R17→R13、R18→R14、R19→R15、R20→R16；工程原则 R21-R25→R17-R21）；历史 CHANGELOG/ADR/research 保留当时编号。
+- **冲突裁决恢复 + 防回归**：CORE 恢复 R17-R21 子条与 9 行冲突裁决表；`check-config.py` 增加 R1-R21 连续性断言与 live 文件旧编号/旧语义扫描。
+- **外部受管副本清理**：删除 `.trae-cn`/`.trae`/`.qoder`/`.cursor`/`.dsh`/`.config/opencode` 中旧同步生成的 rules/skills/agents/commands/hooks/scripts/plugins 与 Cursor plugin；清理 Qoder `settings.json` 的旧 hooks、Cursor `guard-config.json` 与 OpenCode `permission.skill` 白名单；规则入口仅保留指向 `~/.claude/AGENTS.md` 的指针。备份 `backups/editor-managed-20261111-133055/` 与 `backups/dsh-opencode-20261111-134451/`。
+- **执行并发保留**：`AGENTS.md` §2 保留「无依赖不阻塞、优先并行；有依赖按序；长驻服务器/watcher 后台」。
+- **settings 示例**：新增 `settings.example.json`；`check-config.py` 对 `settings.json` 缺失给出 WARN，并强制校验示例的 hook 事件/脚本齐全，避免 hooks 静默丢失。
+- **验证**：`python scripts/check-config.py` → PASS（skills=14 agents=5 rules=4 commands=10；AGENTS.md=144 行、CLAUDE.md=20 行、CORE.md=113 行）；`python hooks/tests/test_hooks.py` → 5/5 passed。
+- **备份**：`~/.claude/backups/refactor-20261111-114808/`（350 文件，2.9 MB）。
+- **决策记录**：`docs/ADR/2026-11-11-config-v14-refactor.md`。
+
+## v13.1.0 harness 中立与精简（2026-11-11）
+
+- **铁律**：R21.1 第一性原理写入用户原文（`rules/CORE.md` + `docs/ENGINEERING_PRINCIPLES.md`，经 `principles.py sync` 注入 14 个目标）；不新增规则编号。
+- **去绑定**：R17/R18 与工具表改为“有则优先、无则回退”；无 codegraph/CRG 时用内置搜索 + 影响面清单，无记忆工具时查项目文档并注明；浏览器 UI 测试统一表述为“Playwright / chrome-devtools 等，若有”。
+- **入口分工**：Claude Code 读 `CLAUDE.md`；其他 harness 读同步生成的 `AGENTS.md`（同源中性文案）。仓内不新增 per-tool 适配文件，Cursor/Qoder/Trae/OpenCode/OpenChamber/DSH 由同步边界各自消费。
+- **skills 26→25**：`claude-mem-maintenance` 并入 `memory-compression`「记忆维护（Claude-mem 可选）」；同步更新 `skills-INDEX`、`MANIFEST`、`SPEC`、`README`、`sync-manifest`、`SYNC_GUIDE`、`validate_config` 上限。
+- **rules**：重写 `rules/MCP.md`（约 14KB→12.8KB），保留单一权威源/常驻架构/profile/浏览器显式选用/禁止项/验证清单，新增 §0 harness 能力映射与 §8 跨端能力对照。
+- **模型无关**：仍无模型 ID / 档位 / effort；`workflow.py check` lint 保持。
+- **测试**：`test_workflow_spine.py` 的未知模型 200K 陈旧断言改为隔离 CLAUDE_HOME 后断言出厂默认 200K（v13 已移除 200K 封顶）；新增 `hooks/tests/conftest.py` 排除 9 个脚本式套件，`test_script_suites.py` 以 subprocess 逐个运行并断言退出码 0（不再把 `check()` 包装当 pytest 用例）；`test_principles.py` 正常收集。
+- **预算**：`principles.py` 的 AGENTS 预算 17,408→18,432 bytes（+1 KiB），为 R21.1 用户原文留余量；仍远低于平台 65,536 bytes。`MANIFEST.yaml` / `SYNC_GUIDE.md` 同步。
+- **验证**：`validate_config.py` 22/22、`workflow.py check`、`principles.py check` 14/14、`test_principles` 33/33、`test_workflow_spine` 100/100、`test_r20_replay` 245/245、`pytest hooks/tests` 41 passed（含 9 个脚本套件真实退出码）。
+
+## 2026-11-02 工程原则按类型并入铁律（5 类 18 子条，post-v13.0.4）
+
+- **版本**：不升 pack 版本，保持 `v13.0.4`；本次为 post-v13.0.4 配置补丁（R14 版本克制）。
+- **并入铁律**：18 条工程原则按类型合并为 `rules/CORE.md` 的 R21-R25（5 类 + 18 子条 + 9 行冲突表）；`scripts/principles.py sync` 注入 `CLAUDE.md`、OpenCode/DSH `AGENTS.md` 与 `CORE.md`；Cursor/Qoder/Trae/Trae-CN 由 `sync-editors.ps1` 从 `CLAUDE.md` / `rules/CORE.md` 生成。
+- **不新增规则文件**：不创建 `rules/PRINCIPLES.md`，不改 `GLOBAL_RULES_MAX`；18 条并入 `rules/CORE.md` 的铁律 R21-R25，并注入入口。
+- **配置驱动**：`principles.py sync|check|status`；`sync.ps1` 先生成 R21-R25 段；`validate_config.py` V22 校验 R21-R25（18 子条）、5 组、9 冲突、14 目标一致与 OpenCode/DSH 17 KiB 预算。
+- **去重**：3 个 CORE 源（`.claude`、OpenCode、DSH）删除重复的 KISS/YAGNI/DRY/SOLID/依赖克制句，改为指针；4 个编辑器 CORE 副本由 `sync.ps1` 同步；编码约束/开发习惯集中到 `CORE.md`（含「编码约束」节）。
+- **文档**：`docs/ENGINEERING_PRINCIPLES.md` 记录 R21-R25（18 子条）、C1–C10 完整表、裁决顺序、10 个场景与原图章节映射。
+- **体积**：DSH `AGENTS.md` 16,663 / 17,408 bytes（17 KiB）；OpenCode 16,372；Claude 12,262。OpenCode/DSH 的「上下文阈值/错误升级」改为 `CORE.md` 指针。
+- **V21 误报修复**：`workflow.py` lint 排除 `jobs/`、`logs/`、`spec/task-difficulty-precision/`、`backups/`、`_backup/`、`.state/`、`cache/changelog.md`、`docs/superpowers/plans/` 历史制品，避免历史模型名被判为现行绑定。
+- **备份**：`~/.claude/backups/principles-20261102-104846/`。
+
+## v21.0 多编辑器 AGENTS.md 适配（2026-10-29）
+
+- **删除**：Cursor `plugins/local/claude-config` 旧规则（含 `00-CLAUDE.mdc` 与 6 条已删规则）、`~/.cursor/skills|agents` junction、4 个 home 的根 `CLAUDE.md`/`SPEC.md`/`MANIFEST.yaml`/3 INDEX 软链；Trae/Trae CN `user_rules` 12 个旧受管规则。Qoder 迁移前无 Claude 派生配置。
+- **适配**：CLAUDE.md → 各工具加载点 `AGENTS.md`（Cursor `00-AGENTS.mdc`、Qoder `rules/AGENTS.md`、Trae `user_rules/AGENTS.md`）；去掉 claude-mem/Task/Bash 依赖，SSOT 路径绝对化，注入工具 profile；规则按 Cursor `alwaysApply` / Qoder `trigger` / Trae 原 frontmatter 投放；`rules/AGENTS.md` 目标改名 `AGENTS-COLLAB.md`。
+- **skills/agents**：25 个 skills（排除 `claude-mem-maintenance`）、9 agents（Cursor/Qoder）真实拷贝；`.md` 做文本适配，二进制原样；`.claude-managed` + `.claude-hashes` 台账，孤儿清理只删受管项。
+- **引擎**：`sync.ps1` 改薄入口 → `sync-editors.ps1`（schema v2）；`-Scope indexes` 只更新入口；`-CleanLegacy` 一次性迁移；`-Force` 保持内容 hash 幂等。
+- **验证**：`check.ps1` S3b（入口/规则 hash/skills/agents/台账/legacy 残留）+ `test-sync-dedup.ps1`（stale 修复、shadow 清理、用户规则存活）；Guard 回归 69/69。
+- **备份**：`~/.claude/backups/editor-migration-20261029-223224/`（61 文件，含旧 plugin、user_rules、根文件、junction 目标）。
+
+## v13.0.4 执行并发（无依赖不阻塞）（2026-10-29）
+
+- **规则**：无依赖且可后台的命令/操作不得阻塞会话，优先并行；有依赖或下一步需要其输出的仍按序、禁止后台；长驻服务器 / watcher 保持后台。不是第三道 `/goal` 门，不另建 Stop hook，不改 `browser_ui_tests`。
+- **结构化 SSOT**：`config/workflow.yaml` `execution.concurrency`（`prefer_parallel` / `independent_must_not_block` / `serial_if_dependent` / `serial_if_output_needed` / `long_running_background` = true；`extra_stop_hook` / `extra_pass_bar` = false）。
+- **派生**：`scripts/workflow.py` 渲染 `spine:concurrency` 到 CLAUDE.md、CORE、DEV_FLOW、AGENTS、using-superpowers、verification、executing-plans、SDD、git-workflow、`/execute`、CURSOR-EDITOR.mdc、OpenCode `templates/editor-graph-hooks/README.md`。`workflow.py check` 与 validate V21 防漂移。
+
+## v13.0.3 浏览器 UI 测试显式选用（2026-10-29）
+
+- **规则**：Playwright / chrome-devtools 浏览器 UI 测试仅当用户本轮显式要求才跑。任务强烈像需要但未要求 → interrupt，禁止静默开跑，禁止软自动兜底。用户已要求时允许安装/配置。不是第三道 `/goal` 门，不另建 Stop hook。
+- **结构化 SSOT**：`mcp/servers.json` `browser_ui_tests`（`opt_in=explicit_user_ask` / `if_indicated_without_ask=interrupt` / `soft_fallback=false` / `allow_install_when_asked=true`）。正文 `rules/MCP.md` §2c。
+- **指针**：`docs/TOOL_MATCHING_GUIDE.md`、`skills/using-superpowers`、`skills/verification-before-completion`、`rules/CORE.md`、`CLAUDE.md`、`CURSOR-EDITOR.mdc`。
+- **防回归**：validate V6 核 `browser_ui_tests` 字段；LIVE_POLICY 禁「E2E 脚本=playwright」与「内置浏览器（UI 核验）> playwright plugin（E2E）」作为现行默认。
+
+## v13.0.2 确认后优化 + 站立 `/goal`（2026-10-28）
+
+- **续轮去撞名**：`hooks/_lib/crg_track.py` `RETRY_LINES` / `retry_block`；文案改为「续轮须补观察证据（影响面 / 满足三态 / 错改 / 漏改 / 原功能 / 文档）」。不把 R20「问题是否解决」塞进这段。
+- **调研源失败中断**：`skills/deep-research/SKILL.md` 删除「自动切下一源」；声明源不可用 → 标注缺失 → interrupt，禁止假装 V1 已过。
+- **删死键**：`config/quality_gates.json` `scope_reduction`（无 Python 消费者）。schema_drift / security_anchor 保留。
+- **MANIFEST 钉扎注记**：OpenSpec 概念 pin + 本机 CLI 为准；`do_not_absorb` 九项（cbm / claude-mem≥13.14 / caveman≥2 / ralph-loop / 竞品 code-graph / CCR / openai 跨模型 cc 插件 / SuperClaude / everything-claude-code 插件）。
+- **防回归**：`LIVE_POLICY_BANS` 增「六维全低」「scenario-router.yaml」；`config/scenario-router.yaml` 与 `harness-capabilities.yaml` 出现即 V16 失败。
+- **sync L0 以仓为准**：`l0_source_of_truth: repo`；`Sync-File -RepoWins`；plugin `00-CLAUDE.mdc` 每次覆盖。
+- **站立 `/goal`**：`completion.standing_goal` SSOT，渲染 `commands/goal.md`；与 `review.pass_requires` 同一两道门，不另建 Stop hook。
+- **明确不修（计划 9）**：无编辑 Stop 硬门、first_edit 升七维、200K 封顶、回灌已裁组件、追 caveman 4.x / claude-mem 15.x / OpenSpec 1.15。
+
+## v13.0.1 机械门收口（2026-10-24）
+
+- **调研 SSOT（2026-10-28，未实施优化）**：唯一现行制品改为 `docs/research/merits-20261028.md`；删除 44-repo / 45-upstream / COVERAGE / repos 卡片。优化计划待确认，生产 hooks/rules/spine 未改。
+- **证据模板**：`review_bars_ok` 拒绝整段 `<>` 槽、`证据：<…>`、契约用语（「观察到的具体输出」「尖括号模板」）。照抄审查契约不再算 PASS。
+- **豁免匹配**：`user_waived_verification` 为 SSOT。`跳过验证` / `不用验证` / `skip verify` 仅在左侧无否定前缀时成立。「不要跳过验证」「don't skip verify」不是豁免。Stop 与 `stop-graph-freshness` 共用。
+- **阻断计数**：`count_stop_block` — `review`/`capped` 计入；`verify`/`graph`/`modify` 仅同一相位连续第二次计入；R20 等 skip 相位仍计入。一轮内推进不再烧 `max_blocks`。
+- **BLOCKED 可见**：轮次/阻断用尽不再只写 stderr。Claude Stop 放行时 stdout 带 `systemMessage` + `additionalContext`；Cursor `verification_stop` 用 `user_message`/`agent_message`。`capped` 不再误走「验证通过」成功路径。
+- **lint**：effort 模式补 `thinking_budget` / `budget_tokens` / `max_thinking` / `thinkingLevel`。
+- **文案**：审查契约示例去掉可照抄尖括号槽；eng-reviewer / verification / `/review` 去掉「通过 | 不通过」图例；`quality_gates` 差集描述不再把非 git 写成完成状态；Guard 夹具「满 5 轮」改为 3。
+- **清理**：删除 `docs/archive/`（过期经验与孤儿脚本）与误跟踪的 `.state/loop_guard_state.json`。
+- **分支吸收**：`main` / `claude-config-11-5` / `config-driven-workflow-spine` / `mcp-everything-routing` 均为本线祖先，尖的部分（everything 语义路由、工具链地板、配置主干、双角色审查）已在 v13；本版不回灌已裁的啰嗦组件。
+
+## v13.0.0 模型无关 · 一次通过 · 独立审查门（2026-10-24）
+
+- **不绑定模型**：配置、agents、rules、skills、hooks、CLAUDE.md、Cursor 规则与 `workflow.yaml` 不再出现模型 ID、厂商档位别名或「用某模型」措辞。删除 `workflow.yaml` 的 `models` / `roles` / `constraints` / `triage` / `legacy_reviewer_names`，删除 `workflow.py show --profile` 与 `apply-settings`、`templates/claude-settings/model.snippet.json`、`catalog/skills/claude-api`；agents 与 ~40 个 catalog agents 的 frontmatter 去掉 `model:`；CURSOR-EDITOR.mdc 厂商模型表换成「完成定义」派生块；CI 模板去掉 `model:`。模型由会话 / settings / 编辑器 / Task 传参决定，agent 一律继承。
+- **推理强度外置**：去掉 per-agent effort、profile→effort 矩阵与所有派生块中的 effort；由被调用模型自身设置决定。
+- **模型无关 lint**：`workflow.py lint`（也在 `check` 与 validate_config V21 内）扫描全仓的模型 ID / 档位别名 / effort 键 / 子代理模型环境变量，以及 agent/skill/command frontmatter 的 `model:` / `effort:`；豁免 CHANGELOG、docs/archive|research|ADR、plugins/、hooks/tests/。
+- **完成定义（硬要求）**：新增 `completion`：四条轨道（simple / bug / non_simple / research）全部要求独立审查；完成 = ④验证观察证据 + 本轮全新独立审查 PASS。轮次用尽仍未 PASS ⇒ **BLOCKED（未完成）**，不再「DONE_WITH_CONCERNS 放行」；用户显式豁免最多 DONE_WITH_CONCERNS。简单任务不豁免审查。校验器要求每条轨道含 ④验证、`required_on_tracks` 覆盖全部轨道。
+- **PASS 两道关（硬要求）**：`review.pass_requires` = 符合预期要求（逐条对照目标/验收标准，无遗漏、无破坏需求的越界改动）+ 原功能保持（相对起点无静默回归，附测试 / validate / check / 行为 diff 证据，有意行为变更逐条列出）。审查者契约与 verification skill 由主干同源渲染（含两道关逐字输出行），/review 与手写 CI 模板同步措辞；`r20_replay.review_bars_ok` 机械校验两道关各一行（规则见下方第 2 轮修正），缺任一则 PASS 不算干净；V21 校验标签与 hooks `PASS_BAR_LABELS` 一致。
+- **一次通过 ≤3 轮**：`review.max_rounds` 默认 3，校验器上限 3；`max_blocks` ≥ `max_rounds`。Stop 门、Cursor Guard、OpenCode/editor 文案的回退默认值 5→3；阻断/轮次用尽提示状态 = BLOCKED。
+- **大幅精简**：
+  - agents 16→9：删 code-explorer、architect、agentic-orchestrator、build-error-resolver、spec-reviewer、sre、doc-writer（去向见 `agents/README.md`）；跨模型审查者更名 `cross-model-reviewer` 并去厂商化。校验器要求无孤儿 agent（每个 agent 是阶段角色或路由审查者）。
+  - skills 35→26：删 karpathy-guidelines（并入 CORE 开发习惯）、triage（并入 systematic-debugging 分诊）、autoplan、structured-artifacts、improve-codebase-architecture、code-refactoring、frontend-library-advisor、frontend-design-pattern-applier、test-edge-case-analyzer；requesting/receiving-code-review 与 finishing-a-development-branch 保留为薄壳（防上游同名插件技能接管）。task-triage 去掉「模型匹配」维（六维→五维）。
+  - rules 12→6：删 WORKFLOW、CONTEXT、GOVERNANCE、FRONTEND、BACKEND、DATABASE；CORE 重写为一张铁律表（R2/R6/R7/R10 退役，R1 = 证据 + 独立审查 PASS）+ 开发习惯 + 工具路由 + 阈值。
+  - commands 18→14：删 /clear、/status（编辑器内置）、/office-hours（catalog 技能）、/autoplan（审查路由在 workflow.yaml）。
+- **上下文窗口**：`context_thresholds` 删别名解析；`model-context-windows.json` 出厂为空（v2）；窗口来自模型名后缀 / 本机登记 / 显式 `autoCompactWindow`；V17 只在窗口可确认时比较上限。
+- **validate_config**：组件清单与上限对齐 9/26/6/14；V4 只检查保留的铁律编号；删除全栈 glob 检查；live policy 新增禁词（「最多 5 轮」「放行并标 DONE_WITH_CONCERNS」「模型匹配低」）；V20 R15 检查适配单行铁律索引；V21 增加 lint。
+- **测试**：`test_workflow_spine.py` 重写（56 项：校验 / 漂移 / lint / 旧键拒绝 / 完成门 / 两道关 / 轮次上限 / 上下文窗口）；`test_r20_replay.py` 新增两道关正反例（217 项）；`scripts/test-cursor-guard-hooks.py`（模板隔离运行）69/69。
+- **审查修正（第 1 轮独立审查）**：`review_bars_ok` 只按结论开头判失败（「无静默回归」不再误杀），证据词接受 证据/观察/evidence，去掉 `**` 粗体标记再解析；审查契约渲染两道门的逐字输出行，eng-reviewer / verification 模板 / `/review` 同步；`gate_reader` 与 Guard `gate_messages` 回退轮次 5→3；`scripts/test-cursor-guard-hooks.py` 夹具补两道门行；`pre-manifest-validator` 恢复 requesting/receiving-code-review、finishing-a-development-branch 映射，新增 change-implementer，cross-model-reviewer / pair-agent 指向现存 concern。
+- **审查修正（第 2 轮独立审查）**：`review_bars_ok` 改白名单——每道关单独一行、以「通过/满足/PASS/✅」开头、同一行不得含不通过类词、证据非空（照抄模板、「部分通过」「待定」「❌」「证据：无」均拒绝）；字段解析接受 `*`/`•`/编号列表前缀；契约声明优先于个人模板，并要求主会话把观察到的测试/validate 输出与相对起点的行为差异交给只读审查者；lint 补 minimax/gpt/gemini/llama/mistral/moonshot/o1/claude-数字 形式，清掉 skill-reviewer 与 design-pipeline 的模型名；上下文登记改用 gitignore 的 `config/model-context-windows.local.json`；`templates/taskmaster/README.md` 去掉已删 `/office-hours` 命令引用。
+- **有意行为变更**：hooks 不再把旧名子代理（v12 前 code-reviewer、v12 跨模型审查者）计为独立审查（`legacy_reviewer_names` 删除）；Stop 门轮次/阻断用尽状态由 DONE_WITH_CONCERNS 改为 BLOCKED；默认轮次 5→3；PASS 必须带两道关行。
+- **已知限制**：Stop 机械门只在有交付编辑（`review.min_files: 1`）时触发；无编辑任务（调研/问答）的「独立审查必过」由流程规则（CLAUDE.md / verification skill / CORE R1）约束，不由 hook 阻断。未知模型的 `autoCompactWindow` 不再按 200K 封顶。
+- **迁移**：`git pull` → `python scripts/workflow.py check` → 若 v12 `apply-settings --write` 写过 `settings.json`，按需删除其中的推理强度键与别名重定向环境变量，自己选择会话模型 → `pwsh -File scripts/sync.ps1 -All`（Cursor 侧再跑 `deploy-cursor-guard.ps1`）。Guard 仍 1.2.17。
+
+## v12.0.0 配置驱动主干：`config/workflow.yaml` 单一调度面（2026-10-24）
+
+- **主干 SSOT**：新增 `config/workflow.yaml`，集中定义 `models`（profile anthropic/kimi/deepseek/single × 档位 frontier/mid/light，含 Claude 别名、具体模型、Cursor slug、上下文、effort 能力）、`roles`（agent → 档位 + effort）、`constraints`（审查者档位 ≥ 修改者）、`triage`、`stages`（进入/退出门）、`tracks`（simple/bug/non_simple/research）、`quality`（就绪定义 / 交审自检 / 验证档）、`review`（七维 + 提示、结论、轮次 5 / 阻断 3、路由、旧名）。换模型只改 `models.active_profile`。
+- **渲染器**：新增 `scripts/workflow.py`（`check` / `render` / `show [--profile]` / `apply-settings [--write]`）。重写 34 个派生目标：agents frontmatter `model`/`effort`、审查者 `spine:review-contract`、change-implementer/planner `spine:ready-contract`、6 个命令的 `spine:stage-gate`、CLAUDE.md / DEV_FLOW / AGENTS / task-triage / SDD / verification / CURSOR-EDITOR.mdc 的派生块，以及 `quality_gates.json`、`guard-config.json`、`model-context-windows.json`、`templates/claude-settings/model.snippet.json` 与 OpenCode `verify-gate.ts` 轮次文案。`apply-settings` 合并 `ANTHROPIC_DEFAULT_*_MODEL` 并移除会覆盖路由的 `CLAUDE_CODE_SUBAGENT_MODEL`。
+- **一次通过**：就绪定义与交审自检进入修改者/规划者；审查者契约与 verification 七维同源渲染；V21 校验 hooks `r20_replay._REQUIRED` 与配置七维一致。
+- **去重合并**：`agents/code-reviewer` 并入 `eng-reviewer`（旧名留在 `review.legacy_reviewer_names`，hooks 仍识别）；`skills/pr-workflow` 并入 `skills/ship`，`finishing-a-development-branch` 改为指向 ship 的薄壳。删除 catalog 同名副本（agents：ceo-reviewer/designer/eng-reviewer/qa/security-reviewer/security/context-rot-monitor；skills：deep-research/git-workflow/git-worktrees/code-refactor），以及未注册 hooks（pre-tmux-reminder/pre-loop-guard/pre-suggest-compact/stop-context-monitor）。计数：skills 36→35，agents 17→16，catalog 100/41/15。
+- **validate_config**：新增 V21（主干校验 + 派生块漂移）；V16 改为与 `workflow.yaml` 比对轮次/阻断（不再硬编码）；V5 要求 `workflow_spine` concern。`gen-catalog-index.py` 支持 `CLAUDE_HOME`。
+- **文档**：新增 `docs/DEV_FLOW.md`（推荐开发流程 + 换模型示例 + v11→v12 迁移）；CLAUDE.md 五阶段/门控块改为派生的「工作流主干」；MANIFEST `phases` → `workflow_spine`，新增 `workflow_spine` / `model_routing` concern。
+- **审查修正**：
+  - OpenCode `verify-gate.ts` 的 `review_max_rounds=<n>` 纳入派生；`show` 同时打印阶段/轨道；V16 无 PyYAML 时 WARN 跳过；`apply-settings` 只删前一 profile 写入的重定向，保留网关自定义值并逐项提示，兼容 `env: null`，保留 `opus[1m]` 等后缀；`deploy-cursor-guard.ps1` 让 `verification.reviewer_agents` 始终跟随模板；codex-reviewer 输出先填七维。
+  - `codex-reviewer` 补进 hooks 默认审查者名单与「you are …」识别。V21 要求 `review.routing` + `legacy_reviewer_names` 与 `r20_replay.DEFAULT_REVIEWER_AGENTS` 一致。
+  - `context_thresholds` 把 `opus`/`sonnet`/`haiku`（含 `[1m]` 后缀）经 `ANTHROPIC_DEFAULT_*_MODEL` 解析为具体模型，避免按 200K 兜底计算压缩窗口。
+  - `apply-settings` 切换 profile 时清掉上一 profile 残留的别名重定向、`effortLevel` 与别名 `model`，并提示会覆盖路由的 `env.ANTHROPIC_MODEL`。备份改为已 gitignore 的 `settings.json.bak_<时间戳>`。
+  - ⓢ交付改为 `on_demand`（不在任何 track 内，R19：用户明确要求才提交/开 PR）；学习恢复为 ⑤。
+  - 删除无消费方的 `fresh_reviewer_each_round` 与 `fast`。`refresh_graph_before_review` 必须为 true。`verify_tiers` 渲染进 /verify 门控。
+  - frontmatter 插入跳过块标量 description。
+  - 回归测试 `hooks/tests/test_workflow_spine.py`（31 项）。
+- **迁移**：`git pull` →（Kimi / DeepSeek / 网关用户先改 `models.active_profile` 并 `render`）→ `python scripts/workflow.py check` → `python scripts/workflow.py apply-settings --write` → `pwsh -File scripts/sync.ps1 -All`；若本机 `settings.json` 仍注册已删 hook，按 `templates/claude-settings/hooks.snippet.json` 清理。Guard 仍 1.2.17。
+
+## v11.6.0 工具链 SSOT：pwsh 7.5+ / pnpm 11 / 语言地板（2026-09-09）
+
+- **单一地板**：`config/toolchain.yaml`。缺工具 → BLOCKED + 安装命令。禁止 if-else 静默回退到 Windows PowerShell 5.1 / npm / pip。
+- **R9 / R15**：Windows 一律 `pwsh` 7.5+（`#Requires -Version 7.5`）；Node 默认 pnpm 11。尊重已有 lockfile 是项目约定，不是 PATH 上没有 pnpm 时改用 npm。
+- **MCP spawn**：`.mcp.json` 与 Cursor 粘贴片段 `command: pwsh`。Qoder 仍 fork `powershell.exe` 时改宿主配置，不在包装脚本里保留 5.1 分支（`rules/MCP.md` §3b）。
+- **运行时**：`which_pwsh()` 只认 `pwsh`；live `scripts/*.ps1` 无 `#Requires -Version 5.1`。Cursor Guard **1.2.17**（`sync_runner` 只 spawn pwsh；缺则 BLOCKED；Shell 警告 `powershell`→pwsh，allow 不 deny）。
+- **validate_config V20**：钉 `powershell_min: "7.5"`、`package_manager: pnpm`、`pnpm_major: "11"`、`missing_tool: BLOCKED`、`python.installer: uv`、脚本 Requires、`which_pwsh` 不回退、mcp.json/Cursor 片段不得 `command: powershell`/`powershell.exe`、Guard `sync_runner` 须 `resolve_pwsh`、CLAUDE.md R15 不含「兜底」。
+- **审查修正**：活 MCP spawn 从 `powershell` 改为 `pwsh`（包装脚本 `#Requires 7.5` 否则会拒启）；V14 版本史取现行 Guard 戳（不再钉死 v20.19）；bootstrap 对 pyproject/requirements 回报 `uv`。V20 恢复 `package_manager: pnpm` 断言并识别无空格/`powershell.exe` JSON（含正例夹具与大小写）；Guard Shell 警告与 Claude `pre-bash-guard` 对齐（含 `.exe`）；`resolve_pwsh` / `run_sync_plan` 缺 pwsh 不 spawn；V14 钉 1.2.16 史留；live 脚本禁 pnpm→npm / pwsh→powershell 控制流回退。
+- **语言指针**：FRONTEND/BACKEND 与 catalog `RULES_{PYTHON,TYPESCRIPT,GO,JAVA,RUST,CSHARP,DART,RUBY}` 指向 yaml 地板，不在 alwaysApply 再加规则。
+
+## v11.5.0 全新七维审查 + 图谱硬门 + 全栈可落地（2026-09-09）
+
+- **审查政策单一 SSOT**：`skills/verification-before-completion/SKILL.md`。有交付即只读独立审查（**含文档**）；废除只读完成旁路。每轮全新七维（满足/遗漏/错改/漏改/原功能/影响范围/**问题是否解决**）；禁止 `resume`、禁止边审边改。`review_max_rounds=5`（`max_blocks` 仍为 3）。无依赖审查者同一消息并行；批次任一 NEEDS-CHANGES / 七维缺项压过 PASS。
+- **图谱三时点**：任务开始 SessionStart `ensure`；**每一轮开审前**须在 `last_edit` 之后增量 refresh（SessionStart ensure 不能代替）；任务完成 Stop refresh（不记审查前戳）。无新鲜图禁止开审。不恢复每次编辑 kg sync。
+- **铁律瘦身**：R1–R11 短指针；R9 平台 spawn 只在 `rules/MCP.md`；R12–R20 全文 CORE；R20 = 七维 + 审查前刷图。L0 CLAUDE.md ≤200 行。Superpowers **6.3.0**。
+- **全栈 glob**：新增薄层 `rules/BACKEND.md`、`rules/DATABASE.md`；`FRONTEND.md` 去掉 teoms-web/Vue 默认与裸 `*.js`。`global_rules_max` 10→12。
+- **requesting-code-review** 改派 gstack `eng-reviewer` 路由；删除不存在的 `code-review-workflow`。
+- **机械门**：`dual_pass_in_scope` 含文档；`dual_pass_phase` 增加 `graph`；`apply_review_verdict` 按本轮 `reviews[]` 批次聚合；`identify_reviewer` 识别 ceo/designer/dx/security。Cursor Guard **1.2.15**（结论标题 Unicode 边界）。`deploy-editor-graph-hooks.ps1 -Scope editors|all`（落地用 `editors`）。
+- **审查修正**：`identify_reviewer` 不再把 `code-explorer` / 句中 `security` / 修改者 prompt 里的审查者全名误判为审查委派；Cursor `generalPurpose` 从 `prompt` 识别角色。刷图命令须在起始或 `;`/`&&`/`|` 之后且不能是 `echo`。空槽不能 PASS；capture 只填七维结论（PASS 与 NEEDS-CHANGES 均须七维）；并行空槽按审查者身份填（无身份不填，禁止父会话抢槽）；父消息不完整 PASS / 门控「PASS 或/or NEEDS-CHANGES」不得毒化已捕获正文；换行空「满足：」不得吞下一字段，同名字段取最后非空。结论只认标题/结论行：整行解析，跳过教学句与同行双结论，最后一条真实结论胜出（禁止截到第一个 PASS）。标题用 Unicode 字母边界（禁止把 Python `\\b` 搬进 JS；「当前状态」不得当结论行）。`reviewer_source_from_payload` 只读身份字段，不扫 `text`/`prompt`/`description`。`review_verdict_ok` 与 `primary_verdict` 同一口径。图例「已解决 | 未解决 | 部分解决」带后缀仍拒填。便携 `r20_check.py` 导入 `r20_replay`（禁止再复制正则）；OpenCode `verify-gate.ts` 结论行与七维对齐（禁止 spawn `gate_cli.py`）。Claude `SubagentStop` → `r20-capture.py`（Stop 不 attach）。纯文档走 graph/review；CURSOR-EDITOR / 完成门文案为修改→验证→刷图→审查。Cursor Guard **1.2.15**。
+- **validate_config**：`REQUIRED_AGENTS` 补 `change-implementer`；现行政策文件禁止硬编码旧轮次；V16 要求 `require_refresh_before_review` 与七维字段。V14 核现行文档身份戳（`hooks/README.md` Cursor 段 / README 当前 / SETUP 首条 / SPEC / SYNC 版本史）须等于 `guard_version`，避免只改模板版本留下旧现行句。
+
+## v11.4.13 MCP 四工具路由 + everything 常驻（2026-09-07）
+
+- **everything**：`.mcp.json` 常驻 `elis132/everything-mcp==1.0.6`，启动钉 `--with mcp<2`（FastMCP 2.x 崩溃）。仅 Windows；需 Everything.exe。与 **everything-claude-code 插件**（禁止安装）不是同一物；禁止 marketplace plugin 双挂。
+- **分工 SSOT**（`rules/MCP.md` §4）：codegraph=R17；CRG=上下文/影响面/风险/审查；serena=符号编辑；everything=本机文件名。禁止 everything 替代 Glob / codegraph / CRG `detect_changes`。
+- **语义名**：规则与钩子按 `codegraph_explore` / `everything_search` 匹配，禁止 `mcp0_`/`mcp1_`。Cursor User MCP 可能带 `user-` 前缀。
+- **CONTEXT F1**：删除未暴露的 `codegraph_context`/`codegraph_trace`/`codegraph_impact`/`codegraph_callees`/`codegraph_status`；默认仅 `codegraph_explore`/`codegraph_node`/`codegraph_search`/`codegraph_callers`。不启用 `CODEGRAPH_MCP_TOOLS`。
+- **硬门**：无图时 everything 与 Glob 同级 deny；`is_write_tool` / `is_edit_tool` 解包 `CallDynamicTool`+serena；`extract_edit_paths` 读内层 `arguments`。Claude matcher 加 `mcp__everything__.*`。Cursor `explore_router` matcher 含 CallDynamicTool + everything（有图时也拦 everything 当 Glob 后门）。`first_edit_verify` matcher 含 CallDynamicTool。
+- **现行入口纠偏**：SPEC/MANIFEST/brainstorming/user-rules-snippet 不再把未暴露的 `codegraph_impact` 当必调用。MCP.md / CURSOR-EDITOR.mdc 默认四工具写全名 `codegraph_explore` 等。门控文案/GOVERNANCE/change-impact-analysis/CONTEXT/完成门 无图 deny 含 Glob/everything。explore_router 不再把 everything 当 Grep/Glob fallback。
+- **Cursor `mcp.json`**：不经 `sync.ps1` 复制；粘贴片段见 `docs/CURSOR_MCP_PROFILE.md`。
+- **计数**：常驻 4→5。Guard 仍 1.2.11（matcher 增量，不升 Guard 版本）。
+- **过时清理**：`mcp-configs/search.json` 不再把 plugin 写成 `.mcp.json` 常驻；SPEC Plugins 表 / deep-research 不再把 context7/exa/firecrawl 指到 MCP；删除 catalog 中指向本机 `C:/Users/DELL/.cc-switch` 的坏 symlink。
+- **审查纠偏**：MANIFEST `mcp_tiering`/`mcp_loading` 与 `mcp/servers.json` `toolsets.plugins` 补 firecrawl；Cursor `verify_tracker` 用 `extract_tool_input`（含 CallDynamicTool 内层 `arguments`）；项目模板 / `hooks/README` / MCP.md cbm 段对齐 CRG 影响面 + everything 硬门。
+- **现行入口补齐**：`CURSOR_EDITOR_SETUP` / `CURSOR_MCP_PROFILE` Plugin 表 / user-rules 片段 / CORE 反模式表对齐常驻 5 与 CRG `get_impact_radius`；hooks README 澄清 everything 非 Grep/Glob fallback。
+- **门控兜底文案**：CONTEXT Exa/Context7 改为 plugin；MCP.md Plugins 列表补 firecrawl；GOVERNANCE 影响门与 `gate_reader`/`gate_messages.py` FALLBACK 对齐 CRG `get_impact_radius`。
 
 ## v11.4.12 一次找齐再集中改 + 每轮全新开审（2026-09-01）
 

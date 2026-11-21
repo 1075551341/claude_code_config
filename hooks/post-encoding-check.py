@@ -41,11 +41,11 @@ def main():
     tool_input = data.get("tool_input") or {}
     cwd = str(data.get("cwd") or "")
 
-    if not is_edit_tool(tool_name):
+    if not is_edit_tool(tool_name, tool_input):
         sys.exit(0)
 
     try:
-        results = check_after_edit(tool_name, tool_input, cwd)
+        results = check_after_edit(tool_name, tool_input, cwd, str(data.get("session_id") or ""), str(data.get("tool_use_id") or ""))
         if results:
             emit_warning(format_warning(results), "PostToolUse")
     except Exception as e:  # noqa: BLE001 - 校验失败不阻断主流程

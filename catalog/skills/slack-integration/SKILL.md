@@ -51,7 +51,7 @@ const client = new WebClient(process.env.SLACK_BOT_TOKEN);
 // 简单文本消息
 await client.chat.postMessage({
   channel: '#general',
-  text: 'Hello from Claude!',
+  text: 'Hello from App!',
 });
 
 // Block Kit 富消息

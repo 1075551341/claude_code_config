@@ -1,34 +1,13 @@
-# Catalog — 领域能力库
+# 按需领域资料库
 
-> 不全局加载；按需 `migrate-from-legacy.py --skill|--agent|--rule` 复制到项目 `.claude/`
-> 逐项清单见 [INDEX.md](INDEX.md)（含同名项消歧表）
+这里是可选资料，不自动进入全局技能发现。当前保留 98 个技能、41 个角色正文与 15 份领域规则，清单见 [INDEX.md](INDEX.md)。
 
-## 规模
+只有任务需要领域方法时才选择相应内容，复制到项目或本端支持的原生目录并独立维护；不建跨工具链接。
+通用流程以本端入口为准，领域内容补充方法，不另设阶段机、完成门或权限政策。
 
-| 目录 | 数量 | 策略 |
-|------|------|------|
-| skills/ | 101 | 全栈 + 办公 + 移动端/3D 保留 |
-| agents/ | 43 | 领域专家 + 语言 reviewer + gstack 5 角色 |
-| rules/ | 15 | 语言/领域 lazy-load |
-
-## 权威 vs 变体（v10.17）
-
-顶层 `skills/` `agents/` `rules/` 为**权威实现**，参与路由加载；本目录为**变体库**，
-同名项一律以顶层为准。7 个同名项见 [INDEX.md](INDEX.md) 消歧表。
-
-## 分层
-
-```
-P0 全局（../skills/ ../agents/ ../rules/）  ← 始终可用
-P1 全栈（api/db/docker/frontend/backend/...）
-P2 办公（docx/pdf/pptx/xlsx/google-workspace/...）
-P3 移动端/3D（mini-program, uniapp, capacitor, d3-visualization, flutter, react-native...）
-```
-
-## 移动端/微信/3D 保留清单
-
-mini-program, uniapp-development, capacitor-app, ios-simulator, android-development, flutter-development, react-native, mobile-ui, mobile-performance, mobile-deployment, d3-visualization
-
-## 已删记录
-
-见 `docs/archive/experiences/rejected/deletion-candidates.md`（已归档）
+- 全栈、办公、移动端与可视化等独特能力保留。
+- `catalog/rules/` 为按需参考物料；实际作为项目规则加载时，应按当前宿主原生格式与加载路径转换并维护。
+- 角色原生元数据只适用于其宿主，迁移时转换工具权限，不假定所有工具支持同一种 frontmatter。
+- 命令示例是供用户理解的资料，不是自动执行授权；发布、Git、浏览器及破坏性操作仍遵守入口边界。
+- 失效的本能学习与未证实的外部编排移到普通历史资料，见 `../docs/archive/`；不再作为可启用技能。
+- 新增或删除内容时同步索引；同名通用能力先复用顶层版本，不整包复制。

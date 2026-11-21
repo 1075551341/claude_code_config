@@ -1,10 +1,12 @@
 ---
 name: webapp-testing
-description: 用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。测试 Web 应用
-triggers: [用于 Web 应用自动化测试，使用 Playwright 进行端到端测试。测试 Web 应用, 编写 E2E 测试, 自动化浏览器操作时使用]
+description: 仅在用户本轮显式要求浏览器 UI 或 E2E 测试时使用 Playwright 进行端到端测试。触发词：编写 E2E 测试、浏览器 UI 测试、Playwright E2E。
+disable-model-invocation: true
 ---
 
 # Web 应用测试
+
+> **硬约束**：仅在用户本轮显式要求浏览器 UI/E2E 测试时启用；安装/运行命令须遵守项目既有包管理器与锁文件，不擅自全局安装。
 
 ## 核心原则
 
@@ -19,11 +21,13 @@ triggers: [用于 Web 应用自动化测试，使用 Playwright 进行端到端�
 
 ### 安装配置
 
+> 以下安装命令仅作示例；实际须遵守项目既有包管理器与锁文件，不擅自全局安装或初始化覆盖现有配置。
+
 ```bash
-# 安装
+# 安装（示例）
 npm init playwright@latest
 
-# 或手动安装
+# 或手动安装（示例）
 npm install -D @playwright/test
 npx playwright install
 ```
@@ -314,6 +318,8 @@ export default defineConfig({
 ```
 
 ## 调试技巧
+
+> 仅在用户本轮显式要求浏览器 UI/E2E 调试时按需运行，并遵守项目既有包管理器与锁文件环境。
 
 ```bash
 # UI 模式调试
